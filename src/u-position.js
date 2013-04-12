@@ -12,3 +12,24 @@ Util.absTop = function(e) {
 	}
 	return e.offsetTop;
 }
+
+
+Util.eventX = function(event){
+	
+	return (event.targetTouches ? event.targetTouches[0].pageX : event.pageX);
+}
+Util.eventY = function(event){
+
+	return (event.targetTouches ? event.targetTouches[0].pageY : event.pageY);
+}
+
+/*
+Util.relEventX = function(event){
+	
+	return (event.targetTouches ? event.targetTouches[0].layerX : event.layerX);
+}
+Util.relEventY = function(event){
+
+	return (event.targetTouches ? event.targetTouches[0].layerY : event.layerY);
+}
+*/

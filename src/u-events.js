@@ -90,7 +90,7 @@ Util.Events = u.e = new function() {
 		}
 		catch(exception) {
 			if(document.all) {
-//				u.bug("exception:" + e + "," + type + ":" + exception);
+				u.bug("exception:" + e + "," + type + ":" + exception);
 //				e.attachEvent("on" + type, action);
 			}
 			else {
@@ -126,7 +126,7 @@ Util.Events = u.e = new function() {
 	*/
 	this.onStart = this.onDown = function(e, action) {
 //		u.bug("onstart")
-		u.e.addEvent(e, this.event_pref == "touch" ? "touchstart" : "mousedown", action);
+		u.e.addEvent(e, (this.event_pref == "touch" ? "touchstart" : "mousedown"), action);
 	}
 
 	/**
@@ -136,7 +136,8 @@ Util.Events = u.e = new function() {
 	* @param action Action to execute on event
 	*/
 	this.onMove = function(e, action) {
-		u.e.addEvent(e, this.event_pref == "touch" ? "touchmove" : "mousemove", action);
+//		u.bug("onmove:" + e.nodeName)
+		u.e.addEvent(e, (this.event_pref == "touch" ? "touchmove" : "mousemove"), action);
 	}
 
 	/**
@@ -147,8 +148,56 @@ Util.Events = u.e = new function() {
 	*/
 	this.onEnd = this.onUp = function(e, action) {
 //		u.bug("onend")
-		u.e.addEvent(e, this.event_pref == "touch" ? "touchend" : "mouseup", action);
+		u.e.addEvent(e, (this.event_pref == "touch" ? "touchend" : "mouseup"), action);
+
+		// add additional mouseout handler if needed
+		if(e.snapback && u.e.event_pref == "mouse") {
+			u.e.addEvent(e, "mouseout", this._snapback);
+		}
+		// mouse out is also invoked by dragging over another element - bad
+		else if(e.drag && u.e.event_pref == "mouse") {
+//			u.e.addEvent(e, "mouseout", action);
+		}
+
+
 	}
+
+
+	this.transitioned = function(e) {
+		if(typeof(e.style.webkitTransition) != "undefined") {
+//			u.bug("listen-s" + e.className)
+			u.e.addEvent(e, "webkitTransitionEnd", this._transitioned);
+		}
+		else {
+//			u.bug("listen-m" + e.className)
+			u.e.addEvent(e, "transitionend", this._transitioned);
+		}
+	}
+
+	this._transitioned = function(event) {
+		// maybe only callback when target == this?
+
+//		u.bug("catch" + event.target.className + "::" + this.className)
+		if(typeof(this.transitioned) == "function") {
+			this.transitioned(event);
+		}
+	}
+
+	this.animated = function(e) {
+		if(typeof(e.style.webkitAnimation) != "undefined") {
+			u.e.addEvent(e, "webkitAnimationEnd", this._animated);
+		}
+		else {
+			u.e.addEvent(e, "animationend", this._animated);
+		}
+	}
+
+	this._animated = function(event) {
+		if(typeof(this.animated) == "function") {
+			this.animated(event);
+		}
+	}
+
 
 	this.onTransitionEnd = function(e, action) {
 		u.e.addEvent(e, "webkitTransitionEnd", action);
@@ -192,6 +241,8 @@ Util.Events = u.e = new function() {
 	*/
 
 	this.transform = function(e, x, y) {
+//		u.bug("trans e")
+
 		// transition support, use transform
 		if(typeof(e.style.MozTransition) != "undefined" || typeof(e.style.webkitTransition) != "undefined") {
 			e.style.MozTransform = "translate("+x+"px, "+y+"px)";
@@ -402,6 +453,7 @@ Util.Events = u.e = new function() {
 
 	this.resetEvents = function(e) {
 
+//		u.bug("reset:" + e.nodeName)
 //		u.bug(1, "reset:"+e.id+":"+e.className)
 
 		u.t.resetTimer(e.t_held);
@@ -423,9 +475,10 @@ Util.Events = u.e = new function() {
 		this.removeEvent(e, "touchend", this._drop);
 
 		this.removeEvent(e, "mouseout", this._snapback);
+		this.removeEvent(e, "mouseout", this._drop);
 
-		
 	}
+
 	/**
 	* Input started
 	*
@@ -433,10 +486,12 @@ Util.Events = u.e = new function() {
 	* Multiple event possible
 	*/
 	this._inputStart = function(event) {
+//		u.bug("_inputStart:" + this.nodeName);
 
+		// used to handle dblclick timeout event forwarding
 		this.event_var = event;
+		this.input_timestamp = new Date().getTime();
 
-//		u.bug(event.type)
 //		u.e.setEventPref(event.type);
 
 //		u.bug(event + ":" + this.className);
@@ -449,35 +504,53 @@ Util.Events = u.e = new function() {
 //		u.bug(1, "start");
 		
 		// ordinary click events
-		if(this.click || this.dblclick || this.hold) {
-//			u.bug("set click");
+//		u.bug(this.e_click)
+		if(this.e_click || this.e_dblclick || this.e_hold) {
+//			u.bug("click set:" + this.nodeName);
 			u.e.onMove(this, u.e._inputClickMove);
 			u.e.onEnd(this, u.e._dblclicked);
 		}
 		// listen for hold?
-		if(this.hold) {
+		if(this.e_hold) {
 			this.t_held = u.t.setTimer(this, u.e._held, 750);
 		}
 
 		// drag enabled? (cannot co-exist with swipe)
-		if(this.drag || this.swipe) {
+		if(this.e_drag || this.e_swipe) {
+//			u.bug("drag set" + this.nodeName)
 			u.e.onMove(this, u.e._pick);
 			u.e.onEnd(this, u.e._drop);
 		}
+
+
+		// callback TODO - what function name?
+		if(typeof(this.inputStarted) == "function") {
+			this.inputStarted(event);
+		}
+
+
 	}
+
+
 	this._inputClickMove = function(event) {
 		u.e.resetEvents(this);
+		// old event
 		if(typeof(this.clickMoved) == "function") {
 			this.clickMoved(event);
 		}
+		// new event
+		if(typeof(this.moved) == "function") {
+			this.moved(event);
+		}
 	}
+
 
 	/**
 	* Notifies:
 	* element.held
 	*/
 	this.hold = function(e) {
-		e.hold = true;
+		e.e_hold = true;
 		u.e.onStart(e, this._inputStart);
 	}
 	this._held = function(event) {
@@ -496,7 +569,8 @@ Util.Events = u.e = new function() {
 	* element.clicked
 	*/
 	this.click = this.tap = function(e) {
-		e.click = true;
+//		u.bug("set click:"+e.nodeName)
+		e.e_click = true;
 		u.e.onStart(e, this._inputStart);
 	}
 	this._clicked = function(event) {
@@ -516,7 +590,8 @@ Util.Events = u.e = new function() {
 	* element.dblclicked
 	*/
 	this.dblclick = this.doubletap = function(e) {
-		e.dblclick = true;
+		u.bug("set dblclick:"+e.nodeName)
+		e.e_dblclick = true;
 		u.e.onStart(e, this._inputStart);
 	}
 	this._dblclicked = function(event) {
@@ -535,7 +610,7 @@ Util.Events = u.e = new function() {
 		}
 
 		// no dbl-click event
-		else if(!this.dblclick) {
+		else if(!this.e_dblclick) {
 			// rerouting event
 			this._clicked = u.e._clicked;
 			this._clicked(event);
@@ -568,17 +643,19 @@ Util.Events = u.e = new function() {
 	* element.moved
 	* element.dropped
 	*/
-	this.drag = function(e, target, strict, snapback, process_time) {
-		e.drag = true;
+//	this.drag = function(e, target, strict, snapback, process_time) {
+	this.drag = function(e, target, strict, snapback) {
+//		u.bug("set click:"+e.nodeName)
+		e.e_drag = true;
 
 		// set elastic effect when dragging out of scope
 		e.strict = strict ? true : false;
 		e.allowed_offset = e.strict ? 0 : 250;
 		e.elastica = 2;
 		e.snapback = snapback ? true : false;
-		e.process_time = process_time ? process_time : 0;
+//		e.process_time = process_time ? process_time : 0;
 
-		e.mtm_avg = new Array();
+//		e.mtm_avg = new Array();
 
 		// remember boundaries
 		// if target is array of coordinates
@@ -596,10 +673,34 @@ Util.Events = u.e = new function() {
 			e.end_drag_y = Number(e.start_drag_y + target.offsetHeight);
 		}
 
+//		u.bug(u.absLeft(e)+":"+ e.start_drag_x +":"+ e.end_drag_x +"-"+ e.start_drag_x)
+/*
+		var display_drag = u.ae(document.body, "div", "display_drag")
+		display_drag.style.position = "absolute";
+		display_drag.style.left = Number(u.absLeft(e)) - Number(e.start_drag_x) + "px";
+		display_drag.style.top = u.absTop(e) - e.start_drag_y + "px";
+		display_drag.style.width = e.end_drag_x - e.start_drag_x + "px";
+		display_drag.style.height = e.end_drag_y - e.start_drag_y + "px";
+		display_drag.style.border = "1px solid red";
+		display_drag.style.zIndex = 1
+*/
+
+		e.element_x = e.element_x ? e.element_x : 0;
+		e.element_y = e.element_y ? e.element_y : 0;
+
+		// offsetHeight and Width may change during a rotation, so better to save starting point values
+		// dragging locked (only event catching)
+		e.locked = ((e.end_drag_x - e.start_drag_x == e.offsetWidth) && (e.end_drag_y - e.start_drag_y == e.offsetHeight));
+		// is the drag one-dimentional
+		e.vertical = (!e.locked && e.end_drag_x - e.start_drag_x == e.offsetWidth);
+		e.horisontal = (!e.locked && e.end_drag_y - e.start_drag_y == e.offsetHeight);
+
 //		u.bug(2, e.className + "::"+ e.start_drag_x +":"+e.start_drag_y+":"+e.end_drag_x+":"+e.end_drag_y);
 
-		u.e.addEvent(e, "mousedown", this._inputStart);
-		u.e.addEvent(e, "touchstart", this._inputStart);
+		u.e.onStart(e, this._inputStart);
+
+//		u.e.addEvent(e, "mousedown", this._inputStart);
+//		u.e.addEvent(e, "touchstart", this._inputStart);
 	}
 
 	/**
@@ -609,10 +710,12 @@ Util.Events = u.e = new function() {
 	* Calls return function element.picked to notify of event
 	*/
 	this._pick = function(event) {
-//		u.bug("pick");
+//		u.bug("_pick:"+this.nodeName);
+
+		// kill event to prevent dragging deeper element
+		// could possibly be forced into callback to allow for double drag
 	    u.e.kill(event);
 
-//		u.bug(1, "picked")
 
 		// reset click/hold timers
 //		u.t.resetTimer(this.t_held);
@@ -621,14 +724,27 @@ Util.Events = u.e = new function() {
 
 		// set initial move timestamp
 		this.move_timestamp = new Date().getTime();
+//		u.bug(this.end_drag_x +"-"+ this.start_drag_x +"=="+ this.offsetWidth)
 
+		// dragging locked (only event catching)
+//		this.locked = ((this.end_drag_x - this.start_drag_x == this.offsetWidth) && (this.end_drag_y - this.start_drag_y == this.offsetHeight));
 		// is the drag one-dimentional
-		this.vertical = (this.end_drag_x - this.start_drag_x == this.offsetWidth);
-		this.horisontal = (this.end_drag_y - this.start_drag_y == this.offsetHeight);
+//		this.vertical = (!this.locked && this.end_drag_x - this.start_drag_x == this.offsetWidth);
+//		this.horisontal = (!this.locked && this.end_drag_y - this.start_drag_y == this.offsetHeight);
+
+
+
 
 		// set element offset, internal value or relative position
-		this.offset_x = this.element_x = this.element_x ? this.element_x : 0;
-		this.offset_y = this.element_y = this.element_y ? this.element_y : 0;
+//		this.offset_x = this.element_x = this.element_x ? this.element_x : 0;
+//		this.offset_y = this.element_y = this.element_y ? this.element_y : 0;
+
+//		this.offset_x = 0; //this.offsetLeft;
+//		this.offset_y = 0; //this.offsetTop;
+
+		// declare element_x value if not set already
+//		this.element_x = this.element_x ? this.element_x : 0;
+//		this.element_y = this.element_y ? this.element_y : 0;
 
 //		u.bug("dtl", this.offset_x+":"+this.offset_y);
 
@@ -636,9 +752,19 @@ Util.Events = u.e = new function() {
 		this.current_xps = 0;
 		this.current_yps = 0;
 
+//		u.bug("ol:"+this.offsetLeft +","+ this.offsetWidth)
+//		u.bug("ot:"+this.offsetTop +","+ this.offsetHeight)
+
 		// remember starting point of drag - to signal drag is ready and to calculate speed
-		this.start_input_x = event.targetTouches ? event.targetTouches[0].pageX : event.pageX;
-		this.start_input_y = event.targetTouches ? event.targetTouches[0].pageY : event.pageY;
+		// relative to parentNode
+//		this.start_input_x = u.getInputX(event, this);//.targetTouches ? event.targetTouches[0].pageX : event.pageX) - u.absLeft(this);
+//		this.start_input_y = u.getInputY(event, this);//.targetTouches ? event.targetTouches[0].pageY : event.pageY) - u.absTop(this);
+
+		// relative to screen
+		this.start_input_x = u.eventX(event) - this.element_x; // - u.absLeft(this);//(event.targetTouches ? event.targetTouches[0].pageX : event.pageX);
+		this.start_input_y = u.eventY(event) - this.element_y; // - u.absTop(this);//.targetTouches ? event.targetTouches[0].pageY : event.pageY);
+
+//		u.bug("st:"+this.className +"::"+this.start_input_x +","+ this.start_input_y)
 
 		u.e.transition(this, "none");
 
@@ -647,15 +773,19 @@ Util.Events = u.e = new function() {
 			this.picked(event);
 		}
 
+
 		// reset events and setting drag events
 		u.e.resetEvents(this);
 		u.e.onMove(this, u.e._drag);
 		u.e.onEnd(this, u.e._drop);
 
 		// Undesired effect when sliding the presentation, could be enabled for small elements in large scopes using mouse
-		if(this.snapback && u.e.event_pref == "mouse") {
-			u.e.addEvent(this, "mouseout", u.e._snapback);
-		}
+//		if(this.snapback && u.e.event_pref == "mouse") {
+//			u.e.addEvent(this, "mouseout", u.e._snapback);
+//		}
+//		else if(!this.snapback &&  u.e.event_pref == "mouse") {
+			
+//		}
 		
 	}
 
@@ -664,13 +794,11 @@ Util.Events = u.e = new function() {
 	* Calls return function element.moved to notify of event
 	*/
 	this._drag = function(event) {
-//		u.bug("drag");
-		u.e.kill(event);
+//		u.bug("_drag:"+this.nodeName);
 
-//		u.bug(1, "drag" + this.id + ":" + this.className);
 
 		// If init values are set
-		if(this.start_input_x && this.start_input_y) {
+//		if(this.start_input_x && this.start_input_y) {
 
 			// get comparison timestamp
 			this.new_move_timestamp = new Date().getTime();
@@ -678,27 +806,49 @@ Util.Events = u.e = new function() {
 			// If timedelay is kept
 			// Time delay prevents slow animation by overloading the browser with events
 			// The value can be adjusted with light animations
-			if(this.new_move_timestamp - this.move_timestamp > this.process_time) {
+//			if(this.new_move_timestamp - this.move_timestamp > this.process_time) {
 				var offset = false;
-				var speed_ex, speed_ey, speed_mtm;
+//				var speed_ex, speed_ey, speed_mtm;
 
-				// Get current input coordinates
-				this.current_x = event.targetTouches ? event.targetTouches[0].pageX : event.pageX;
-				this.current_y = event.targetTouches ? event.targetTouches[0].pageY : event.pageY;
+				// Get current input coordinates relative to parent
+				this.current_x = u.eventX(event) - this.start_input_x;
+				this.current_y = u.eventY(event) - this.start_input_y;
+
+
+//				u.bug("cc"+this.current_x + "::" + this.element_y + "::" + this);
+//				this.current_x = event.targetTouches ? event.targetTouches[0].pageX : event.pageX;
+//				this.current_y = event.targetTouches ? event.targetTouches[0].pageY : event.pageY;
 
 
 				// CHECK THIS
 //	 			if(!this.strict) {
 
 				// set variables for speed calculation
-				speed_ex = this.element_x;
-				speed_ey = this.element_y;
-				speed_mtm = this.new_move_timestamp - this.move_timestamp;
+//				speed_ex = this.element_x;
+//				speed_ey = this.element_y;
+//				speed_mtm = this.new_move_timestamp - this.move_timestamp;
+
+
+
+//	 			if(!this.strict) {
+					this.current_xps = Math.round(((this.current_x - this.element_x) / (this.new_move_timestamp - this.move_timestamp)) * 1000);
+//					u.bug("(("+this.current_x +"-"+ this.element_x+") /"+ speed_mtm+")*1000");
+					this.current_yps = Math.round(((this.current_y - this.element_y) / (this.new_move_timestamp - this.move_timestamp)) * 1000);
+
+//					this.current_xps = Math.round(((this.current_x - this.start_input_x + this.offset_x - speed_ex) / speed_mtm)*1000);
+//					this.current_yps = Math.round(((this.current_y - this.start_input_y + this.offset_y - speed_ey) / speed_mtm)*1000);
+
+//					u.bug("ispeed:" + this.current_xps + "x" + this.current_yps)
+//					u.bug(1, "speed x:" + this.current_xps + " ("+this.element_x+ "-"+ speed_ex+ "/" +speed_mtm+")");
+					// u.bug(1, "speed y:" + this.current_yps + " ("+this.element_y+ "-"+ speed_ey+ "/" +speed_mtm+")");
+//				}
+
 
 //				}
 
 //				u.bug(2, speed_mtm);
-				this.mtm_avg[this.mtm_avg.length] = speed_mtm; 
+//				this.mtm_avg[this.mtm_avg.length] = speed_mtm; 
+
 				// set new move timestamp
 				this.move_timestamp = this.new_move_timestamp;
 
@@ -711,123 +861,149 @@ Util.Events = u.e = new function() {
 				// check for natural drag limitations
 				// linear drag, vertical (element as high as boundary allows - no stretch over fixed lines)
 //				if(this.end_drag_x - this.start_drag_x == this.offsetWidth) {
+//				if(this.locked) {
+//					u.bug("lo");
+//					this.element_x = this.element_x;
+//					this.element_y = this.current_y;
+
+//				}
+//				else 
 				if(this.vertical) {
 					// only set new y
-					this.element_y = this.current_y - this.start_input_y + this.offset_y;
+//					u.bug("ve"+this.element_y+ "="+ this.current_y +"-"+ this.start_input_y +"+"+ this.offset_y);
+					this.element_y = this.current_y;
+//					this.element_y = this.current_y - this.start_input_y + this.offset_y;
 				}
 				// linear drag, horisontal (element as wide as boundary allows - no stretch over fixed lines)
 //				else if(this.end_drag_y - this.start_drag_y == this.offsetHeight) {
 				else if(this.horisontal) {
 					// only set new x
-					this.element_x = this.current_x - this.start_input_x + this.offset_x;
+//					u.bug("ho"+this.element_x+ "="+ this.current_x +"-"+ this.start_input_x +"+"+ this.offset_x);
+//					this.element_x = this.current_x - this.start_input_x + this.offset_x;
+					this.element_x = this.current_x;
 				}
 				// free drag (within boundaries)
-				else {
-					this.element_x = this.current_x - this.start_input_x + this.offset_x;
-					this.element_y = this.current_y - this.start_input_y + this.offset_y;
+				else if(!this.locked) {
+//					u.bug("fr:"+this.element_x+ "="+ this.current_x +"-"+ this.start_input_x);
+
+					this.element_x = this.current_x;
+					this.element_y = this.current_y;
+//					this.element_x = this.current_x - this.start_input_x + this.offset_x;
+//					this.element_y = this.current_y - this.start_input_y + this.offset_y;
 				}
 
 				// calculate speed (strict does not accumulate speed)
-	 			if(!this.strict) {
-					this.current_xps = Math.round(((this.element_x - speed_ex) / speed_mtm)*1000);
-					this.current_yps = Math.round(((this.element_y - speed_ey) / speed_mtm)*1000);
+//	 			if(!this.strict) {
+//					this.current_xps = Math.round(((this.element_x - speed_ex) / speed_mtm)*1000);
+//					this.current_yps = Math.round(((this.element_y - speed_ey) / speed_mtm)*1000);
 
 //					u.bug("speed:" + this.current_xps + "x" + this.current_yps)
 					// u.bug(1, "speed x:" + this.current_xps + " ("+this.element_x+ "-"+ speed_ex+ "/" +speed_mtm+")");
 					// u.bug(1, "speed y:" + this.current_yps + " ("+this.element_y+ "-"+ speed_ey+ "/" +speed_mtm+")");
-				}
+//				}
 
 
-				// Move element if strict boundaries are kept
-				if(u.e.overlap(this, new Array(this.start_drag_x, this.start_drag_y, this.end_drag_x, this.end_drag_y), true)) {
+				// only perform overlap test and movement if the drag element is not locked
+				if(!this.locked) {
+					
+					
+					// Move element if strict boundaries are kept
+					if(u.e.overlap(this, new Array(this.start_drag_x, this.start_drag_y, this.end_drag_x, this.end_drag_y), true)) {
 
-//					u.bug(1, this.current_xps +"x"+this.current_yps);
-					// calc swipe
-					if(this.current_xps && (Math.abs(this.current_xps) > Math.abs(this.current_yps) || this.horisontal)) {
-						if(this.current_xps < 0) {
-							this.swiped = "left";
-//							u.bug(1, "sideways left")
+//						u.bug("noos");
+
+	//					u.bug(1, this.current_xps +"x"+this.current_yps);
+						// calc swipe
+						if(this.current_xps && (Math.abs(this.current_xps) > Math.abs(this.current_yps) || this.horisontal)) {
+//							u.bug("xps:" + this.current_xps);
+							if(this.current_xps < 0) {
+								this.swiped = "left";
+//								u.bug(1, "sideways left")
+							}
+							else {
+								this.swiped = "right";
+//								u.bug(1, "sideways right")
+							}
+						}
+						else if(this.current_yps && (Math.abs(this.current_xps) < Math.abs(this.current_yps) || this.vertical)) {
+							if(this.current_yps < 0) {
+								this.swiped = "up";
+	//							u.bug(1, "up")
+							}
+							else {
+								this.swiped = "down";
+	//							u.bug(1, "down")
+							}
+						}
+
+	//					u.bug("move:" + this.element_x+","+ this.element_y)
+						u.a.translate(this, this.element_x, this.element_y);
+					}
+					// Out of scope
+					else {
+
+//						u.bug("oos")
+						this.swiped = false;
+
+						// reset speed
+						this.current_xps = 0;
+						this.current_yps = 0;
+
+						// correct overflow
+						// if overflow found:
+						// - get offset (corrected for allowed offset)
+						// - set correct element_x (for snapback function on drop)
+						// - set temorary element x (calculated by drag, allowed_offset and elestica)
+
+						// right out of scope
+						if(this.element_x < this.start_drag_x) {
+							offset = this.element_x < this.start_drag_x - this.allowed_offset ? - this.allowed_offset : this.element_x - this.start_drag_x;
+							this.element_x = this.start_drag_x;
+							this.current_x = this.element_x + offset + (Math.round(Math.pow(offset, 2)/this.allowed_offset)/this.elastica);
+						}
+						// left out of scope
+						else if(this.element_x + this.offsetWidth > this.end_drag_x) {
+							offset = this.element_x + this.offsetWidth > this.end_drag_x + this.allowed_offset ? this.allowed_offset : this.element_x + this.offsetWidth - this.end_drag_x;
+							this.element_x = this.end_drag_x - this.offsetWidth;
+							this.current_x = this.element_x + offset - (Math.round(Math.pow(offset, 2)/this.allowed_offset)/this.elastica);
 						}
 						else {
-							this.swiped = "right";
-//							u.bug(1, "sideways right")
+							this.current_x = this.element_x;
 						}
-					}
-					else if(this.current_yps && (Math.abs(this.current_xps) < Math.abs(this.current_yps) || this.vertical)) {
-						if(this.current_yps < 0) {
-							this.swiped = "up";
-//							u.bug(1, "up")
+
+						// top out of scope
+						if(this.element_y < this.start_drag_y) {
+							offset = this.element_y < this.start_drag_y - this.allowed_offset ? - this.allowed_offset : this.element_y - this.start_drag_y;
+							this.element_y = this.start_drag_y;
+							this.current_y = this.element_y + offset + (Math.round(Math.pow(offset, 2)/this.allowed_offset)/this.elastica);
+						}
+						// bottom out of scope
+						else if(this.element_y + this.offsetHeight > this.end_drag_y) {
+							offset = (this.element_y + this.offsetHeight > this.end_drag_y + this.allowed_offset) ? this.allowed_offset : (this.element_y + this.offsetHeight - this.end_drag_y);
+							this.element_y = this.end_drag_y - this.offsetHeight;
+							this.current_y = this.element_y + offset - (Math.round(Math.pow(offset, 2)/this.allowed_offset)/this.elastica);
 						}
 						else {
-							this.swiped = "down";
-//							u.bug(1, "down")
+							this.current_y = this.element_y;
 						}
+
+//						u.bug("oos"+offset);
+						// if offset found, move to these coordinates
+						if(offset) {
+//							u.bug("offset"+offset)
+	//						u.bug("offset:" + this.element_x+","+ this.element_y)
+							u.a.translate(this, this.current_x, this.current_y);
+						}
+//				}
 					}
 
-//					u.bug("move:" + this.element_x+","+ this.element_y)
-					u.e.transform(this, this.element_x, this.element_y);
-				}
-				// Out of scope
-				else {
-
-					this.swiped = false;
-
-					// reset speed
-					this.current_xps = 0;
-					this.current_yps = 0;
-
-					// correct overflow
-					// if overflow found:
-					// - get offset (corrected for allowed offset)
-					// - set correct element_x (for snapback function on drop)
-					// - set temorary element x (calculated by drag, allowed_offset and elestica)
-
-					// right out of scope
-					if(this.element_x < this.start_drag_x) {
-						offset = this.element_x < this.start_drag_x - this.allowed_offset ? - this.allowed_offset : this.element_x - this.start_drag_x;
-						this.element_x = this.start_drag_x;
-						this.current_x = this.element_x + offset + (Math.round(Math.pow(offset, 2)/this.allowed_offset)/this.elastica);
-					}
-					// left out of scope
-					else if(this.element_x + this.offsetWidth > this.end_drag_x) {
-						offset = this.element_x + this.offsetWidth > this.end_drag_x + this.allowed_offset ? this.allowed_offset : this.element_x + this.offsetWidth - this.end_drag_x;
-						this.element_x = this.end_drag_x - this.offsetWidth;
-						this.current_x = this.element_x + offset - (Math.round(Math.pow(offset, 2)/this.allowed_offset)/this.elastica);
-					}
-					else {
-						this.current_x = this.element_x;
-					}
-
-					// top out of scope
-					if(this.element_y < this.start_drag_y) {
-						offset = this.element_y < this.start_drag_y - this.allowed_offset ? - this.allowed_offset : this.element_y - this.start_drag_y;
-						this.element_y = this.start_drag_y;
-						this.current_y = this.element_y + offset + (Math.round(Math.pow(offset, 2)/this.allowed_offset)/this.elastica);
-					}
-					// bottom out of scope
-					else if(this.element_y + this.offsetHeight > this.end_drag_y) {
-						offset = (this.element_y + this.offsetHeight > this.end_drag_y + this.allowed_offset) ? this.allowed_offset : (this.element_y + this.offsetHeight - this.end_drag_y);
-						this.element_y = this.end_drag_y - this.offsetHeight;
-						this.current_y = this.element_y + offset - (Math.round(Math.pow(offset, 2)/this.allowed_offset)/this.elastica);
-					}
-					else {
-						this.current_y = this.element_y;
-					}
-
-					// if offset found, move to these coordinates
-					if(offset) {
-//						u.bug("offset:" + this.element_x+","+ this.element_y)
-						u.e.transform(this, this.current_x, this.current_y);
-					}
 				}
 
-
-				// notify of movement
-				if(typeof(this.moved) == "function") {
-					this.moved(event);
-				}
+			// notify of movement
+			if(typeof(this.moved) == "function") {
+				this.moved(event);
 			}
-		}
+//		}
 	}
 
 	/**
@@ -836,24 +1012,19 @@ Util.Events = u.e = new function() {
 	* Calls return function element.dropped to notify of event
 	*/
 	this._drop = function(event) {
-//		u.bug("drop");
-	    u.e.kill(event);
-
-//		u.bug(1, "drop");
-
+//		u.bug("_drop");
 //		u.bug(2, "#"+this.mtm_avg.length);
 
-		var sum = 0;
-		for(var i = 0; i < this.mtm_avg.length; i++) {
-			sum += this.mtm_avg[i];
+//		var sum = 0;
+//		for(var i = 0; i < this.mtm_avg.length; i++) {
+//			sum += this.mtm_avg[i];
 //			u.bug(3, this.mtm_avg[i] + ":"+sum);
-		}
+//		}
 
 //		u.bug("average:" + sum);
 //		u.bug(1, sum/(i) + "("+(this.mtm_avg.length)+")");
 
 		u.e.resetEvents(this);
-//		u.e.removeEvent(this, "mouseout", u.e._snapback);
 
 		// return swipe events to handlers
 		if(this.swipe && this.swiped) {
@@ -883,7 +1054,8 @@ Util.Events = u.e = new function() {
 //			u.bug(1, this.swiped);
 			
 		}
-		else if(this.start_input_x && this.start_input_y) {
+		// else transition element into place
+		else if(!this.locked && this.start_input_x && this.start_input_y) {
 			// block init values
 			this.start_input_x = false;
 			this.start_input_y = false;
@@ -907,26 +1079,30 @@ Util.Events = u.e = new function() {
 			}
 
 			// if speed is not 0, execute projection
-			if(this.current_xps || this.current_yps) {
-				u.e.transition(this, "all 1s cubic-bezier(0,0,0.25,1)");
+			if(!this.strict && (this.current_xps || this.current_yps)) {
+				u.a.transition(this, "all 1s cubic-bezier(0,0,0.25,1)");
 
 				// set projected value new coordinates
-				this.element_x = this.current_x;
-				this.element_y = this.current_y;
+//				this.element_x = this.current_x;
+//				this.element_y = this.current_y;
 			}
 			// use faster transition if its a snapback (coordinates are already set)
 			else {
-				u.e.transition(this, "all 0.1s cubic-bezier(0,0,0.25,1)");
+				u.a.transition(this, "all 0.1s cubic-bezier(0,0,0.25,1)");
+//				u.a.transition(this, "all 0.1s ease");
 			}
 
 			// execute projection or snapback
-			u.e.transform(this, this.current_x, this.current_y);
+			u.a.translate(this, this.current_x, this.current_y);
 
-			// notify of drop
-			if(typeof(this.dropped) == "function") {
-				this.dropped(event);
-			}
+
 		}
+
+		// notify of drop
+		if(typeof(this.dropped) == "function") {
+			this.dropped(event);
+		}
+
 	}
 
 
@@ -966,7 +1142,7 @@ Util.Events = u.e = new function() {
 	* ? element.swipedLeft
 	*/
 	this.swipe = function(e, target, strict) {
-		e.swipe = true;
+		e.e_swipe = true;
 
 		u.e.drag(e, target, strict);
 
@@ -1020,7 +1196,7 @@ Util.Events = u.e = new function() {
 	this._snapback = function(event) {
 	    u.e.kill(event);
 
-//		u.bug(2, "snap")
+		u.bug(2, "snap")
 
 		if(this.start_input_x && this.start_input_y) {
 

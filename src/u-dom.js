@@ -57,6 +57,17 @@ Util.gs = function(e, direction) {
 	}
 	return false;
 }
+
+Util.qs = function(query, target) {
+	t = target ? target : document;
+	return t.querySelector(query);
+}
+
+Util.qsa = function(query, target) {
+	t = target ? target : document;
+	return t.querySelectorAll(query);
+}
+
 /**
 * append child to element e
 * add reference to e on node
@@ -116,6 +127,9 @@ Util.addClass = function(e, classname) {
 		var regexp = new RegExp("(^|\\s)" + classname + "(\\s|$|\:)");
 		if(!regexp.test(e.className)) {
 			e.className += e.className ? " " + classname : classname;
+
+			// force dom update
+			e.offsetTop;
 		}
 	}
 }
@@ -124,6 +138,9 @@ Util.removeClass = function(e, classname) {
 	if(classname) {
 		var regexp = new RegExp(classname + " | " + classname + "|" + classname);
 		e.className = e.className.replace(regexp, "");
+
+		// force dom update
+		e.offsetTop;
 	}
 }
 // Remove classname from element
@@ -135,6 +152,9 @@ Util.toggleClass = function(e, classname) {
 	else {
 		Util.addClass(e, classname);
 	}
+
+	// force dom update
+	e.offsetTop;
 }
 
 // insert element in wrap-element and return wrapper
