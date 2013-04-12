@@ -25,7 +25,7 @@ Util.safari = function(version, scope) {
 		if(scope && !eval(current_version + scope + version)){
 			return false;
 		}
-		else if(scope && version && current_version != version) {
+		else if(!scope && version && current_version != version) {
 			return false;
 		}
 		else {
@@ -36,6 +36,25 @@ Util.safari = function(version, scope) {
 		return false;
 	}
 }
+Util.webkit = function(version, scope) {
+	if(navigator.userAgent.indexOf("AppleWebKit") >= 0) {
+		var undefined;
+		var current_version = navigator.userAgent.match(/(AppleWebKit\/)(\d+.\d)/i)[2];
+		if(scope && !eval(current_version + scope + version)){
+			return false;
+		}
+		else if(!scope && version && current_version != version) {
+			return false;
+		}
+		else {
+			return current_version;
+		}
+	}
+	else {
+		return false;
+	}
+}
+
 Util.firefox = function(version, scope) {
 	if(navigator.userAgent.indexOf("Firefox") >= 0) {
 		var undefined;

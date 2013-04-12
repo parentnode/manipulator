@@ -68,12 +68,29 @@ Util.gs = function(e, direction) {
 Util.ae = function(e, node_type, attributes) {
 	var node = e.appendChild(document.createElement(node_type));
 	if(attributes) {
-//		u.bug(typeof(optional));
 		if(typeof(attributes) == "object") {
 			for(attribute in attributes) {
-//				u.bug("op"+attribute+"=>"+attributes[attribute]);
 				node.setAttribute(attribute, attributes[attribute]);
-				
+			}
+		}
+		else {
+			u.addClass(node, attributes)
+		}
+	}
+
+	node.e = e;
+	return node;
+}
+
+/**
+* Insert element
+*/
+Util.ie = function(e, node_type, attributes) {
+	var node = e.insertBefore(document.createElement(node_type), e.firstChild);
+	if(attributes) {
+		if(typeof(attributes) == "object") {
+			for(attribute in attributes) {
+				node.setAttribute(attribute, attributes[attribute]);
 			}
 		}
 		else {

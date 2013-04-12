@@ -1,2 +1,2 @@
 var u, Util = u = new function() {}
-u.version = 1;
+u.version = 2;

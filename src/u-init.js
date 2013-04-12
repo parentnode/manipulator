@@ -17,4 +17,5 @@ Util.init = function() {
 	// enable mouse tracking
 	// u.tracePointer();
 }
+
 window.onload = u.init;

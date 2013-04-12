@@ -1,6 +1,6 @@
 // test urls
 Util.testURL = function(url) {
-//	return true;
+	return true;
 	return url.match(/http\:\/\/mkn\.|http\:\/\/w\.|\.local/i);
 }
 // open debug popup

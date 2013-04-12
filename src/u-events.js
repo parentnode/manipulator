@@ -86,7 +86,7 @@ Util.Events = u.e = new function() {
 	*/
 	this.addEvent = function(e, type, action) {
 		try {
-			e.addEventListener(type, action, false);			
+			e.addEventListener(type, action, false);
 		}
 		catch(exception) {
 			if(document.all) {
@@ -154,6 +154,24 @@ Util.Events = u.e = new function() {
 		u.e.addEvent(e, "webkitTransitionEnd", action);
 		u.e.addEvent(e, "transitionend", action);
 	}
+
+	this.transitionEnded = function(e, action) {
+		u.e.removeEvent(e, "webkitTransitionEnd", action);
+		u.e.removeEvent(e, "transitionend", action);
+	}
+
+
+	this.onAnimationEnd = function(e, action) {
+		u.e.addEvent(e, "webkitAnimationEnd", action);
+		u.e.addEvent(e, "animationend", action);
+	}
+
+	this.animationEnded = function(e, action) {
+		u.e.removeEvent(e, "webkitAnimationEnd", action);
+		u.e.removeEvent(e, "animationend", action);
+	}
+
+
 /*
 	this.transform = function(e, x, y) {
 		e.style.MozTransform = "translate("+x+"px, "+y+"px)";
@@ -503,13 +521,8 @@ Util.Events = u.e = new function() {
 	}
 	this._dblclicked = function(event) {
 
-		// remove holding timer
-//		u.t.resetTimer(this.t_held);
-
 		// if valid click timer, treat as dblclick
-		if(u.t.valid(this.t_clicked)) {
-			// reset click timer
-//			u.t.resetTimer(this.t_clicked);
+		if(u.t.valid(this.t_clicked) && event) {
 
 			// remove up/end event
 			u.e.resetEvents(this);
@@ -527,11 +540,16 @@ Util.Events = u.e = new function() {
 			this._clicked = u.e._clicked;
 			this._clicked(event);
 		}
+		// if no event, click timeout response
+		else if(!event) {
+			this._clicked = u.e._clicked;
+			this._clicked(this.event_var);
+		}
 		// no valid timer, first click
 		else {
 			// set click timer, waiting for second click
 			u.e.resetEvents(this);
-			this.t_clicked = u.t.setTimer(this, u.e._clicked, 400);
+			this.t_clicked = u.t.setTimer(this, u.e._dblclicked, 400);
 		}
 
 	}
