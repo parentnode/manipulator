@@ -34,6 +34,11 @@ Util.XMLRequest = function(url, node, parameters, async, method) {
 	async = async ? async : true;
 	method = method ? method : "POST";
 
+	node.url = url;
+	node.parameters = parameters;
+	node.async = async;
+	node.method = method;
+
 	var XMLRequest = new Object();
 	// get request object, and verify it
 	XMLRequest.Http = this.createRequestObject();
@@ -81,35 +86,50 @@ Util.XMLResponse = function(response) {
 
 // Simple validation of response
 // automatically executes script elements
+// state = true = process complete
+// state = false = process error
 // returns content element
 Util.validateResponse = function(request, state){
 
-	var e = document.createElement("div");
+	var div = document.createElement("div");
 	if(state) {
+//		alert(request.responseHTML);
 		try {
 			request.status;
 //			u.bug("status:" + request.status + ":" + request.responseText)
 			if(request.status == 200) {
-				e.innerHTML = request.responseText;
+
+				// some engines removes head and body tags - in all cases the content of body comes through
+				div.innerHTML = request.responseText;
+
+				// sometimes if a head/body tag is actually sent from the server, we may need some of its information
+				// getting head/body info with regular expression on responseText
+				var body_class = request.responseText.match(/<body class="([a-z0-9A-Z_ ]+)"/);
+				div.body_class = body_class ? body_class[1] : "";
+
+				var head_title = request.responseText.match(/<title>([^$]+)<\/title>/);
+				div.head_title = head_title ? head_title[1] : "";
+
+//				alert(div.innerHTML)
 			}
 			else {
-				e.innerHTML = '<div class="error">Response error:'+request.status+ ':'+request.url + request.parameters +'</div>';
+				div.innerHTML = '<div class="error">Response error:'+request.status+ ':'+request.node.url + request.node.parameters +'</div>';
 				u.bug("status NOT 200:" + request.status);
 				u.bug(request.statusText);
 			}
 		}
-		catch(e) {
-			e.innerHTML = '<div class="error">Response error: no status</div>';
-			u.bug("NO status exceptions:" + e);
+		catch(exception) {
+			div.innerHTML = '<div class="error">Response error: no status</div>';
+			u.bug("NO status exceptions:" + exception);
 			u.bug(request.statusText);
 		}
 	}
 	else {
-		e.innerHTML = '<div class="error">Request error:'+request.url + request.parameters + '</div>';
-		u.bug("Request error:" + request.url + request.parameters);
+		div.innerHTML = '<div class="error">Request error:'+request.node.url + request.node.parameters + '</div>';
+		u.bug("Request error:" + request.node.url + request.node.parameters);
 	}
 
-	return e;
+	return div;
 }
 
 

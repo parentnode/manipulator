@@ -73,7 +73,7 @@ Util.Events = u.e = new function() {
 	this.kill = function(event) {
 		if(event) {
 			event.preventDefault();
-			event.cancelBubble = true;
+			event.stopPropagation();
 		}
 	}
 
@@ -129,6 +129,11 @@ Util.Events = u.e = new function() {
 		u.e.addEvent(e, (this.event_pref == "touch" ? "touchstart" : "mousedown"), action);
 	}
 
+	this.removeOnStart = this.removeOnDown = function(e, action) {
+//		u.bug("onstart")
+		u.e.addEvent(e, (this.event_pref == "touch" ? "touchstart" : "mousedown"), action);
+	}
+
 	/**
 	* Add mousemove/touchmove event
 	* Shorthand function to ensure correct event type is added
@@ -147,7 +152,7 @@ Util.Events = u.e = new function() {
 	* @param action Action to execute on event
 	*/
 	this.onEnd = this.onUp = function(e, action) {
-//		u.bug("onend")
+//		u.bug("set onend:" + e.className)
 		u.e.addEvent(e, (this.event_pref == "touch" ? "touchend" : "mouseup"), action);
 
 		// add additional mouseout handler if needed
@@ -163,78 +168,6 @@ Util.Events = u.e = new function() {
 	}
 
 
-	this.transitioned = function(e) {
-		if(typeof(e.style.webkitTransition) != "undefined") {
-//			u.bug("listen-s" + e.className)
-			u.e.addEvent(e, "webkitTransitionEnd", this._transitioned);
-		}
-		else {
-//			u.bug("listen-m" + e.className)
-			u.e.addEvent(e, "transitionend", this._transitioned);
-		}
-	}
-
-	this._transitioned = function(event) {
-		// maybe only callback when target == this?
-
-//		u.bug("catch" + event.target.className + "::" + this.className)
-		if(typeof(this.transitioned) == "function") {
-			this.transitioned(event);
-		}
-	}
-
-	this.animated = function(e) {
-		if(typeof(e.style.webkitAnimation) != "undefined") {
-			u.e.addEvent(e, "webkitAnimationEnd", this._animated);
-		}
-		else {
-			u.e.addEvent(e, "animationend", this._animated);
-		}
-	}
-
-	this._animated = function(event) {
-		if(typeof(this.animated) == "function") {
-			this.animated(event);
-		}
-	}
-
-
-	this.onTransitionEnd = function(e, action) {
-		u.e.addEvent(e, "webkitTransitionEnd", action);
-		u.e.addEvent(e, "transitionend", action);
-	}
-
-	this.transitionEnded = function(e, action) {
-		u.e.removeEvent(e, "webkitTransitionEnd", action);
-		u.e.removeEvent(e, "transitionend", action);
-	}
-
-
-	this.onAnimationEnd = function(e, action) {
-		u.e.addEvent(e, "webkitAnimationEnd", action);
-		u.e.addEvent(e, "animationend", action);
-	}
-
-	this.animationEnded = function(e, action) {
-		u.e.removeEvent(e, "webkitAnimationEnd", action);
-		u.e.removeEvent(e, "animationend", action);
-	}
-
-
-/*
-	this.transform = function(e, x, y) {
-		e.style.MozTransform = "translate("+x+"px, "+y+"px)";
-		e.style.webkitTransform = "translate3d("+x+"px, "+y+"px, 0)";
-		e.element_x = x;
-		e.element_y = y;
-	}
-	
-	this.transition = function(e, transition) {
-		e.style.MozTransition = transition;
-		e.style.webkitTransition = transition;
-	}
-	*/
-	
 
 	/**
 	*
@@ -486,7 +419,7 @@ Util.Events = u.e = new function() {
 	* Multiple event possible
 	*/
 	this._inputStart = function(event) {
-//		u.bug("_inputStart:" + this.nodeName);
+//		u.bug("_inputStart:" + this.className);
 
 		// used to handle dblclick timeout event forwarding
 		this.event_var = event;
@@ -590,12 +523,12 @@ Util.Events = u.e = new function() {
 	* element.dblclicked
 	*/
 	this.dblclick = this.doubletap = function(e) {
-		u.bug("set dblclick:"+e.nodeName)
 		e.e_dblclick = true;
 		u.e.onStart(e, this._inputStart);
 	}
 	this._dblclicked = function(event) {
-
+//		u.bug("dblclicked:" + event)
+		
 		// if valid click timer, treat as dblclick
 		if(u.t.valid(this.t_clicked) && event) {
 
@@ -694,6 +627,7 @@ Util.Events = u.e = new function() {
 		// is the drag one-dimentional
 		e.vertical = (!e.locked && e.end_drag_x - e.start_drag_x == e.offsetWidth);
 		e.horisontal = (!e.locked && e.end_drag_y - e.start_drag_y == e.offsetHeight);
+//		u.bug("e.vertical:" + e.horisontal + ":" + e.className + ":" + e.offsetHeight);
 
 //		u.bug(2, e.className + "::"+ e.start_drag_x +":"+e.start_drag_y+":"+e.end_drag_x+":"+e.end_drag_y);
 
@@ -942,27 +876,27 @@ Util.Events = u.e = new function() {
 					// Out of scope
 					else {
 
-//						u.bug("oos")
+//						u.bug(4, "oos")
 						this.swiped = false;
 
 						// reset speed
 						this.current_xps = 0;
 						this.current_yps = 0;
 
+
 						// correct overflow
 						// if overflow found:
 						// - get offset (corrected for allowed offset)
 						// - set correct element_x (for snapback function on drop)
 						// - set temorary element x (calculated by drag, allowed_offset and elestica)
-
-						// right out of scope
-						if(this.element_x < this.start_drag_x) {
+						// right out of scope and not locked vertically
+						if(this.element_x < this.start_drag_x && !this.vertical) {
 							offset = this.element_x < this.start_drag_x - this.allowed_offset ? - this.allowed_offset : this.element_x - this.start_drag_x;
 							this.element_x = this.start_drag_x;
 							this.current_x = this.element_x + offset + (Math.round(Math.pow(offset, 2)/this.allowed_offset)/this.elastica);
 						}
-						// left out of scope
-						else if(this.element_x + this.offsetWidth > this.end_drag_x) {
+						// left out of scope and not locked vertically
+						else if(this.element_x + this.offsetWidth > this.end_drag_x && !this.vertical) {
 							offset = this.element_x + this.offsetWidth > this.end_drag_x + this.allowed_offset ? this.allowed_offset : this.element_x + this.offsetWidth - this.end_drag_x;
 							this.element_x = this.end_drag_x - this.offsetWidth;
 							this.current_x = this.element_x + offset - (Math.round(Math.pow(offset, 2)/this.allowed_offset)/this.elastica);
@@ -972,22 +906,24 @@ Util.Events = u.e = new function() {
 						}
 
 						// top out of scope
-						if(this.element_y < this.start_drag_y) {
+						if(this.element_y < this.start_drag_y && !this.horisontal) {
 							offset = this.element_y < this.start_drag_y - this.allowed_offset ? - this.allowed_offset : this.element_y - this.start_drag_y;
 							this.element_y = this.start_drag_y;
 							this.current_y = this.element_y + offset + (Math.round(Math.pow(offset, 2)/this.allowed_offset)/this.elastica);
+//							u.bug(3, "oos0"+offset);
 						}
 						// bottom out of scope
-						else if(this.element_y + this.offsetHeight > this.end_drag_y) {
+						else if(this.element_y + this.offsetHeight > this.end_drag_y && !this.horisontal) {
 							offset = (this.element_y + this.offsetHeight > this.end_drag_y + this.allowed_offset) ? this.allowed_offset : (this.element_y + this.offsetHeight - this.end_drag_y);
 							this.element_y = this.end_drag_y - this.offsetHeight;
 							this.current_y = this.element_y + offset - (Math.round(Math.pow(offset, 2)/this.allowed_offset)/this.elastica);
+//							u.bug(3, "oos1"+offset);
 						}
 						else {
+//							u.bug(3, "oos2"+offset);
 							this.current_y = this.element_y;
 						}
 
-//						u.bug("oos"+offset);
 						// if offset found, move to these coordinates
 						if(offset) {
 //							u.bug("offset"+offset)
@@ -1027,7 +963,7 @@ Util.Events = u.e = new function() {
 		u.e.resetEvents(this);
 
 		// return swipe events to handlers
-		if(this.swipe && this.swiped) {
+		if(this.e_swipe && this.swiped) {
 //			u.bug("swiped"+this.swiped);
 
 			if(this.swiped == "left") {

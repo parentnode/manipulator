@@ -9,4 +9,5 @@ Util.popUp = function(url, name, w, h, extra) {
 	p += ",top=" + ((screen.height-h)-20)/2;
 	p += extra ? "," + extra : ",scrollbars";
 	document[name] = window.open(url, name, p);
+//	return document[name];
 }

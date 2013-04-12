@@ -1,4 +1,4 @@
-JES-0.3
+JES-0.4
 ===
 
-Complete JavaScript library - the JavaScript side of WhatTheFramework.org
+Complete JavaScript library - 100% optimized for WhatTheFramework.org

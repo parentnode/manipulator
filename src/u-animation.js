@@ -40,15 +40,20 @@ Util.Animation = u.a = new function() {
 		e.element_x = x;
 		e.element_y = y;
 		e.transition_timestamp = new Date().getTime();
+
+		e.offsetHeight;
 	}
 
 	this.rotate = function(e, deg) {
+//		u.bug("rotate a")
 		e.style[this.variant() + "Transform"] = "rotate("+deg+"deg)";
 
 //		e.style.MozTransform = "rotate("+deg+"deg)";
 //		e.style.webkitTransform = "rotate("+deg+"deg)";
 		e.rotation = deg;
 		e.transition_timestamp = new Date().getTime();
+
+		e.offsetHeight;
 	}
 
 	this.scale = function(e, scale) {
@@ -58,6 +63,9 @@ Util.Animation = u.a = new function() {
 //		e.style.webkitTransform = "scale("+scale+")";
 		e.scale = scale;
 		e.transition_timestamp = new Date().getTime();
+
+		// update dom
+		e.offsetHeight;
 	}
 
 
@@ -74,6 +82,9 @@ Util.Animation = u.a = new function() {
 		e.element_x = x;
 		e.element_y = y;
 		e.transition_timestamp = new Date().getTime();
+
+		// update dom
+		e.offsetHeight;
 	}
 
 
@@ -83,6 +94,9 @@ Util.Animation = u.a = new function() {
 		e.element_y = y;
 		e.rotation = deg;
 		e.transition_timestamp = new Date().getTime();
+
+		// update dom
+		e.offsetHeight;
 	}
 
 
@@ -90,12 +104,14 @@ Util.Animation = u.a = new function() {
 	*
 	*/
 	this.transition = function(e, transition) {
-//		u.bug("trans")
-
 		e.style[this.variant() + "Transition"] = transition;
+//		e.style["Transition"] = transition;
 //		e.style.webkitTransition = transition;
 
+		// automatically enable transitionend callback
 		u.e.addEvent(e, this.variant() + "TransitionEnd", this._transitioned);
+		// Moz implementation is off track :)
+		u.e.addEvent(e, "transitionend", u.a._transitioned);
 
 		var duration = transition.match(/[0-9.]+[ms]/g);
 		if(duration) {
@@ -109,13 +125,13 @@ Util.Animation = u.a = new function() {
 	}
 
 	// manual setting of transition end callback (when transitions are declared via CSS instead of JS)
-	this.transitioned = function(e) {
+//	this.transitioned = function(e) {
 //		u.bug("listen:" + e.className);
 //		u.bug(this.variant()+"TransitionEnd")
-		u.e.addEvent(e, this.variant()+"TransitionEnd", u.a._transitioned);
+//		u.e.addEvent(e, this.variant()+"TransitionEnd", u.a._transitioned);
 		// Moz implementation is of track :)
-		u.e.addEvent(e, "transitionend", u.a._transitioned);
-	}
+//		u.e.addEvent(e, "transitionend", u.a._transitioned);
+//	}
 
 	this._transitioned = function(event) {
 		// maybe only callback when target == this?
@@ -126,4 +142,14 @@ Util.Animation = u.a = new function() {
 		}
 	}
 
+	this.fadeIn = function(e, duration) {
+		duration = duration == undefined ? "0.5s" : duration;
+		u.as(e, "opacity", 0);
+		if(u.gcs(e, "display") == "none") {
+			u.as(e, "display", "block");
+		}
+		u.a.transition(e, "all "+duration+" ease-in");
+		u.as(e, "opacity", 1);
+	}
+	
 }

@@ -1,7 +1,7 @@
 Util.Mem = new Object();
 Util.Mem.set = function(key, value) {
 	var view_id = this.getViewId();
-	var memories = eval(Util.getCookie("memories"));
+	var memories = eval(u.getCookie("memories"));
 	if(!memories) {
 		memories = new Object();
 	}
@@ -13,7 +13,7 @@ Util.Mem.set = function(key, value) {
 }
 Util.Mem.get = function(key) {
 	var view_id = this.getViewId();
-	var memories = eval(Util.getCookie("memories"));
+	var memories = eval(u.getCookie("memories"));
 	if(memories && memories[view_id]) {
 		return memories[view_id][key] ? memories[view_id][key] : "";
 	}
