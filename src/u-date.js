@@ -4,6 +4,7 @@
 
 // m - Numeric representation of a month, with leading zeros: 01 through 12
 // n - Numeric representation of a month, without leading zeros: 1 through 12
+// F - full month string, given as array
 
 // Y - A full numeric representation of a year, 4 digits
 
@@ -12,9 +13,32 @@
 // i - Minutes with leading zeros	00 to 59
 // s - Seconds, with leading zeros	00 through 59
 
-Util.date = function(format, timestamp) {
-	var date = isNaN(timestamp) ? new Date() : new Date(timestamp);
-	var tokens = /d|j|m|n|Y|G|H|i|s/g;
+Util.date = function(format, timestamp, months) {
+
+	var date = timestamp ? new Date(timestamp) : new Date();
+
+	// not a valid date
+	if(isNaN(date.getTime())) {
+
+		// look for correct timezone
+		if(!timestamp.match(/[A-Z]{3}\+[0-9]{4}/)) {
+
+			// offset declared without timezone (twitter - IE doesn't understand)
+			if(timestamp.match(/ \+[0-9]{4}/)) {
+
+				// add timezone and try to create date again
+				date = new Date(timestamp.replace(/ (\+[0-9]{4})/, " GMT$1"));
+			}
+		}
+
+		// final test - if it still fails, return current time
+		if(isNaN(date.getTime())) {
+			date = new Date();
+		}
+	}
+
+
+	var tokens = /d|j|m|n|F|Y|G|H|i|s/g;
 
 	var chars = new Object();
 
@@ -23,6 +47,7 @@ Util.date = function(format, timestamp) {
 
 	chars.n = date.getMonth()+1;
 	chars.m = (chars.n > 9 ? "" : "0") + chars.n;
+	chars.F = months ? months[date.getMonth()] : "";
 
 	chars.Y = date.getFullYear();
 

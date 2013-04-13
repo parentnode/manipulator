@@ -1,11 +1,11 @@
 // test urls
 Util.testURL = function(url) {
 	return true;
-	return url.match(/http\:\/\/mkn\.|http\:\/\/w\.|\.local/i);
+	return document.domain.match(/.local$|^w\./);
 }
 // open debug popup
 Util.debug = function(output) {
-	if(Util.testURL(location.href)) {
+	if(Util.testURL()) {
 		var element, br;
 		if(Util.debugWindow && Util.debugWindow.document) {
 			element = Util.debugWindow.document.createTextNode(output);
@@ -39,7 +39,7 @@ Util.openDebugger = function() {
 }
 // trace mouse
 Util.tracePointer = function(e) {
-	if(Util.testURL(location.href)) {
+	if(Util.testURL()) {
 		var position = document.createElement("div");
 		document.body.appendChild(position);
 		position.id = "debug_pointer";
@@ -56,12 +56,17 @@ Util.tracePointer = function(e) {
 	}
 }
 // write output to screen
-Util.bug = function(target, message) {
-	if(Util.testURL(location.href)) {
+Util.bug = function(target, message, color) {
+	if(Util.testURL()) {
 		var option, options = new Array(new Array(0, "auto", "auto", 0), new Array(0, 0, "auto", "auto"), new Array("auto", 0, 0, "auto"), new Array("auto", "auto", 0, 0));
-		if(!message) {
+		if((!color && !message) || (!color && isNaN(target))) {
+			color = message;
 			message = target;
-			target = options[0];
+			target = 0;
+		}
+		if(!color) {
+			color = "black";
+			
 		}
 		if(!u.ge("debug_"+target)) {
 			for(var i = 0; option = options[i]; i++) {
@@ -76,6 +81,8 @@ Util.bug = function(target, message) {
 					d_target.style.left = option[3];
 					d_target.style.backgroundColor = "#ffffff";
 					d_target.style.color = "#000000";
+					d_target.style.textAlign = "left";
+//					d_target.style.maxWidth = "400px";
 					d_target.style.padding = "3px";
 					d_target.id = "debug_id_"+i;
 					d_target.className = "debug_"+target;
@@ -83,6 +90,31 @@ Util.bug = function(target, message) {
 				}
 			}
 		}
-		u.ge("debug_"+target).innerHTML += message+"<br>";
+//		d_target.style.color = color;
+		u.ae(u.ge("debug_"+target), "div", ({"style":"color: " + color})).innerHTML = message;
 	}
+}
+Util.htmlToText = function(string) {
+	return string.replace(/>/g, "&gt;").replace(/</g, "&lt;");
+}
+
+Util.listObjectContent = function(object) {
+	var x, s = "-s-<br>";
+	for(x in object) {
+//		u.bug(x + ":" + object[x] + ":" + typeof(object[x]));
+		if(object[x] && typeof(object[x]) == "object" && typeof(object[x].nodeName) == "string") {
+			s += x + "=" + object[x]+" -> " + u.nodeId(object[x]) + "<br>";
+
+		}
+		else {
+			s += x + "=" + object[x]+"<br>";
+			
+		}
+	}
+	s += "-e-"
+	return s;
+}
+
+Util.nodeId = function(node) {
+	return node.id ? node.id : (node.className ? node.className : (node.name ? node.name : node.nodeName));
 }

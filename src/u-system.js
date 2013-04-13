@@ -6,7 +6,7 @@ Util.explorer = function(version, scope) {
 		if(scope && !eval(current_version + scope + version)){
 			return false;
 		}
-		else if(version && current_version != version) {
+		else if(!scope && version && current_version != version) {
 			return false;
 		}
 		else {
@@ -56,13 +56,13 @@ Util.webkit = function(version, scope) {
 }
 
 Util.firefox = function(version, scope) {
-	if(navigator.userAgent.indexOf("Firefox") >= 0) {
-		var undefined;
-		var current_version = navigator.userAgent.match(/(Firefox\/)(\d+\.\d+)(\.\d+)/i)[2];
+	var browser = navigator.userAgent.match(/(Firefox\/)(\d+\.\d+)/i);
+	if(browser) {
+		var current_version = browser[2];
 		if(scope && !eval(current_version + scope + version)){
 			return false;
 		}
-		else if(version && current_version != version) {
+		else if(!scope && version && current_version != version) {
 			return false;
 		}
 		else {

@@ -3,42 +3,52 @@
 // Returns elementById if possible
 // else Returns first element with (partial) matching classname from target
 // If no matches, return first element with tagname from target
-Util.ge = function(id, target) {
+Util.getElement = u.ge = function(identifier, target) {
 	var e, i, regexp, t;
 	t = target ? target : document;
-	if(document.getElementById(id)) {
-		return document.getElementById(id);
+	if(document.getElementById(identifier)) {
+		return document.getElementById(identifier);
 	}
-	regexp = new RegExp("(^|\\s)" + id + "(\\s|$|\:)");
+	regexp = new RegExp("(^|\\s)" + identifier + "(\\s|$|\:)");
 	for(i = 0; e = t.getElementsByTagName("*")[i]; i++) {
 		if(regexp.test(e.className)) {
 			return e;
 		}
 	}
-	return t.getElementsByTagName(id).length ? t.getElementsByTagName(id)[0] : false;
+	return t.getElementsByTagName(identifier).length ? t.getElementsByTagName(identifier)[0] : false;
 }
 // Get elements (class/tag)
 // Returns all elements with (partial) matching classname from target
 // If no matches, return elements with tagname from target
-Util.ges = function(id, target) {
+Util.getElements = u.ges = function(identifier, target) {
 	var e, i, regexp, t;
 	var elements = new Array();
 	t = target ? target : document;
-	regexp = new RegExp("(^|\\s)" + id + "(\\s|$|\:)");
+	regexp = new RegExp("(^|\\s)" + identifier + "(\\s|$|\:)");
 	for(i = 0; e = t.getElementsByTagName("*")[i]; i++) {
 		if(regexp.test(e.className)) {
 			elements.push(e);
 		}
 	}
-	return elements.length ? elements : t.getElementsByTagName(id);
+	return elements.length ? elements : t.getElementsByTagName(identifier);
+}
+
+Util.querySelector = u.qs = function(query, target) {
+	t = target ? target : document;
+	return t.querySelector(query);
+}
+
+Util.querySelectorAll = u.qsa = function(query, target) {
+	t = target ? target : document;
+	return t.querySelectorAll(query);
 }
 
 // get sibling (get next/prev parentnode childnode of same type)
-Util.gs = function(e, direction) {
+Util.getSibling = u.gs = function(e, direction) {
 	try {
 		var node_type = e.nodeType;
 		var ready = false;
-		var prev_node = false
+		var prev_node = false;
 		for(var i = 0; node = e.parentNode.childNodes[i]; i++) {
 			if(node.nodeType == node_type) {
 				if(ready) {
@@ -64,26 +74,16 @@ Util.gs = function(e, direction) {
 	}
 }
 
-Util.qs = function(query, target) {
-	t = target ? target : document;
-	return t.querySelector(query);
-}
-
-Util.qsa = function(query, target) {
-	t = target ? target : document;
-	return t.querySelectorAll(query);
-}
-
 // Returns previous sibling, not counting text nodes as siblings and ignoring optional exclude=className/nodeName
 Util.previousSibling = u.ps = function(e, exclude) {
 	var node = e.previousSibling;
 	if(exclude) {
-		while(node && (node.nodeType == 3 || node.className.match("(^|\\s)" + exclude + "(\\s|$)") || node.nodeName.match(exclude.toUpperCase()))) {
+		while(node && (node.nodeType == 3 || node.nodeType == 8 || node.className.match("(^|\\s)" + exclude + "(\\s|$)") || node.nodeName.match(exclude.toUpperCase()))) {
 			node = node.previousSibling;
 		}
 	}
 	else {
-		while(node && node.nodeType == 3) {
+		while(node && (node.nodeType == 3 || node.nodeType == 8)) {
 			node = node.previousSibling;
 		}
 	}
@@ -94,12 +94,12 @@ Util.previousSibling = u.ps = function(e, exclude) {
 Util.nextSibling = u.ns = function(e, exclude) {
 	var node = e.nextSibling;
 	if(exclude) {
-		while(node && (node.nodeType == 3 || node.className.match("(^|\\s)" + exclude + "(\\s|$)") || node.nodeName.match(exclude.toUpperCase()))) {
+		while(node && (node.nodeType == 3 || node.nodeType == 8 || node.className.match("(^|\\s)" + exclude + "(\\s|$)") || node.nodeName.match(exclude.toUpperCase()))) {
 			node = node.nextSibling;
 		}
 	}
 	else {
-		while(node && node.nodeType == 3) {
+		while(node && (node.nodeType == 3 || node.nodeType == 8)) {
 			node = node.nextSibling;
 		}
 	}
@@ -114,7 +114,7 @@ Util.nextSibling = u.ns = function(e, exclude) {
 * @param Optional ClassName or attribute object
 * return HTML node
 */
-Util.ae = function(e, node_type, attributes) {
+Util.appendElement = u.ae = function(e, node_type, attributes) {
 	try {
 		var node = e.appendChild(document.createElement(node_type));
 		if(attributes) {
@@ -128,33 +128,40 @@ Util.ae = function(e, node_type, attributes) {
 			}
 		}
 
-		node.e = e;
+//		node.e = e;
 		return node;
 	}
 	catch(exception) {
 		u.bug("Exception ("+exception+") in u.ae, called from: "+arguments.callee.caller.name);
+		u.bug("e="+e + ":nodename="+e.nodeName + ":id="+e.id + ":classname="+e.classname + ":attributes=" + attribute);
 	}
 }
 
 /**
 * Insert element
 */
-Util.ie = function(e, node_type, attributes) {
-	var node = e.insertBefore(document.createElement(node_type), e.firstChild);
-	if(attributes) {
-		if(typeof(attributes) == "object") {
-			for(attribute in attributes) {
-				node.setAttribute(attribute, attributes[attribute]);
+Util.insertElement = u.ie = function(e, node_type, attributes) {
+	try {
+		var node = e.insertBefore(document.createElement(node_type), e.firstChild);
+		if(attributes) {
+			if(typeof(attributes) == "object") {
+				for(attribute in attributes) {
+					node.setAttribute(attribute, attributes[attribute]);
+				}
+			}
+			else {
+				u.addClass(node, attributes)
 			}
 		}
-		else {
-			u.addClass(node, attributes)
-		}
-	}
 
-	node.e = e;
-	return node;
+	//	node.e = e;
+		return node;
+	}
+	catch(exception) {
+		u.bug("Exception ("+exception+") in u.getIJ, called from: "+arguments.callee.caller);
+	}
 }
+
 
 // Get JSS class value
 Util.getIJ = function(e, id) {
@@ -166,7 +173,7 @@ Util.getIJ = function(e, id) {
 		return false;
 	}
 	catch(exception) {
-		u.bug("Exception ("+exception+") in u.removeClass, called from: "+arguments.callee.caller);
+		u.bug("Exception ("+exception+") in u.getIJ, called from: "+arguments.callee.caller);
 	}
 }
 
@@ -180,7 +187,7 @@ Util.setClass = u.sc = function(e, classname) {
 		e.offsetTop;
 	}
 	catch(exception) {
-		u.bug("Exception ("+exception+") in u.removeClass, called from: "+arguments.callee.caller);
+		u.bug("Exception ("+exception+") in u.setClass, called from: "+arguments.callee.caller);
 	}
 }
 // Add classname to element if it is not already there
@@ -227,34 +234,61 @@ Util.toggleClass = u.tc = function(e, classname, second_classname) {
 			if(second_classname) {
 				Util.addClass(e, second_classname);
 			}
+			return second_classname;
 		}
 		else {
 			Util.addClass(e, classname);
 			if(second_classname) {
 				Util.removeClass(e, second_classname);
 			}
+			return classname;
 		}
 
 		// force dom update
 		e.offsetTop;
 	}
 	catch(exception) {
-		u.bug("Exception ("+exception+") in u.removeClass, called from: "+arguments.callee.caller);
+		u.bug("Exception ("+exception+") in u.toggleClass, called from: "+arguments.callee.caller);
 	}
+}
+// Element has classname
+Util.hasClass = u.hc = function(e, classname) {
+	try {
+		if(classname) {
+			var regexp = new RegExp("(^|\\s)" + classname + "(\\s|$|\:)");
+			if(regexp.test(e.className)) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+	}
+	catch(exception) {
+		u.bug("Exception ("+exception+") in u.hasClass, called from: "+arguments.callee.caller);
+	}
+	return false;
 }
 
 // apply style
 // set style value and query DOM to force update
 Util.applyStyle = u.as = function(e, style, value) {
-	e.style[style] = value;
+//	if(style == "height") {
+//		u.bug("as:" + e + ":" + style + ":" + value);
+//	}
+	try {
+		e.style[style] = value;
 
-	e.offsetHeight;
+		e.offsetHeight;
+	}
+	catch(exception) {
+		u.bug("Exception ("+exception+") in u.applyStyle("+u.nodeId(e)+", "+style+", "+value+") called from: "+arguments.callee.caller);
+	}
 }
 
 // Get elements computed style value for css attribute
-
 Util.getComputedStyle = u.gcs = function(e, attribute) {
-	//query DOM to force update
+	// query DOM to force update
 	e.offsetHeight;
 	// return computed style if method is supported
 	if(document.defaultView && document.defaultView.getComputedStyle) {
@@ -264,10 +298,15 @@ Util.getComputedStyle = u.gcs = function(e, attribute) {
 }
 
 // insert element in wrap-element and return wrapper
-Util.wrapElement = u.we = function(e, wrap) {
+Util.wrapElement = u.we = function(e, wrap, attributes) {
 	wrap = e.parentNode.insertBefore(document.createElement(wrap), e);
+	if(attributes) {
+		for(attribute in attributes) {
+			wrap.setAttribute(attribute, attributes[attribute]);
+		}
+	}
+	
 	wrap.appendChild(e);
 	return wrap;
 }
-
 

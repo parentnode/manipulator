@@ -73,7 +73,7 @@ Util.Events = u.e = new function() {
 	this.kill = function(event) {
 		if(event) {
 			event.preventDefault();
-			event.stopPropagation();
+			event.stopPropagation()
 		}
 	}
 
@@ -89,13 +89,7 @@ Util.Events = u.e = new function() {
 			e.addEventListener(type, action, false);
 		}
 		catch(exception) {
-			if(document.all) {
-				u.bug("exception:" + e + "," + type + ":" + exception);
-//				e.attachEvent("on" + type, action);
-			}
-			else {
-				u.bug("exception:" + e + "," + type + ":" + exception);
-			}
+			alert("exception in addEvent:" + e + "," + type + ":" + exception);
 		}
 	}
 
@@ -111,9 +105,7 @@ Util.Events = u.e = new function() {
 			e.removeEventListener(type, action, false);
 		}
 		catch(exception) {
-//			if(document.all) {
-//				e.detachEvent("on" + type, action);
-//			}
+			u.bug("exception in removeEvent:" + e + "," + type + ":" + exception);
 		}
 	}
 
@@ -124,14 +116,14 @@ Util.Events = u.e = new function() {
 	* @param e element to add event to
 	* @param action Action to execute on event
 	*/
-	this.onStart = this.onDown = function(e, action) {
-//		u.bug("onstart")
+	this.addStartEvent = this.addDownEvent = function(e, action) {
+//		u.bug("addStartEvent")
 		u.e.addEvent(e, (this.event_pref == "touch" ? "touchstart" : "mousedown"), action);
 	}
 
-	this.removeOnStart = this.removeOnDown = function(e, action) {
-//		u.bug("onstart")
-		u.e.addEvent(e, (this.event_pref == "touch" ? "touchstart" : "mousedown"), action);
+	this.removeStartEvent = this.removeDownEvent = function(e, action) {
+//		u.bug("removeStartEvent")
+		u.e.removeEvent(e, (this.event_pref == "touch" ? "touchstart" : "mousedown"), action);
 	}
 
 	/**
@@ -140,9 +132,13 @@ Util.Events = u.e = new function() {
 	* @param e element to add event to
 	* @param action Action to execute on event
 	*/
-	this.onMove = function(e, action) {
-//		u.bug("onmove:" + e.nodeName)
+	this.addMoveEvent = function(e, action) {
+//		u.bug("addMoveEvent:" + e.nodeName)
 		u.e.addEvent(e, (this.event_pref == "touch" ? "touchmove" : "mousemove"), action);
+	}
+	this.removeMoveEvent = function(e, action) {
+//		u.bug("removeMoveEvent:" + e.nodeName)
+		u.e.removeEvent(e, (this.event_pref == "touch" ? "touchmove" : "mousemove"), action);
 	}
 
 	/**
@@ -151,188 +147,28 @@ Util.Events = u.e = new function() {
 	* @param e element to add event to
 	* @param action Action to execute on event
 	*/
-	this.onEnd = this.onUp = function(e, action) {
-//		u.bug("set onend:" + e.className)
+	this.addEndEvent = this.addUpEvent = function(e, action) {
+//		u.bug("addEndEvent:" + e.nodeName + ":" + (e.id ? e.id : e.className));// + ":" + action)
 		u.e.addEvent(e, (this.event_pref == "touch" ? "touchend" : "mouseup"), action);
 
 		// add additional mouseout handler if needed
 		if(e.snapback && u.e.event_pref == "mouse") {
 			u.e.addEvent(e, "mouseout", this._snapback);
 		}
-		// mouse out is also invoked by dragging over another element - bad
-		else if(e.drag && u.e.event_pref == "mouse") {
-//			u.e.addEvent(e, "mouseout", action);
-		}
 
+	}
+	this.removeEndEvent = this.removeUpEvent = function(e, action) {
+//		u.bug("removeEndEvent:" + e.nodeName)
+		u.e.removeEvent(e, (this.event_pref == "touch" ? "touchend" : "mouseup"), action);
+
+		// add additional mouseout handler if needed
+		if(e.snapback && u.e.event_pref == "mouse") {
+			u.e.removeEvent(e, "mouseout", this._snapback);
+		}
 
 	}
 
 
-
-	/**
-	*
-	*/
-
-	this.transform = function(e, x, y) {
-//		u.bug("trans e")
-
-		// transition support, use transform
-		if(typeof(e.style.MozTransition) != "undefined" || typeof(e.style.webkitTransition) != "undefined") {
-			e.style.MozTransform = "translate("+x+"px, "+y+"px)";
-			e.style.webkitTransform = "translate3d("+x+"px, "+y+"px, 0)";
-			e.element_x = x;
-			e.element_y = y;
-		}
-		// use bacis css positioning
-		else {
-			e.style.position = "absolute";
-			u.bug("duration:" + e.duration);
-			// perform move, no duration
-			if(!e.duration) {
-//				u.bug("m:" + x + "," + y);
-				e.style.left = x+"px";
-				e.style.top = y+"px";
-				e.element_x = x;
-				e.element_y = y;
-			}
-			// if transition is set, start timeout based transition
-			else {
-//				u.bug("m2:" + x + "," + y);
-
-//				u.bug("trsna:"+e.duration + ":" + x + "," + y)
-
-				e.transitions = 15;
-				e.transition_progress = 0;
-
-				e.element_x = e.element_x ? e.element_x : 0;
-				e.element_y = e.element_y ? e.element_y : 0;
-
-				e.transitionTo = function() {
-						++this.transition_progress;
-//						u.bug("t:"+this.transitioned)
-//						var new_pos = this.distance_x - this.interval_x*this.transitioned;
-
-//						u.bug("new pos:"+new_pos);
-
-//						u.bug("ol" + this.offsetLeft + ":ic"+(this.interval_x)+"*"+(this.transition_progress) + "=" + (this.end_x-(this.distance_x - (this.interval_x*this.transitioned))));
-						this.style.left =  this.end_x-(this.distance_x - (this.interval_x*this.transition_progress))+"px";
-//						this.style.left =  this.end_x-this.distance_x - this.interval_x*this.transition_progress+"px";
-						this.style.top =  this.end_y-this.distance_y - this.interval_y*this.transition_progress+"px";
-						this.element_x = this.end_x-(this.distance_x - (this.interval_x*this.transition_progress));
-						this.element_y = this.end_y-(this.distance_y - (this.interval_y*this.transition_progress));
-					
-//					this.style.left = this.offsetLeft + (this.distance/16) + "px";
-//					u.t.setTimer(this, this.transitionTo, e.transtion/10);
-				}
-
-				e.end_x = x;
-				e.end_y = y;
-
-//				u.bug("e" + e.element_x)
-				// d 100
-				if(e.end_x > e.element_x) {
-
-					// ex/ox 200/100, 100/0, 50/-50, 0/-100
-					if(e.end_x > 0 && e.element_x >= 0 || e.end_x >= 0 && e.element_x < 0) {
-						e.distance_x = e.end_x - e.element_x;
-					}
-					// ex/ox -100/-200
-					else {
-						e.distance_x = e.element_x - e.end_x;
-					}
-				}
-				// d -100
-				else if(e.end_x < e.element_x) {
-
-					// ex/ox -50/50, 0/100, -200/-100, -100/0
-					if(e.end_x <= 0 && e.element_x > 0 || e.end_x < 0 && e.element_x <= 0) {
-						e.distance_x = e.end_x - e.element_x;
-					}
-					// ex/ox 100/200
-					else {
-						e.distance_x = e.element_x - e.end_x;
-	//					u.bug("right3:" + this.offsetLeft + "->" +this.end_x + "=" + this.distance_x)
-					}
-				}
-				else {
-					e.distance_x = 0;
-				}
-				
-
-				// d 100
-				if(e.end_y > e.element_y) {
-
-					// ex/ox 200/100, 100/0, 50/-50, 0/-100
-					if(e.end_y > 0 && e.element_y >= 0 || e.end_y >= 0 && e.element_y < 0) {
-						e.distance_y = e.end_y - e.element_y;
-//						u.bug("left1:" + e.element_y + "->" +e.end_x + "=" + e.distance_x)
-					}
-					// ex/ox -100/-200
-					else {
-						e.distance_y = e.element_y - e.end_y;
-//						u.bug("left2:" + e.element_y + "->" +e.end_x + "=" + e.distance_x)
-					}
-				}
-				// d -100
-				else if(e.end_y < e.element_y) {
-
-					// ex/ox -50/50, 0/100, -200/-100, -100/0
-					if(e.end_y <= 0 && e.element_y > 0 || e.end_y < 0 && e.element_y <= 0) {
-						e.distance_y = e.end_y - e.element_y;
-//						u.bug("right1:" + e.element_y + "->" +e.end_x + "=" + e.distance_x)
-					}
-					// ex/ox 100/200
-					else {
-						e.distance_y = e.element_y - e.end_y;
-//						u.bug("right2:" + e.element_y + "->" +e.end_x + "=" + e.distance_x)
-					}
-				}
-				else {
-					e.distance_y = 0;
-				}
-
-				e.interval_x = e.distance_x/e.transitions;
-				e.interval_y = e.distance_y/e.transitions;
-
-//				u.bug(e.interval_x + "," + e.interval_y);
-
-				for(var i = 0; i < e.transitions; i++) {
-//					u.bug(this.transition + ":" + (this.transition/16)*i);
-					u.t.setTimer(e, e.transitionTo, (e.duration/e.transitions)*i);
-					
-				}
-				if(typeof(e.transitioned) == "function") {
-					u.t.setTimer(e, e.transitioned, e.duration);
-				}
-//				e.style.left = x+"px";
-//				e.style.top = y+"px";
-			}
-		}
-		// remember value for cross method compability
-	}
-
-	/**
-	* Set element transition
-	* Detects if CSS transitions are supported
-	* If not it prepares transtion time for fallback animation
-	*/
-	this.transition = function(e, transition) {
-		// transitions support
-		if(typeof(e.style.MozTransition) != "undefined" || typeof(e.style.webkitTransition) != "undefined") {
-			e.style.MozTransition = transition;
-			e.style.webkitTransition = transition;
-
-			// set callback
-			if(typeof(e.transitioned) == "function") {
-				this.onTransitionEnd(e, e.transitioned);
-			}
-		}
-		// parse and calculated ms duration
-		else {
-			var duration = transition.match(/[0-9.]+[ms]/g) ? transition.match(/[0-9.]+[ms]/g).toString() : false;
-			e.duration = duration ? (duration.match("ms") ? parseFloat(duration) : parseFloat(duration) * 1000) : false;
-		}
-	}
 
 	/**
 	* Detect overlap between element and target
@@ -366,8 +202,8 @@ Util.Events = u.e = new function() {
 		var element_end_x = Number(element_start_x + element.offsetWidth);
 		var element_end_y = Number(element_start_y + element.offsetHeight);
 
-//		u.bug("dbl", "esx: "+element_start_x+":esy: "+element_start_y+":eex: "+element_end_x+":eey: "+element_end_y);
-//		u.bug("dbl", "tsx: "+target_start_x+":tsy: "+target_start_y+":tex: "+target_end_x+":tey: "+target_end_y);
+//		u.bug("esx: "+element_start_x+":esy: "+element_start_y+":eex: "+element_end_x+":eey: "+element_end_y);
+//		u.bug("tsx: "+target_start_x+":tsy: "+target_start_y+":tex: "+target_end_x+":tey: "+target_end_y);
 
 		// strict - check boundaries
 		if(strict && element_start_x >= target_start_x && element_start_y >= target_start_y && element_end_x <= target_end_x && element_end_y <= target_end_y) {
@@ -384,19 +220,24 @@ Util.Events = u.e = new function() {
 	}
 
 
-	this.resetEvents = function(e) {
-
-//		u.bug("reset:" + e.nodeName)
-//		u.bug(1, "reset:"+e.id+":"+e.className)
+	this.resetClickEvents = function(e) {
+//		u.bug("reset click events:" + (e.id ? e.id : e.className));
 
 		u.t.resetTimer(e.t_held);
 		u.t.resetTimer(e.t_clicked);
-
+	
 		this.removeEvent(e, "mouseup", this._dblclicked);
 		this.removeEvent(e, "touchend", this._dblclicked);
 
-		this.removeEvent(e, "mousemove", this._inputClickMove);
-		this.removeEvent(e, "touchmove", this._inputClickMove);
+		this.removeEvent(e, "mousemove", this._clickCancel);
+		this.removeEvent(e, "touchmove", this._clickCancel);
+
+		this.removeEvent(e, "mousemove", this._move);
+		this.removeEvent(e, "touchmove", this._move);
+	}
+
+	this.resetDragEvents = function(e) {
+//		u.bug("reset drag events:" + (e.id ? e.id : e.className));
 
 		this.removeEvent(e, "mousemove", this._pick);
 		this.removeEvent(e, "touchmove", this._pick);
@@ -409,6 +250,39 @@ Util.Events = u.e = new function() {
 
 		this.removeEvent(e, "mouseout", this._snapback);
 		this.removeEvent(e, "mouseout", this._drop);
+
+
+
+		this.removeEvent(e, "mousemove", this._scrollStart);
+		this.removeEvent(e, "touchmove", this._scrollStart);
+		this.removeEvent(e, "mousemove", this._scrolling);
+		this.removeEvent(e, "touchmove", this._scrolling);
+		this.removeEvent(e, "mouseup", this._scrollEnd);
+		this.removeEvent(e, "touchend", this._scrollEnd);
+		
+
+	}
+
+	this.resetEvents = function(e) {
+
+//		u.bug("reset:" + e.nodeName)
+
+		this.resetClickEvents(e);
+		this.resetDragEvents(e);
+//		u.bug(1, "reset:"+e.id+":"+e.className)
+
+
+
+
+	}
+
+	this.resetNestedEvents = function(e) {
+
+		while(e && e.nodeName != "HTML") {
+//			u.bug("reset nested:" + e.nodeName)
+			this.resetEvents(e);
+			e = e.parentNode;
+		}
 
 	}
 
@@ -428,6 +302,10 @@ Util.Events = u.e = new function() {
 //		u.e.setEventPref(event.type);
 
 //		u.bug(event + ":" + this.className);
+		this.start_event_x = u.eventX(event);
+		this.start_event_y = u.eventY(event);
+
+
 		this.current_xps = 0;
 		this.current_yps = 0;
 		this.swiped = false;
@@ -439,9 +317,38 @@ Util.Events = u.e = new function() {
 		// ordinary click events
 //		u.bug(this.e_click)
 		if(this.e_click || this.e_dblclick || this.e_hold) {
-//			u.bug("click set:" + this.nodeName);
-			u.e.onMove(this, u.e._inputClickMove);
-			u.e.onEnd(this, u.e._dblclicked);
+//			u.bug("click set:" + (this.id ? this.id : this.className));
+
+
+			// TODO: do we need to reset on mouseout??
+
+//			var test = this;
+//			while(test) {
+//				if(test.e_drag || test.e_swipe) {
+//					u.bug("click over drag");
+//				}
+//				test = test.parentNode;
+//			}
+			
+			// only reset onmove if element is draggable
+			var node = this;
+			while(node) {
+				if(node.e_drag || node.e_swipe) {
+//					u.bug("move reset:" + (node.id ? node.id : node.className))
+					u.e.addMoveEvent(this, u.e._clickCancel);
+					break;
+//					node = false;
+				}
+				else {
+					node = node.parentNode;
+				}
+			}
+
+			// move callback - for custom handling of mousedown+move combo
+			u.e.addMoveEvent(this, u.e._move);
+			// execute on mouse up
+			u.e.addEndEvent(this, u.e._dblclicked);
+			
 		}
 		// listen for hold?
 		if(this.e_hold) {
@@ -451,8 +358,14 @@ Util.Events = u.e = new function() {
 		// drag enabled? (cannot co-exist with swipe)
 		if(this.e_drag || this.e_swipe) {
 //			u.bug("drag set" + this.nodeName)
-			u.e.onMove(this, u.e._pick);
-			u.e.onEnd(this, u.e._drop);
+			u.e.addMoveEvent(this, u.e._pick);
+			u.e.addEndEvent(this, u.e._drop);
+		}
+
+		if(this.e_scroll) {
+//			u.bug("drag set" + this.nodeName)
+			u.e.addMoveEvent(this, u.e._scrollStart);
+			u.e.addEndEvent(this, u.e._scrollEnd);
 		}
 
 
@@ -465,18 +378,23 @@ Util.Events = u.e = new function() {
 	}
 
 
-	this._inputClickMove = function(event) {
-		u.e.resetEvents(this);
-		// old event
-		if(typeof(this.clickMoved) == "function") {
-			this.clickMoved(event);
+	this._cancelClick = function(event) {
+//		u.bug("_inputClickMove:" + (this.id ? this.id : this.className))
+
+		u.e.resetClickEvents(this);
+
+		// new event
+		if(typeof(this.clickCancelled) == "function") {
+			this.clickCancelled(event);
 		}
+	}
+
+	this._move = function(event) {
 		// new event
 		if(typeof(this.moved) == "function") {
 			this.moved(event);
 		}
 	}
-
 
 	/**
 	* Notifies:
@@ -484,7 +402,7 @@ Util.Events = u.e = new function() {
 	*/
 	this.hold = function(e) {
 		e.e_hold = true;
-		u.e.onStart(e, this._inputStart);
+		u.e.addStartEvent(e, this._inputStart);
 	}
 	this._held = function(event) {
 
@@ -504,12 +422,19 @@ Util.Events = u.e = new function() {
 	this.click = this.tap = function(e) {
 //		u.bug("set click:"+e.nodeName)
 		e.e_click = true;
-		u.e.onStart(e, this._inputStart);
+		u.e.addStartEvent(e, this._inputStart);
 	}
 	this._clicked = function(event) {
+		// track event
+		u.stats.event(this, "clicked");
+
+
+		// TODO: should reset parent events as well
+
 
 		// remove up/end event
-		u.e.resetEvents(this);
+//		u.e.resetEvents(this);
+		u.e.resetNestedEvents(this);
 
 		// notify of click
 		if(typeof(this.clicked) == "function") {
@@ -524,7 +449,7 @@ Util.Events = u.e = new function() {
 	*/
 	this.dblclick = this.doubletap = function(e) {
 		e.e_dblclick = true;
-		u.e.onStart(e, this._inputStart);
+		u.e.addStartEvent(e, this._inputStart);
 	}
 	this._dblclicked = function(event) {
 //		u.bug("dblclicked:" + event)
@@ -532,8 +457,13 @@ Util.Events = u.e = new function() {
 		// if valid click timer, treat as dblclick
 		if(u.t.valid(this.t_clicked) && event) {
 
+
+			// TODO: should reset parent events as well
+
+
 			// remove up/end event
-			u.e.resetEvents(this);
+//			u.e.resetEvents(this);
+			u.e.resetNestedEvents(this);
 
 			// notify base
 			if(typeof(this.dblclicked) == "function") {
@@ -556,7 +486,7 @@ Util.Events = u.e = new function() {
 		// no valid timer, first click
 		else {
 			// set click timer, waiting for second click
-			u.e.resetEvents(this);
+			u.e.resetNestedEvents(this);
 			this.t_clicked = u.t.setTimer(this, u.e._dblclicked, 400);
 		}
 
@@ -627,11 +557,10 @@ Util.Events = u.e = new function() {
 		// is the drag one-dimentional
 		e.vertical = (!e.locked && e.end_drag_x - e.start_drag_x == e.offsetWidth);
 		e.horisontal = (!e.locked && e.end_drag_y - e.start_drag_y == e.offsetHeight);
-//		u.bug("e.vertical:" + e.horisontal + ":" + e.className + ":" + e.offsetHeight);
 
 //		u.bug(2, e.className + "::"+ e.start_drag_x +":"+e.start_drag_y+":"+e.end_drag_x+":"+e.end_drag_y);
 
-		u.e.onStart(e, this._inputStart);
+		u.e.addStartEvent(e, this._inputStart);
 
 //		u.e.addEvent(e, "mousedown", this._inputStart);
 //		u.e.addEvent(e, "touchstart", this._inputStart);
@@ -644,74 +573,120 @@ Util.Events = u.e = new function() {
 	* Calls return function element.picked to notify of event
 	*/
 	this._pick = function(event) {
-//		u.bug("_pick:"+this.nodeName);
-
-		// kill event to prevent dragging deeper element
-		// could possibly be forced into callback to allow for double drag
-	    u.e.kill(event);
+//		u.bug("_pick:" + u.nodeId(this) + this.element_x + u.gcs(this, "left"));
 
 
-		// reset click/hold timers
-//		u.t.resetTimer(this.t_held);
-//		u.t.resetTimer(this.t_clicked);
+		// detect if drag is relevant for element
+		var init_speed_x = Math.abs(this.start_event_x - u.eventX(event));
+		var init_speed_y = Math.abs(this.start_event_y - u.eventY(event));
+
+//		u.bug("speed:" + Math.abs(this.start_event_x - u.eventX(event)) + "," + Math.abs(this.start_event_y - u.eventY(event)));
+
+		/*
+		if(init_speed_x > init_speed_y && this.horisontal) {
+			u.bug("hori ok")
+		}
+		else if(init_speed_x < init_speed_y && this.vertical) {
+			u.bug("vert ok")
+		}
+		*/
+
+/*
+
+abs(a - b)
+
+x: -2 -> 2 = 4 (-2 - 2)
+y: 2 -> 3 = 1 (2 - 3)
+
+x: 2 -> 5 = 3 (2 - 5)
+y: 1 -> 4 = 3 (1 - 4)
+
+x: 2 -> -4 = 6 (2 - -4)
+y: 1 -> 3 = 2 (1 - 3)
+
+x: 2 -> -4 = 6 (2 - -4)
+y: -3 -> 4 = 7 (-3 - 4)
+
+x: 2 -> 3 = 1 (2 - 3)
+y: 3 -> -2 = 5 (3 - -2)
+
+*/
+		// reset inital events
+		u.e.resetNestedEvents(this);
 
 
-		// set initial move timestamp
-		this.move_timestamp = new Date().getTime();
-//		u.bug(this.end_drag_x +"-"+ this.start_drag_x +"=="+ this.offsetWidth)
+		if(init_speed_x > init_speed_y && this.horisontal || init_speed_x < init_speed_y && this.vertical || !this.vertical && !this.horisontal) {
 
-		// dragging locked (only event catching)
-//		this.locked = ((this.end_drag_x - this.start_drag_x == this.offsetWidth) && (this.end_drag_y - this.start_drag_y == this.offsetHeight));
-		// is the drag one-dimentional
-//		this.vertical = (!this.locked && this.end_drag_x - this.start_drag_x == this.offsetWidth);
-//		this.horisontal = (!this.locked && this.end_drag_y - this.start_drag_y == this.offsetHeight);
+			// kill event to prevent dragging deeper element
+			// could possibly be forced into callback to allow for double drag
+		    u.e.kill(event);
 
 
+			// reset click/hold timers
+	//		u.t.resetTimer(this.t_held);
+	//		u.t.resetTimer(this.t_clicked);
 
 
-		// set element offset, internal value or relative position
-//		this.offset_x = this.element_x = this.element_x ? this.element_x : 0;
-//		this.offset_y = this.element_y = this.element_y ? this.element_y : 0;
+			// set initial move timestamp
+			this.move_timestamp = new Date().getTime();
+	//		u.bug(this.end_drag_x +"-"+ this.start_drag_x +"=="+ this.offsetWidth)
 
-//		this.offset_x = 0; //this.offsetLeft;
-//		this.offset_y = 0; //this.offsetTop;
+			// dragging locked (only event catching)
+	//		this.locked = ((this.end_drag_x - this.start_drag_x == this.offsetWidth) && (this.end_drag_y - this.start_drag_y == this.offsetHeight));
+			// is the drag one-dimentional
+	//		this.vertical = (!this.locked && this.end_drag_x - this.start_drag_x == this.offsetWidth);
+	//		this.horisontal = (!this.locked && this.end_drag_y - this.start_drag_y == this.offsetHeight);
 
-		// declare element_x value if not set already
-//		this.element_x = this.element_x ? this.element_x : 0;
-//		this.element_y = this.element_y ? this.element_y : 0;
 
-//		u.bug("dtl", this.offset_x+":"+this.offset_y);
 
-		// set current speed
-		this.current_xps = 0;
-		this.current_yps = 0;
 
-//		u.bug("ol:"+this.offsetLeft +","+ this.offsetWidth)
-//		u.bug("ot:"+this.offsetTop +","+ this.offsetHeight)
+			// set element offset, internal value or relative position
+	//		this.offset_x = this.element_x = this.element_x ? this.element_x : 0;
+	//		this.offset_y = this.element_y = this.element_y ? this.element_y : 0;
 
-		// remember starting point of drag - to signal drag is ready and to calculate speed
-		// relative to parentNode
-//		this.start_input_x = u.getInputX(event, this);//.targetTouches ? event.targetTouches[0].pageX : event.pageX) - u.absLeft(this);
-//		this.start_input_y = u.getInputY(event, this);//.targetTouches ? event.targetTouches[0].pageY : event.pageY) - u.absTop(this);
+	//		this.offset_x = 0; //this.offsetLeft;
+	//		this.offset_y = 0; //this.offsetTop;
 
-		// relative to screen
-		this.start_input_x = u.eventX(event) - this.element_x; // - u.absLeft(this);//(event.targetTouches ? event.targetTouches[0].pageX : event.pageX);
-		this.start_input_y = u.eventY(event) - this.element_y; // - u.absTop(this);//.targetTouches ? event.targetTouches[0].pageY : event.pageY);
+			// declare element_x value if not set already
+	//		this.element_x = this.element_x ? this.element_x : 0;
+	//		this.element_y = this.element_y ? this.element_y : 0;
 
-//		u.bug("st:"+this.className +"::"+this.start_input_x +","+ this.start_input_y)
+	//		u.bug("dtl", this.offset_x+":"+this.offset_y);
 
-		u.e.transition(this, "none");
+			// set current speed
+			this.current_xps = 0;
+			this.current_yps = 0;
 
-		// notify of pick
-		if(typeof(this.picked) == "function") {
-			this.picked(event);
+	//		u.bug("ol:"+this.offsetLeft +","+ this.offsetWidth)
+	//		u.bug("ot:"+this.offsetTop +","+ this.offsetHeight)
+
+			// remember starting point of drag - to signal drag is ready and to calculate speed
+			// relative to parentNode
+	//		this.start_input_x = u.getInputX(event, this);//.targetTouches ? event.targetTouches[0].pageX : event.pageX) - u.absLeft(this);
+	//		this.start_input_y = u.getInputY(event, this);//.targetTouches ? event.targetTouches[0].pageY : event.pageY) - u.absTop(this);
+
+			// relative to screen
+			this.start_input_x = u.eventX(event) - this.element_x; // - u.absLeft(this);//(event.targetTouches ? event.targetTouches[0].pageX : event.pageX);
+			this.start_input_y = u.eventY(event) - this.element_y; // - u.absTop(this);//.targetTouches ? event.targetTouches[0].pageY : event.pageY);
+
+	//		u.bug("st:"+this.className +"::"+this.start_input_x +","+ this.start_input_y)
+
+			u.a.transition(this, "none");
+
+			// notify of pick
+			if(typeof(this.picked) == "function") {
+				this.picked(event);
+			}
+
+
+			// reset events and setting drag events
+			u.e.addMoveEvent(this, u.e._drag);
+			u.e.addEndEvent(this, u.e._drop);
+
+
 		}
 
 
-		// reset events and setting drag events
-		u.e.resetEvents(this);
-		u.e.onMove(this, u.e._drag);
-		u.e.onEnd(this, u.e._drop);
 
 		// Undesired effect when sliding the presentation, could be enabled for small elements in large scopes using mouse
 //		if(this.snapback && u.e.event_pref == "mouse") {
@@ -720,7 +695,6 @@ Util.Events = u.e = new function() {
 //		else if(!this.snapback &&  u.e.event_pref == "mouse") {
 			
 //		}
-		
 	}
 
 	/**
@@ -728,7 +702,7 @@ Util.Events = u.e = new function() {
 	* Calls return function element.moved to notify of event
 	*/
 	this._drag = function(event) {
-//		u.bug("_drag:"+this.nodeName);
+//		u.bug("_drag:" + u.nodeId(this));
 
 
 		// If init values are set
@@ -1111,6 +1085,7 @@ Util.Events = u.e = new function() {
 		*/
 	}
 
+
 	/**
 	* Input picks element - handlder
 	* Sets default values for following inputDrag
@@ -1122,6 +1097,80 @@ Util.Events = u.e = new function() {
 
 
 	}
+
+	this.scroll = function(e) {
+		e.e_scroll = true;
+
+		e.element_x = e.element_x ? e.element_x : 0;
+		e.element_y = e.element_y ? e.element_y : 0;
+
+		u.e.addStartEvent(e, this._inputStart);
+	}
+	this._scrollStart = function(event) {
+//		u.bug("scrollstart")
+
+		u.e.resetNestedEvents(this);
+
+		this.move_timestamp = new Date().getTime();
+
+		// set current speed
+		this.current_xps = 0;
+		this.current_yps = 0;
+
+		// relative to screen
+		this.start_input_x = u.eventX(event) - this.element_x;
+		this.start_input_y = u.eventY(event) - this.element_y;
+
+		u.a.transition(this, "none");
+
+		// notify of pick
+		if(typeof(this.picked) == "function") {
+			this.picked(event);
+		}
+
+		// reset events and setting drag events
+		u.e.addMoveEvent(this, u.e._scrolling);
+		u.e.addEndEvent(this, u.e._scrollEnd);
+
+	}
+	this._scrolling = function(event) {
+//		u.bug("scrolling")
+		this.new_move_timestamp = new Date().getTime();
+
+		// Get current input coordinates relative to parent
+		this.current_x = u.eventX(event) - this.start_input_x;
+		this.current_y = u.eventY(event) - this.start_input_y;
+
+		this.current_xps = Math.round(((this.current_x - this.element_x) / (this.new_move_timestamp - this.move_timestamp)) * 1000);
+		this.current_yps = Math.round(((this.current_y - this.element_y) / (this.new_move_timestamp - this.move_timestamp)) * 1000);
+
+		// set new move timestamp
+		this.move_timestamp = this.new_move_timestamp;
+
+		// scroll manually to keep events popping
+		if(u.scrollY() > 0 && -(this.current_y) + u.scrollY() > 0) {
+//			u.bug("killed:")
+			u.e.kill(event);
+			window.scrollTo(0, -(this.current_y) + u.scrollY());
+		}
+
+		// notify of movement
+		if(typeof(this.moved) == "function") {
+			this.moved(event);
+		}
+	}
+
+	this._scrollEnd = function(event) {
+//		u.bug("scrollEnd");
+
+		u.e.resetEvents(this);
+
+		// notify of drop
+		if(typeof(this.dropped) == "function") {
+			this.dropped(event);
+		}
+	}
+
 
 
 
@@ -1162,7 +1211,7 @@ Util.Events = u.e = new function() {
 				offset_y = input_y - this.current_y;
 			}
 
-			u.e.transform(this, (this.element_x+offset_x), (this.element_y+offset_y));
+			u.a.translate(this, (this.element_x+offset_x), (this.element_y+offset_y));
 //			u.bug("dtl", this.element_x+"x"+this.element_y+":"+this.current_x+"x"+this.current_y+"::"+input_x+"x"+input_y);
 
 		}

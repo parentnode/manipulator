@@ -3,7 +3,7 @@
 Util.Sort = u.s = new function() {
 
 	this.sortable = function(e) {
-		var i, node;
+		var i, j, node;
 
 		// get all possible targets
 		// TODO: needs to be extended to handle nested draggable list and drag between multiple lists
@@ -21,6 +21,13 @@ Util.Sort = u.s = new function() {
 
 		// what type of list do we have - floated indicates horisontal list
 		if(e.nodes.length) {
+			
+			// TODO
+
+			// if list is higher and wider than its content - mixed list
+			// if list is higher than its content - vertical list
+			// if list is wider than its content - horisontal list
+			
 			e.list_type = u.gcs(e.nodes[0], "float").match(/left|right/) == null ? "vertical" : "horisontal";
 		}
 
@@ -35,14 +42,30 @@ Util.Sort = u.s = new function() {
 			// uniquely identify element as target
 			node.dragme = true;
 
-			// get reletive offset coords for ul
+			// get relative offset coords for ul
 			node.rel_ox = u.relOffsetX(node);
 			node.rel_oy = u.relOffsetY(node);
+//			u.bug(u.nodeId(node) + ":node.rel_ox = " + node.rel_ox + ", node.rel_oy = " + node.rel_oy)
+
 
 			node.drag = u.qs(".drag", node);
+			// if no drag area, use entire node
+			if(!node.drag) {
+				node.drag = node;
+			}
+
+			// remember which is actual drag node
 			node.drag.node = node;
+			// cross-reference all drag children, so every event.target knows node
+			var drag_children = u.qsa("*", node.drag);
+			if(drag_children) {
+				for(j = 0; child = drag_children[j]; j++) {
+					child.node = node;
+				}
+			}
+
 			// set start drag event handler
-			u.e.onStart(node.drag , this._pick);
+			u.e.addStartEvent(node.drag , this._pick);
 		}
 		
 		// window scroller
@@ -59,6 +82,8 @@ Util.Sort = u.s = new function() {
 	this._pick = function(event) {
 		u.e.kill(event);
 
+//		u.bug("pick:" + this.node + ":" + this.node.className)
+
 		// don't pick unless last element was correctly dropped
 		if(!this.node.e.dragged) {
 
@@ -72,9 +97,10 @@ Util.Sort = u.s = new function() {
 			// drag target - create node based on dragged node
 			if(!node.e.tN) {
 				node.e.tN = document.createElement(node.nodeName);
-				node.e.tN.className = "target";
 			}
+			u.sc(node.e.tN, "target " + node.className);
 			u.as(node.e.tN, "height", u.actualHeight(node)+"px");
+			u.as(node.e.tN, "width", u.actualWidth(node)+"px");
 			u.as(node.e.tN, "opacity", node.start_opacity - 0.5);
 			node.e.tN.innerHTML = node.innerHTML;
 
@@ -90,7 +116,8 @@ Util.Sort = u.s = new function() {
 			// dragged element mouse offsets
 			node.mouse_ox = u.eventX(event) - u.absX(node);
 			node.mouse_oy = u.eventY(event) - u.absY(node);
-//			u.bug("mx:" + u.eventX(event) + "-" + u.absX(node))
+//			u.bug("mx:" + u.eventX(event) + "-" + u.absX(node));
+//			u.bug("my:" + u.eventY(event) + "-" + u.absY(node));
 
 
 			// when everything is set up, position absolute
@@ -98,8 +125,8 @@ Util.Sort = u.s = new function() {
 
 
 			// set drag and end events on body, to make sure events are captured even when away from list
-			u.e.onMove(document.body , u.s._drag);
-			u.e.onEnd(document.body , u.s._drop);
+			u.e.addMoveEvent(document.body , u.s._drag);
+			u.e.addEndEvent(document.body , u.s._drop);
 //			u.e.addEvent(document.body, "mousemove", u.s._drag);
 //			u.e.addEvent(document.body, "mouseup", u.s._drop);
 
@@ -130,7 +157,7 @@ Util.Sort = u.s = new function() {
 	this._drag = function(event) {
 		var i, node;
 
-//		u.bug("drag")
+//		u.bug("drag:" + event.target + ":" + event.target.className)
 
 		u.e.kill(event);
 	//	out("kill timer:" + u.t_scroller);
@@ -199,7 +226,7 @@ Util.Sort = u.s = new function() {
 				// calculate center coordinate of dragged element
 				var d_center_x = d_left + (this.e.dragged.offsetWidth/2);
 				var d_center_y = d_top + (this.e.dragged.offsetHeight/2);
-//				u.bug("d center:" + d_center_x + "x" + d_center_y)
+//				u.bug("d ("+u.nodeId(this.e.dragged)+") center:" + d_center_x+ "("+d_left + "+" + this.e.dragged.offsetWidth+"/2)" + "x" + d_center_y + "("+d_top + "+"+this.e.dragged.offsetHeight+"/2)")
 
 
 				// set dragged element properties
@@ -218,10 +245,12 @@ Util.Sort = u.s = new function() {
 
 						// vertical list
 						if(this.e.list_type == "vertical") {
+//							u.bug("vertical list")
 
 							// pre-calculate vars for better performance
 							var o_top = u.absY(node);
 							var o_height = node.offsetHeight; // + parseInt(u.gcs(li, "margin-top")) + parseInt(u.gcs(li, "margin-bottom"));
+//							u.bug("test node:" + o_top + ":" + o_height + ":" + d_center_y)
 
 							// overlap with element
 						 	if(o_top < d_center_y && (o_top + o_height) > d_center_y) {
@@ -309,8 +338,13 @@ Util.Sort = u.s = new function() {
 //		u.e.removeEvent(document.body, "mousemove", u.s._drag);
 //		u.e.removeEvent(document.body, "mouseup", u.s._drop);
 
-		u.e.removeEvent(document.body, u.e.event_pref == "touch" ? "touchmove" : "mousemove", u.s._drag);
-		u.e.removeEvent(document.body, u.e.event_pref == "touch" ? "touchend" : "mouseup", u.s._drop);
+//		u.e.removeEvent(document.body, u.e.event_pref == "touch" ? "touchmove" : "mousemove", u.s._drag);
+//		u.e.removeEvent(document.body, u.e.event_pref == "touch" ? "touchend" : "mouseup", u.s._drop);
+
+//		u.e.removeMoveEvent(document.body , this._drag);
+//		u.e.removeEndEvent(document.body , this._drop);
+		u.e.removeMoveEvent(document.body , u.s._drag);
+		u.e.removeEndEvent(document.body , u.s._drop);
 
 
 		// replace target with dragged element

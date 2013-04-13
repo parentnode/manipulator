@@ -11,7 +11,7 @@ Util.Timer = u.t = new function() {
 		var id = this.actions.length;
 		this.actions[id] = action;
 		this.objects[id] = object;
-		this.timers[id] = setTimeout("u.t.execute("+id+")", timeout);
+		this.timers[id] = setTimeout("u.t.executeTimer("+id+")", timeout);
 		return id;
 	}
 	// Reset timer
@@ -19,9 +19,8 @@ Util.Timer = u.t = new function() {
 		clearTimeout(this.timers[id]);
 		this.objects[id] = false;
 	}
-
 	// execute added function on onTimeout
-	this.execute = function(id) {
+	this.executeTimer = function(id) {
 		this.objects[id].exe = this.actions[id];
 		this.objects[id].exe();
 
@@ -30,6 +29,26 @@ Util.Timer = u.t = new function() {
 		this.actions[id] = null;
 		this.objects[id] = false;
 		this.timers[id] = null;
+	}
+
+	// Add new timer to object
+	this.setInterval = function(object, action, timeout) {
+		var id = this.actions.length;
+		this.actions[id] = action;
+		this.objects[id] = object;
+		this.timers[id] = setInterval("u.t.executeInterval("+id+")", timeout);
+		return id;
+	}
+	// Reset timer
+	this.resetInterval = function(id) {
+		clearInterval(this.timers[id]);
+		this.objects[id] = false;
+	}
+
+	// execute added function on onTimeout
+	this.executeInterval = function(id) {
+		this.objects[id].exe = this.actions[id];
+		this.objects[id].exe();
 	}
 
 	this.valid = function(id) {

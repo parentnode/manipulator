@@ -1,0 +1,19 @@
+* {font-family: Arial, sans-serif; color: #000000;}
+
+html {height: 100%;}
+body {margin: 0; height: 100%; text-align: center;}
+
+/* BASE */
+h1, h2, h3, h4, h5, h6, p, ul, li, dl, dd, dt, address {padding: 0; margin: 0;}
+a {text-decoration: underline; color: #000000; cursor: pointer;
+	-moz-user-select: text;
+}
+a:hover {color: #000000;}
+img {border: 0; display: block;}
+ul {list-style: none;}
+
+form, fieldset, label, input, select, textarea {padding: 0; margin: 0; font-weight: normal;}
+input, select, textarea {font-size: 14px;}
+input, textarea {outline: none;}
+
+#page {margin: 0 auto; width: 960px; text-align: left;}

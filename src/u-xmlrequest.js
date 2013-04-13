@@ -81,7 +81,9 @@ Util.XMLRequest = function(url, node, parameters, async, method) {
 }
 
 Util.XMLResponse = function(response) {
-	alert("base responder")
+
+//	alert("base responder")
+
 }
 
 // Simple validation of response

@@ -16,6 +16,38 @@ Util.absoluteY = u.absY = function(e) {
 	return e.offsetTop;
 }
 
+
+// Get relative left position
+// calculated from first relative/absolute parentNode
+Util.relativeX = u.relX = function(e) {
+
+//	u.bug("u.gcs("+u.nodeId(e)+", position):" + u.gcs(e, "position"));
+	// if e is not absolute
+	if(u.gcs(e, "position").match(/absolute/) == null && e.offsetParent && u.gcs(e.offsetParent, "position").match(/relative|absolute/) == null) {
+		// continue upwards in dom
+		return e.offsetLeft + u.relX(e.offsetParent);
+	}
+	return e.offsetLeft;
+
+//	u.bug("e:"+e + "::" + e.offsetParent)
+//	u.bug("rel:"+ e.nodeName + (e.id ? e.id : e.className) + ":" + u.gcs(e.offsetParent, "position").match(/relative|absolute/))
+//	if(u.gcs(e, "position").match(/relative|absolute/) == null && e.offsetParent && u.gcs(e.offsetParent, "position").match(/relative|absolute/) == null) {
+//		u.bug("loop:" + e.offsetLeft)
+//		return e.offsetLeft + u.relX(e.offsetParent);
+//	}
+//	return e.offsetLeft;
+}
+
+// Get relative top position
+// calculated from first relative/absolute parentNode
+Util.relativeY = u.relY = function(e) {
+	if(u.gcs(e, "position").match(/relative|absolute/) == null && e.offsetParent && u.gcs(e.offsetParent, "position").match(/relative|absolute/) == null) {
+		return e.offsetTop + u.relY(e.offsetParent);
+	}
+	return e.offsetTop;
+}
+
+
 // relative offset left position
 // calculates the relative offset of e(lement)
 // Explanation: If an element is within a relative/absolute positioned parentNode, its internal positioning 
@@ -23,12 +55,15 @@ Util.absoluteY = u.absY = function(e) {
 //              the relative offset needs to be subtracted from mouse coordinate. This function returns the
 //              correction value.
 Util.relativeOffsetX = u.relOffsetX = function(e) {
+	// is parent relative/absolute
 	if(e.offsetParent && u.gcs(e.offsetParent, "position").match(/relative|absoute/) != null) {
 //		return e.offsetLeft + u.relOffsetX(e.offsetParent);
 		return u.absX(e.offsetParent); // - e.offsetLeft u.relOffsetX(e.offsetParent);
 	}
 	return 0; //u.absX(e) - e.offsetLeft;
 }
+
+
 
 // relative offset top position
 // calculates the relative top offset of e(lement)

@@ -1,8 +1,14 @@
 // limits length of string and adds dots
 Util.cutString = function(string, length) {
-	var length_compensation, matches, i;
-
-	length_compensation = 0;
+	var matches, i;
+	
+	if(string.length <= length) {
+		return string;
+	}
+	else {
+		
+	length = length-3;
+	}
 	// find entity matches
 	matches = string.match(/\&[\w\d]+\;/g);
 
@@ -29,7 +35,20 @@ Util.randomKey = function(length) {
 	// default length 8
 	length = length ? length : 8;
 	
-	var pattern = "1234567890abcdefghijklmnopqrstuvwxyz";
+	var pattern = "1234567890abcdefghijklmnopqrstuvwxyz".split('');
+	for(i = 0; i < length; i++) {
+		key += pattern[u.random(0,35)];
+	}
+	return key;
+}
+
+Util.randomString = function(length) {
+	var key = "", i;
+
+	// default length 8
+	length = length ? length : 8;
+	
+	var pattern = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".split('');
 	for(i = 0; i < length; i++) {
 		key += pattern[u.random(0,35)];
 	}
@@ -49,4 +68,14 @@ Util.uuid = function() {
 		}
  	}
 	return uuid.join('');
+}
+
+// return string if string is valid - else return optional replacement or ""
+Util.stringOr = function(value, replacement) {
+	if(value !== undefined && value !== null) {
+		return value;
+	}
+	else {
+		return replacement ? replacement : "";
+	}	
 }

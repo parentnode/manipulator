@@ -1,5 +1,12 @@
 Util.Animation = u.a = new function() {
 
+	this.support = function() {
+		var node = document.createElement("div");
+		if(node.style[this.variant() + "Transition"] !== undefined) {
+			return true;
+		}
+		return false;
+	}
 
 	// get variant, to avoid setting more than the required type
 	this.variant = function(e) {
@@ -31,7 +38,15 @@ Util.Animation = u.a = new function() {
 	this.translate = function(e, x, y) {
 
 //		u.bug("trans a")
-		e.style[this.variant() + "Transform"] = "translate("+x+"px, "+y+"px)";
+		var variant_string = this.variant();
+		if(variant_string == "webkit") {
+//			u.bug("3d");
+			e.style[variant_string + "Transform"] = "translate3d("+x+"px, "+y+"px, 0)";
+		}
+		else {
+//			u.bug("not 3d")
+			e.style[variant_string + "Transform"] = "translate("+x+"px, "+y+"px)";
+		}
 
 //		u.bug(x + ":" + y)
 
@@ -39,6 +54,9 @@ Util.Animation = u.a = new function() {
 //		e.style.webkitTransform = "translate3d("+x+"px, "+y+"px, 0)";
 		e.element_x = x;
 		e.element_y = y;
+		e._x = x;
+		e._y = y;
+
 		e.transition_timestamp = new Date().getTime();
 
 		e.offsetHeight;
@@ -50,7 +68,8 @@ Util.Animation = u.a = new function() {
 
 //		e.style.MozTransform = "rotate("+deg+"deg)";
 //		e.style.webkitTransform = "rotate("+deg+"deg)";
-		e.rotation = deg;
+		e._rotation = deg;
+
 		e.transition_timestamp = new Date().getTime();
 
 		e.offsetHeight;
@@ -62,11 +81,54 @@ Util.Animation = u.a = new function() {
 //		e.style.MozTransform = "scale("+scale+")";
 //		e.style.webkitTransform = "scale("+scale+")";
 		e.scale = scale;
+		e._scale = scale;
 		e.transition_timestamp = new Date().getTime();
 
 		// update dom
 		e.offsetHeight;
 	}
+
+
+	this.setOpacity = function(e, opacity) {
+		e.style.opacity = opacity;
+
+		e._opacity = opacity;
+
+		e.transition_timestamp = new Date().getTime();
+
+		// update dom
+		e.offsetHeight;
+	}
+
+	this.setWidth = function(e, width) {
+//		u.bug("setWidth:" + e)
+		var width_px = (width == "auto" ? width : (width.toString().match(/\%/) ? width : width+"px"));
+//		var width_px = (width == "auto" ? width : width+"px");
+//		width += width == "auto" ? "" : "px";
+		e.style.width = width_px;
+
+		e._width = width;
+
+		e.transition_timestamp = new Date().getTime();
+
+		// update dom
+		e.offsetHeight;
+	}
+
+	this.setHeight = function(e, height) {
+		var height_px = (height == "auto" ? height : (height.toString().match(/\%/) ? height : height+"px"));
+//		var height_px = (height == "auto" ? height : height+"px");
+//		height += height == "auto" ? "" : "px";
+		e.style.height = height_px;
+
+		e._height = height;
+
+		e.transition_timestamp = new Date().getTime();
+
+		// update dom
+		e.offsetHeight;
+	}
+
 
 
 	this.rotateTranslate = function(e, deg, x, y) {
@@ -81,6 +143,11 @@ Util.Animation = u.a = new function() {
 		e.rotation = deg;
 		e.element_x = x;
 		e.element_y = y;
+
+		e._rotation = deg;
+		e._x = x;
+		e._y = y;
+
 		e.transition_timestamp = new Date().getTime();
 
 		// update dom
@@ -93,6 +160,11 @@ Util.Animation = u.a = new function() {
 		e.element_x = x;
 		e.element_y = y;
 		e.rotation = deg;
+
+		e._x = x;
+		e._y = y;
+		e._rotation = deg;
+
 		e.transition_timestamp = new Date().getTime();
 
 		// update dom
@@ -100,28 +172,39 @@ Util.Animation = u.a = new function() {
 	}
 
 
+
 	/**
 	*
 	*/
 	this.transition = function(e, transition) {
-		e.style[this.variant() + "Transition"] = transition;
-//		e.style["Transition"] = transition;
-//		e.style.webkitTransition = transition;
+		try {
+		
+			e.style[this.variant() + "Transition"] = transition;
+		//	e.style["Transition"] = transition;
+		//	e.style.webkitTransition = transition;
 
-		// automatically enable transitionend callback
-		u.e.addEvent(e, this.variant() + "TransitionEnd", this._transitioned);
-		// Moz implementation is off track :)
-		u.e.addEvent(e, "transitionend", u.a._transitioned);
+			// automatically enable transitionend callback
+			u.e.addEvent(e, this.variant() + "TransitionEnd", this._transitioned);
+			// Moz implementation is off track :)
+			u.e.addEvent(e, "transitionend", this._transitioned);
 
-		var duration = transition.match(/[0-9.]+[ms]/g);
-		if(duration) {
-			var d = duration[0];
-//			u.bug(d);
-			e.duration = d.match("ms") ? parseFloat(d) : (parseFloat(d) * 1000);
+			var duration = transition.match(/[0-9.]+[ms]+/g);
+			if(duration) {
+				var d = duration[0];
+		//		u.bug(d);
+				e.duration = d.match("ms") ? parseFloat(d) : (parseFloat(d) * 1000);
+			}
+			else {
+				e.duration = false;
+			}
+			// update dom
+			e.offsetHeight;
+			
 		}
-		else {
-			e.duration = false;
+		catch(exception) {
+			u.bug("Exception ("+exception+") in u.a.transition, called from: "+arguments.callee.caller);
 		}
+		
 	}
 
 	// manual setting of transition end callback (when transitions are declared via CSS instead of JS)
@@ -151,5 +234,7 @@ Util.Animation = u.a = new function() {
 		u.a.transition(e, "all "+duration+" ease-in");
 		u.as(e, "opacity", 1);
 	}
+	
+	
 	
 }

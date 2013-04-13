@@ -1,0 +1,1 @@
+<?= $_GET["callback"] ?>({"h1":"test"});

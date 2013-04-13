@@ -1,5 +1,5 @@
 Util.link = function(e) {
-	var a = u.qs("a", e);
+	var a = (e.nodeName.toLowerCase() == "a" ? e : u.qs("a", e));
 	u.addClass(e, "link");
 	e.url = a.href;
 	a.removeAttribute("href");

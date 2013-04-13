@@ -1,4 +1,4 @@
-Util.Objects = u.o = new Array();
+Util.Objects = u.o = new Object();
 
 Util.init = function() {
 
@@ -7,7 +7,7 @@ Util.init = function() {
 
 	for(i = 0; e = elements[i]; i++) {
 		while((ij_value = u.getIJ(e, "i"))) {
-			//u.bug("init:" + ij_value)
+//			u.bug("init:" + ij_value)
 			u.removeClass(e, "i:"+ij_value);
 			if(ij_value && typeof(u.o[ij_value]) == "object") {
 				u.o[ij_value].init(e);
@@ -19,4 +19,5 @@ Util.init = function() {
 	// u.tracePointer();
 }
 
-window.onload = u.init;
+u.e.addEvent(window, "load", u.init);
+//window.onload = u.init;
