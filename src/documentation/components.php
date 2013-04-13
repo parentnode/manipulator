@@ -1,4 +1,4 @@
-<? include_once("../../php/includes.php") ?>
+<? include_once("php/includes.php") ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -37,7 +37,7 @@
 		<ul>
 			<li><h3><a href="/documentation/utilities.php">Utilities (framework)</a></h3></li>
 			<li><h3><a href="/documentation/components.php">Components</a></h3></li>
-			<li><h3><a href="/documentation/tests.php">Tests</a></h3></li>
+			<li><h3><a href="/documentation/tests/index.php">Tests</a></h3></li>
 		</ul>
 	</div>
 
