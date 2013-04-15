@@ -1,0 +1,3 @@
+[submodule "src/bundles/full/lib/build"]
+	path = src/bundles/full/lib/build
+	url = https://github.com/hvadhedderde/js-merger.git
