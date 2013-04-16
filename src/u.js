@@ -1,6 +1,6 @@
 if(!u || !Util) {
 	var u, Util = u = new function() {}
-	u.version = 6;
+	u.version = 0.6;
 
 	// handle bug requests if debug lib is not included
 	u.bug = function() {}
