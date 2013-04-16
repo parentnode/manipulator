@@ -36,7 +36,7 @@ Util.Events = u.e = new function() {
 	this.kill = function(event) {
 		if(event) {
 			event.preventDefault();
-			event.stopPropagation()
+			event.stopPropagation();
 		}
 	}
 
@@ -111,7 +111,7 @@ Util.Events = u.e = new function() {
 	* @param action Action to execute on event
 	*/
 	this.addEndEvent = this.addUpEvent = function(node, action) {
-//		u.bug("addEndEvent:" + e.nodeName + ":" + (e.id ? e.id : e.className));// + ":" + action)
+//		u.bug("addEndEvent:" + u.nodeId(node));// + ":" + action)
 		u.e.addEvent(node, (this.event_pref == "touch" ? "touchend" : "mouseup"), action);
 
 		// add additional mouseout handler if needed
@@ -166,6 +166,7 @@ Util.Events = u.e = new function() {
 	// reset events in nested elements
 	// used to reset event on outer elements
 	this.resetNestedEvents = function(node) {
+//		u.bug("resetEvents:" + u.nodeId(node))
 
 		while(node && node.nodeName != "HTML") {
 //			u.bug("reset nested:" + e.nodeName)
@@ -186,17 +187,14 @@ Util.Events = u.e = new function() {
 
 		// used to handle dblclick timeout event forwarding
 		this.event_var = event;
-//		alert("test:" + u.nodeId(this))
 		this.input_timestamp = event.timeStamp;
-//		alert("test2")
-
-//		u.e.setEventPref(event.type);
-
-//		u.bug(event + ":" + this.className);
 	
 		// get event positions relative to screen
-		this.start_event_x = u.eventX(event) - u.scrollX();
-		this.start_event_y = u.eventY(event) - u.scrollY();
+		// this.start_event_x = u.eventX(event) - u.scrollX();
+		// this.start_event_y = u.eventY(event) - u.scrollY();
+		this.start_event_x = u.eventX(event);
+		this.start_event_y = u.eventY(event);
+//		u.bug("this.start_event_y:" + this.start_event_y)
 
 		// reset speed
 		this.current_xps = 0;
@@ -205,18 +203,9 @@ Util.Events = u.e = new function() {
 		// reset swipe detections
 		this.swiped = false;
 
-
-//		u.e.kill(event);
-
-//		u.bug(1, "start");
-		
 		// ordinary click events
-//		u.bug(this.e_click)
 		if(this.e_click || this.e_dblclick || this.e_hold) {
 //			u.bug("click set:" + u.nodeId(this));
-
-
-			// TODO: do we need to reset on mouseout??
 
 			// only reset onmove if element is draggable
 			var node = this;
@@ -237,11 +226,17 @@ Util.Events = u.e = new function() {
 			u.e.addMoveEvent(this, u.e._move);
 			// execute on mouse up
 			u.e.addEndEvent(this, u.e._dblclicked);
-			
+
+
+			// reset events on mouseout
+			if(u.e.event_pref == "mouse") {
+				u.e.addEvent(this, "mouseout", u.e._cancelClick);
+			}
 		}
 		// listen for hold?
 		if(this.e_hold) {
 			this.t_held = u.t.setTimer(this, u.e._held, 750);
+
 		}
 
 		// drag enabled? (cannot co-exist with swipe)
@@ -271,6 +266,8 @@ Util.Events = u.e = new function() {
 	this._cancelClick = function(event) {
 //		u.bug("_cancelClick:" + u.nodeId(this))
 
+		// TODO - check for speed?
+
 		u.e.resetClickEvents(this);
 
 		// new event
@@ -280,6 +277,7 @@ Util.Events = u.e = new function() {
 	}
 
 	this._move = function(event) {
+//		u.bug("_move:" + u.nodeId(this))
 		// new event
 		if(typeof(this.moved) == "function") {
 			this.moved(event);
@@ -347,7 +345,6 @@ Util.Events = u.e = new function() {
 	}
 	this._dblclicked = function(event) {
 //		u.bug("_dblclicked:" + u.nodeId(this))
-
 		// if valid click timer, treat as dblclick
 		if(u.t.valid(this.t_clicked) && event) {
 

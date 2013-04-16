@@ -1,278 +1,110 @@
 // Fallback specific animation handler
 // tries to mimic transitions by using timeouts
 
-this.transition = function(e, transition) {
+u.a.transition = function(node, transition) {
 	var duration = transition.match(/[0-9.]+[ms]+/g);
 	if(duration) {
-		var d = duration[0];
-//		u.bug(d);
-		e.duration = d.match("ms") ? parseFloat(d) : (parseFloat(d) * 1000);
+		node.duration = duration[0].match("ms") ? parseFloat(duration[0]) : (parseFloat(duration[0]) * 1000);
 	}
 	else {
-		e.duration = false;
+		node.duration = false;
 
-		// reset running animations?
-		// u.t.resetTimer(e.t_transition);
+		// TODO: reset running animations?
+
 	}
-	// update dom
-	e.offsetHeight;
+
+	// safeguard - avoid double transitions if browser supports CSS transitions
+	if(u.support(this.variant()+"Transition")) {
+		// set transition to "none" directly, and keep duration value
+		node.style[this.variant()+"Transition"] = "none";
+	}
 }
 
 
-// set opacity of element
-u.a.setOpacity = function(e, opacity) {
-//	u.bug("set opacity:" + u.nodeId(e) + ":" + opacity);
+// fallback, using absolute positioning with timeouts
+u.a.translate = function(node, x, y) {
+//	u.bug("translate desktop_light:" + u.nodeId(node) + ":" + x + "x" + y);
 
-	// IE in desktop_light IE8 XP, IE7, IE6 fails combination of filters and png/font-face - use visibility to fake opacity 0
-	if(u.explorer()) {
-		if(opacity < 0.5) {
-			u.as(e, "visibility", "hidden");
+	// updates for animation in ms (1000/100 = 10fps)
+	var update_frequency = 100;
+
+	// set internal coordinate value
+	node._x = node._x ? node._x : 0;
+	node._y = node._y ? node._y : 0;
+
+
+	// TODO: reset running animations?
+
+
+	// calculate absolute position offset on first run
+	if(node.translate_offset_x == undefined) {
+
+		// first get element offset to first relative parent
+		var abs_left = u.gcs(node, "left");
+		var abs_top = u.gcs(node, "top");
+
+		if(abs_left.match(/px/)) {
+			node.translate_offset_x = parseInt(abs_left);
 		}
 		else {
-			u.as(e, "visibility", "visible");
+			node.translate_offset_x = u.relX(node);
+		}
+		if(abs_top.match(/px/)) {
+			node.translate_offset_y = parseInt(abs_top);
+		}
+		else {
+			node.translate_offset_y = u.relY(node);
 		}
 
-		if(e.duration && typeof(e.transitioned) == "function") {
-			e.transitioned();
-		}
-	}
-	// duration and transition not supported
-	else if(e.duration && !this.support()) {
-
-		// TODO: gcs(opacity) probably does NOT work in IE 8 - test and implement solution
-//		u.bug("gcs-opacity:" + u.gcs(e, "opacity"));
-//		u.bug("IE:" + u.gcs(e, "filter"))
-
-		e.o_start = e._opacity ? e._opacity : u.gcs(e, "opacity");
-		e.o_transitions = e.duration/100;
-//		u.bug(e.o_transitions + ":" + opacity + ":" + e.o_start)
-		e.o_change = (opacity - e.o_start) / e.o_transitions;
-		e.o_progress = 0;
-
-//		u.bug("duration ("+(e.id ? e.id : e.className)+"):" + e.duration + ":from:" + e.start_opacity + ":to:" + opacity + ":" + e.transitions + ":" + e.change_pr_transition);
-
-		e.o_transitionTo = function() {
-			++this.o_progress;
-
-			var new_opacity = (Number(this.o_start) + Number(this.o_progress * this.o_change));
-
-			// CSS
-			u.as(this, "opacity", new_opacity);
-		}
-
-		for(var i = 0; i < e.o_transitions; i++) {
-			u.t.setTimer(e, e.o_transitionTo, 100 * i);
-		}
-
-		// callback to transition end handler
-		// set it initially with full duration instead of calling on last "frame"
-		if(typeof(e.transitioned) == "function") {
-			u.t.setTimer(e, e.transitioned, e.duration);
-		}
-		
-
-	}
-	// no transition or transitions supported by browser
-	else {
-		e.style.opacity = opacity;
-	}
-
-	e._opacity = opacity;
-	e.transition_timestamp = new Date().getTime();
-
-	// update dom
-	e.offsetHeight;
-}
-
-u.a.setWidth = function(e, width) {
-
-//	u.bug("setWidth (al):" + u.nodeId(e) + ":" + width);
-	// duration and transition not supported
-	if(e.duration && !this.support()) {
-
-		// set up transition values
-		e.w_start = e._width ? e._width : u.gcs(e, "width").replace("px", "");
-		e.w_transitions = e.duration/100;
-		e.w_change = (width - e.w_start) / e.w_transitions;
-
-//		u.bug("e.w_transitions:" + e.w_transitions + ":e.w_change:" + e.w_change);
-
-		e.w_progress = 0;
-
-		// transition handler
-		e.w_transitionTo = function() {
-			++this.w_progress;
-		
-			var new_width = (Number(this.w_start) + Number(this.w_progress * this.w_change));
-//			u.bug("tTo:" + new_width + ":" + this.w_start + ":" + this.w_progress + ":" + this.w_change + ":" + (this.w_progress * this.w_change))
-			// correct miscalculation in IE
-			if(new_width >= 0) {
-				// CSS
-				u.as(this, "width", new_width+"px");
-			}
-		}
-
-		// set transition timers
-		for(var i = 0; i < e.w_transitions; i++) {
-			u.t.setTimer(e, e.w_transitionTo, 100 * i);
-		}
-
-		// callback to transition end handler
-		// set it initially with full duration instead of calling on last "frame"
-		if(typeof(e.transitioned) == "function") {
-			u.t.setTimer(e, e.transitioned, e.duration);
-		}
-
-
-	}
-	else {
-		var width_px = (width == "auto" ? width : width+"px");
-//		width += width == "auto" ? "" : "px";
-		u.as(e, "width", width_px);
-	}
-
-	e._width = width;
-	e.transition_timestamp = new Date().getTime();
-
-	// update dom
-	e.offsetHeight;
-}
-
-u.a.setHeight = function(e, height) {
-
-	// duration and transition not supported
-	if(e.duration && !this.support()) {
-
-		// set up transition values
-		e.h_start = e._height ? e._height : u.gcs(e, "height").replace("px", "");
-		e.h_transitions = e.duration/100;
-		e.h_change = (height - e.h_start) / e.h_transitions;
-
-//		u.bug("set height:" + e.h_transitions + ":" + height + ":" + e.h_start)
-
-		e.h_progress = 0;
-
-		// transition handler
-		e.h_transitionTo = function() {
-			++this.h_progress;
-
-			var new_height = (Number(this.h_start) + Number(this.h_progress * this.h_change));
-//			u.bug("new height:" + u.nodeId(this) + ":" + new_height + ":" + Number(this.h_start) + "+"+ this.h_progress +"*"+ this.h_change);
-
-			// correct miscalculation in IE
-			if(new_height >= 0) {
-				// CSS
-				u.as(this, "height", new_height+"px");
-			}
-
-		}
-
-		// set transition timers
-		for(var i = 0; i < e.h_transitions; i++) {
-			u.t.setTimer(e, e.h_transitionTo, 100 * i);
-		}
-
-		// callback to transition end handler
-		// set it initially with full duration instead of calling on last "frame"
-		if(typeof(e.transitioned) == "function") {
-			u.t.setTimer(e, e.transitioned, e.duration);
-		}
-
-	}
-	// no duration or transition support
-	else {
-		var height_px = (height == "auto" ? height : height+"px");
-		u.as(e, "height", height_px);
-//		e.style.height = height;
-	}
-
-
-	e._height = height;
-	e.transition_timestamp = new Date().getTime();
-
-	// update dom
-	e.offsetHeight;
-}
-
-
-/**
-*
-*/
-
-u.a.translate = function(e, x, y) {
-	var i;
-
-//	u.bug("translate desktop_light:" + u.nodeId(e) + ":" + x + "x" + y);
-
-	// first translation?
-	if(e.translate_offset_x == undefined) {
-		
-		// first get element offset to first relative parent
-		e.translate_offset_x = u.relX(e);
-		e.translate_offset_y = u.relY(e);
-
-		// set internal coordinate value
-		e.element_x = e.element_x ? e.element_x : 0;
-		e.element_y = e.element_y ? e.element_y : 0;
-
-		e._x = e._x ? e._x : 0;
-		e._y = e._y ? e._y : 0;
-
-//		u.bug("e.element_x:" + e.element_x + ": e.t_offset_x:" + e.t_offset_x);
-
-		// safe guard if device has transitions - to avoid double transitions
-		if(this.support()) {
-			// set transition to "none" directly, and keep duration value
-			e.style[this.variant()+"Transition"] = "none";
-		}
 
 		// set new absolute coordinates
-		u.as(e, "left", e.translate_offset_x+"px");
-		u.as(e, "top", e.translate_offset_y+"px");
-
+		u.as(node, "left", node.translate_offset_x+"px");
+		u.as(node, "top", node.translate_offset_y+"px");
 
 		// set position absolute
-		u.as(e, "position", "absolute");
-
-//		u.bug("init translate:" + e.t_offset_x + ":" + e.element_x + "::" + e.t_offset_y + ":" + e.element_y)
+		u.as(node, "position", "absolute");
 	}
 
-	// possibly only run if x != element_x || y != element_y
-	if(e.duration) {
 
-//		u.bug("translate with duration:" + u.nodeId(e) + ": dur:" + e.duration + ": x" + x + ": y:" + y);
+	// only run if coords are different from current values
+	if(node.duration && (node._x != x || node._y != y)) {
+//		u.bug("translate with duration:" + u.nodeId(node) + ": dur:" + node.duration + ": x:" + x + ": y:" + y);
 
 		// calculate transition
-		e.x_start = e._x;
-		e.y_start = e._y;
-		e.translate_transitions = e.duration/100;
-		e.translate_progress = 0;
-		e.x_change = (x - e.x_start) / e.translate_transitions;
-		e.y_change = (y - e.y_start) / e.translate_transitions;
+		node.x_start = node._x;
+		node.y_start = node._y;
+		node.translate_transitions = node.duration/update_frequency;
+		node.translate_progress = 0;
+		node.x_change = (x - node.x_start) / node.translate_transitions;
+		node.y_change = (y - node.y_start) / node.translate_transitions;
 
 //		u.bug("x_change:" + e.x_change);
 //		u.bug("y_change:" + e.y_change);
 
 
-		e.translate_transitionTo = function(event) {
+		node.translate_transitionTo = function(event) {
 			++this.translate_progress;
 
 			var new_x = (Number(this.x_start) + Number(this.translate_progress * this.x_change) + this.translate_offset_x);
 			var new_y = (Number(this.y_start) + Number(this.translate_progress * this.y_change) + this.translate_offset_y);
+//			u.bug("transition move:" + u.nodeId(this, 1) + ": new_x:" + new_x + ": new_y:" + new_y);
 
-//			u.bug("transition move:" + (new_x) + "::" + (new_y) + "::" + new Date().getTime());
+			u.as(node, "left", new_x + "px");
+			u.as(node, "top", new_y + "px");
 
-			u.as(e, "left", new_x + "px");
-			u.as(e, "top", new_y + "px");
+			// update dom
+			this.offsetHeight;
 
-			// test
+			// more transitions to go?
 			if(this.translate_progress < this.translate_transitions) {
 
-
-				this.t_transition = u.t.setTimer(this, this.translate_transitionTo, 100);
+				this.t_translate_transition = u.t.setTimer(this, this.translate_transitionTo, update_frequency);
 			}
-			// last step
+			// last step - adjust any miscalculations and callback
 			else {
+
+				u.as(this, "left", (this.translate_offset_x + this._x)+"px");
+				u.as(this, "top", (this.translate_offset_y + this._y)+"px");
 
 				if(typeof(this.transitioned) == "function") {
 					this.transitioned(event);
@@ -280,40 +112,579 @@ u.a.translate = function(e, x, y) {
 			}
 		}
 
-		e.translate_transitionTo();
-
-		// for(i = 0; i < e.translate_transitions; i++) {
-		// 	u.t.setTimer(e, e.translate_transitionTo, 100 * i);
-		// }
-		// 
-		// // callback to transition end handler
-		// // set it initially with full duration instead of calling on last "frame"
-		// if(typeof(e.transitioned) == "function") {
-		// 	u.t.setTimer(e, e.transitioned, e.duration);
-		// }
-
+		// start transition
+		node.translate_transitionTo();
 	}
+	// no duration - just move, and no transition callback (bacause CSS transitions has no callback when no duration is given)
 	else {
+//		u.bug("direct move")
 
-//		u.bug("direct move or support:" + (e.t_offset_x + x) + "::" + (e.t_offset_y + y))
-//		alert("3 e.translate_offset_x:" + e.translate_offset_x + "+" + x);
-
-		u.as(e, "left", (e.translate_offset_x + x)+"px");
-		u.as(e, "top", (e.translate_offset_y + y)+"px");
-
+		u.as(node, "left", (node.translate_offset_x + x)+"px");
+		u.as(node, "top", (node.translate_offset_y + y)+"px");
 	}
 
 	
 	// remember value for cross method compability
-	e.element_x = x;
-	e.element_y = y;
-	e._x = x;
-	e._y = y;
-	e.transition_timestamp = new Date().getTime();
+	node._x = x;
+	node._y = y;
 
 	// update dom
-	e.offsetHeight;
+	node.offsetHeight;
+}
+
+// fallback, only set callback, to ensure loops don't break
+u.a.rotate = function(node, deg) {
+
+	if(node.duration && node._rotation !== deg) {
+		u.t.setTimer(node, function() {if(typeof(this.transitioned) == "function") {this.transitioned();}}, node.duration);
+	}
+	node._rotation = deg;
 
 }
 
 
+// fallback, only set callback, to ensure loops don't break
+u.a.scale = function(node, scale) {
+
+	if(node.duration && node._scale !== scale) {
+		u.t.setTimer(node, function() {if(typeof(this.transitioned) == "function") {this.transitioned();}}, node.duration);
+	}
+	node._scale = scale;
+}
+
+
+// fallback, using opacity with timeouts if possible.
+u.a.setOpacity = function(node, opacity) {
+
+	// updates for animation in ms (1000/100 = 10fps)
+	var update_frequency = 100;
+
+	// set internal value
+	node._opacity = node._opacity != undefined ? node._opacity : u.gcs(node, "opacity");
+
+
+	// TODO: reset running animations?
+
+
+	// IE in desktop_light IE8 XP, IE7, IE6 fails combination of filters and png/font-face - use visibility as opacity replacement
+	if(!u.support("opacity")) {
+
+		// hide if opacity is 0
+		if(opacity == 0) {
+			u.as(node, "visibility", "hidden");
+		}
+		else {
+			u.as(node, "visibility", "visible");
+		}
+
+		// callback if duration is set
+		if(node.duration && node._opacity !== opacity) {
+			u.t.setTimer(node, function() {if(typeof(this.transitioned) == "function") {this.transitioned();}}, node.duration);
+		}
+	}
+	// only run if opacity is different from current value
+	else if(node.duration && node._opacity != opacity) {
+//		u.bug("opacity with duration:" + u.nodeId(node) + ": dur:" + node.duration + ": opacity:" + opacity);
+
+		// calculate transition
+		node.opacity_start = node._opacity;
+		node.opacity_transitions = node.duration/update_frequency;
+		node.opacity_change = (opacity - node.opacity_start) / node.opacity_transitions;
+		node.opacity_progress = 0;
+
+//		u.bug("opacity_change:" + node.opacity_change);
+
+		node.opacity_transitionTo = function(event) {
+			++this.opacity_progress;
+
+			var new_opacity = (Number(this.opacity_start) + Number(this.opacity_progress * this.opacity_change));
+//			u.bug("transition opacity:" + u.nodeId(this, 1) + ": opacity:" + new_opacity);
+
+			// CSS
+			u.as(this, "opacity", new_opacity);
+
+			// update dom
+			this.offsetHeight;
+
+			// more transitions to go?
+			if(this.opacity_progress < this.opacity_transitions) {
+
+				this.t_opacity_transition = u.t.setTimer(this, this.opacity_transitionTo, update_frequency);
+			}
+			// last step - adjust any miscalculations and callback
+			else {
+
+				this.style.opacity = this._opacity;
+
+				if(typeof(this.transitioned) == "function") {
+					this.transitioned(event);
+				}
+			}
+
+		}
+
+		// start transition
+		node.opacity_transitionTo();
+
+	}
+	// no duration - just move, and no transition callback (bacause CSS transitions has no callback when no duration is given)
+	else {
+//		u.bug("direct opacity")
+		node.style.opacity = opacity;
+	}
+
+	node._opacity = opacity;
+
+	// update dom
+	node.offsetHeight;
+}
+
+
+
+
+
+// fallback, using regular CSS width with timeouts
+u.a.setWidth = function(node, width) {
+
+	// updates for animation in ms (1000/25 = 40fps)
+	var update_frequency = 25;
+
+	// set internal value
+	node._width = node._width ? node._width : u.gcs(node, "width").match("px") ? u.gcs(node, "width").replace("px", "") : 0;
+
+
+	// TODO: reset running animations?
+
+
+	// only run if width is different from current value
+	if(node.duration && node._width != width) {
+
+		// set up transition values
+		node.width_start = node._width;
+		node.width_transitions = node.duration/update_frequency;
+		node.width_change = (width - node.width_start) / node.width_transitions;
+		node.width_progress = 0;
+
+//		u.bug("width_change:" + node.width_change);
+
+		// transition handler
+		node.width_transitionTo = function(event) {
+			++this.width_progress;
+
+			var new_width = (Number(this.width_start) + Number(this.width_progress * this.width_change));
+//			u.bug("transition width:" + u.nodeId(this, 1) + ": width:" + new_width);
+
+			// correct miscalculation in IE
+			// not able to verify problem
+			// if(new_width >= 0) {
+				// CSS
+				u.as(this, "width", new_width+"px");
+			// }
+
+			// update dom
+			this.offsetHeight;
+
+			// more transitions to go?
+			if(this.width_progress < this.width_transitions) {
+
+				this.t_width_transition = u.t.setTimer(this, this.width_transitionTo, update_frequency);
+			}
+			// last step - adjust any miscalculations and callback
+			else {
+
+				u.as(this, "width", this._width);
+
+				if(typeof(this.transitioned) == "function") {
+					this.transitioned(event);
+				}
+			}
+		}
+
+		// start transition
+		node.width_transitionTo();
+
+	}
+	// no duration - just move, and no transition callback (bacause CSS transitions has no callback when no duration is given)
+	else {
+//		u.bug("direct opacity")
+
+		var new_width = width.toString().match(/\%|auto/) ? width : width + "px";
+		u.as(node, "width", new_width);
+	}
+
+	// remember value for cross method compability
+	node._width = width;
+
+	// update dom
+	node.offsetHeight;
+}
+
+
+// fallback, using regular CSS height with timeouts
+u.a.setHeight = function(node, height) {
+
+	// updates for animation in ms (1000/25 = 40fps)
+	var update_frequency = 25;
+
+	// set internal value
+	node._height = node._height ? node._height : u.gcs(node, "height").match("px") ? u.gcs(node, "height").replace("px", "") : 0;
+
+
+	// TODO: reset running animations?
+
+
+	// only run if height is different from current value
+	if(node.duration && node._height != height) {
+
+		// set up transition values
+		node.height_start = node._height;
+		node.height_transitions = node.duration/update_frequency;
+		node.height_change = (height - node.height_start) / node.height_transitions;
+		node.height_progress = 0;
+
+//		u.bug("height_change:" + node.height_change);
+
+		// transition handler
+		node.height_transitionTo = function(event) {
+			++this.height_progress;
+
+			var new_height = (Number(this.height_start) + Number(this.height_progress * this.height_change));
+//			u.bug("transition height:" + u.nodeId(this, 1) + ": height:" + new_height);
+
+			// correct miscalculation in IE
+			// not able to verify problem
+			// if(new_height >= 0) {
+				// CSS
+				u.as(this, "height", new_height+"px");
+			//}
+
+			// update dom
+			this.offsetHeight;
+
+			// more transitions to go?
+			if(this.height_progress < this.height_transitions) {
+
+				this.t_height_transition = u.t.setTimer(this, this.height_transitionTo, update_frequency);
+			}
+			// last step - adjust any miscalculations and callback
+			else {
+
+				u.as(this, "height", this._height);
+
+				if(typeof(this.transitioned) == "function") {
+					this.transitioned(event);
+				}
+			}
+		}
+
+		// start transition
+		node.height_transitionTo();
+
+	}
+	// no duration - just move, and no transition callback (bacause CSS transitions has no callback when no duration is given)
+	else {
+//		u.bug("direct opacity")
+
+		var new_height = height.toString().match(/\%|auto/) ? height : height + "px";
+		u.as(node, "height", new_height);
+	}
+
+	// remember value for cross method compability
+	node._height = height;
+
+	// update dom
+	node.offsetHeight;
+}
+
+
+// fallback, using regular CSS background-position with timeouts
+u.a.setBgPos = function(node, x, y) {
+
+	// updates for animation in ms (1000/25 = 40fps)
+	var update_frequency = 25;
+
+	// TODO: consider converting values if % or top, left, bottom, right, auto ??
+	// Maybe overkill, as there is still no way of converting from % to px
+	// top = 0%
+	// bottom = 100%
+	// left = 0%
+	// right = 100%
+	// center = 50%
+
+	// u.bug("pos:" + u.gcs(node, "background-position"))
+	// u.bug("pos:" + u.gcs(node, "background-position-x"))
+	// u.bug("pos:" + u.gcs(node, "background-position-y"))
+	
+	if(!node._bg_x || !node._bg_y) {
+
+		if(u.gcs(node, "background-position")) {
+			var current_bg = u.gcs(node, "background-position").split(" ");
+			var current_bg_x = current_bg[0];
+			var current_bg_y = current_bg[1];
+		}
+		else {
+			var current_bg_x = u.gcs(node, "background-position-x");
+			var current_bg_y = u.gcs(node, "background-position-y");
+		}
+
+	}
+
+	// set internal values - if current value is not in px, animation cannot be calculated, so pretend no change has happened
+	node._bg_x = node._bg_x ? node._bg_x : current_bg_x.match("px") ? current_bg_x.replace("px", "") : x;
+	node._bg_y = node._bg_y ? node._bg_y : current_bg_y.match("px") ? current_bg_y.replace("px", "") : y;
+
+
+	// TODO: reset running animations?
+
+
+	// only run if one value is different from current value
+	if(node.duration && (node._bg_x != x || node._bg_y != y)) {
+
+		// u.bug("pos:" + u.gcs(node, "background-position-y"))
+		// u.bug("x:" + u.gcs(node, "background-position").split(" ")[0])
+		// u.bug("y:" + u.gcs(node, "background-position").split(" ")[1])
+
+		node._bg_same_x = false;
+		node._bg_same_y = false;
+
+		// set up transition values
+		node.bg_transitions = node.duration/update_frequency;
+
+		// is x value changed and value does not contain %, top, left, bottom, right
+		if(node._bg_x != x) {
+			node.bg_start_x = node._bg_x;
+			node.bg_change_x = (x - node.bg_start_x) / node.bg_transitions;
+		}
+		else {
+			node._bg_same_x = true;
+		}
+
+		// is y value changed and value does not contain %, top, left, bottom, right
+		if(node._bg_y != y) {
+			node.bg_start_y = node._bg_y;
+			node.bg_change_y = (y - node.bg_start_y) / node.bg_transitions;
+		}
+		else {
+			node._bg_same_y = true;
+		}
+		node.bg_progress = 0;
+
+//		u.bug("bg_change_x:" + node.bg_change_x + ", " + "bg_change_y:" + node.bg_change_y);
+
+
+		// transition handler
+		node.bg_transitionTo = function(event) {
+			++this.bg_progress;
+
+			var new_x, new_y;
+			if(!this._bg_same_x) {
+				new_x = Math.round((Number(this.bg_start_x) + Number(this.bg_progress * this.bg_change_x)));
+			}
+			else {
+				new_x = this._bg_x;
+			}
+
+			if(!this._bg_same_y) {
+				new_y = Math.round((Number(this.bg_start_y) + Number(this.bg_progress * this.bg_change_y)));
+			}
+			else {
+				new_y = this._bg_y;
+			}
+
+//			u.bug("new:" + new_x + ":" + new_y);
+			var new_bg_x = new_x.toString().match(/\%|top|left|right|center|bottom/) ? new_x : (new_x + "px");
+			var new_bg_y = new_y.toString().match(/\%|top|left|right|center|bottom/) ? new_y : (new_y + "px");
+
+			// CSS
+			u.as(this, "backgroundPosition", new_bg_x + " " + new_bg_y);
+
+			// update dom
+			this.offsetHeight;
+
+			// more transitions to go?
+			if(this.bg_progress < this.bg_transitions) {
+
+				this.t_bg_transition = u.t.setTimer(this, this.bg_transitionTo, update_frequency);
+			}
+			// last step - adjust any miscalculations and callback
+			else {
+
+				u.as(this, "backgroundPosition", this._bg_x + " " + this._bg_y);
+
+				if(typeof(this.transitioned) == "function") {
+					this.transitioned(event);
+				}
+			}
+		}
+
+		// start transition
+		node.bg_transitionTo();
+
+	}
+	// no duration - just move, and no transition callback (bacause CSS transitions has no callback when no duration is given)
+	else {
+//		u.bug("direct opacity")
+
+		var new_bg_x = x.toString().match(/\%|top|left|right|center|bottom/) ? x : (x + "px");
+		var new_bg_y = y.toString().match(/\%|top|left|right|center|bottom/) ? y : (y + "px");
+		u.as(node, "backgroundPosition", new_bg_x + " " + new_bg_y);
+	}
+
+	// remember value for cross method compability
+	node._bg_x = x;
+	node._bg_y = y;
+
+	// update dom
+	node.offsetHeight;
+}
+
+
+// fallback bgColor - manual calculation with timeouts
+u.a.setBgColor = function(node, color) {
+
+	// updates for animation in ms (1000/25 = 40fps)
+	var update_frequency = 100;
+
+	// check for valid values
+	if(isNaN(node._bg_color_r) || isNaN(node._bg_color_g) || isNaN(node._bg_color_b)) {
+
+		var current_bg_color = u.gcs(node, "background-color");
+		var matches;
+		var current_bg_color_r, current_bg_color_g, current_bg_color_b;
+		var new_bg_color_r = false;
+		var new_bg_color_g = false;
+		var new_bg_color_b = false;
+
+		// convert current color statement
+		// #00000-#ffffff or #000-#fff
+		if(current_bg_color.match(/#[\da-fA-F]{3,6}/)) {
+			if(current_bg_color.length == 7) {
+				matches = current_bg_color.match(/#([\da-fA-F]{2})([\da-fA-F]{2})([\da-fA-F]{2})/);
+			}
+			else {
+				matches = current_bg_color.match(/#([\da-fA-F]{1}),[ ]?([\da-fA-F]{1}),[ ]?([\da-fA-F]{1})/);
+			}
+			current_bg_color_r = u.hexToNum(matches[1]);
+			current_bg_color_g = u.hexToNum(matches[2]); 
+			current_bg_color_b = u.hexToNum(matches[3]);
+		}
+		// rgb(0, 0, 0)-rbg(255, 255, 255)
+		else if(current_bg_color.match(/rgb\([\d]{1,3},[ ]?[\d]{1,3},[ ]?[\d]{1,3}\)/)) {
+			matches = current_bg_color.match(/rgb\(([\d]{1,3}),[ ]?([\d]{1,3}),[ ]?([\d]{1,3})\)/);
+			current_bg_color_r = matches[1];
+			current_bg_color_g = matches[2];
+			current_bg_color_b = matches[3];
+		}
+		// rbga(0, 0, 0, 0)-rbga(255, 255, 255, 1) - alpha channel ignored for now
+		else if(current_bg_color.match(/rgba\([\d]{1,3},[ ]?[\d]{1,3},[ ]?[\d]{1,3},[ ]?[\d\.]+\)/)) {
+			matches = current_bg_color.match(/rgba\(([\d]{1,3}),[ ]?([\d]{1,3}),[ ]?([\d]{1,3}),[ ]?([\d\.]+)\)/);
+			current_bg_color_r = matches[1];
+			current_bg_color_g = matches[2];
+			current_bg_color_b = matches[3];
+		}
+	}
+
+	// convert color input statement
+	if(color.match(/#[\da-fA-F]{3,6}/)) {
+		if(color.length == 7) {
+			matches = color.match(/#([\da-fA-F]{2})([\da-fA-F]{2})([\da-fA-F]{2})/);
+		}
+		else {
+			matches = color.match(/#([\da-fA-F]{1}),[ ]?([\da-fA-F]{1}),[ ]?([\da-fA-F]{1})/);
+		}
+		new_bg_color_r = u.hexToNum(matches[1]);
+		new_bg_color_g = u.hexToNum(matches[2]);
+		new_bg_color_b = u.hexToNum(matches[3]);
+	}
+
+
+	// set internal values - if current value is not in px, animation cannot be calculated, so pretend no change has happened
+	node._bg_color_r = !isNaN(node._bg_color_r) ? node._bg_color_r : !isNaN(current_bg_color_r) ? current_bg_color_r : false;
+	node._bg_color_g = !isNaN(node._bg_color_g) ? node._bg_color_g : !isNaN(current_bg_color_g) ? current_bg_color_g : false;
+	node._bg_color_b = !isNaN(node._bg_color_b) ? node._bg_color_b : !isNaN(current_bg_color_b) ? current_bg_color_b : false;
+
+//	u.bug("current:" + node._bg_color_r + ", " + node._bg_color_g + ", " + node._bg_color_b);
+//	u.bug("new:" + new_bg_color_r + ", " + new_bg_color_g + ", " + new_bg_color_b);
+
+
+	// TODO: reset running animations?
+
+
+	// only run if one value is different from current value and valid
+	if(node.duration && 
+	node._bg_color_r !== false && 
+	node._bg_color_g !== false && 
+	node._bg_color_b !== false && 
+
+	new_bg_color_r !== false && 
+	new_bg_color_g !== false && 
+	new_bg_color_b !== false &&
+
+	(new_bg_color_r != node._bg_color_r ||
+	new_bg_color_g != node._bg_color_g ||
+	new_bg_color_b != node._bg_color_b)) {
+
+		// set up transition values
+		node.bg_color_r_start = node._bg_color_r;
+		node.bg_color_g_start = node._bg_color_g;
+		node.bg_color_b_start = node._bg_color_b;
+
+		node.bg_color_transitions = node.duration/update_frequency;
+		node.bg_color_r_change = (new_bg_color_r - node.bg_color_r_start) / node.bg_color_transitions;
+		node.bg_color_g_change = (new_bg_color_g - node.bg_color_g_start) / node.bg_color_transitions;
+		node.bg_color_b_change = (new_bg_color_b - node.bg_color_b_start) / node.bg_color_transitions;
+		node.bg_color_progress = 0;
+
+//		u.bug("bg_color_r_change:" + node.bg_color_r_change + ", bg_color_g_change:" + node.bg_color_g_change + ", bg_color_b_change:" + node.bg_color_b_change);
+
+		// transition handler
+		node.bg_color_transitionTo = function(event) {
+			++this.bg_color_progress;
+
+			var new_bg_color_r = Math.round(Number(this.bg_color_r_start) + Number(this.bg_color_progress * this.bg_color_r_change));
+			var new_bg_color_g = Math.round(Number(this.bg_color_g_start) + Number(this.bg_color_progress * this.bg_color_g_change));
+			var new_bg_color_b = Math.round(Number(this.bg_color_b_start) + Number(this.bg_color_progress * this.bg_color_b_change));
+//			u.bug("transition height:" + u.nodeId(this, 1) + ", #" + new_bg_color_r + "=" + u.numToHex(new_bg_color_r) + ":" + new_bg_color_g + "=" + u.numToHex(new_bg_color_g) + ":" + new_bg_color_b + "=" + u.numToHex(new_bg_color_b));
+
+			var bg_hex_r = u.prefix(u.numToHex(new_bg_color_r), 2);
+			var bg_hex_g = u.prefix(u.numToHex(new_bg_color_g), 2);
+			var bg_hex_b = u.prefix(u.numToHex(new_bg_color_b), 2);
+
+			// CSS
+			u.as(this, "backgroundColor", "#" + bg_hex_r + bg_hex_g + bg_hex_b);
+
+			// update dom
+			this.offsetHeight;
+		
+			// more transitions to go?
+			if(this.bg_color_progress < this.bg_color_transitions) {
+					
+				this.t_bg_color_transition = u.t.setTimer(this, this.bg_color_transitionTo, update_frequency);
+			}
+			// last step - adjust any miscalculations and callback
+			else {
+
+				u.as(this, "backgroundColor", this._bg_color);
+
+				if(typeof(this.transitioned) == "function") {
+					this.transitioned(event);
+				}
+			}
+		}
+
+		// start transition
+		node.bg_color_transitionTo();
+	}
+	//
+	// no duration - just move, and no transition callback (bacause CSS transitions has no callback when no duration is given)
+	else {
+//		u.bug("direct bgcolor")
+
+		node.style.backgroundColor = color;
+	}
+
+	node._bg_color = color;
+
+	// update dom
+	node.offsetHeight;
+}

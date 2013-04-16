@@ -66,7 +66,7 @@ u.deviceDetection = function() {
 	}
 	
 	// crome trail, supported until current
-	if(window.chrome || navigator.vendor.match(/Google/i)) {
+	if(window.chrome || (navigator.vendor && navigator.vendor.match(/Google/i))) {
 //		u.bug("IS CHROME");
 
 		json["window.chrome"] = true;
@@ -76,7 +76,7 @@ u.deviceDetection = function() {
 	}
 
 	// webkit trail, supported until current
-	if(navigator.vendor.match(/Apple/i)) {
+	if(navigator.vendor && navigator.vendor.match(/Apple/i)) {
 
 		json["Safari"] = true;
 

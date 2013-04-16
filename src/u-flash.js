@@ -61,7 +61,7 @@ Util.flashDetection = function(version) {
 }
 
 
-Util.flash = function(node, url) {
+Util.flash = function(node, url, settings) {
 
 	// default values
 	var width = "100%";
@@ -71,28 +71,29 @@ Util.flash = function(node, url) {
 
 	var allowScriptAccess = "always";
 	var menu = "false";
-	var scale = "default";
+	var scale = "showall";
 	var wmode = "transparent";
 
+
 	// additional info passed to function as JSON object
-	if(arguments.length > 1 && typeof(arguments[2]) == "object") {
-		for(argument in arguments[2]) {
+	if(typeof(settings) == "object") {
+		var argument;
+		for(argument in settings) {
 
 			switch(argument) {
-				case "id" : id = arguments[2][argument]; break;
-				case "width" : width = Number(arguments[2][argument]); break;
-				case "height" : height = Number(arguments[2][argument]); break;
-				case "background" : background = arguments[2][argument]; break;
+				case "id"					: id				= settings[argument]; break;
+				case "width"				: width				= Number(settings[argument]); break;
+				case "height"				: height			= Number(settings[argument]); break;
+				case "background"			: background		= settings[argument]; break;
 
-				case "allowScriptAccess" : allowScriptAccess = arguments[2][argument]; break;
-				case "menu" : menu = arguments[2][argument]; break;
-				case "scale" : scale = arguments[2][argument]; break;
-				case "wmode" : wmode = arguments[2][argument]; break;
+				case "allowScriptAccess"	: allowScriptAccess = settings[argument]; break;
+				case "menu"					: menu				= settings[argument]; break;
+				case "scale"				: scale				= settings[argument]; break;
+				case "wmode"				: wmode				= settings[argument]; break;
 			}
 
 		}
 	}
-
 
 	// ie 8 and less needs objects and parameters injected at the same time
 	html = '<object';
@@ -101,7 +102,8 @@ Util.flash = function(node, url) {
 	html += ' height="'+height+'"';
 
 	// explorer version
-	if(u.explorer()) {
+//	if(u.explorer()) {
+	if(u.browser("explorer")) {
 		html += ' classid="clsid:d27cdb6e-ae6d-11cf-96b8-444553540000"';
 //		html += ' codebase="http://fpdownload.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=9,0,0,0"';
 	}

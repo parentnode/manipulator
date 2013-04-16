@@ -79,6 +79,20 @@ Util.audioPlayer = function(node) {
 		}
 		u.e.addEvent(player.audio, "canplaythrough", player._canplaythrough);
 
+		// video loaded
+		player._loadeddata = function(event) {
+//			u.bug("_loadeddata:" + this.duration);
+
+//			u.bug("_loaded:" + u.nodeId(this) + ":" + this.parentNode);
+
+			this.parentNode.videoLoaded = true;
+
+			if(typeof(this.parentNode.loadeddata) == "function") {
+				this.parentNode.loadeddata(event);
+			}
+		}
+		u.e.addEvent(player.audio, "loadeddata", player._loadeddata);
+
 		// movie has play til its end
 		player._ended = function(event) {
 //			u.bug("_ended");
@@ -100,6 +114,16 @@ Util.audioPlayer = function(node) {
 
 
 	}
+	
+	// Flash support
+	else if(typeof(u.audioPlayerFallback) == "function") {
+
+		// remove HTML5 element
+		player.removeChild(player.video);
+		player = u.audioPlayerFallback(player);
+	}
+
+	
 	else {
 		player.load = function() {}
 		player.play = function() {}
@@ -107,6 +131,7 @@ Util.audioPlayer = function(node) {
 		player.pause = function() {}
 		player.stop = function() {}
 	}
+
 	/*
 	// Flash support
 	else if (document.all || (navigator.plugins && navigator.mimeTypes["application/x-shockwave-flash"])) {

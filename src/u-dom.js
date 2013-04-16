@@ -180,6 +180,13 @@ Util.wrapElement = u.we = function(node, node_type, attributes) {
 	return false;
 }
 
+
+// get node textcontent shorthand (basically this is not needed for newer browsers, but required to align syntax for older browsers)
+Util.textContent = u.text = function(node) {
+	return node.textContent;
+}
+
+
 // make element clickable
 Util.clickableElement = u.ce = function(node) {
 	// look for link
@@ -236,17 +243,17 @@ Util.setClass = u.sc = function(node, classname) {
 	return false;
 }
 // Element has classname
-Util.hasClass = u.hc = function(e, classname) {
+Util.hasClass = u.hc = function(node, classname) {
 	try {
 		if(classname) {
-			var regexp = new RegExp("(^|\\s)" + classname + "(\\s|$|\:)");
-			if(regexp.test(e.className)) {
+			var regexp = new RegExp("(^|\\s)(" + classname + ")(\\s|$)");
+			if(regexp.test(node.className)) {
 				return true;
 			}
 		}
 	}
 	catch(exception) {
-		u.bug("Exception ("+exception+") in u.hasClass, called from: "+arguments.callee.caller);
+		u.bug("Exception ("+exception+") in u.hasClass("+u.nodeId(node)+"), called from: "+arguments.callee.caller);
 	}
 	// return false on error
 	return false;
@@ -343,4 +350,13 @@ Util.getComputedStyle = u.gcs = function(node, property) {
 }
 
 
-
+// has fixed parent - lots of things needs to be calculated differently if parent is fixed
+Util.hasFixedParent = u.hfp = function(node) {
+	while(node.nodeName.toLowerCase() != "body") {
+		if(u.gcs(node.parentNode, "position").match("fixed")) {
+			return true;
+		}
+		node = node.parentNode;
+	}
+	return false;
+}

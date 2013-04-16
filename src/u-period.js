@@ -42,23 +42,24 @@
 // months - using 365/12 days
 // years - of 365
 
-Util.period = function(format) {
+Util.period = function(format, time) {
 
 	// define default options
 	var seconds = 0;
 
 	// additional info passed to function as JSON object
-	if(arguments.length > 1 && typeof(arguments[1]) == "object") {
-		for(argument in arguments[1]) {
+	if(typeof(time) == "object") {
+		var argument;
+		for(argument in time) {
 
 			switch(argument) {
-				case "seconds" : seconds = arguments[1][argument]; break;
-				case "milliseconds" : seconds = Number(arguments[1][argument])/1000; break;
-				case "minutes" : seconds = Number(arguments[1][argument])*60; break;
-				case "hours" : seconds = Number(arguments[1][argument])*60*60 ; break;
-				case "days" : seconds = Number(arguments[1][argument])*60*60*24; break;
-				case "months" : seconds = Number(arguments[1][argument])*60*60*24*(365/12); break;
-				case "years" : seconds = Number(arguments[1][argument])*60*60*24*365; break;
+				case "seconds"		: seconds = time[argument]; break;
+				case "milliseconds" : seconds = Number(time[argument])/1000; break;
+				case "minutes"		: seconds = Number(time[argument])*60; break;
+				case "hours"		: seconds = Number(time[argument])*60*60 ; break;
+				case "days"			: seconds = Number(time[argument])*60*60*24; break;
+				case "months"		: seconds = Number(time[argument])*60*60*24*(365/12); break;
+				case "years"		: seconds = Number(time[argument])*60*60*24*365; break;
 			}
 
 		}

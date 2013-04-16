@@ -2,21 +2,22 @@ Util.Animation = u.a = new function() {
 
 	
 	// transitions support - required to perform animations
-	this.support = function() {
-
-		// only run detection once
-		if(this._support === undefined) {
-			var node = document.createElement("div");
-			if(node.style[this.variant() + "Transition"] !== undefined) {
-				this._support = true;
-			}
-			else {
-				this._support = false;
-			}
-		}
-
-		return this._support;
-	}
+	// this.support = function() {
+	// 
+	// 	// only run detection once
+	// 	if(this._support === undefined) {
+	// 		var node = document.createElement("div");
+	// 		u.bug("transition:" + node.style[this.variant() + "Transition"] + ", " + (this.variant() + "Transition" in document.documentElement.style));
+	// 		if(node.style[this.variant() + "Transition"] !== undefined) {
+	// 			this._support = true;
+	// 		}
+	// 		else {
+	// 			this._support = false;
+	// 		}
+	// 	}
+	// 
+	// 	return this._support;
+	// }
 
 	// translate3d support?
 	this.support3d = function() {
@@ -135,9 +136,6 @@ Util.Animation = u.a = new function() {
 			node.style[this.variant() + "Transform"] = "translate("+x+"px, "+y+"px)";
 		}
 
-		// old value holder (deprecated)
-		node.element_x = x;
-		node.element_y = y;
 		// new value holder
 		node._x = x;
 		node._y = y;

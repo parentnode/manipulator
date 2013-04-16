@@ -1,69 +1,49 @@
-// Create xmlhttprequest object 
-Util.createRequestObject = function(type) {
-	var request_object = false;
-	// w3c
-//	if(window.XMLHttpRequest) {
-		try {
-			request_object = new XMLHttpRequest();
-		}
-		catch(e){
-			request_object = new ActiveXObject("Microsoft.XMLHTTP");
-		}
-//	}
-	// windows activeX object
-/*
-	else if(typeof(window.ActiveXObject) == "function") {
-		try {
-			request_object = new ActiveXObject("Microsoft.XMLHTTP");
-		}
-		catch(e){}
-	}
-	*/
-	if(request_object) {
-		return request_object;
-	}
-	u.bug("Could not create HTTP Object");
-	return false;
-//	return typeof(request_object.send) == 'undefined' ? false : request_object;
+
+
+// Create xmlhttprequest object - separated to make it possible to implement fallback, primarily for IE
+Util.createRequestObject = function() {
+	return new XMLHttpRequest();
 }
 
-/**
-* Request object
-*
-* @param node Response node - DOM node, which will recieve the Responce callback
-* @param url
-* @param parameters
-* @param method POST, GET or SCRIPT. Default GET
-* @param async Run request syncronious of asyncronious. Default false
-*/
+// Request object
+Util.Request = u.request = function(node, url, settings) {
 
-Util.Request = function(node, url, parameters, method, async) {
+	node.request_url = url;
 
-	// if node isn't an object, create temp object as stand-in
-	if(typeof(node) != "object") {
-		var node = new Object();
+	// set default values
+	node.request_method = "GET";
+	node.request_async = true;
+	node.request_params = "";
+	node.request_headers = false;
+
+
+	// additional info passed to function as JSON object
+	if(typeof(settings) == "object") {
+		var argument;
+		for(argument in settings) {
+
+			switch(argument) {
+				case "method"	: node.request_method	= settings[argument]; break;
+				case "params"	: node.request_params	= settings[argument]; break;
+				case "async"	: node.request_async	= settings[argument]; break;
+				case "headers"	: node.request_headers	= settings[argument]; break;
+			}
+
+		}
 	}
 
 
-	node.url = url;
-	node.parameters = parameters ? parameters : "";
-// TODO: conflicts with json parameters
-//	node.parameters += (node.parameters && !node.parameters.substr(-1) == "&" ? "&" : "") + "ts=" + new Date().getTime();
-	node.method = method ? method : "GET";
-	node.async = async ? async : false;
-
-//	u.bug("###request###" + node.method + "###" + node.url)
-
 	// regular HTTP request
-	if(node.method.match(/GET|POST|PUT|PATCH/i)) {
+	if(node.request_method.match(/GET|POST|PUT|PATCH/i)) {
 
 		node.HTTPRequest = this.createRequestObject();
 		node.HTTPRequest.node = node;
 
 		// listen for async request state change
-		if(node.async) {
+		if(node.request_async) {
 			node.HTTPRequest.onreadystatechange = function() {
-				if(node.HTTPRequest.readyState == 4) {
+				if(this.readyState == 4) {
+					// process async response
 					u.validateResponse(this);
 				}
 			}
@@ -71,26 +51,44 @@ Util.Request = function(node, url, parameters, method, async) {
 
 		// perform request
 		try {
-//			u.bug("request url:" + node.url)
+			// perform GET request
+			if(node.request_method.match(/GET/i)) {
 
-			// TODO: adding parameters to url, on get - extend to check for ? and make nicer url
+				// convert JSON params to regular params, JSON cannot be sent as GET
+				var params = u.JSONtoParams(node.request_params);
 
-			if(node.method.match(/GET/i)) {
-				node.url += node.parameters ? ((!node.url.match(/\?/g) ? "?" : "&") + node.parameters) : "";
-				node.HTTPRequest.open(node.method, node.url, node.async);
+				// add params to url
+				node.request_url += params ? ((!node.request_url.match(/\?/g) ? "?" : "&") + params) : "";
+
+				node.HTTPRequest.open(node.request_method, node.request_url, node.request_async);
 				node.HTTPRequest.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 
 				// rails form proofing
 				var csfr_field = u.qs('meta[name="csrf-token"]');
 				if(csfr_field && csfr_field.content) {
 					node.HTTPRequest.setRequestHeader("X-CSRF-Token", csfr_field.content);
+				}
+
+				// add additional headers
+				if(typeof(node.request_headers) == "object") {
+					var header;
+					for(header in node.request_headers) {
+						node.HTTPRequest.setRequestHeader(header, node.request_headers[header]);
+					}
 				}
 
 				// send info
-				node.HTTPRequest.send();
+				// some older browser (Firefox 3 in paticular) requires a parameter for send - an empty string is enough
+				node.HTTPRequest.send("");
+
 			}
-			else if(node.method.match(/POST|PUT|PATCH/i)) {
-				node.HTTPRequest.open(node.method, node.url, node.async);
+			// perform POST, PUT or PATCH request
+			else if(node.request_method.match(/POST|PUT|PATCH/i)) {
+
+				// stringify possible JSON object
+				var params = typeof(node.request_params) == "object" ? JSON.stringify(node.request_params) : node.request_params;
+
+				node.HTTPRequest.open(node.request_method, node.request_url, node.request_async);
 				node.HTTPRequest.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 
 				// rails form proofing
@@ -99,38 +97,34 @@ Util.Request = function(node, url, parameters, method, async) {
 					node.HTTPRequest.setRequestHeader("X-CSRF-Token", csfr_field.content);
 				}
 
+				// add additional headers
+				if(typeof(node.request_headers) == "object") {
+					var header;
+					for(header in node.request_headers) {
+						node.HTTPRequest.setRequestHeader(header, node.request_headers[header]);
+					}
+				}
 
-//				u.bug("request parameters:" + typeof(node.parameters))
+				// send params
+				node.HTTPRequest.send(params);
 
-				node.HTTPRequest.send(node.parameters);
-//				node.HTTPRequest.send(node.parameters ? node.parameters : "test=fisk");
-//				node.HTTPRequest.send();
 			}
-
 		}
-		catch(e) {
-			u.bug("request exception:" + e);
-
+		// catch security exceptions and other exeptions
+		catch(exception) {
+//			u.bug("Request exc:" + exception)
+			node.HTTPRequest.exception = exception;
 			u.validateResponse(node.HTTPRequest);
 			return;
 		}
 
-		if(!async) {
-
-//			u.bug("request-25")
-
-
+		// process synchronous response
+		if(!node.request_async) {
 			u.validateResponse(node.HTTPRequest);
-	//		node.XMLResponse(u.validateResponse(XMLRequest, true));
 		}
-		
-
 	}
 	// request by script injection
-	else if(node.method.match(/SCRIPT/i)) {
-
-		// remember node
-		node.url = url;
+	else if(node.request_method.match(/SCRIPT/i)) {
 
 		// generate callback key
 		var key = u.randomString();
@@ -140,9 +134,6 @@ Util.Request = function(node, url, parameters, method, async) {
 		document[key].node = node;
 		document[key].responder = function(response) {
 
-//			u.bug("responder" + response)
-//			u.bug("responder" + JSON.stringify(response))
-
 			// make object to map node
 			var response_object = new Object();
 			response_object.node = this.node;
@@ -150,60 +141,52 @@ Util.Request = function(node, url, parameters, method, async) {
 			u.validateResponse(response_object);
 		}
 
+		// convert JSON params to regular params, JSON cannot be sent as GET
+		var params = u.JSONtoParams(node.request_params);
+
+		// add params to url
+		node.request_url += params ? ((!node.request_url.match(/\?/g) ? "?" : "&") + params) : "";
+		// add callback to url
+		node.request_url += (!node.request_url.match(/\?/g) ? "?" : "&") + "callback=document."+key+".responder";
+
 		// add JSON Request to HTML head
-
-		// TODO - parameters
-//		u.bug("append header");
-
-		u.ae(u.qs("head"), "script", ({"type":"text/javascript", "src":node.url + "?" + parameters + "&callback=document."+key+".responder"}));
-		
+		u.ae(u.qs("head"), "script", ({"type":"text/javascript", "src":node.request_url}));
 	}
 
-
 }
 
-Util.requestParameters = function() {
-	
-	u.bug("params:" + arguments.length)
-	
-}
-/*
-Util.Response = function(object) {
 
-	if(typeof(this.node.Response) == "function") {
-		u.validateResponse(response);
+// convert simple (first level only) JSON to parameter string
+Util.JSONtoParams = function(json) {
+	if(typeof(json) == "object") {
+		var params = "", param;
+		for(param in json) {
+			params += (params ? "&" : "") + param + "=" + json[param];
+		}
+		return params
 	}
-	
-	u.bug("###RESPONSE###");
-	u.bug("request.status:" + request.status);
 
+	var object = u.isStringJSON(json);
+	if(object) {
+		return u.JSONtoParams(object);
+	}
 
-	
-//	retuner response
+	return json;
 }
-*/
-//node.XMLResponse(u.validateResponse(XMLRequest, true));
 
 
-// test for JSON
-// TODO test object
-// ' | " - text string
-// ( | { - json
-// < - HTML
 
-Util.testResponseForJSON = function(responseText) {
+// is string valid JSON
+Util.isStringJSON = function(string) {
 
-//	u.bug("JSON test:" + responseText)
-
-	// JSON
-	if(responseText.trim().substr(0, 1).match(/[\{\[]/i) && responseText.trim().substr(-1, 1).match(/[\}\]]/i)) {
-//		u.bug("guessing JSON:" + responseText, "green");
+	// JSON hints
+	// ( | { - json
+	if(string.trim().substr(0, 1).match(/[\{\[]/i) && string.trim().substr(-1, 1).match(/[\}\]]/i)) {
+//		u.bug("guessing JSON:" + string, "green");
 		
 		try {
-//			u.bug("test JSON:" + responseText)
 			// test for json object()
-
-			var test = eval("("+responseText+")");
+			var test = JSON.parse(string);
 			if(typeof(test) == "object") {
 				test.isJSON = true;
 				return test;
@@ -211,176 +194,151 @@ Util.testResponseForJSON = function(responseText) {
 		}
 		// ignore exception
 		catch(exception) {}
-
 	}
 
 	// unknown response
 	return false;
-	
 }
 
+// is string valid HTML
+Util.isStringHTML = function(string) {
 
-Util.testResponseForHTML = function(responseText) {
-
-//	u.bug("html test")
-	// HTML
-	if(responseText.trim().substr(0, 1).match(/[\<]/i) && responseText.trim().substr(-1, 1).match(/[\>]/i)) {
-//		u.bug("guessing HTML", "green");// + u.htmlToText(responseText));
+	// HTML hints
+	// < - HTML
+	if(string.trim().substr(0, 1).match(/[\<]/i) && string.trim().substr(-1, 1).match(/[\>]/i)) {
+//		u.bug("guessing HTML" + string, "green");
 
 		// test for DOM
 		try {
-//			u.bug("test DOM")
 			var test = document.createElement("div");
-			test.innerHTML = responseText;
+			test.innerHTML = string;
 
-//			u.bug("childnodes:" + test.childNodes.length)
-//			u.bug("to:" + test + "::" + u.htmlToText(test.innerHTML))
 			// seems to be a valid test for now
 			if(test.childNodes.length) {
 
 				// sometimes if a head/body tag is actually sent from the server, we may need some of its information
 				// getting head/body info with regular expression on responseText
-
-				var body_class = responseText.match(/<body class="([a-z0-9A-Z_ ]+)"/);
+				var body_class = string.match(/<body class="([a-z0-9A-Z_ ]+)"/);
 				test.body_class = body_class ? body_class[1] : "";
-
-				var head_title = responseText.match(/<title>([^$]+)<\/title>/);
+				var head_title = string.match(/<title>([^$]+)<\/title>/);
 				test.head_title = head_title ? head_title[1] : "";
 
-
-//				u.bug("return HTML")
 				test.isHTML = true;
-
 				return test;
 			}
 		}
 		// ignore exception
 		catch(exception) {}
-
 	}
-
 
 	// unknown response
 	return false;
-	
 }
 
-Util.evaluateResponse = function(responseText) {
 
-//	u.bug("responseText:" + responseText);
+
+
+// evaluate responseText string
+// see what response contains
+Util.evaluateResponseText = function(responseText) {
 
 	var object;
 
-	// see what response contains
-
 	// already a JSON object (could be the response from a SCRIPT)
 	if(typeof(responseText) == "object") {
+		// u.bug("guessing object:" + responseText, "green");
+
 		responseText.isJSON = true;
-//		u.bug("guessing object:" + responseText, "green");
 		return responseText;
 	}
 	else {
 
-//		u.bug("to:" + typeof(responseText) + ":" + responseText.trim())
-//		u.bug("check by  " + responseText.substr(0, 1) + "  " + responseText.trim().substr(-1, 1), "red");
+		var response_string;
+
 		// quoted string (could be the response from SCRIPT, POST or GET)
 		if(responseText.trim().substr(0, 1).match(/[\"\']/i) && responseText.trim().substr(-1, 1).match(/[\"\']/i)) {
-//			u.bug("guessing quoted string:" + responseText, "green");
+			// u.bug("guessing quoted string:" + responseText, "red");
 
-				response_string = responseText.trim();
-
-//				u.bug("new term:" + response_string.substr(1, response_string.length-2));
-
-
-				var json = u.testResponseForJSON(response_string.substr(1, response_string.length-2));
-				if(json) {
-					return json;
-				}
-
-				var html = u.testResponseForHTML(response_string.substr(1, response_string.length-2));
-				if(html) {
-					return html;
-				}
-
-				return responseText;
-			
+			// remove quotes before testing content
+			response_string = responseText.trim().substr(1, responseText.trim().length-2);
 		}
-		
-		var json = u.testResponseForJSON(responseText);
+		else {
+			response_string = responseText;
+		}
+
+
+		// check for JSON
+		var json = u.isStringJSON(response_string);
 		if(json) {
 			return json;
 		}
-		
-		var html = u.testResponseForHTML(responseText);
+
+		// check for HTML
+		var html = u.isStringHTML(response_string);
 		if(html) {
 			return html;
 		}
 
+		// neither JSON or HTML, return original responseText
 		return responseText;
 
 	}
 
 }
 
-// Simple validation of response
-// automatically executes script elements
-// state = true = process complete
-// state = false = process error
-// returns content element
+// Simple validation of responseText
+// Makes callback to appropriate notifier
 Util.validateResponse = function(response){
+//	u.bug("validateResponse:" + response);
 
-//	u.bug("Validate:" + response);
-//	u.bug("Validate node:" + u.nodeId(response.node));
-//	u.listObjectContent(response);
+	var object = false;
 
-	var object;
-
-//	var div = document.createElement("div");
 	if(response) {
-//		alert(response);
 
+//		u.bug("response:" + response + ":" + u.nodeId(response.node) + ":" + response.status)
 
-//		u.bug("status:" + response.status);
-//		u.bug("responseText:" + response.responseText);
+		// u.bug("status:" + response.status + ":" + u.nodeId(response.node));
+		// u.bug("responseText:" + response.responseText);
 
-		// HTTP object from GET/POST
 		try {
-			if(response.status) {
-
-				// Accaptable response (Exclude known bads)
-				if(!response.status.toString().match(/403|404|500/)) {
-
-					object = u.evaluateResponse(response.responseText);
-
-	//				u.bug("response:" + object);
-
-				}
+			// valid response status
+			if(response.status && !response.status.toString().match(/403|404|500/)) {
+				object = u.evaluateResponseText(response.responseText);
 			}
-			// SCRIPT
-			else {
-
-				if(response.responseText) {
-
-					object = u.evaluateResponse(response.responseText);
-
-				}
-
-	//			u.bug(typeof(response));
-
-	//		 if(typeof(response) == "") {
-
+			// SCRIPT has no response.status
+			// is responseText available for evaluation
+			else if(response.responseText) {
+				object = u.evaluateResponseText(response.responseText);
 			}
-			
 		}
 		catch(exception) {
-			u.bug("HTTPRequest exection:" + e);
+			response.exception = exception;
+//			u.bug("HTTPRequest exection:" + exception);
 		}
 	}
 
-//	u.bug("ready to respond:" + response.node.className + ":" + typeof(response.node.Response))
 
-	if(typeof(response.node.Response) == "function") {
-		response.node.Response(object);
+	// did validation yield usable object
+	if(object) {
+
+		// callback to Response handler
+		if(typeof(response.node.Response) == "function") {
+			response.node.Response(object);
+		}
+		if(typeof(response.node.response) == "function") {
+			response.node.response(object);
+		}
+	}
+	else {
+
+		// callback to ResponseError handler
+		if(typeof(response.node.ResponseError) == "function") {
+			response.node.ResponseError(response);
+		}
+		if(typeof(response.node.responseError) == "function") {
+			response.node.responseError(response);
+		}
 	}
 
 }
+

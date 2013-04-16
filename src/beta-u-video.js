@@ -22,7 +22,6 @@ Util.videoPlayer = function(node) {
 
 
 	// HTML5 support
-//	if(typeof(player.video.play) == "function" && !u.explorer()) {
 	if(typeof(player.video.play) == "function") {
 
 		// load video
@@ -77,14 +76,14 @@ Util.videoPlayer = function(node) {
 		}
 
 		player.ff = function() {
-//			u.bug("ff:" + this.video.currentTime);
+//			u.bug("player.ff:" + this.video.currentTime);
 			if(this.video.src && this.video.currentTime && this.videoLoaded) {
 				this.video.currentTime = (this.video.duration - this.video.currentTime >= this.ff_skip) ? (this.video.currentTime + this.ff_skip) : this.video.duration;
 				this.video._timeupdate();
 			}
 		}
 		player.rw = function() {
-//			u.bug("rw:" + this.video.currentTime);
+//			u.bug("player.rw:" + this.video.currentTime);
 			if(this.video.src && this.video.currentTime && this.videoLoaded) {
 				this.video.currentTime = (this.video.currentTime >= this.rw_skip) ? (this.video.currentTime - this.rw_skip) : 0;
 				this.video._timeupdate();

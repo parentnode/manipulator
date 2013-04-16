@@ -23,22 +23,14 @@ Util.cutString = function(string, length) {
 	return string.substring(0, length) + (string.length > length ? "..." : "");
 }
 
-// extended random number generator
-Util.random = function(min, max) {
-	return Math.round((Math.random() * (max - min)) + min);
-}
-
-Util.randomKey = function(length) {
-	var key = "", i;
-
-	// default length 8
-	length = length ? length : 8;
-	
-	var pattern = "1234567890abcdefghijklmnopqrstuvwxyz".split('');
-	for(i = 0; i < length; i++) {
-		key += pattern[u.random(0,35)];
+// prefix string to length with prefix
+Util.prefix = function(string, length, prefix) {
+	string = string.toString();
+	prefix = prefix ? prefix : "0";
+	while(string.length < length) {
+		string = prefix + string;
 	}
-	return key;
+	return string;
 }
 
 Util.randomString = function(length) {

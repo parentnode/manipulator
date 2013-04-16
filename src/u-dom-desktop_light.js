@@ -3,6 +3,10 @@ Util.getComputedStyle = u.gcs = function(e, attribute) {
 	// query DOM to force update
 	e.offsetHeight;
 
+	if(attribute == "opacity" && e._opacity != undefined) {
+		return e._opacity;
+	}
+
 //	u.bug("gcs:" + attribute)
 	// return computed style if method is supported
 	if(document.defaultView && document.defaultView.getComputedStyle) {
@@ -135,6 +139,21 @@ Util.wrapElement = u.we = function(node, node_type, attributes) {
 		u.xInObject(attributes);
 	}
 	return false;
+}
+
+// get node textcontent shorthand (basically this is not needed for newer browsers, but required to align syntax for older browsers)
+// function could be made as prototype, but IE 7+6 does not support Object.defineProperty
+Util.textContent = u.text = function(node) {
+	if(node.textContent) {
+		return node.textContent;
+	}
+	else if(node.innerText) {
+		return node.innerText;
+	}
+	else {
+		// manually remove all HTML from node.innerHTML
+		return node.innerHTML.replace(/\<[^\>]*\>/g, "");
+	}
 }
 
 

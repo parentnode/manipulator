@@ -29,37 +29,40 @@ Util.nodeId = function(node, include_path) {
 // write output to screen
 Util.bug = function(message, corner, color) {
 	if(u.debugURL()) {
-		var option, options = new Array([0, "auto", "auto", 0], [0, 0, "auto", "auto"], ["auto", 0, 0, "auto"], ["auto", "auto", 0, 0]);
-		if(isNaN(corner)) {
-			color = corner;
-			corner = 0;
-		}
-		if(typeof(color) != "string") {
-			color = "black";
-		}
-		option = options[corner];
 
-		if(!u.qs("#debug_id_"+corner)) {
-			var d_target = u.ae(document.body, "div", {"class":"debug_"+corner, "id":"debug_id_"+corner});
-			d_target.style.position = u.bug_position ? u.bug_position : "absolute";
-			d_target.style.zIndex = 16000;
-			d_target.style.top = option[0];
-			d_target.style.right = option[1];
-			d_target.style.bottom = option[2];
-			d_target.style.left = option[3];
-			d_target.style.backgroundColor = u.bug_bg ? u.bug_bg : "#ffffff";
-			d_target.style.color = "#000000";
-			d_target.style.textAlign = "left";
-			if(d_target.style.maxWidth) {
-				d_target.style.maxWidth = u.bug_max_width ? u.bug_max_width+"px" : "auto";
+		if(!u.bug_console_only) {
+			var option, options = new Array([0, "auto", "auto", 0], [0, 0, "auto", "auto"], ["auto", 0, 0, "auto"], ["auto", "auto", 0, 0]);
+			if(isNaN(corner)) {
+				color = corner;
+				corner = 0;
 			}
-			d_target.style.padding = "3px";
-		}
+			if(typeof(color) != "string") {
+				color = "black";
+			}
+			option = options[corner];
 
-		if(typeof(message) != "string") {
-			message = message.toString();
+			if(!u.qs("#debug_id_"+corner)) {
+				var d_target = u.ae(document.body, "div", {"class":"debug_"+corner, "id":"debug_id_"+corner});
+				d_target.style.position = u.bug_position ? u.bug_position : "absolute";
+				d_target.style.zIndex = 16000;
+				d_target.style.top = option[0];
+				d_target.style.right = option[1];
+				d_target.style.bottom = option[2];
+				d_target.style.left = option[3];
+				d_target.style.backgroundColor = u.bug_bg ? u.bug_bg : "#ffffff";
+				d_target.style.color = "#000000";
+				d_target.style.textAlign = "left";
+				if(d_target.style.maxWidth) {
+					d_target.style.maxWidth = u.bug_max_width ? u.bug_max_width+"px" : "auto";
+				}
+				d_target.style.padding = "3px";
+			}
+
+			if(typeof(message) != "string") {
+				message = message.toString();
+			}
+			u.ae(u.qs("#debug_id_"+corner), "div", ({"style":"color: " + color})).innerHTML = message ? message.replace(/>/g, "&gt;").replace(/</g, "&lt;").replace(/&lt;br&gt;/g, "<br>") : "Util.bug with no message?";
 		}
-		u.ae(u.qs("#debug_id_"+corner), "div", ({"style":"color: " + color})).innerHTML = message ? message.replace(/>/g, "&gt;").replace(/</g, "&lt;").replace(/&lt;br&gt;/g, "<br>") : "Util.bug with no message?";
 		if(typeof(console) == "object") {
 			console.log(message);
 		}

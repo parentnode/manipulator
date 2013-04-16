@@ -18,9 +18,20 @@ if(document.all) {
 		}
 
 //		u.bug("handle event:" + u.nodeId(element) + ":" + window.event.type, "red");
-
+		// create fake element, because window.event cannot be modified
 		// update event with target attribute
-		window.event.target = element;
+		var win_event = new Object();
+		for(x in window.event) {
+			win_event[x] = window.event[x];
+		}
+//		window.event.target = element;
+		win_event.target = element;
+//		u.xInObject(win_event);
+//		u.bug("window.event.timeStamp a" + win_event.timeStamp)
+
+//		window.event.timeStamp = 100; //new Date().getTime();
+		win_event.timeStamp = new Date().getTime();
+//		u.bug("window.event.timeStamp b" + win_event.timeStamp)
 
 		// is all information available to execute event handling?
 		if(element && eid && window.attachedEvents[eid] && window.attachedEvents[eid][window.event.type]) {
@@ -29,12 +40,13 @@ if(document.all) {
 			var i, attachedAction;
 			for(i = 0; attachedAction = window.attachedEvents[eid][window.event.type][i]; i++) {
 
-//				u.bug("execute")
+//				u.bug("execute:" + u.nodeId(element) + ":" + attachedAction.toString().substring(0, 40))
 
 				// add function to element, to achieve "this" context
 				element.ie_event_action = attachedAction;
 				// execute function, sending modified event
-				element.ie_event_action(window.event);
+//				element.ie_event_action(window.event);
+				element.ie_event_action(win_event);
 			}
 
 		}
@@ -75,7 +87,7 @@ if(document.all) {
 
 			if(!eid) {
 				// generate event id and add to element, to be able to map event and element later
-				var eid = u.randomKey();
+				var eid = u.randomString();
 				u.ac(node, "eid:"+eid)
 			}
 		}

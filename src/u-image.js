@@ -6,7 +6,7 @@ Util.Image = u.i = new function() {
 	* @param e event return node
 	*/
 	this.load = function(node, src) {
-//		u.bug("load image: " + e + ", " + src);
+//		u.bug("load image: " + u.nodeId(node) + ", " + src);
 
 		// create new image
 		var image = new Image();
@@ -47,8 +47,13 @@ Util.Image = u.i = new function() {
 		if(typeof(this.node.loaded) == "function") {
 			this.node.loaded(event);
 		}
+
+//		delete this;
+//		this.src = "/img/mobile_touch/dot.gif";
+
 	}
 	this._error = function(event) {
+//		u.xInObject(event);
 		u.rc(this.node, "loading");
 		u.ac(this.node, "error");
 		// notify base

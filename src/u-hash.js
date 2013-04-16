@@ -26,7 +26,7 @@ Util.Hash = u.h = new function() {
 
 		// TODO: temp fix in plane - IE7 does not work
 
-		if("onhashchange" in window && !u.explorer(7, "<=")) {
+		if("onhashchange" in window && !u.browser("explorer", "<=7")) {
 //			u.bug("change")
 //			u.e.addEvent(window, "hashchange", function() {alert("fisk")});
 //			window.onhashchange = function() {alert("fisk")}

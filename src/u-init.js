@@ -1,23 +1,20 @@
 Util.Objects = u.o = new Object();
 
-Util.init = function() {
+Util.init = function(scope) {
 
-	var i, e, elements, ij_value;
-	elements = u.ges("i\:([_a-zA-Z0-9])+");
+	var i, node, nodes, object;
+	scope = scope && scope.nodeName ? scope : document;
 
-	for(i = 0; e = elements[i]; i++) {
-		while((ij_value = u.getIJ(e, "i"))) {
-//			u.bug("init:" + ij_value)
-			u.removeClass(e, "i:"+ij_value);
-			if(ij_value && typeof(u.o[ij_value]) == "object") {
-				u.o[ij_value].init(e);
+	nodes = u.ges("i\:([_a-zA-Z0-9])+");
+
+	for(i = 0; node = nodes[i]; i++) {
+		while((object = u.cv(node, "i"))) {
+			// u.bug("init:" + object)
+			u.rc(node, "i:"+object);
+			if(object && typeof(u.o[object]) == "object") {
+				u.o[object].init(node);
 			}
 		}
 	}
 
-	// enable mouse tracking
-	// u.tracePointer();
 }
-
-u.e.addEvent(window, "load", u.init);
-//window.onload = u.init;

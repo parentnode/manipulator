@@ -1,4 +1,4 @@
-JES-0.6
+JES-0.7
 ===
 
 Complete JavaScript library - 100% optimized for WhatTheFramework.org

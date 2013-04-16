@@ -13,7 +13,7 @@ pinch/zoom/rotate (later)
 *	e.start_input_y - start coord of touch input event
 *
 *	e.current_y - current coord of input
-*	e.element_y - calculated new coord of element relative to input
+*	e._y - calculated new coord of element relative to input
 *	e.offset_y - offset between events - to calcilated direction
 *
 
@@ -52,7 +52,7 @@ u.e.resetDragEvents = function(node) {
 
 /**
 * Detect overlap between element and target
-* Element is using internal position values element_x and element_y, allowing to test overlap, before moving element
+* Element is using internal position values _x and _y, allowing to test overlap, before moving element
 *
 * Default allows for partial overlap
 * set strict = true for complete overlap
@@ -166,6 +166,7 @@ u.e.drag = function(node, boundaries, settings) {
 
 	// additional info passed to function as JSON object
 	if(typeof(settings) == "object") {
+		var argument;
 		for(argument in settings) {
 
 			switch(argument) {
@@ -186,8 +187,11 @@ u.e.drag = function(node, boundaries, settings) {
 
 //	u.bug("boundaries:" + typeof(boundaries) + "::" + boundaries.constructor.toString());
 //	u.xInObject(boundaries);
-
-	if(boundaries.constructor.toString().match("Array")) {
+//	alert(boundaries.constructor);
+//	u.bug(boundaries.scopeName + "," + typeof(boundaries))
+	// use scopeName for old IE
+//	if(boundaries.constructor.toString().match("Array")) {
+	if((boundaries.constructor && boundaries.constructor.toString().match("Array")) || (boundaries.scopeName && boundaries.scopeName != "HTML")) {
 
 //		u.bug("boundaries are array")
 
@@ -202,7 +206,8 @@ u.e.drag = function(node, boundaries, settings) {
 
 	}
 	// boundaries is node
-	else if(boundaries.constructor.toString().match("HTML")) {
+//	else if(boundaries.constructor.toString().match("HTML")) {
+	else if((boundaries.constructor && boundaries.constructor.toString().match("HTML")) || (boundaries.scopeName && boundaries.scopeName == "HTML")) {
 
 //		u.bug("boundaries are node")
 
@@ -283,9 +288,6 @@ u.e.drag = function(node, boundaries, settings) {
 
 
 
-	node.element_x = node.element_x ? node.element_x : 0;
-	node.element_y = node.element_y ? node.element_y : 0;
-
 	node._x = node._x ? node._x : 0;
 	node._y = node._y ? node._y : 0;
 
@@ -308,20 +310,24 @@ u.e.drag = function(node, boundaries, settings) {
 * Calls return function element.picked to notify of event
 */
 u.e._pick = function(event) {
-//	u.bug("_pick:" + u.nodeId(this) + ":" + this.element_x);
+//	u.bug("_pick:" + u.nodeId(this) + ":" + this._x + " x " + this._y);
 
 
-	// reset inital events to avoid unintended bubbling
-	u.e.resetNestedEvents(this);
+	// reset inital events to avoid unintended bubbling - only reset if pick makes sense
+//	u.e.resetNestedEvents(this);
 
 
 	// detect if drag is relevant for element
 	// if only vertical drag is allowed, only react on vertical movements
 	// if only horisontal drag is allowed, only react on horisontal movements
 	// to do this we calculate the vertical and horisontal speeds
-	var init_speed_x = Math.abs(this.start_event_x - u.eventX(event) - u.scrollX());
-	var init_speed_y = Math.abs(this.start_event_y - u.eventY(event) - u.scrollY());
+//	var init_speed_x = Math.abs(this.start_event_x - u.eventX(event) - u.scrollX());
+//	var init_speed_y = Math.abs(this.start_event_y - u.eventY(event) - u.scrollY());
+	var init_speed_x = Math.abs(this.start_event_x - u.eventX(event));
+	var init_speed_y = Math.abs(this.start_event_y - u.eventY(event));
 
+	// u.bug("this.start_event_x:" + this.start_event_x + ",this.start_event_y:" + this.start_event_y)
+	// u.bug("u.eventX:" + u.eventX(event) + ",u.eventY:" + u.eventY(event))
 //	u.bug("initial speed:" + init_speed_x + "/" + init_speed_y);
 
 /*
@@ -350,6 +356,9 @@ y: 3 -> -2 = 5 (3 - -2)
 	   init_speed_x < init_speed_y && this.only_vertical ||
 	   !this.only_vertical && !this.only_horisontal) {
 
+		// reset inital events to avoid unintended bubbling if pick direction makes sense
+		u.e.resetNestedEvents(this);
+
 		// kill event to prevent dragging deeper element
 		// could possibly be forced into callback to allow for double drag (but don't see point at current time)
 	    u.e.kill(event);
@@ -361,9 +370,15 @@ y: 3 -> -2 = 5 (3 - -2)
 		this.move_last_x = this._x;
 		this.move_last_y = this._y;
 
-		// relative to screen
-		this.start_input_x = u.eventX(event) - this._x - u.scrollX(); 
-		this.start_input_y = u.eventY(event) - this._y - u.scrollY();
+		// relative to screen - compensate scroll-offset for fixed elements 
+		if(u.hasFixedParent(this)) {
+			this.start_input_x = u.eventX(event) - this._x - u.scrollX(); 
+			this.start_input_y = u.eventY(event) - this._y - u.scrollY();
+		}
+		else {
+			this.start_input_x = u.eventX(event) - this._x; 
+			this.start_input_y = u.eventY(event) - this._y;
+		}
 
 
 		// reset current speed
@@ -403,33 +418,27 @@ y: 3 -> -2 = 5 (3 - -2)
 u.e._drag = function(event) {
 //	u.bug("_drag:" + u.nodeId(this));
 
-//	u.bug("event.timeStamp:" + event.timeStamp);
-
-	// get comparison timestamp
-	// use this method for fallback version if event.timeStamp does not exist
-//	var timestamp = new Date().getTime();
-
-
-	// If timedelay is kept
-	// Time delay prevents slow animation by overloading the browser with events
-	// The value can be adjusted with light animations
-//	if(timestamp - this.move_timestamp > this.process_time) {
-
-
 	// Get current input coordinates relative to starting point
-	this.current_x = u.eventX(event) - this.start_input_x - u.scrollX();
-	this.current_y = u.eventY(event) - this.start_input_y - u.scrollY();
+	if(u.hasFixedParent(this)) {
+		this.current_x = u.eventX(event) - this.start_input_x - u.scrollX();
+		this.current_y = u.eventY(event) - this.start_input_y - u.scrollY();
+	}
+	else {
+		this.current_x = u.eventX(event) - this.start_input_x;
+		this.current_y = u.eventY(event) - this.start_input_y;
+	}
 
-	// current speed per second
-	
 
 	// TODO: error - when locked, speed is calculated from start drag point, should always be speed since last event
+	// this.current_xps = Math.round(((this.current_x - this._x) / (event.timeStamp - this.move_timestamp)) * 1000);
+	// this.current_yps = Math.round(((this.current_y - this._y) / (event.timeStamp - this.move_timestamp)) * 1000);
 
+	// current speed per second
 	this.current_xps = Math.round(((this.current_x - this.move_last_x) / (event.timeStamp - this.move_timestamp)) * 1000);
 	this.current_yps = Math.round(((this.current_y - this.move_last_y) / (event.timeStamp - this.move_timestamp)) * 1000);
+//	u.bug(this.current_x + ":" + this.move_last_x + ":" + event.timeStamp + ":" + this.move_timestamp)
+//	u.bug("this.current_xps:" + this.current_xps + " x " + "this.current_yps:" + this.current_yps)
 
-	// this.current_xps = Math.round(((this.current_x - this.element_x) / (event.timeStamp - this.move_timestamp)) * 1000);
-	// this.current_yps = Math.round(((this.current_y - this.element_y) / (event.timeStamp - this.move_timestamp)) * 1000);
 
 	// remember current move time for next event
 	this.move_timestamp = event.timeStamp;
@@ -458,21 +467,21 @@ u.e._drag = function(event) {
 		if(this.current_xps && (Math.abs(this.current_xps) > Math.abs(this.current_yps) || this.only_horisontal)) {
 			if(this.current_xps < 0) {
 				this.swiped = "left";
-	//			u.bug("swiped left")
+//				u.bug("swiped left")
 			}
 			else {
 				this.swiped = "right";
-	//			u.bug("swiped right")
+//				u.bug("swiped right")
 			}
 		}
 		else if(this.current_yps && (Math.abs(this.current_xps) < Math.abs(this.current_yps) || this.only_vertical)) {
 			if(this.current_yps < 0) {
 				this.swiped = "up";
-	//			u.bug("swiped up")
+//				u.bug("swiped up")
 			}
 			else {
 				this.swiped = "down";
-	//			u.bug("swiped down")
+//				u.bug("swiped down")
 			}
 		}
 	}
@@ -480,13 +489,13 @@ u.e._drag = function(event) {
 
 	// only perform overlap test and movement if the drag element is not locked
 	if(!this.locked) {
-
+//		u.bug("not locked")
 
 		// Move element if strict boundaries are kept
 		if(u.e.overlap(this, [this.start_drag_x, this.start_drag_y, this.end_drag_x, this.end_drag_y], true)) {
 //			u.bug("in scope");
 
-//			u.bug("translate:" + this.element_x+","+ this.element_y)
+//			u.bug("translate:" + this._x+","+ this._y)
 			u.a.translate(this, this._x, this._y);
 
 		}
@@ -495,6 +504,7 @@ u.e._drag = function(event) {
 
 		// elastica - boundaries can be crossed with elastica
 		else if(this.drag_elastica) {
+//			u.bug("out of scope, with elastica")
 
 			// reset detected swipe
 			this.swiped = false;
@@ -509,7 +519,7 @@ u.e._drag = function(event) {
 			// correct overflow
 			// if overflow found:
 			// - get offset (corrected for allowed offset)
-			// - set correct element_x (for snapback function on drop)
+			// - set correct _x (for snapback function on drop)
 			// - set temorary element x (calculated by drag, allowed_offset and elestica)
 			// right out of scope and not locked vertically
 			if(!this.only_vertical && this._x < this.start_drag_x) {
@@ -529,7 +539,7 @@ u.e._drag = function(event) {
 
 			// top out of scope
 			if(!this.only_horisontal && this._y < this.start_drag_y) {
-				offset = this.element_y < this.start_drag_y - this.drag_elastica ? - this.drag_elastica : this._y - this.start_drag_y;
+				offset = this._y < this.start_drag_y - this.drag_elastica ? - this.drag_elastica : this._y - this.start_drag_y;
 				this._y = this.start_drag_y;
 				this.current_y = this._y + offset + (Math.round(Math.pow(offset, 2)/this.drag_elastica));
 //				u.bug("oos0"+offset);
@@ -549,7 +559,7 @@ u.e._drag = function(event) {
 			// if offset found, move to these coordinates
 			if(offset) {
 //				u.bug("offset"+offset)
-//				u.bug("offset:" + this.element_x+","+ this.element_y)
+//				u.bug("offset:" + this._x+","+ this._y)
 				u.a.translate(this, this.current_x, this.current_y);
 			}
 
@@ -600,7 +610,7 @@ u.e._drag = function(event) {
 * Calls return function element.dropped to notify of event
 */
 u.e._drop = function(event) {
-//	u.bug("_drop:" + event.type);
+//	u.bug("_drop:" + ":" + u.nodeId(this) + event.type + ":" + this.swiped);
 
 	// reset events to prepare for new drag
 	u.e.resetEvents(this);
@@ -634,7 +644,7 @@ u.e._drop = function(event) {
 
 	// projection is enabled
 	else if(!this.drag_strict && !this.locked) {
-
+//		u.bug("if(!this.drag_strict && !this.locked)");
 
 		// block init values
 		// this.start_input_x = false;
@@ -720,9 +730,6 @@ u.e.swipe = function(node, boundaries, settings) {
 u.e.scroll = function(e) {
 	e.e_scroll = true;
 
-	e.element_x = e.element_x ? e.element_x : 0;
-	e.element_y = e.element_y ? e.element_y : 0;
-
 	e._x = e._x ? e._x : 0;
 	e._y = e._y ? e._y : 0;
 
@@ -807,7 +814,7 @@ u.e._scrollEnd = function(event) {
 // 
 // 	if(this.start_input_x && this.start_input_y) {
 // 
-// //		u.bug("dtl", this.element_x+":"+this.element_y+":"+this.current_x+":"+this.current_y);
+// //		u.bug("dtl", this._x+":"+this._y+":"+this.current_x+":"+this.current_y);
 // 
 // 		input_x = event.targetTouches ? event.targetTouches[0].pageX : event.pageX;
 // 		input_y = event.targetTouches ? event.targetTouches[0].pageY : event.pageY;
@@ -833,8 +840,8 @@ u.e._scrollEnd = function(event) {
 // 			offset_y = input_y - this.current_y;
 // 		}
 // 
-// 		u.a.translate(this, (this.element_x+offset_x), (this.element_y+offset_y));
-// //		u.bug("dtl", this.element_x+"x"+this.element_y+":"+this.current_x+"x"+this.current_y+"::"+input_x+"x"+input_y);
+// 		u.a.translate(this, (this._x+offset_x), (this._y+offset_y));
+// //		u.bug("dtl", this._x+"x"+this._y+":"+this.current_x+"x"+this.current_y+"::"+input_x+"x"+input_y);
 // 
 // 	}
 // }
