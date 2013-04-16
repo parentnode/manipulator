@@ -14,8 +14,9 @@ this.transition = function(e, transition) {
 		// reset running animations?
 		// u.t.resetTimer(e.t_transition);
 	}
+
 	// update dom
-	e.offsetHeight;
+//	e.offsetHeight;
 }
 
 
@@ -52,8 +53,6 @@ u.a.setOpacity = function(e, opacity) {
 
 			// CSS
 			u.as(this, "opacity", new_opacity);
-			// IE 8
-			this.style.filter='progid:DXImageTransform.Microsoft.Alpha(Opacity=' + (new_opacity*100) + ')';
 		}
 
 		for(var i = 0; i < e.o_transitions; i++) {
@@ -72,7 +71,6 @@ u.a.setOpacity = function(e, opacity) {
 	else {
 		
 		e.style.opacity = opacity;
-		e.style.filter='progid:DXImageTransform.Microsoft.Alpha(Opacity=' + (opacity*100) + ')';
 	}
 
 	e._opacity = opacity;
@@ -187,6 +185,107 @@ u.a.setHeight = function(e, height) {
 }
 
 
+u.a.setBgPos = function(node, x, y) {
+
+//	x = (x.toString().match(/auto|center|top|left|bottom|right/) ? x : (x.toString().match(/\%/) ? x : x + "px"));
+//	y = (y.toString().match(/auto|center|top|left|bottom|right/) ? y : (y.toString().match(/\%/) ? y : y + "px"));
+
+	// duration and transition not supported
+	if(node.duration && !this.support()) {
+
+		node._bg_same_x = false;
+		node._bg_same_y = false;
+		node.bg_transitions = node.duration/50;
+//		u.bug(e._height)
+		// set up transition values
+		// u.bug("pos:" + u.gcs(node, "background-position-y"))
+		// u.bug("x:" + u.gcs(node, "background-position").split(" ")[0])
+		// u.bug("y:" + u.gcs(node, "background-position").split(" ")[1])
+		if(u.gcs(node, "background-position-x") != x) {
+			node.bg_start_x = node._bg_x ? node._bg_x : u.gcs(node, "background-position-x").replace("px", "");
+			node.bg_change_x = (x - node.bg_start_x) / node.bg_transitions;
+		}
+		else {
+			node._bg_same_x = true;
+		}
+
+		if(u.gcs(node, "background-position-y") != y) {
+			node.bg_start_y = node._bg_y ? node._bg_y : u.gcs(node, "background-position-y").replace("px", "");
+			node.bg_change_y = (y - node.bg_start_y) / node.bg_transitions;
+		}
+		else {
+			node._bg_same_y = true;
+		}
+
+
+//		u.bug("set bgpos:" + y + ":" + node._bg_same_y + ":" + node.bg_start_y)
+
+		node.bg_progress = 0;
+
+		// transition handler
+		node.bg_transitionTo = function() {
+			++this.bg_progress;
+
+			var new_x, new_y;
+			if(!this._bg_same_x) {
+				new_x = Math.round((Number(this.bg_start_x) + Number(this.bg_progress * this.bg_change_x)));
+			}
+			else {
+				new_x = this._bg_x;
+			}
+
+			if(!this._bg_same_y) {
+				new_y = Math.round((Number(this.bg_start_y) + Number(this.bg_progress * this.bg_change_y)));
+			}
+			else {
+				new_y = this._bg_y;
+			}
+			
+
+//			u.bug("new:" + new_x + ":" + new_y);
+
+//			u.bug("new height:" + (this.id ? this.id : this.className) + ":" + new_height + ":" + Number(this.h_start) + "+"+ this.h_progress +"*"+ this.h_change);
+
+			// CSS
+//			u.bug("value:" + (new_x.toString().match(/\%|top|left|right|center|bottom/) ? new_x : new_x + "px") + " " + (new_y.toString().match(/\%|top|left|right|center|bottom/) ? new_y : new_y + "px"));
+			u.as(this, "backgroundPosition", (new_x.toString().match(/\%|top|left|right|center|bottom/) ? new_x : new_x + "px") + " " + (new_y.toString().match(/\%|top|left|right|center|bottom/) ? new_y : new_y + "px"));
+//			u.bug("background:" + u.gcs(this, "background-position"));
+			this.offsetHeight;
+		}
+
+		// same coords, no transition
+		if(!node._bg_same_x || !node._bg_same_x) {
+			// set transition timers
+			for(var i = 0; i < node.bg_transitions; i++) {
+				u.t.setTimer(node, node.bg_transitionTo, 50 * i);
+			}
+
+			// callback to transition end handler
+			// set it initially with full duration instead of calling on last "frame"
+			if(typeof(node.transitioned) == "function") {
+				u.t.setTimer(node, node.transitioned, node.duration);
+			}
+		}
+
+
+	}
+	// no duration or transition support
+	else {
+//		var height_px = (height == "auto" ? height : height+"px");
+		u.as(node, "backgroundPosition", (x.toString().match(/\%|top|left|right|center|bottom/) ? x : x + "px") + " " + (y.toString().match(/\%|top|left|right|center|bottom/) ? y : y + "px"));
+//		u.as(node, "backgroundPosition", x + " " + y);
+//		e.style.height = height;
+	}
+
+
+	node._bg_x = x;
+	node._bg_y = y;
+	node.transition_timestamp = new Date().getTime();
+
+	// update dom
+	node.offsetHeight;
+}
+
 /**
 *
 */
@@ -202,14 +301,33 @@ u.a.translate = function(e, x, y) {
 	if(e.translate_offset_x == undefined) {
 		
 		// first get element offset to first relative parent
-		e.translate_offset_x = u.relX(e);
-		e.translate_offset_y = u.relY(e);
+		var abs_left = u.gcs(e, "left");
+		var abs_top = u.gcs(e, "top");
+
+		if(abs_left.match(/px/)) {
+			e.translate_offset_x = parseInt(abs_left);
+		}
+		else {
+			e.translate_offset_x = u.relX(e);
+		}
+		if(abs_top.match(/px/)) {
+			e.translate_offset_y = parseInt(abs_top);
+		}
+		else {
+			e.translate_offset_y = u.relY(e);
+		}
+
+//		u.bug("abs_left:" + u.nodeId(e) + ":" + abs_left)
+
 
 		// set internal coordinate value
 		e.element_x = e.element_x ? e.element_x : 0;
 		e.element_y = e.element_y ? e.element_y : 0;
 
-//		u.bug("e.element_x:" + e.element_x + ": e.t_offset_x:" + e.t_offset_x);
+		e._x = e._x ? e._x : 0;
+		e._y = e._y ? e._y : 0;
+
+//		u.bug("e.element_x:" + e.element_x + ": e.t_offset_x:" + e.translate_offset_x + "::" + u.nodeId(e));
 
 		// safe guard if device has transitions - to avoid double transitions
 		if(this.support()) {
@@ -218,11 +336,11 @@ u.a.translate = function(e, x, y) {
 		}
 
 		// set new absolute coordinates
-		u.as(e, "left", e.translate_offset_x+"px");
-		u.as(e, "top", e.translate_offset_y+"px");
+//		u.as(e, "left", e.translate_offset_x+"px");
+//		u.as(e, "top", e.translate_offset_y+"px");
 
 		// set position absolute
-		u.as(e, "position", "absolute");
+//		u.as(e, "position", "absolute");
 
 //		u.bug("init translate:" + e.t_offset_x + ":" + e.element_x + "::" + e.t_offset_y + ":" + e.element_y)
 	}
@@ -233,8 +351,8 @@ u.a.translate = function(e, x, y) {
 //		u.bug("translate with duration:" + u.nodeId(e) + ": dur:" + e.duration + ": x" + x + ": y:" + y);
 
 		// calculate transition
-		e.x_start = e.element_x;
-		e.y_start = e.element_y;
+		e.x_start = e._x;
+		e.y_start = e._y;
 		e.translate_transitions = e.duration/25;
 		e.translate_progress = 0;
 		e.x_change = (x - e.x_start) / e.translate_transitions;
@@ -247,13 +365,18 @@ u.a.translate = function(e, x, y) {
 		e.translate_transitionTo = function(event) {
 			++this.translate_progress;
 
-			var new_x = (Number(this.x_start) + Number(this.translate_progress * this.x_change) + this.translate_offset_x);
-			var new_y = (Number(this.y_start) + Number(this.translate_progress * this.y_change) + this.translate_offset_y);
+			var new_x = (Number(this.x_start) + Number(this.translate_progress * this.x_change));
+			var new_y = (Number(this.y_start) + Number(this.translate_progress * this.y_change));
+
+			// var new_x = (Number(this.x_start) + Number(this.translate_progress * this.x_change) + this.translate_offset_x);
+			// var new_y = (Number(this.y_start) + Number(this.translate_progress * this.y_change) + this.translate_offset_y);
 
 //			u.bug("transition move:" + u.nodeId(this) + ":" + u.nodeId(this.parentNode) + ": new_x:" + new_x + ": new_y:" + new_y);
 
-			u.as(e, "left", new_x + "px");
-			u.as(e, "top", new_y + "px");
+			e.style["msTransform"] = "translate("+ new_x + "px, " + new_y +"px)";
+
+//			u.as(e, "left", new_x + "px");
+//			u.as(e, "top", new_y + "px");
 
 			// test
 			if(this.translate_progress < this.translate_transitions) {
@@ -290,9 +413,10 @@ u.a.translate = function(e, x, y) {
 	else {
 
 //		u.bug("direct move or support:" + (e.t_offset_x + x) + "::" + (e.t_offset_y + y))
+		e.style["msTransform"] = "translate("+ x + "px, " + y +"px)";
 
-		u.as(e, "left", (e.translate_offset_x + x)+"px");
-		u.as(e, "top", (e.translate_offset_y + y)+"px");
+//		u.as(e, "left", (e.translate_offset_x + x)+"px");
+//		u.as(e, "top", (e.translate_offset_y + y)+"px");
 
 	}
 
@@ -300,6 +424,8 @@ u.a.translate = function(e, x, y) {
 	// remember value for cross method compability
 	e.element_x = x;
 	e.element_y = y;
+	e._x = x;
+	e._y = y;
 	e.transition_timestamp = new Date().getTime();
 
 	// update dom

@@ -5,17 +5,24 @@ Util.Image = u.i = new function() {
 	*
 	* @param e event return node
 	*/
-	this.load = function(e, src) {
+	this.load = function(node, src) {
 //		u.bug("load image: " + e + ", " + src);
 
 		// create new image
 		var image = new Image();
-		image.e = e;
+		image.node = node;
 
-		u.addClass(e, "loading");
+		u.ac(node, "loading");
 	    u.e.addEvent(image, 'load', u.i._loaded);
 
+		u.e.addEvent(image, 'error', u.i._error);
+
+//	TODO: error handling?? missing image or other errors
+//		u.e.addEvent(image, 'data', u.i._debug);
+
+
 //		u.bug("image load:" + image.onload)
+//		u.e.addEvent(image, 'error', u.i._debug);
 //		u.e.addEvent(image, 'data', u.i._debug);
 //		u.e.addEvent(image, 'progress', u.i._debug);
 //		u.e.addEvent(image, 'done', u.i._debug);
@@ -35,12 +42,23 @@ Util.Image = u.i = new function() {
 	*
 	*/
 	this._loaded = function(event) {
-		u.removeClass(this.e, "loading");
+		u.rc(this.node, "loading");
 		// notify base
-		if(typeof(this.e.loaded) == "function") {
-			this.e.loaded(event);
+		if(typeof(this.node.loaded) == "function") {
+			this.node.loaded(event);
 		}
-		
+	}
+	this._error = function(event) {
+		u.rc(this.node, "loading");
+		u.ac(this.node, "error");
+		// notify base
+		// fallback to loaded if no failed callback function declared 
+		if(typeof(this.node.loaded) == "function" && typeof(this.node.failed) != "function") {
+			this.node.loaded(event);
+		}
+		else if(typeof(this.node.failed) == "function") {
+			this.node.failed(event);
+		}
 	}
 
 	// ???
@@ -48,14 +66,15 @@ Util.Image = u.i = new function() {
 
 		u.bug("progress")
 		// notify base
-		if(typeof(this.e.progress) == "function") {
-			this.e.progress(event);
+		if(typeof(this.node.progress) == "function") {
+			this.node.progress(event);
 		}
 		
 	}
 
 	this._debug = function(event) {
 		u.bug("event:" + event.type);
+		u.xInObject(event);
 	}
 
 }

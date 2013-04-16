@@ -1,13 +1,12 @@
 // limits length of string and adds dots
 Util.cutString = function(string, length) {
-	var matches, i;
+	var matches, match, i;
 	
 	if(string.length <= length) {
 		return string;
 	}
 	else {
-		
-	length = length-3;
+		length = length-3;
 	}
 	// find entity matches
 	matches = string.match(/\&[\w\d]+\;/g);

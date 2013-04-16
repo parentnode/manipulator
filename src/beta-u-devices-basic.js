@@ -167,10 +167,42 @@ u.deviceDetection = function() {
 		document.body.appendChild(img);
 	}
 
+//	u.qs(".scene").innerHTML = string.replace(/\n/g, "<br>");
 
-}
+	// string += "navigator.vendor: " + navigator.vendor + "\n";
+	// string += "navigator.appCodeName: " + navigator.appCodeName + "\n";
+	// string += "navigator.appName: " + navigator.appName + "\n";
+	// string += "navigator.appVersion: " + navigator.appVersion + "\n";
+	// string += "navigator.product: " + navigator.product + "\n";
+	// string += "navigator.geolocation: " + navigator.geolocation + "\n";
 
+	// 
+	// webkitTransition > 532.9
+	// 
+	// prøv at sætte og læse css klasser med prefix
+	// 
+	// push-state
+	// navigator.vendor
+	// XMLHttpRequest
+	// 
+	// function getIEVersion(odoc){
+	// 
+	// if (odoc.body.style.scrollbar3dLightColor!=undefined)
+	// 
+	//  {
+	// 
+	//  if (odoc.body.style.opacity!=undefined) {return '9';} // IE9
+	// 
+	//  else if (odoc.body.style.msBlockProgression!=undefined) {return '8';} // IE8
+	// 
+	//  else if (odoc.body.style.msInterpolationMode!=undefined) {return '7';} // IE7
+	// 
+	//  else if (odoc.body.style.textOverflow!=undefined) {return '6'} //IE6
+	// 
+	//  else {return 'IE5.5';} // or lower
+	// 
+	//  }
+	// 
+	// }
 
-if(navigator.userAgent.match(/zxing|silly\_that/i)) {
-	u.deviceDetection();
 }

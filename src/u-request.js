@@ -35,7 +35,6 @@ Util.createRequestObject = function(type) {
 * @param parameters
 * @param method POST, GET or SCRIPT. Default GET
 * @param async Run request syncronious of asyncronious. Default false
-* @param accept Accept type for response
 */
 
 Util.Request = function(node, url, parameters, method, async) {
@@ -44,6 +43,7 @@ Util.Request = function(node, url, parameters, method, async) {
 	if(typeof(node) != "object") {
 		var node = new Object();
 	}
+
 
 	node.url = url;
 	node.parameters = parameters ? parameters : "";
@@ -329,8 +329,8 @@ Util.evaluateResponse = function(responseText) {
 // returns content element
 Util.validateResponse = function(response){
 
-//	u.bug("Validate:" + response)
-//	u.bug("Validate node:" + response.node)
+//	u.bug("Validate:" + response);
+//	u.bug("Validate node:" + u.nodeId(response.node));
 //	u.listObjectContent(response);
 
 	var object;

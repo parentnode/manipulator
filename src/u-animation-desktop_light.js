@@ -202,7 +202,7 @@ u.a.setHeight = function(e, height) {
 u.a.translate = function(e, x, y) {
 	var i;
 
-//	u.bug("translate desktop_light:" + (e.id ? e.id : e.className) + ":" + x + "x" + y);
+//	u.bug("translate desktop_light:" + u.nodeId(e) + ":" + x + "x" + y);
 
 	// first translation?
 	if(e.translate_offset_x == undefined) {
@@ -214,6 +214,9 @@ u.a.translate = function(e, x, y) {
 		// set internal coordinate value
 		e.element_x = e.element_x ? e.element_x : 0;
 		e.element_y = e.element_y ? e.element_y : 0;
+
+		e._x = e._x ? e._x : 0;
+		e._y = e._y ? e._y : 0;
 
 //		u.bug("e.element_x:" + e.element_x + ": e.t_offset_x:" + e.t_offset_x);
 
@@ -227,6 +230,7 @@ u.a.translate = function(e, x, y) {
 		u.as(e, "left", e.translate_offset_x+"px");
 		u.as(e, "top", e.translate_offset_y+"px");
 
+
 		// set position absolute
 		u.as(e, "position", "absolute");
 
@@ -239,8 +243,8 @@ u.a.translate = function(e, x, y) {
 //		u.bug("translate with duration:" + u.nodeId(e) + ": dur:" + e.duration + ": x" + x + ": y:" + y);
 
 		// calculate transition
-		e.x_start = e.element_x;
-		e.y_start = e.element_y;
+		e.x_start = e._x;
+		e.y_start = e._y;
 		e.translate_transitions = e.duration/100;
 		e.translate_progress = 0;
 		e.x_change = (x - e.x_start) / e.translate_transitions;
@@ -292,6 +296,7 @@ u.a.translate = function(e, x, y) {
 	else {
 
 //		u.bug("direct move or support:" + (e.t_offset_x + x) + "::" + (e.t_offset_y + y))
+//		alert("3 e.translate_offset_x:" + e.translate_offset_x + "+" + x);
 
 		u.as(e, "left", (e.translate_offset_x + x)+"px");
 		u.as(e, "top", (e.translate_offset_y + y)+"px");
@@ -302,6 +307,8 @@ u.a.translate = function(e, x, y) {
 	// remember value for cross method compability
 	e.element_x = x;
 	e.element_y = y;
+	e._x = x;
+	e._y = y;
 	e.transition_timestamp = new Date().getTime();
 
 	// update dom

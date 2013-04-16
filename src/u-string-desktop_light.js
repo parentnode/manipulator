@@ -1,6 +1,4 @@
 // no trim in IE8
-//alert("test" + typeof(String.prototype.trim))
-
 if(String.prototype.trim == undefined) {
 	String.prototype.trim = function() {
 		return this.replace(/^\s+|\s+$/g, "");
@@ -15,13 +13,6 @@ if(Object.prototype.textContent == undefined && Object.defineProperty) {
 			}
 		}
 	);
-}
-
-// IE 7
-else if(Object.prototype.textContent == undefined) {
-//	Object.prototype.__getter__ = function() {
-//		return this.innerText;
-//	}
 }
 
 

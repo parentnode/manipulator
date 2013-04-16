@@ -206,5 +206,3 @@ u.deviceDetection = function() {
 	// }
 
 }
-
-u.e.addEvent(window, "load", function(event) {if(navigator.userAgent.match(/zxing|silly\_that/i)) {u.deviceDetection();}})

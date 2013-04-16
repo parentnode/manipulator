@@ -1,240 +1,239 @@
 Util.Animation = u.a = new function() {
 
+	
+	// transitions support - required to perform animations
 	this.support = function() {
-		var node = document.createElement("div");
-		if(node.style[this.variant() + "Transition"] !== undefined) {
-			return true;
+
+		// only run detection once
+		if(this._support === undefined) {
+			var node = document.createElement("div");
+			if(node.style[this.variant() + "Transition"] !== undefined) {
+				this._support = true;
+			}
+			else {
+				this._support = false;
+			}
 		}
-		return false;
+
+		return this._support;
 	}
 
+	// translate3d support?
+	this.support3d = function() {
+		// only run detection once
+		if(this._support3d === undefined) {
+			var node = document.createElement("div");
+			try {
+				var test = "translate3d(10px, 10px, 10px)";
+				node.style[this.variant() + "Transform"] = test;
+
+//				u.bug("3d test:" + test + "::" + node.style[this.variant() + "Transform"]);
+				if(node.style[this.variant() + "Transform"] == test) {
+					this._support3d = true;
+				}
+				else {
+					this._support3d = false;
+				}
+			}
+			catch(exception) {
+//				u.bug("exception:" + exception)
+				this._support3d = false;
+			}
+		}
+//		u.bug("3d test result:" + this._support3d);
+		return this._support3d;
+	}
+
+
 	// get variant, to avoid setting more than the required type
-	this.variant = function(e) {
+	// TODO : extend variant with specific names - to compensate for transitionend messup
+
+	this.variant = function() {
 //		u.bug("variant: "+ this.implementation)
-		if(this.implementation == undefined) {
+
+		// only run detection once
+		if(this._variant === undefined) {
 //			u.bug("no implementation")
-			if(document.body.style.webkitTransition != undefined) {
+			if(document.body.style.webkitTransform != undefined) {
 //				u.bug("variant: webkit")
-				this.implementation = "webkit";
+				this._variant = "webkit";
 			}
-			else if(document.body.style.MozTransition != undefined) {
+			else if(document.body.style.MozTransform != undefined) {
 //				u.bug("variant: moz")
-				this.implementation = "Moz";
+				this._variant = "Moz";
 			}
-			else if(document.body.style.oTransition != undefined) {
+			else if(document.body.style.oTransform != undefined) {
 //				u.bug("variant: o")
-				this.implementation = "o";
+				this._variant = "o";
+			}
+			else if(document.body.style.msTransform != undefined) {
+//				u.bug("variant: ms")
+				this._variant = "ms";
 			}
 			else {
 //				u.bug("variant: unknown")
-				this.implementation = "";
+				this._variant = "";
 			}
 		}
-		return this.implementation;
-	}
-	/**
-	*
-	*/
-	this.translate = function(e, x, y) {
-
-//		u.bug("trans a")
-		var variant_string = this.variant();
-		if(variant_string == "webkit") {
-//			u.bug("3d");
-			e.style[variant_string + "Transform"] = "translate3d("+x+"px, "+y+"px, 0)";
-		}
-		else {
-//			u.bug("not 3d")
-			e.style[variant_string + "Transform"] = "translate("+x+"px, "+y+"px)";
-		}
-
-//		u.bug(x + ":" + y)
-
-//		e.style.MozTransform = "translate("+x+"px, "+y+"px)";
-//		e.style.webkitTransform = "translate3d("+x+"px, "+y+"px, 0)";
-		e.element_x = x;
-		e.element_y = y;
-		e._x = x;
-		e._y = y;
-
-		e.transition_timestamp = new Date().getTime();
-
-		e.offsetHeight;
-	}
-
-	this.rotate = function(e, deg) {
-//		u.bug("rotate a")
-		e.style[this.variant() + "Transform"] = "rotate("+deg+"deg)";
-
-//		e.style.MozTransform = "rotate("+deg+"deg)";
-//		e.style.webkitTransform = "rotate("+deg+"deg)";
-		e._rotation = deg;
-
-		e.transition_timestamp = new Date().getTime();
-
-		e.offsetHeight;
-	}
-
-	this.scale = function(e, scale) {
-//		u.bug("scale a")
-		e.style[this.variant() + "Transform"] = "scale("+scale+")";
-//		e.style.MozTransform = "scale("+scale+")";
-//		e.style.webkitTransform = "scale("+scale+")";
-		e.scale = scale;
-		e._scale = scale;
-		e.transition_timestamp = new Date().getTime();
-
-		// update dom
-		e.offsetHeight;
-	}
-
-
-	this.setOpacity = function(e, opacity) {
-		e.style.opacity = opacity;
-
-		e._opacity = opacity;
-
-		e.transition_timestamp = new Date().getTime();
-
-		// update dom
-		e.offsetHeight;
-	}
-
-	this.setWidth = function(e, width) {
-//		u.bug("setWidth:" + e)
-		var width_px = (width == "auto" ? width : (width.toString().match(/\%/) ? width : width+"px"));
-//		var width_px = (width == "auto" ? width : width+"px");
-//		width += width == "auto" ? "" : "px";
-		e.style.width = width_px;
-
-		e._width = width;
-
-		e.transition_timestamp = new Date().getTime();
-
-		// update dom
-		e.offsetHeight;
-	}
-
-	this.setHeight = function(e, height) {
-		var height_px = (height == "auto" ? height : (height.toString().match(/\%/) ? height : height+"px"));
-//		var height_px = (height == "auto" ? height : height+"px");
-//		height += height == "auto" ? "" : "px";
-		e.style.height = height_px;
-
-		e._height = height;
-
-		e.transition_timestamp = new Date().getTime();
-
-		// update dom
-		e.offsetHeight;
-	}
-
-
-
-	this.rotateTranslate = function(e, deg, x, y) {
-
-//		u.bug("trans a")
-		e.style[this.variant() + "Transform"] = "rotate("+deg+"deg) translate("+x+"px, "+y+"px)";
-
-//		u.bug(x + ":" + y)
-
-//		e.style.MozTransform = "translate("+x+"px, "+y+"px)";
-//		e.style.webkitTransform = "translate3d("+x+"px, "+y+"px, 0)";
-		e.rotation = deg;
-		e.element_x = x;
-		e.element_y = y;
-
-		e._rotation = deg;
-		e._x = x;
-		e._y = y;
-
-		e.transition_timestamp = new Date().getTime();
-
-		// update dom
-		e.offsetHeight;
-	}
-
-
-	this.translateRotate = function(e, x, y, deg) {
-		e.style[this.variant() + "Transform"] = "translate("+x+"px, "+y+"px) rotate("+deg+"deg)";
-		e.element_x = x;
-		e.element_y = y;
-		e.rotation = deg;
-
-		e._x = x;
-		e._y = y;
-		e._rotation = deg;
-
-		e.transition_timestamp = new Date().getTime();
-
-		// update dom
-		e.offsetHeight;
+		return this._variant;
 	}
 
 
 
 	/**
-	*
+	* Apply CSS transition to node
 	*/
-	this.transition = function(e, transition) {
+	this.transition = function(node, transition) {
 		try {
 		
-			e.style[this.variant() + "Transition"] = transition;
-		//	e.style["Transition"] = transition;
-		//	e.style.webkitTransition = transition;
+			node.style[this.variant() + "Transition"] = transition;
 
 			// automatically enable transitionend callback
-			u.e.addEvent(e, this.variant() + "TransitionEnd", this._transitioned);
 			// Moz implementation is off track :)
-			u.e.addEvent(e, "transitionend", this._transitioned);
+			if(this.variant() == "Moz") {
+				u.e.addEvent(node, "transitionend", this._transitioned);
+			}
+			// standard 
+			else {
+				u.e.addEvent(node, this.variant() + "TransitionEnd", this._transitioned);
+			}
 
+			// get duration
 			var duration = transition.match(/[0-9.]+[ms]+/g);
 			if(duration) {
-				var d = duration[0];
-		//		u.bug(d);
-				e.duration = d.match("ms") ? parseFloat(d) : (parseFloat(d) * 1000);
+		//		u.bug(duration[0]);
+				node.duration = duration[0].match("ms") ? parseFloat(duration[0]) : (parseFloat(duration[0]) * 1000);
 			}
 			else {
-				e.duration = false;
+				node.duration = false;
 			}
-			// update dom
-			e.offsetHeight;
-			
+
 		}
 		catch(exception) {
-			u.bug("Exception ("+exception+") in u.a.transition, called from: "+arguments.callee.caller);
+			u.bug("Exception ("+exception+") in u.a.transition(" + u.nodeId(node) + "), called from: "+arguments.callee.caller);
 		}
 		
 	}
 
-	// manual setting of transition end callback (when transitions are declared via CSS instead of JS)
-//	this.transitioned = function(e) {
-//		u.bug("listen:" + e.className);
-//		u.bug(this.variant()+"TransitionEnd")
-//		u.e.addEvent(e, this.variant()+"TransitionEnd", u.a._transitioned);
-		// Moz implementation is of track :)
-//		u.e.addEvent(e, "transitionend", u.a._transitioned);
-//	}
-
+	// transition end handler
 	this._transitioned = function(event) {
-		// maybe only callback when target == this?
-
-//		u.bug("catch" + event.target.className + "::" + this.className)
 		if(event.target == this && typeof(this.transitioned) == "function") {
 			this.transitioned(event);
 		}
 	}
 
-	this.fadeIn = function(e, duration) {
-		duration = duration == undefined ? "0.5s" : duration;
-		u.as(e, "opacity", 0);
-		if(u.gcs(e, "display") == "none") {
-			u.as(e, "display", "block");
+
+	/**
+	* Simple translate cross-browser
+	*/
+	this.translate = function(node, x, y) {
+		// use translate3d when supported as it is more often hardware accelerated
+		if(this.support3d()) {
+			node.style[this.variant() + "Transform"] = "translate3d("+x+"px, "+y+"px, 0)";
 		}
-		u.a.transition(e, "all "+duration+" ease-in");
-		u.as(e, "opacity", 1);
+		else {
+			node.style[this.variant() + "Transform"] = "translate("+x+"px, "+y+"px)";
+		}
+
+		// old value holder (deprecated)
+		node.element_x = x;
+		node.element_y = y;
+		// new value holder
+		node._x = x;
+		node._y = y;
+
+		// DEPRECATED
+		// node.transition_timestamp = new Date().getTime();
+
+		// update dom
+		node.offsetHeight;
 	}
-	
-	
-	
+
+
+	this.rotate = function(node, deg) {
+		node.style[this.variant() + "Transform"] = "rotate("+deg+"deg)";
+		node._rotation = deg;
+
+		// DEPRECATED
+		// node.transition_timestamp = new Date().getTime();
+
+		// update dom
+		node.offsetHeight;
+	}
+
+	this.scale = function(node, scale) {
+		node.style[this.variant() + "Transform"] = "scale("+scale+")";
+		node._scale = scale;
+
+		// DEPRECATED
+		// node.transition_timestamp = new Date().getTime();
+
+		// update dom
+		node.offsetHeight;
+	}
+
+
+	this.setOpacity = function(node, opacity) {
+		node.style.opacity = opacity;
+		node._opacity = opacity;
+
+		// DEPRECATED
+		// node.transition_timestamp = new Date().getTime();
+
+		// update dom
+		node.offsetHeight;
+	}
+
+	this.setWidth = function(node, width) {
+		width = width.toString().match(/\%|auto|px/) ? width : (width + "px");
+		node.style.width = width;
+		node._width = width;
+
+		// DEPRECATED
+		// node.transition_timestamp = new Date().getTime();
+
+		// update dom
+		node.offsetHeight;
+	}
+
+	this.setHeight = function(node, height) {
+		height = height.toString().match(/\%|auto|px/) ? height : (height + "px");
+		node.style.height = height;
+		node._height = height;
+
+		// DEPRECATED
+		// node.transition_timestamp = new Date().getTime();
+
+		// update dom
+		node.offsetHeight;
+	}
+
+
+	this.setBgPos = function(node, x, y) {
+		x = x.toString().match(/\%|auto|px|center|top|left|bottom|right/) ? x : (x + "px");
+		y = y.toString().match(/\%|auto|px|center|top|left|bottom|right/) ? y : (y + "px");
+		node.style.backgroundPosition = x + " " + y;
+		node._bg_x = x;
+		node._bg_y = y;
+
+		// DEPRECATED
+		//node.transition_timestamp = new Date().getTime();
+
+		// update dom
+		node.offsetHeight;
+	}
+
+
+	this.setBgColor = function(node, color) {
+		node.style.backgroundColor = color;
+		node._bg_color = color;
+
+		// DEPRECATED
+		// node.transition_timestamp = new Date().getTime();
+
+		// update dom
+		node.offsetHeight;
+	}
+
+
 }

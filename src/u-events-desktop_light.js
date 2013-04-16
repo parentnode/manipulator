@@ -1,0 +1,147 @@
+// IE specific event forwarder
+// IE sends all event to the window object - these functions make sure the events return to element in a w3c style
+if(document.all) {
+
+	// create window control array to store event, element and action information
+	window.attachedEvents = {};
+
+	// create window event handler to handle event forwarding
+	window.eventHandler = function(eid) {
+		var element, i;
+//		u.xInObject(window.event);
+
+		if(eid != "window") {
+			element = u.ge("eid:"+eid);
+		}
+		else {
+			element = window;
+		}
+
+//		u.bug("handle event:" + u.nodeId(element) + ":" + window.event.type, "red");
+
+		// update event with target attribute
+		window.event.target = element;
+
+		// is all information available to execute event handling?
+		if(element && eid && window.attachedEvents[eid] && window.attachedEvents[eid][window.event.type]) {
+
+			// loop through event callbacks
+			var i, attachedAction;
+			for(i = 0; attachedAction = window.attachedEvents[eid][window.event.type][i]; i++) {
+
+//				u.bug("execute")
+
+				// add function to element, to achieve "this" context
+				element.ie_event_action = attachedAction;
+				// execute function, sending modified event
+				element.ie_event_action(window.event);
+			}
+
+		}
+		return;
+
+	}
+
+
+
+	// set event preferences to strictly mouse
+	u.e.event_pref = "mouse";
+
+	// kill the event in the IE way
+	u.e.kill = function(event) {
+
+//		u.bug("kill:" + event);
+
+		if(event) {
+			event.cancelBubble = true;
+			event.returnValue = false;
+		}
+	}
+
+	/**
+	* Add event handler to element - IE style
+	*
+	* @param HTML node e - Element to attach event to
+	* @param String type - Event type
+	* @param function action - Function to execute
+	*/
+	u.e.addEvent = function(node, type, action) {
+
+//		u.bug("add event:" + u.nodeId(e) + ":" + type + ":" + action.toString().substring(0, 30))
+
+		if(node != window) {
+			// check for existing event id (eid)
+			var eid = u.cv(node, "eid");
+
+			if(!eid) {
+				// generate event id and add to element, to be able to map event and element later
+				var eid = u.randomKey();
+				u.ac(node, "eid:"+eid)
+			}
+		}
+		else {
+			eid = "window";
+		}
+
+
+		// store type and action for given eid 
+		if(!window.attachedEvents[eid]) {
+			window.attachedEvents[eid] = {};
+		}
+		if(!window.attachedEvents[eid][type]) {
+			window.attachedEvents[eid][type] = new Array();
+		}
+
+		// only add one event handler pr. event type
+		if(window.attachedEvents[eid][type].length == 0) {
+			// create callback function for node
+			eval('node._'+type+'eventhandler = function() {window.eventHandler("'+eid+'")}');
+			node.attachEvent("on"+type, node["_"+type+"eventhandler"]);
+		}
+
+		if(window.attachedEvents[eid][type].indexOf(action) == -1) {
+//			u.bug("add for real:" + eid + ":" + type + ":" + u.nodeId(e))
+			window.attachedEvents[eid][type].push(action);
+		}
+	}
+
+	/**
+	* Remove event handler from element
+	*
+	* @param HTML node e - Element to remove event from
+	* @param String type - Event type
+	* @param function action - Function to remove
+*/
+	u.e.removeEvent = function(node, type, action) {
+//		u.bug("remove event:" + u.nodeId(node) + ":" + type)
+
+		// different approach needed for window element
+		if(node != window) {
+			// check for existing event id (eid)
+			var eid = u.cv(node, "eid");
+		}
+		else {
+			eid = "window";
+		}
+
+		// remove event from event array
+		// if event type exists for element
+		if(eid && window.attachedEvents[eid] && window.attachedEvents[eid][type]) {
+
+			// look for action
+			for(i in window.attachedEvents[eid][type]) {
+				if(window.attachedEvents[eid][type][i] == action) {
+					// remove action from event extender
+					window.attachedEvents[eid][type].splice(i,1);
+
+					// no more attached events - detachEvent
+					if(!window.attachedEvents[eid][type].length) {
+						node.detachEvent("on"+type, node["_"+type+"eventhandler"])
+					}
+				}
+			}
+
+		}
+
+	}
+}

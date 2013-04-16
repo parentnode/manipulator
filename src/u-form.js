@@ -71,7 +71,7 @@ Util.Form = u.f = new function() {
 			}
 
 			// numeric inputs
-			if(field.className.match(/numeric/)) {
+			if(field.className.match(/numeric|integer/)) {
 				field.iN = u.qs("input", field);
 				field.iN.field = field;
 				field.iN.val = function(value) {if(value) {this.value = value;} else {return this.value;}}
@@ -116,22 +116,39 @@ Util.Form = u.f = new function() {
 
 
 				// resize textarea while typing
-				// get textarea height value offset - webkit scrollHeight differs from height
-				// check by setting height to scrollHeight and then comparing new height to scrollHeight
-				u.as(field.iN, "height", field.iN.scrollHeight+"px");
-				field.iN.offset = 0;
-				if(parseInt(u.gcs(field.iN, "height")) != field.iN.scrollHeight) {
-					field.iN.offset = field.iN.scrollHeight - parseInt(u.gcs(field.iN, "height"));
-				}
-				// set correct height
-				u.as(field.iN, "height", (field.iN.scrollHeight - field.iN.offset) +"px");
-				field.iN.setHeight = function() {
-					var height = parseInt(u.gcs(this, "height")) + this.offset;
-					if(this.value && this.scrollHeight > height) {
-						u.as(this, "height", (this.scrollHeight - this.offset) +"px");
+				if(u.hc(field.iN, "autoexpand")) {
+					// get textarea height value offset - webkit and IE/Opera scrollHeight differs from height
+					// implenting different solutions is the only way to achive similar behaviour across browsers
+					// fallback support is Mozilla 
+
+					field.iN.offset = 0;
+					if(parseInt(u.gcs(field.iN, "height")) != field.iN.scrollHeight) {
+						field.iN.offset = field.iN.scrollHeight - parseInt(u.gcs(field.iN, "height"));
 					}
+
+					// set correct height
+					field.iN.setHeight = function() {
+						var textarea_height = parseInt(u.gcs(this, "height"));
+
+						if(this.value) {
+							if(u.webkit()) {
+								if(this.scrollHeight - this.offset > textarea_height) {
+									u.as(this, "height", this.scrollHeight+"px");
+								}
+							}
+							else if(u.opera() || u.explorer()) {
+								if(this.scrollHeight > textarea_height) {
+									u.as(this, "height", this.scrollHeight+"px");
+								}
+							}
+							else {
+								u.as(this, "height", this.scrollHeight+"px");
+							}
+						}
+					}
+					u.e.addEvent(field.iN, "keyup", field.iN.setHeight);					
 				}
-				u.e.addEvent(field.iN, "keyup", field.iN.setHeight);
+
 			}
 
 			// selects
@@ -198,8 +215,28 @@ Util.Form = u.f = new function() {
 				// validate now
 				this.validate(field.iN);
 
-				u.e.addEvent(field.iN, "change", this._update);
-				u.e.addEvent(field.iN, "change", this._changed);
+				// special setting for IE8 and less (bad onchange handler)
+				if(u.explorer(8, "<=")) {
+					field.iN.pre_state = field.iN.checked;
+
+					field.iN._changed = u.f._changed;
+					field.iN._update = u.f._update;
+					field.iN._clicked = function(event) {
+//						u.bug("clicked:" + this.checked + ":" + this.pre_state + ":" + u.nodeId(this));
+						// if state is changed - callback to change and update notifier
+						if(this.checked != this.pre_state) {
+							this._changed(window.event);
+							this._update(window.event);
+						}
+						this.pre_state = this.checked;
+					}
+					u.e.addEvent(field.iN, "click", field.iN._clicked);
+
+				}
+				else {
+					u.e.addEvent(field.iN, "change", this._update);
+					u.e.addEvent(field.iN, "change", this._changed);
+				}
 			}
 
 			// radio button
@@ -241,8 +278,31 @@ Util.Form = u.f = new function() {
 					// validate now
 					this.validate(radio);
 
-					u.e.addEvent(radio, "change", this._update);
-					u.e.addEvent(radio, "change", this._changed);
+					// special setting for IE8 and less (bad onchange handler)
+					if(u.explorer(8, "<=")) {
+						radio.pre_state = radio.checked;
+
+						radio._changed = u.f._changed;
+						radio._update = u.f._update;
+						radio._clicked = function(event) {
+//							u.bug("clicked:" + this.checked + ":" + this.pre_state + ":" + u.nodeId(this));
+							// if state is changed - callback to change and update notifier
+							if(this.checked != this.pre_state) {
+								this._changed(window.event);
+								this._update(window.event);
+							}
+							// update prestates for all radios in set
+							for(i = 0; iN = this.field.iNs[i]; i++) {
+								iN.pre_state = iN.checked;
+							}
+						}
+						u.e.addEvent(radio, "click", radio._clicked);
+
+					}
+					else {
+						u.e.addEvent(radio, "change", this._update);
+						u.e.addEvent(radio, "change", this._changed);
+					}
 				}
 			}
 
@@ -282,6 +342,44 @@ Util.Form = u.f = new function() {
 				}
 			}
 
+			// File field initialization
+			if(field.className.match(/file/)) {
+				// custom variation
+				if(typeof(this.customInit) == "object" && typeof(this.customInit["file"]) == "function") {
+					this.customInit["file"](field);
+				}
+				else {
+					field.iN = u.qs("input", field);
+					field.iN.field = field;
+					field.iN.val = function(value) {if(value) {this.value = value;} else {return this.value;}}
+
+					// reference node
+					form.fields[field.iN.name] = field.iN;
+
+					// know position in field-order
+					field.iN.field_order = form.field_order.length;
+					form.field_order[form.field_order.length] = field.iN;
+
+					this.activate(field.iN);
+					// validate now
+					this.validate(field.iN);
+
+					u.e.addEvent(field.iN, "keyup", this._update);
+					u.e.addEvent(field.iN, "change", this._changed);
+				}
+			}
+
+			// check for custom inits
+			if(typeof(this.customInit) == "object") {
+
+				for(type in this.customInit) {
+					if(field.className.match(type)) {
+						this.customInit[type](field);
+					}
+				}
+
+			}
+			
 		}
 
 
@@ -317,6 +415,7 @@ Util.Form = u.f = new function() {
 
 				u.e.click(action.iN);
 				action.iN.clicked = function(event) {
+//					alert("fusk:" + event)
 					u.e.kill(event);
 
 					// don't execute if button is disabled
@@ -338,7 +437,6 @@ Util.Form = u.f = new function() {
 				form.actions[action.iN.name] = action;
 			}
 
-
 			// shortcuts
 //			u.bug(u.hc(action.iN, "key:[a-z0-9]+"));
 			if(typeof(u.e.k) == "object" && u.hc(action.iN, "key:[a-z0-9]+")) {
@@ -353,8 +451,7 @@ Util.Form = u.f = new function() {
 
 	// input is changed (onchange event)
 	this._changed = function(event) {
-//		u.bug("value changed:" + this.name)
-
+//		u.bug("value changed:" + this.name + ":" + event.type + ":" + u.nodeId(event.srcElement));
 
 		if(typeof(this.changed) == "function") {
 			this.changed(this);
@@ -366,7 +463,7 @@ Util.Form = u.f = new function() {
 
 	// input is updated (onkeyup event)
 	this._update = function(event) {
-//		u.bug("used:" + this.name);
+//		u.bug("value updated:" + this.name + ":" + event.type + ":" + u.nodeId(event.srcElement));
 
 		// if key is not [TAB], [ENTER], [SHIFT], [CTRL], [ALT]
 		if(event.keyCode != 9 && event.keyCode != 13 && event.keyCode != 16 && event.keyCode != 17 && event.keyCode != 18) {
@@ -426,10 +523,10 @@ Util.Form = u.f = new function() {
 
 	// submit field on [ENTER]
 	this.submitOnEnter = function(iN) {
-		iN.onkeydown = function(event) {
+		iN._onkeydown = function(event) {
 //			u.bug(event.keyCode);
 
-			// IE 8 quickfix
+			// TODO: IE 8 quickfix
 			event = event ? event : window.event;
 
 			if(event.keyCode == 13) {
@@ -444,8 +541,8 @@ Util.Form = u.f = new function() {
 				this.field._form._submit(event);
 			}
 		}
+		u.e.addEvent(iN, "keydown", iN._onkeydown);
 	}
-
 
 
 	// activate input - add focus and blur events
@@ -528,12 +625,13 @@ Util.Form = u.f = new function() {
 	// validate input
 	// - string (min 2 chars)
 	// - numeric
+	// - integer
 	// - tel (+.- and min 5 max 14)
 	// - email (valid email)
 	// - text (text area - min 3 chars)
 	// - select (option must have value)
 	//
-	// TODO:
+	// TODO: handle multiple validations on same field
 	// - date
 	this.validate = function(iN) {
 //		u.bug("validate:" + iN.name)
@@ -541,7 +639,7 @@ Util.Form = u.f = new function() {
 		// string validation
 		if(u.hc(iN.field, "string")) {
 
-			if((iN.value.length > 1 && !this.isDefault(iN)) || !u.hc(iN.field, "required")) {
+			if((iN.value.length > 0 && !this.isDefault(iN)) || !u.hc(iN.field, "required")) {
 				this.fieldCorrect(iN);
 			}
 			else {
@@ -560,10 +658,21 @@ Util.Form = u.f = new function() {
 			}
 		}
 
+		// integer validation
+		if(u.hc(iN.field, "integer")) {
+
+			if((iN.value && !isNaN(iN.value) && Math.round(iN.value) == iN.value && !this.isDefault(iN)) || (!u.hc(iN.field, "required") && !iN.value)) {
+				this.fieldCorrect(iN);
+			}
+			else {
+				this.fieldError(iN);
+			}
+		}
+
 		// telephone validation
 		if(u.hc(iN.field, "tel")) {
 
-			if((iN.value.match(/^([\+0-9\-\.\s]){5,14}$/) && !this.isDefault(iN)) || (!u.hc(iN.field, "required") && !iN.value)) {
+			if((iN.value.match(/^([\+0-9\-\.\s\(\)]){5,14}$/) && !this.isDefault(iN)) || (!u.hc(iN.field, "required") && !iN.value)) {
 				this.fieldCorrect(iN);
 			}
 			else {
@@ -615,6 +724,20 @@ Util.Form = u.f = new function() {
 			}
 		}
 
+
+//		u.bug("typeof(u.f.customValidate):" + typeof(u.f.customValidate))
+		// loop through custom validations
+		if(typeof(u.f.customValidate) == "object") {
+			var custom_validation;
+			for(custom_validation in u.f.customValidate) {
+				if(u.hc(iN.field, custom_validation)) {
+					u.f.customValidate[custom_validation](iN);
+				}
+//				u.bug("custom_validation:" + custom_validation)
+			}
+		}
+
+
 		// date validation
 		if(u.hc(iN.field, "date")) {
 
@@ -635,6 +758,8 @@ Util.Form = u.f = new function() {
 			}
 
 		}
+		
+		
 
 		if(u.hc(iN.field, "error")) {
 			return false;

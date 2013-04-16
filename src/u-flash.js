@@ -1,75 +1,139 @@
 // Flash writer
-Util.flash = function(e, url, id, w, h, background) {
+Util.flashDetection = function(version) {
 
-//	u.bug("make flash")
+	var flash_version = false;
+	var flash = false;
 
-	w = w ? w : e.offsetWidth;
-	h = h ? h : e.offsetHeight;
+	// default way
+	if(navigator.plugins && navigator.plugins["Shockwave Flash"] && navigator.plugins["Shockwave Flash"].description && navigator.mimeTypes && navigator.mimeTypes["application/x-shockwave-flash"]) {
 
-	background = background ? background : "transparent";
+		flash = true;
 
-	id = id ? id : "flash_" + new Date().getHours() + "_" + new Date().getMinutes() + "_" + new Date().getMilliseconds();
+		var Pversion = navigator.plugins["Shockwave Flash"].description.match(/\b([\d]+)\b/);
+		if(Pversion.length > 1 && !isNaN(Pversion[1])) {
+			flash_version = Pversion[1];
+		}
 
-//	url = url + "?id=" + id;
+	}
 
-	/*	NOT WORKING IN IE8
-	cannot add params to object - because object is not HTML (or something like that) - don't know why??
+	// ActiveX way
+	else if(window.ActiveXObject) {
 
-	var object = u.ae(e, "OBJECT", ({"id":id, "name":id, "width":w, "height":h}));
+		try {
+			var AXflash, AXversion;
+			AXflash = new ActiveXObject("ShockwaveFlash.ShockwaveFlash");
+			if(AXflash) {
 
-	object.setAttribute("classid", "clsid:d27cdb6e-ae6d-11cf-96b8-444553540000");
-	object.setAttribute("codebase", "http://fpdownload.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=8,0,0,0");
+				flash = true;
 
-	u.ae(object, "param", ({"allowScriptAccess":"always"}));
-	u.ae(object, "param", ({"movie":url}));
-	u.ae(object, "param", ({"quality":"high"}));
-	u.ae(object, "param", ({"wmode":"transparent"}));
-	u.ae(object, "param", ({"menu":"false"}));
-	u.ae(object, "param", ({"scale":"noscale"}));
+				AXversion = AXflash.GetVariable("$version").match(/\b([\d]+)\b/);
+				if(AXversion.length > 1 && !isNaN(AXversion[1])) {
+					flash_version = AXversion[1];
+				}
+			}
+		}
+		catch(exception) {}
 
-	return object;
-*/
+	}
 
+	// flash version detected, or flash and no version requirements
+	if(flash_version || (flash && !version)) {
+
+		// no version requirement
+		if(!version) {
+			return true;
+		}
+		else {
+			// specific flash version
+			if(!isNaN(version)) {
+				return flash_version == version;
+			}
+			// flash version scope
+			else {
+				return eval(flash_version + version);
+			}
+		}
+	}
+	else {
+		return false;
+	}
+
+}
+
+
+Util.flash = function(node, url) {
+
+	// default values
+	var width = "100%";
+	var height = "100%";
+	var background = "transparent";
+	var id = "flash_" + new Date().getHours() + "_" + new Date().getMinutes() + "_" + new Date().getMilliseconds();
+
+	var allowScriptAccess = "always";
+	var menu = "false";
+	var scale = "default";
+	var wmode = "transparent";
+
+	// additional info passed to function as JSON object
+	if(arguments.length > 1 && typeof(arguments[2]) == "object") {
+		for(argument in arguments[2]) {
+
+			switch(argument) {
+				case "id" : id = arguments[2][argument]; break;
+				case "width" : width = Number(arguments[2][argument]); break;
+				case "height" : height = Number(arguments[2][argument]); break;
+				case "background" : background = arguments[2][argument]; break;
+
+				case "allowScriptAccess" : allowScriptAccess = arguments[2][argument]; break;
+				case "menu" : menu = arguments[2][argument]; break;
+				case "scale" : scale = arguments[2][argument]; break;
+				case "wmode" : wmode = arguments[2][argument]; break;
+			}
+
+		}
+	}
+
+
+	// ie 8 and less needs objects and parameters injected at the same time
 	html = '<object';
 	html += ' id="'+id+'"';
-//	html += ' name="'+id+'"'; 
-	html += ' width="'+w+'"';
-	html += ' height="'+h+'"';
+	html += ' width="'+width+'"';
+	html += ' height="'+height+'"';
 
+	// explorer version
 	if(u.explorer()) {
 		html += ' classid="clsid:d27cdb6e-ae6d-11cf-96b8-444553540000"';
 //		html += ' codebase="http://fpdownload.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=9,0,0,0"';
 	}
+	// default version
 	else {
 		html += ' type="application/x-shockwave-flash"';
 		html += ' data="'+url+'"';
 	}
 	html += '>';
 
-	html += '<param name="allowScriptAccess" value="always" />';
-	//<param name="allowScriptAccess" value="sameDomain" />
+	html += '<param name="allowScriptAccess" value="'+allowScriptAccess+'" />';
 	html += '<param name="movie" value="'+url+'" />';
 	html += '<param name="quality" value="high" />';
 	html += '<param name="bgcolor" value="'+background+'" />';
 	html += '<param name="play" value="true" />';
-	html += '<param name="wmode" value="transparent" />';
-	html += '<param name="menu" value="false" />';
-	html += '<param name="scale" value="showall" />';
-//	html += '<embed id="'+name+'" src="'+url+'" menu="false" scale="noscale" quality="high" bgcolor="'+background+'" wmode="transparent" width="'+w+'" height="'+h+'" name="'+name+'" align="middle" allowScriptAccess="always" type="application/x-shockwave-flash" pluginspage="http://www.macromedia.com/go/getflashplayer" />';
+	html += '<param name="wmode" value="'+wmode+'" />';
+	html += '<param name="menu" value="'+menu+'" />';
+	html += '<param name="scale" value="'+scale+'" />';
+
+	// really old way - disabled for now
+	//	html += '<embed id="'+name+'" src="'+url+'" menu="false" scale="noscale" quality="high" bgcolor="'+background+'" wmode="transparent" width="'+w+'" height="'+h+'" name="'+name+'" align="middle" allowScriptAccess="always" type="application/x-shockwave-flash" pluginspage="http://www.macromedia.com/go/getflashplayer" />';
+
 	html += '</object>';
 
 
-//	u.bug(u.htmlToText(html));
-
 //	return false;
 	var temp_node = document.createElement("div");
-	temp_node.innerHTML += html;
-	e.insertBefore(temp_node.firstChild, e.firstChild);
-	
-	var obj = u.qs("#"+id, e);
+	temp_node.innerHTML = html;
+	node.insertBefore(temp_node.firstChild, node.firstChild);
 
-//	u.bug("obj:" + obj)
-	
-	return obj;
+	// find flash obejct
+	var flash_object = u.qs("#"+id, node);
 
+	return flash_object;
 }

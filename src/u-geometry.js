@@ -55,6 +55,7 @@ Util.relativeY = u.relY = function(e) {
 //              the relative offset needs to be subtracted from mouse coordinate. This function returns the
 //              correction value.
 Util.relativeOffsetX = u.relOffsetX = function(e) {
+	alert("relativeOffsetX is ??")
 	// is parent relative/absolute
 	if(e.offsetParent && u.gcs(e.offsetParent, "position").match(/relative|absoute/) != null) {
 //		return e.offsetLeft + u.relOffsetX(e.offsetParent);
@@ -64,7 +65,6 @@ Util.relativeOffsetX = u.relOffsetX = function(e) {
 }
 
 
-
 // relative offset top position
 // calculates the relative top offset of e(lement)
 // Explanation: If an element is within a relative/absolute positioned parentNode, its internal positioning 
@@ -72,6 +72,7 @@ Util.relativeOffsetX = u.relOffsetX = function(e) {
 //              the relative offset needs to be subtracted from mouse coordinate before applying it to element.
 //              This function returns the correction value.
 Util.relativeOffsetY = u.relOffsetY = function(e) {
+	alert("relativeOffsetY is ??")
 	if(e.offsetParent && u.gcs(e.offsetParent, "position").match(/relative|absoute/) != null) {
 		return u.absY(e.offsetParent);
 //		return e.offsetTop - u.relOffsetY(e.offsetParent);
@@ -79,6 +80,22 @@ Util.relativeOffsetY = u.relOffsetY = function(e) {
 //	u.bug("return:" + u.absY(e) +"-"+ e.offsetTop)
 	return 0; // u.absY(e) - e.offsetTop;
 }
+
+// seems to be exactly the same as offsetParent
+// // needs to be in other function set
+// Util.relativeTo = function(node) {
+// 	u.bug("offsetParent:" + u.nodeId(node.offsetParent));
+// 	var parent = node.offsetParent;
+// 	while(parent && u.gcs(parent, "position").match(/relative|absolute/) == null) {
+// 		parent = parent.offsetParent;
+// //		return e.offsetTop - u.relOffsetY(e.offsetParent);
+// 	}
+// 	u.bug("parent:" + u.nodeId(parent));
+// 	return parent;
+// //	u.bug("return:" + u.absY(e) +"-"+ e.offsetTop)
+// //	return 0; // u.absY(e) - e.offsetTop;
+// }
+// 
 
 // Get the actual width of an element - offsetWidth includes borders and padding
 Util.actualWidth = function(e) {
