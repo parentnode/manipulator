@@ -316,7 +316,7 @@ Util.validateResponse = function(response){
 //			u.bug("HTTPRequest exection:" + exception);
 		}
 	}
-
+//	u.bug("object:" + object);
 
 	// did validation yield usable object
 	if(object) {
