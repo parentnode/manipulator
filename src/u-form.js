@@ -248,9 +248,7 @@ Util.Form = u.f = new function() {
 			// validate after setting value
 			u.f.validate(this);
 		}
-		else {
-			return this.value;
-		}
+		return this.value;
 	}
 	// value get/setter for radio inputs
 	this._value_radio = function(value) {
@@ -937,6 +935,7 @@ Util.Form = u.f = new function() {
 			}
 		}
 
+//		u.bug("send_as:" + send_as)
 
 		// get inputs
 		var i, input, select, textarea, param;
@@ -1022,7 +1021,7 @@ Util.Form = u.f = new function() {
 
 // Convert param names to nested JSON object structure
 u.f.convertNamesToJsonObject = function(params) {
- 	var indexes, root, indexes_exsists;
+ 	var indexes, root, indexes_exsists, param;
 	var object = new Object();
 
 	// loop through params
