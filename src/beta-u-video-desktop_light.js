@@ -16,6 +16,8 @@ u.videoPlayerFallback = function(player) {
 				this.setup();
 			}
 
+//			u.bug("this.ready:" + this.ready)
+
 			if(this.ready) {
 				if(this.className.match("/playing/")) {
 					this.stop();
