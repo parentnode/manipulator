@@ -19,16 +19,16 @@ Util.Sort = u.s = new function() {
 			e.nodes = u.qsa("."+target_class, e);
 		}
 
-		// what type of list do we have - floated indicates horisontal list
+		// what type of list do we have - floated indicates horizontal list
 		if(e.nodes.length) {
 			
 			// TODO
 
 			// if list is higher and wider than its content - mixed list
 			// if list is higher than its content - vertical list
-			// if list is wider than its content - horisontal list
+			// if list is wider than its content - horizontal list
 			
-			e.list_type = u.gcs(e.nodes[0], "float").match(/left|right/) == null ? "vertical" : "horisontal";
+			e.list_type = u.gcs(e.nodes[0], "float").match(/left|right/) == null ? "vertical" : "horizontal";
 		}
 
 //		u.bug(e.list_type + ":" + u.gcs(e.nodes[0], "float"));
@@ -277,10 +277,10 @@ Util.Sort = u.s = new function() {
 							}
 						}
 
-		// put detaction and injection in separate function as rutine is the same for vert and horisontal
+		// put detaction and injection in separate function as rutine is the same for vert and horizontal
 
 
-						// horisontal list
+						// horizontal list
 						else {
 							var o_left = u.absX(node);
 							var o_top = u.absY(node);

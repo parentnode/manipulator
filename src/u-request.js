@@ -218,7 +218,7 @@ Util.isStringHTML = function(string) {
 
 				// sometimes if a head/body tag is actually sent from the server, we may need some of its information
 				// getting head/body info with regular expression on responseText
-				var body_class = string.match(/<body class="([a-z0-9A-Z_ ]+)"/);
+				var body_class = string.match(/<body class="([a-z0-9A-Z_: ]+)"/);
 				test.body_class = body_class ? body_class[1] : "";
 				var head_title = string.match(/<title>([^$]+)<\/title>/);
 				test.head_title = head_title ? head_title[1] : "";

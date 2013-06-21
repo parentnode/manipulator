@@ -170,12 +170,15 @@ u.e.drag = function(node, boundaries, settings) {
 		for(argument in settings) {
 
 			switch(argument) {
-				case "strict"		: node.drag_strict		= settings[argument]; break;
-//				case "projection"	: node.drag_projection	= settings[argument]; break;
-				case "elastica"		: node.drag_elastica	= Number(settings[argument]); break;
-				case "dropout"		: node.drag_dropout		= settings[argument]; break;
+				case "strict"			: node.drag_strict			= settings[argument]; break;
+//				case "projection"		: node.drag_projection		= settings[argument]; break;
+				case "elastica"			: node.drag_elastica		= Number(settings[argument]); break;
+				case "dropout"			: node.drag_dropout			= settings[argument]; break;
 
-				case "show_bounds"	: node.show_bounds		= settings[argument]; break; // NEEDS HELP
+				case "show_bounds"		: node.show_bounds			= settings[argument]; break; // NEEDS HELP
+
+				case "vertical_lock"	: node.vertical_lock		= settings[argument]; break;
+				case "horizontal_lock"	: node.horizontal_lock		= settings[argument]; break;
 			}
 
 		}
@@ -294,9 +297,10 @@ u.e.drag = function(node, boundaries, settings) {
 	// offsetHeight and Width may change during a rotation, so better to save starting point values
 	// dragging locked (only event catching)
 	node.locked = ((node.end_drag_x - node.start_drag_x == node.offsetWidth) && (node.end_drag_y - node.start_drag_y == node.offsetHeight));
+
 	// is the drag one-dimentional
-	node.only_vertical = (!node.locked && node.end_drag_x - node.start_drag_x == node.offsetWidth);
-	node.only_horisontal = (!node.locked && node.end_drag_y - node.start_drag_y == node.offsetHeight);
+	node.only_vertical = (node.vertical_lock || (!node.locked && node.end_drag_x - node.start_drag_x == node.offsetWidth));
+	node.only_horizontal = (node.horizontal_lock || (!node.locked && node.end_drag_y - node.start_drag_y == node.offsetHeight));
 
 
 	u.e.addStartEvent(node, this._inputStart);
@@ -310,7 +314,7 @@ u.e.drag = function(node, boundaries, settings) {
 * Calls return function element.picked to notify of event
 */
 u.e._pick = function(event) {
-//	u.bug("_pick:" + u.nodeId(this) + ":" + this._x + " x " + this._y);
+	u.bug("_pick:" + u.nodeId(this) + ":" + this._x + " x " + this._y);
 
 
 	// reset inital events to avoid unintended bubbling - only reset if pick makes sense
@@ -319,8 +323,8 @@ u.e._pick = function(event) {
 
 	// detect if drag is relevant for element
 	// if only vertical drag is allowed, only react on vertical movements
-	// if only horisontal drag is allowed, only react on horisontal movements
-	// to do this we calculate the vertical and horisontal speeds
+	// if only horizontal drag is allowed, only react on horizontal movements
+	// to do this we calculate the vertical and horizontal speeds
 //	var init_speed_x = Math.abs(this.start_event_x - u.eventX(event) - u.scrollX());
 //	var init_speed_y = Math.abs(this.start_event_y - u.eventY(event) - u.scrollY());
 	var init_speed_x = Math.abs(this.start_event_x - u.eventX(event));
@@ -328,7 +332,7 @@ u.e._pick = function(event) {
 
 	// u.bug("this.start_event_x:" + this.start_event_x + ",this.start_event_y:" + this.start_event_y)
 	// u.bug("u.eventX:" + u.eventX(event) + ",u.eventY:" + u.eventY(event))
-//	u.bug("initial speed:" + init_speed_x + "/" + init_speed_y);
+	u.bug("initial speed:" + init_speed_x + "/" + init_speed_y + ", vert:" + this.only_vertical + ", hori:" + this.only_horizontal);
 
 /*
 
@@ -352,9 +356,9 @@ y: 3 -> -2 = 5 (3 - -2)
 */
 
 
-	if(init_speed_x > init_speed_y && this.only_horisontal || 
-	   init_speed_x < init_speed_y && this.only_vertical ||
-	   !this.only_vertical && !this.only_horisontal) {
+	if((init_speed_x > init_speed_y && this.only_horizontal) || 
+	   (init_speed_x < init_speed_y && this.only_vertical) ||
+	   (!this.only_vertical && !this.only_horizontal)) {
 
 		// reset inital events to avoid unintended bubbling if pick direction makes sense
 		u.e.resetNestedEvents(this);
@@ -450,8 +454,8 @@ u.e._drag = function(event) {
 		// only set new y
 		this._y = this.current_y;
 	}
-	// element can only be dragged horisontally
-	else if(this.only_horisontal) {
+	// element can only be dragged horizontally
+	else if(this.only_horizontal) {
 		// only set new x
 		this._x = this.current_x;
 	}
@@ -464,7 +468,7 @@ u.e._drag = function(event) {
 
 	if(this.e_swipe) {
 		// calc swipes event for locked elements
-		if(this.current_xps && (Math.abs(this.current_xps) > Math.abs(this.current_yps) || this.only_horisontal)) {
+		if(this.current_xps && (Math.abs(this.current_xps) > Math.abs(this.current_yps) || this.only_horizontal)) {
 			if(this.current_xps < 0) {
 				this.swiped = "left";
 //				u.bug("swiped left")
@@ -538,14 +542,14 @@ u.e._drag = function(event) {
 			}
 
 			// top out of scope
-			if(!this.only_horisontal && this._y < this.start_drag_y) {
+			if(!this.only_horizontal && this._y < this.start_drag_y) {
 				offset = this._y < this.start_drag_y - this.drag_elastica ? - this.drag_elastica : this._y - this.start_drag_y;
 				this._y = this.start_drag_y;
 				this.current_y = this._y + offset + (Math.round(Math.pow(offset, 2)/this.drag_elastica));
 //				u.bug("oos0"+offset);
 			}
 			// bottom out of scope
-			else if(!this.horisontal && this._y + this.offsetHeight > this.end_drag_y) {
+			else if(!this.horizontal && this._y + this.offsetHeight > this.end_drag_y) {
 				offset = (this._y + this.offsetHeight > this.end_drag_y + this.drag_elastica) ? this.drag_elastica : (this._y + this.offsetHeight - this.end_drag_y);
 				this._y = this.end_drag_y - this.offsetHeight;
 				this.current_y = this._y + offset - (Math.round(Math.pow(offset, 2)/this.drag_elastica));
@@ -662,7 +666,7 @@ u.e._drop = function(event) {
 		else if(this.current_x + this.offsetWidth > this.end_drag_x) {
 			this.current_x = this.end_drag_x - this.offsetWidth;
 		}
-		if(this.only_horisontal || this.current_y < this.start_drag_y) {
+		if(this.only_horizontal || this.current_y < this.start_drag_y) {
 			this.current_y = this.start_drag_y;
 		}
 		else if(this.current_y + this.offsetHeight > this.end_drag_y) {
@@ -706,7 +710,7 @@ u.e._drop = function(event) {
 
 /**
 Swipe
-	swipe returns are automatically defined by boundaries, linear horisontal boundaries can only return left/right etc.
+	swipe returns are automatically defined by boundaries, linear horizontal boundaries can only return left/right etc.
 	detect swipe movements
 	notify swipe
 * Notifies:
@@ -828,9 +832,9 @@ u.e._scrollEnd = function(event) {
 // 			// only set new y
 // 			offset_y = input_y - this.current_y;
 // 		}
-// 		// linear drag, horisontal (element as wide as boundary allows - no stretch over fixed lines)
+// 		// linear drag, horizontal (element as wide as boundary allows - no stretch over fixed lines)
 // //		else if(this.end_drag_y - this.start_drag_y == this.offsetHeight) {
-// 		else if(this.horisontal) {
+// 		else if(this.horizontal) {
 // 			// only set new x
 // 			offset_x = input_x - this.current_x;
 // 		}
