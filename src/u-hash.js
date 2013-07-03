@@ -77,8 +77,10 @@ Util.Hash = u.h = new function() {
 	// this function should remove any hash value from url
 
 	this.getCleanUrl = function(string, levels) {
+//		u.bug("getCleanUrl:" + string + " = " + (string ? string.replace(location.protocol+"//"+document.domain, "").match(/[^#$]+/) : "#error#") + ", " + arguments.callee.caller);
+
 		// remove hash and domain from string before
-		string = string.split("#")[0].replace(location.protocol+"//"+document.domain, "");
+		string = string.replace(location.protocol+"//"+document.domain, "").match(/[^#$]+/)[0];
 
 		if(!levels) {
 			return string;
