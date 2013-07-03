@@ -157,6 +157,8 @@ Util.textContent = u.text = function(node) {
 }
 
 
+
+
 if(document.querySelector == undefined) {
 
 //	alert("use sizzle")
@@ -1621,3 +1623,35 @@ if(document.querySelector == undefined) {
 
 
 
+// ALTERNATIVE METHOD FOR IE7 and less
+// if(document.querySelector == undefined) {
+// 
+// 
+// 	var style = document.createStyleSheet();
+// 
+// 	var selector = function(query, scope) {
+// 		var nodes = scope.getElementsByTagName("*");
+// 		var c = [];
+// 
+// 		query = query.replace(/\[for\b/gi, '[htmlFor').split(',');
+// 		for(i = query.length; i--;) {
+// 			style.addRule(query[i], 'k:v');
+// 			for(j=nodes.length; j--;) {
+// 				
+// 				nodes[j].currentStyle.k && c.push(nodes[j]);
+// 			}
+// 			style.removeRule(0);
+// 		}
+// 		return c;
+// 	}
+// 
+// 	Util.querySelector = u.qs = function(query, target) {
+// 		var res = selector(query, target);
+// 		return res[0];
+// 	}
+// 	Util.querySelectorAll = u.qsa = function(query, target) {
+// 		var res = selector(query, target);
+// 		return res;
+// 	}
+// 
+// }
