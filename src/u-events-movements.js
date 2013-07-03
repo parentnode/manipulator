@@ -299,6 +299,9 @@ u.e.drag = function(node, boundaries, settings) {
 	node.locked = ((node.end_drag_x - node.start_drag_x == node.offsetWidth) && (node.end_drag_y - node.start_drag_y == node.offsetHeight));
 
 	// is the drag one-dimentional
+//	node.only_vertical = (!node.locked && node.end_drag_x - node.start_drag_x == node.offsetWidth);
+//	node.only_horizontal = (!node.locked && node.end_drag_y - node.start_drag_y == node.offsetHeight);
+
 	node.only_vertical = (node.vertical_lock || (!node.locked && node.end_drag_x - node.start_drag_x == node.offsetWidth));
 	node.only_horizontal = (node.horizontal_lock || (!node.locked && node.end_drag_y - node.start_drag_y == node.offsetHeight));
 
@@ -314,7 +317,7 @@ u.e.drag = function(node, boundaries, settings) {
 * Calls return function element.picked to notify of event
 */
 u.e._pick = function(event) {
-	u.bug("_pick:" + u.nodeId(this) + ":" + this._x + " x " + this._y);
+//	u.bug("_pick:" + u.nodeId(this) + ":" + this._x + " x " + this._y);
 
 
 	// reset inital events to avoid unintended bubbling - only reset if pick makes sense
@@ -332,7 +335,7 @@ u.e._pick = function(event) {
 
 	// u.bug("this.start_event_x:" + this.start_event_x + ",this.start_event_y:" + this.start_event_y)
 	// u.bug("u.eventX:" + u.eventX(event) + ",u.eventY:" + u.eventY(event))
-	u.bug("initial speed:" + init_speed_x + "/" + init_speed_y + ", vert:" + this.only_vertical + ", hori:" + this.only_horizontal);
+//	u.bug("initial speed:" + init_speed_x + "/" + init_speed_y + ", vert:" + this.only_vertical + ", hori:" + this.only_horizontal);
 
 /*
 
@@ -450,12 +453,12 @@ u.e._drag = function(event) {
 	this.move_last_y = this.current_y;
 
 	// element can only be dragged vertically
-	if(this.only_vertical) {
+	if(!this.locked && this.only_vertical) {
 		// only set new y
 		this._y = this.current_y;
 	}
 	// element can only be dragged horizontally
-	else if(this.only_horizontal) {
+	else if(!this.locked && this.only_horizontal) {
 		// only set new x
 		this._x = this.current_x;
 	}
@@ -465,6 +468,7 @@ u.e._drag = function(event) {
 		this._y = this.current_y;
 	}
 
+//	u.bug("locked:" + this.locked);
 
 	if(this.e_swipe) {
 		// calc swipes event for locked elements
