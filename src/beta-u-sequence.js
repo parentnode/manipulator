@@ -111,7 +111,7 @@ u.sequencePlayer = function(node, options) {
 			this._direction = -1;
 		}
 
-		u.bug("play sequence:" + this._from + " -> " + this._to + "@" + this._framerate + "fps" + " (direction:"+this._direction+")")
+//		u.bug("play sequence:" + this._from + " -> " + this._to + "@" + this._framerate + "fps" + " (direction:"+this._direction+")")
 
 
 		// playback not in initial order
@@ -225,6 +225,7 @@ u.sequencePlayer = function(node, options) {
 
 		// end loop and callback
 		if(this._to == this._current_frame) {
+//			u.bug("end reached:" + typeof(this._ended_callback) + ", " + this.ended + "," + u.nodeId(this))
 
 			if(typeof(this._ended_callback) == "function") {
 				this._ended_callback();
@@ -268,12 +269,12 @@ u.sequencePlayer = function(node, options) {
 		var after_next = (frame + this._direction);
 		var prev = (frame - this._direction);
 
-		u.bug("prev:" + prev);
-		u.bug("after_next:" + after_next);
+//		u.bug("prev:" + prev);
+//		u.bug("after_next:" + after_next);
 
 		// hide current frame
 		if(this._nodes[prev]) {
-			u.bug("show prev:" + prev);
+//			u.bug("show prev:" + prev);
 			u.as(this._nodes[prev], "display", "block");
 
 				// make next frame visible
@@ -303,31 +304,45 @@ u.sequencePlayer = function(node, options) {
 
 	// TODO
 	player.next = function(loop) {
+//		u.bug("next:" + loop);
 
 		if(!loop || this._current_frame + this._direction <= this._to) {
+//			u.bug("more frames:" + this._current_frame)
 			this.nextFrame(this._current_frame);
 			this._current_frame = this._current_frame + this._direction;
+
+//			u.bug("new current_frame:" + this._current_frame)
 		}
-		else if(loop){
+		else if(loop) {
+//			u.bug("no more frames:" + this._current_frame);
+
 			this.play();
 			this.pause();
+			this.nextFrame(this._current_frame);
 			this._current_frame = this._current_frame + this._direction;
+//			u.bug("new current_frame:" + this._current_frame)
 		}
 	}
 
 	// TODO
 	player.prev = function(loop) {
+//		u.bug("prev:" + loop);
 
 		if(!loop || this._current_frame - this._direction >= this._from) {
+//			u.bug("more frames:" + this._current_frame)
+
 			this.prevFrame(this._current_frame);
 			this._current_frame = this._current_frame - this._direction;
+//			u.bug("new current_frame:" + this._current_frame)
 		}
-		else if(loop){
+		else if(loop) {
+
+//			u.bug("no more frames:" + this._current_frame);
+
 			this.prevFrame(this._current_frame);
 			this._current_frame = this._to;
 
-			// this.play();
-			// this.pause();
+//			u.bug("new current_frame:" + this._current_frame)
 		}
 	}
 
