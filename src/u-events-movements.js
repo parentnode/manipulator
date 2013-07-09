@@ -691,11 +691,14 @@ u.e._drop = function(event) {
 
 		// if speed is not 0, execute projection
 		if(this.current_xps || this.current_yps) {
+//			u.bug("speed")
 			u.a.transition(this, "all 1s cubic-bezier(0,0,0.25,1)");
 		}
 		// so speed, no transition
 		else {
-			u.a.transition(this, "none");
+//			u.bug("no speed")
+			u.a.transition(this, "all 0.2s cubic-bezier(0,0,0.25,1)");
+//			u.a.transition(this, "none");
 		}
 
 		// execute projection
