@@ -2,7 +2,7 @@
 
 Util.Sort = u.s = new function() {
 
-	this.sortable = function(e) {
+	this.sortable = function(list) {
 		var i, j, node;
 
 		// get all possible targets
@@ -11,50 +11,53 @@ Util.Sort = u.s = new function() {
 		//       - mulitple lists would be enabled by setting sort on wrapping div
 		//       - nested list would be separated by different classnames
 
-		var target_class = u.getIJ(e, "targets");
+		var target_class = u.cv(list, "targets");
 		if(!target_class) {
-			e.nodes = u.qsa("li", e);
+			list.sortable_nodes = u.qsa("li", list);
 		}
 		else {
-			e.nodes = u.qsa("."+target_class, e);
+			list.sortable_nodes = u.qsa("."+target_class, list);
 		}
 
 		// what type of list do we have - floated indicates horizontal list
-		if(e.nodes.length) {
+		if(list.sortable_nodes.length) {
 			
 			// TODO
-
-			// if list is higher and wider than its content - mixed list
+			// if list is higher and wider than its content - mixed list ?
 			// if list is higher than its content - vertical list
 			// if list is wider than its content - horizontal list
-			
-			e.list_type = u.gcs(e.nodes[0], "float").match(/left|right/) == null ? "vertical" : "horizontal";
+			list.list_type = list.offsetWidth < list.sortable_nodes[0].offsetWidth*2 ? "vertical" : "horizontal";
 		}
 
 //		u.bug(e.list_type + ":" + u.gcs(e.nodes[0], "float"));
 
 		// set up targets
-		for(i = 0; node = e.nodes[i]; i++) {
+		for(i = 0; node = list.sortable_nodes[i]; i++) {
 
 			// remember wrapper
-			node.e = e;
+			node.list = list;
 
 			// uniquely identify element as target
 			node.dragme = true;
 
+
 			// get relative offset coords for ul
-			node.rel_ox = u.relOffsetX(node);
-			node.rel_oy = u.relOffsetY(node);
+//			node.rel_ox = u.relOffsetX(node);
+//			node.rel_oy = u.relOffsetY(node);
+			node.rel_ox = u.absX(node) - u.relX(node);
+			node.rel_oy = u.absY(node) - u.relY(node);
 //			u.bug(u.nodeId(node) + ":node.rel_ox = " + node.rel_ox + ", node.rel_oy = " + node.rel_oy)
 
 
+			// check for drag handle
 			node.drag = u.qs(".drag", node);
 			// if no drag area, use entire node
 			if(!node.drag) {
 				node.drag = node;
 			}
 
-			// remember which is actual drag node
+
+			// reference node from drag handle
 			node.drag.node = node;
 			// cross-reference all drag children, so every event.target knows node
 			var drag_children = u.qsa("*", node.drag);
@@ -67,85 +70,94 @@ Util.Sort = u.s = new function() {
 			// set start drag event handler
 			u.e.addStartEvent(node.drag , this._pick);
 		}
-		
+
+
+		// TODO 
 		// window scroller
 		// based on document body event
-		e._scrollWindowY = function() {
-			window.scrollBy(0, this.scroll_speed);
-			this.t_scroller = u.t.setTimer(this, this._scrollWindowY, 150);
-		}
+		// list._scrollWindowY = function() {
+		// 	window.scrollBy(0, this.scroll_speed);
+		// 	this.t_scroller = u.t.setTimer(this, this._scrollWindowY, 150);
+		// }
 		
 	}
 
 
 	// node picked
 	this._pick = function(event) {
-		u.e.kill(event);
 
-//		u.bug("pick:" + this.node + ":" + this.node.className)
+		// only pick if sorting is not disabled
+		if(!this._sorting_disabled) {
 
-		// don't pick unless last element was correctly dropped
-		if(!this.node.e.dragged) {
+			u.e.kill(event);
 
-			// dragging has begun
-			var node = this.node.e.dragged = this.node;
+	//		u.bug("pick:" + this.node + ":" + this.node.className)
 
-			// dragged element start settings
-			node.start_opacity = u.gcs(node, "opacity");
-			node.start_position = u.gcs(node, "position");
+			// don't pick unless last element was correctly dropped
+			if(!this.node.list.dragged) {
 
-			// drag target - create node based on dragged node
-			if(!node.e.tN) {
-				node.e.tN = document.createElement(node.nodeName);
-			}
-			u.sc(node.e.tN, "target " + node.className);
-			u.as(node.e.tN, "height", u.actualHeight(node)+"px");
-			u.as(node.e.tN, "width", u.actualWidth(node)+"px");
-			u.as(node.e.tN, "opacity", node.start_opacity - 0.5);
-			node.e.tN.innerHTML = node.innerHTML;
+				// dragging has begun
+				var node = this.node.list.dragged = this.node;
 
+				// dragged element start settings
+				node.start_opacity = u.gcs(node, "opacity");
+				node.start_position = u.gcs(node, "position");
+				node.start_width = u.gcs(node, "opacity");
+				node.start_height = u.gcs(node, "position");
 
-			// set fixed dragged element width and lower opacity
-			u.as(node, "width", u.actualWidth(node) + "px");
-			u.as(node, "opacity", node.start_opacity - 0.3);
-
-			// set fixed list width and height to avoid shapeshifting when inserting and removing nodes
-			u.as(node.e, "width", u.actualWidth(node.e) + "px");
-			u.as(node.e, "height", u.actualHeight(node.e) + "px");
-
-			// dragged element mouse offsets
-			node.mouse_ox = u.eventX(event) - u.absX(node);
-			node.mouse_oy = u.eventY(event) - u.absY(node);
-//			u.bug("mx:" + u.eventX(event) + "-" + u.absX(node));
-//			u.bug("my:" + u.eventY(event) + "-" + u.absY(node));
+				// drag target - create node based on dragged node
+				if(!node.list.tN) {
+					node.list.tN = document.createElement(node.nodeName);
+				}
+				u.sc(node.list.tN, "target " + node.className);
+				u.as(node.list.tN, "height", u.actualHeight(node)+"px");
+				u.as(node.list.tN, "width", u.actualWidth(node)+"px");
+				u.as(node.list.tN, "opacity", node.start_opacity - 0.5);
+				node.list.tN.innerHTML = node.innerHTML;
 
 
-			// when everything is set up, position absolute
-			u.as(node, "position", "absolute");
+				// set fixed dragged element width and lower opacity
+				u.as(node, "width", u.actualWidth(node) + "px");
+				u.as(node, "opacity", node.start_opacity - 0.3);
+
+				// set fixed list width and height to avoid shapeshifting when inserting and removing nodes
+				u.as(node.list, "width", u.actualWidth(node.list) + "px");
+				u.as(node.list, "height", u.actualHeight(node.list) + "px");
+
+				// dragged element mouse offsets
+				node.mouse_ox = u.eventX(event) - u.absX(node);
+				node.mouse_oy = u.eventY(event) - u.absY(node);
+	//			u.bug("mx:" + u.eventX(event) + "-" + u.absX(node));
+	//			u.bug("my:" + u.eventY(event) + "-" + u.absY(node));
 
 
-			// set drag and end events on body, to make sure events are captured even when away from list
-			u.e.addMoveEvent(document.body , u.s._drag);
-			u.e.addEndEvent(document.body , u.s._drop);
-//			u.e.addEvent(document.body, "mousemove", u.s._drag);
-//			u.e.addEvent(document.body, "mouseup", u.s._drop);
-
-			// remember current drag scope
-			document.body.e = node.e;
+				// when everything is set up, position absolute to start dragging node
+				u.as(node, "position", "absolute");
 
 
-			// position dragged element
-			u.as(node, "left", (u.eventX(event) - node.rel_ox) - node.mouse_ox+"px");
-			u.as(node, "top", (u.eventY(event) - node.rel_oy) - node.mouse_oy+"px");
-			u.ac(node, "dragged");
-//			u.bug("("+u.eventX(event) + "-" + node.rel_ox + ") -" + node.mouse_ox+"px")
+				// set drag and end events on body, to make sure events are captured even when away from list
+				u.e.addMoveEvent(document.body , u.s._drag);
+				u.e.addEndEvent(document.body , u.s._drop);
+	//			u.e.addEvent(document.body, "mousemove", u.s._drag);
+	//			u.e.addEvent(document.body, "mouseup", u.s._drop);
 
-			// and insert target
-			node.e.insertBefore(node.e.tN, node);
+				// remember current drag scope
+				document.body.list = node.list;
+
+
+				// position dragged element
+				u.as(node, "left", (u.eventX(event) - node.rel_ox) - node.mouse_ox+"px");
+				u.as(node, "top", (u.eventY(event) - node.rel_oy) - node.mouse_oy+"px");
+				u.ac(node, "dragged");
+	//			u.bug("("+u.eventX(event) + "-" + node.rel_ox + ") -" + node.mouse_ox+"px")
+
+				// and insert target
+				node.list.insertBefore(node.list.tN, node);
 			
-			// notify picked
-			if(typeof(node.e.picked) == "function") {
-				node.e.picked(event);
+				// notify picked
+				if(typeof(node.list.picked) == "function") {
+					node.list.picked(event);
+				}
 			}
 		}
 
@@ -155,28 +167,30 @@ Util.Sort = u.s = new function() {
 	// drag element
 	// event handling on document.body
 	this._drag = function(event) {
+		//		u.bug("drag:" + u.nodeId(event.target))
 		var i, node;
 
-//		u.bug("drag:" + event.target + ":" + event.target.className)
 
 		u.e.kill(event);
 	//	out("kill timer:" + u.t_scroller);
 		// reset scroller
-		if(this.e.t_scroller) {
-			u.t.resetTimer(this.e.t_scroller);
-			this.e.scroll_speed = 0;
-		}
+
+
+		// if(this.list.t_scroller) {
+		// 	u.t.resetTimer(this.list.t_scroller);
+		// 	this.list.scroll_speed = 0;
+		// }
 
 
 		// only execute drag if dragged flag is set
-		if(this.e.dragged) {
+		if(this.list.dragged) {
 
 
 			// pre-calculate vars for better performance
-			var d_left = u.eventX(event) - this.e.dragged.mouse_ox;
-			var d_top = u.eventY(event) - this.e.dragged.mouse_oy;
-//			var d_left = (u.eventX(event) - this.e.dragged.rel_ox) - this.e.dragged.mouse_ox;
-//			var d_top = (u.eventY(event) - this.e.dragged.rel_oy) - this.e.dragged.mouse_oy;
+			var d_left = u.eventX(event) - this.list.dragged.mouse_ox;
+			var d_top = u.eventY(event) - this.list.dragged.mouse_oy;
+//			var d_left = (u.eventX(event) - this.list.dragged.rel_ox) - this.list.dragged.mouse_ox;
+//			var d_top = (u.eventY(event) - this.list.dragged.rel_oy) - this.list.dragged.mouse_oy;
 //			u.bug("d:" + d_left + "x" + d_top)
 
 
@@ -189,33 +203,33 @@ Util.Sort = u.s = new function() {
 				if(u.browserH() < u.htmlH()) {
 
 					// set dragged element properties
-					u.as(this.e.dragged, "position", "fixed");
-					u.as(this.e.dragged, "left", d_left - this.e.dragged.rel_ox+"px");
-					u.as(this.e.dragged, "top", 0);
-					u.as(this.e.dragged, "bottom", "auto");
+					u.as(this.list.dragged, "position", "fixed");
+					u.as(this.list.dragged, "left", d_left - this.list.dragged.rel_ox+"px");
+					u.as(this.list.dragged, "top", 0);
+					u.as(this.list.dragged, "bottom", "auto");
 
 					// scroll as much as possible
-					this.e.scroll_speed = Math.round((d_top - u.scrollY()));
-					this.e._scrollWindowY();
+					this.list.scroll_speed = Math.round((d_top - u.scrollY()));
+					this.list._scrollWindowY();
 
 				}
 			}
 
 			// element is being dragged out of viewable area (bottom)
-			else if(u.browserH() + u.scrollY() < d_top + this.e.dragged.offsetHeight && 0) {
+			else if(u.browserH() + u.scrollY() < d_top + this.list.dragged.offsetHeight && 0) {
 
 				// is page scrollable?
 				if(u.browserH() < u.htmlH()) {
 
 					// set dragged element properties
-					u.as(this.e.dragged, "position", "fixed");
-					u.as(this.e.dragged, "left", d_left - this.e.dragged.rel_ox+"px");
-					u.as(this.e.dragged, "top", "auto");
-					u.as(this.e.dragged, "bottom", 0);
+					u.as(this.list.dragged, "position", "fixed");
+					u.as(this.list.dragged, "left", d_left - this.list.dragged.rel_ox+"px");
+					u.as(this.list.dragged, "top", "auto");
+					u.as(this.list.dragged, "bottom", 0);
 
 					// scroll as much as possible
-					this.e.scroll_speed = -(Math.round((u.browserH() + u.scrollY() - d_top - this.e.dragged.offsetHeight)));
-					this.e._scrollWindowY();
+					this.list.scroll_speed = -(Math.round((u.browserH() + u.scrollY() - d_top - this.list.dragged.offsetHeight)));
+					this.list._scrollWindowY();
 				}
 			}
 
@@ -224,27 +238,27 @@ Util.Sort = u.s = new function() {
 			else {
 
 				// calculate center coordinate of dragged element
-				var d_center_x = d_left + (this.e.dragged.offsetWidth/2);
-				var d_center_y = d_top + (this.e.dragged.offsetHeight/2);
+				var d_center_x = d_left + (this.list.dragged.offsetWidth/2);
+				var d_center_y = d_top + (this.list.dragged.offsetHeight/2);
 //				u.bug("d ("+u.nodeId(this.e.dragged)+") center:" + d_center_x+ "("+d_left + "+" + this.e.dragged.offsetWidth+"/2)" + "x" + d_center_y + "("+d_top + "+"+this.e.dragged.offsetHeight+"/2)")
 
 
 				// set dragged element properties
-				u.as(this.e.dragged, "position", "absolute");
-				u.as(this.e.dragged, "left", d_left - this.e.dragged.rel_ox+"px");
-				u.as(this.e.dragged, "top", d_top - this.e.dragged.rel_oy+"px");
-				u.as(this.e.dragged, "bottom", "auto");
+				u.as(this.list.dragged, "position", "absolute");
+				u.as(this.list.dragged, "left", d_left - this.list.dragged.rel_ox+"px");
+				u.as(this.list.dragged, "top", d_top - this.list.dragged.rel_oy+"px");
+				u.as(this.list.dragged, "bottom", "auto");
 
 
 				// check for overlap
-				for(i = 0; node = this.e.nodes[i]; i++) {
+				for(i = 0; node = this.list.sortable_nodes[i]; i++) {
 
 					// do not check current node or target node for overlap
-					if(node != this.e.dragged && node != this.e.tN) {
+					if(node != this.list.dragged && node != this.list.tN) {
 
 
 						// vertical list
-						if(this.e.list_type == "vertical") {
+						if(this.list.list_type == "vertical") {
 //							u.bug("vertical list")
 
 							// pre-calculate vars for better performance
@@ -257,7 +271,7 @@ Util.Sort = u.s = new function() {
 
 								// top half
 								if(o_top < d_center_y && o_top + (o_height/2) > d_center_y) {
-									this.e.insertBefore(this.e.tN, node);
+									this.list.insertBefore(this.list.tN, node);
 								}
 								// bottom half
 								else {
@@ -265,11 +279,11 @@ Util.Sort = u.s = new function() {
 									var next = u.ns(node);
 									if(next) {
 										// insert before next element
-										this.e.insertBefore(this.e.tN, next);
+										this.list.insertBefore(this.list.tN, next);
 									}
 									else {
 										// append to the end of the list
-										this.e.appendChild(this.e.tN);
+										this.list.appendChild(this.list.tN);
 									}
 								}
 								// end loop on overlap
@@ -282,6 +296,7 @@ Util.Sort = u.s = new function() {
 
 						// horizontal list
 						else {
+//							u.bug("horizontal list")
 							var o_left = u.absX(node);
 							var o_top = u.absY(node);
 							var o_width = node.offsetWidth;
@@ -291,7 +306,7 @@ Util.Sort = u.s = new function() {
 						 	if(o_left < d_center_x && (o_left + o_width) > d_center_x && o_top < d_center_y && (o_top + o_height) > d_center_y) {
 								// left half
 								if(o_left < d_center_x && o_left + (o_width/2) > d_center_x) {
-									this.e.insertBefore(this.e.tN, node);
+									this.list.insertBefore(this.list.tN, node);
 								}
 								// right half
 								else {
@@ -299,11 +314,11 @@ Util.Sort = u.s = new function() {
 									var next = u.ns(node);
 									if(next) {
 										// insert before next element
-										this.e.insertBefore(this.e.tN, next);
+										this.list.insertBefore(this.list.tN, next);
 									}
 									else {
 										// append to the end of the list
-										this.e.appendChild(this.e.tN);
+										this.list.appendChild(this.list.tN);
 									}
 								}
 								break;
@@ -319,8 +334,8 @@ Util.Sort = u.s = new function() {
 		}
 
 		// notify dragged
-		if(typeof(this.e.dragged) == "function") {
-			this.e.dragged(event);
+		if(typeof(this.list.dragged) == "function") {
+			this.list.dragged(event);
 		}
 		
 	}
@@ -348,41 +363,43 @@ Util.Sort = u.s = new function() {
 
 
 		// replace target with dragged element
-		this.e.tN = this.e.replaceChild(this.e.dragged, this.e.tN);
+		this.list.tN = this.list.replaceChild(this.list.dragged, this.list.tN);
 
 		// reset dragged element
-		u.as(this.e.dragged, "position", this.e.dragged.start_position);
-		u.as(this.e.dragged, "opacity", this.e.dragged.start_opacity);
-		u.as(this.e.dragged, "left", "");
-		u.as(this.e.dragged, "top", "");
-		u.as(this.e.dragged, "bottom", "");
-		u.as(this.e.dragged, "width", "");
+		u.as(this.list.dragged, "position", this.list.dragged.start_position);
+		u.as(this.list.dragged, "opacity", this.list.dragged.start_opacity);
+		u.as(this.list.dragged, "left", "");
+		u.as(this.list.dragged, "top", "");
+		u.as(this.list.dragged, "bottom", "");
+		u.as(this.list.dragged, "width", "");
 
 		// reset list
-		u.as(this.e, "width", "");
-		u.as(this.e, "height", "");
+//		u.as(this.list, "width", this.list.dragged.start_width);
+//		u.as(this.list, "height", this.list.dragged.start_height);
+		u.as(this.list, "width", "");
+		u.as(this.list, "height", "");
 
 
 		// reset dragged reference
-		u.rc(this.e.dragged, "dragged");
-		this.e.dragged = false;
+		u.rc(this.list.dragged, "dragged");
+		this.list.dragged = false;
 
 		// stop scroller
-		u.t.resetTimer(this.e.t_scroller);
-		this.e.scroll_speed = 0;
+		// u.t.resetTimer(this.list.t_scroller);
+		// this.list.scroll_speed = 0;
 
 		// update nodes list
-		var target_class = u.getIJ(this.e, "targets");
+		var target_class = u.getIJ(this.list, "targets");
 		if(!target_class) {
-			this.e.nodes = u.qsa("li", this.e);
+			this.list.sortable_nodes = u.qsa("li", this.list);
 		}
 		else {
-			this.e.nodes = u.qsa("."+target_class, this.e);
+			this.list.sortable_nodes = u.qsa("."+target_class, this.list);
 		}
 
 		// notify dropped
-		if(typeof(this.e.dropped) == "function") {
-			this.e.dropped(event);
+		if(typeof(this.list.dropped) == "function") {
+			this.list.dropped(event);
 		}
 
 	}

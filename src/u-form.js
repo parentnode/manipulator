@@ -523,6 +523,14 @@ Util.Form = u.f = new function() {
 				// submit on enter (checks for autocomplete etc)
 				this.inputOnEnter(node);
 			}
+			// type=file
+			else if(node.type && node.type.match(/file/)) {
+
+				u.e.addEvent(node, "keyup", this._updated);
+				u.e.addEvent(node, "change", this._changed);
+
+			}
+
 
 			// activate field
 			this.activateField(node);
@@ -941,11 +949,22 @@ Util.Form = u.f = new function() {
 		var i, input, select, textarea, param;
 
 		// Object for found inputs/selects/textareas
-		var params = new Object();
+		// if(window.FormData) {
+		// 	u.bug("formdata");
+		// 	var params = new FormData();
+		// }
+		// else {
+			var params = new Object();
+		// 	params.append = function(name, value, filename) {
+		// 		this[name] = value;
+		// 	}
+		// }
+
 
 		// add submit button to params if available
 		if(form._submit_button && form._submit_button.name) {
 			params[form._submit_button.name] = form._submit_button.value;
+//			params.append(form._submit_button.name, form._submit_button.value);
 		}
 
 		var inputs = u.qsa("input", form);
@@ -959,12 +978,20 @@ Util.Form = u.f = new function() {
 				// if checkbox/radio and node is checked
 				if((input.type == "checkbox" || input.type == "radio") && input.checked) {
 					params[input.name] = input.value;
+//					params.append(input.name, input.value);
+				}
+				// file input
+				else if(input.type == "file") {
+//					u.bug("file:" + input.files[0]);
+					params[input.name] = input.value;
+//					params.append(input.name, input.files[0], input.value);
 				}
 
 				// if anything but buttons and radio/checkboxes
 				// - hidden, text, html5 input-types
-				else if(!input.type.match(/button|submit|reset|checkbox|radio/i)) {
+				else if(!input.type.match(/button|submit|reset|file|checkbox|radio/i)) {
 					params[input.name] = input.value;
+//					params.append(input.name, input.value);
 				}
 			}
 		}
@@ -973,6 +1000,7 @@ Util.Form = u.f = new function() {
 			// exclude specific inputs (defined by ignore_inputs)
 			if(!u.hc(select, ignore_inputs)) {
 				params[select.name] = select.options[select.selectedIndex].value;
+//				params.append(select.name, select.options[select.selectedIndex].value);
 			}
 		}
 
@@ -980,6 +1008,7 @@ Util.Form = u.f = new function() {
 			// exclude specific inputs (defined by ignore_inputs)
 			if(!u.hc(textarea, ignore_inputs)) {
 				params[textarea.name] = textarea.value;
+//				params.append(textarea.name, textarea.value);
 			}
 		}
 
@@ -1008,9 +1037,14 @@ Util.Form = u.f = new function() {
 		// send_as == "params" (or unknown send_as type)
 		else {
 
+//			u.xInObject(params);
+
 			var string = "";
 			for(param in params) {
-				string += (string ? "&" : "") + param + "=" + encodeURIComponent(params[param]);
+//				u.bug("param:" + typeof(params[param]) + ", " + param)
+//				if(typeof(params[param]) != "function") {
+					string += (string ? "&" : "") + param + "=" + encodeURIComponent(params[param]);
+//				}
 			}
 			return string;
 		}

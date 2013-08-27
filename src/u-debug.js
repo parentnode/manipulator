@@ -7,7 +7,7 @@ Util.debugURL = function(url) {
 }
 // identify node
 Util.nodeId = function(node, include_path) {
-	try {
+//	try {
 		if(!include_path) {
 			return node.id ? node.nodeName+"#"+node.id : (node.className ? node.nodeName+"."+node.className : (node.name ? node.nodeName + "["+node.name+"]" : node.nodeName));
 		}
@@ -20,9 +20,9 @@ Util.nodeId = function(node, include_path) {
 			}
 		}
 	}
-	catch(exception) {
-		u.bug("Exception ("+exception+") in u.nodeId("+node+"), called from: "+arguments.callee.caller);
-	}
+	// catch(exception) {
+	// 	u.bug("Exception ("+exception+") in u.nodeId("+node+"), called from: "+arguments.callee.caller);
+	// }
 	return "Unindentifiable node!";
 }
 

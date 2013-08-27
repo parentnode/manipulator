@@ -1,12 +1,13 @@
 
 
 // Create xmlhttprequest object - separated to make it possible to implement fallback, primarily for IE
-Util.createRequestObject = function() {
+Util.createRequestObject = u.createRequestObject = function() {
 	return new XMLHttpRequest();
 }
 
 // Request object
 Util.Request = u.request = function(node, url, settings) {
+//	u.bug("request")
 
 	node.request_url = url;
 
@@ -32,6 +33,7 @@ Util.Request = u.request = function(node, url, settings) {
 		}
 	}
 
+//	u.bug("request:" + node.request_url + ", " + node.request_method + ", " + node.request_params + ", " + node.request_async + ", " + node.request_headers);
 
 	// regular HTTP request
 	if(node.request_method.match(/GET|POST|PUT|PATCH/i)) {
@@ -53,6 +55,7 @@ Util.Request = u.request = function(node, url, settings) {
 		try {
 			// perform GET request
 			if(node.request_method.match(/GET/i)) {
+//				u.bug("GET request");
 
 				// convert JSON params to regular params, JSON cannot be sent as GET
 				var params = u.JSONtoParams(node.request_params);
@@ -84,9 +87,17 @@ Util.Request = u.request = function(node, url, settings) {
 			}
 			// perform POST, PUT or PATCH request
 			else if(node.request_method.match(/POST|PUT|PATCH/i)) {
+//				u.bug("POST|PUT|PATCH request");
 
 				// stringify possible JSON object
-				var params = typeof(node.request_params) == "object" ? JSON.stringify(node.request_params) : node.request_params;
+				var params;
+//				u.bug("params typeof:" + typeof(node.request_params) + ", " +node.request_params.constructor.toString().match(/FormData/i));
+				if(typeof(node.request_params) == "object" && !node.request_params.constructor.toString().match(/FormData/i)) {
+					params = JSON.stringify(node.request_params);
+				}
+				else {
+					params = node.request_params;
+				}
 
 				node.HTTPRequest.open(node.request_method, node.request_url, node.request_async);
 				node.HTTPRequest.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
