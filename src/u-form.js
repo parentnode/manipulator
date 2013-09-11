@@ -70,10 +70,15 @@ Util.Form = u.f = new function() {
 				abbr.parentNode.removeChild(abbr);
 			}
 
+			// optional error message in data-error attribute
 			var error_message = field.getAttribute("data-error");
 			if(error_message) {
 				u.ae(field, "div", {"class":"error", "html":error_message})
 			}
+
+			// required indicator (for showing icons)
+			field._indicator = u.ae(field, "div", {"class":"indicator"});
+
 
 			// get input label, hint and error
 			field._label = u.qs("label", field);
@@ -83,6 +88,7 @@ Util.Form = u.f = new function() {
 
 			// setup fields
 			var not_initialized = true;
+
 
 			// check for custom inits
 			var custom_init;
@@ -98,7 +104,7 @@ Util.Form = u.f = new function() {
 			if(not_initialized) {
 
 				// regular inputs initialization
-				if(u.hc(field, "string|email|tel|numeric|integer|password")) {
+				if(u.hc(field, "string|email|tel|number|integer|password")) {
 
 					field._input = u.qs("input", field);
 					field._input.field = field;
@@ -146,7 +152,7 @@ Util.Form = u.f = new function() {
 					}
 				}
 				// date field initialization
-				else if(u.hc(field, "date")) {
+				else if(u.hc(field, "date|datetime")) {
 
 					field._input = u.qsa("select,input", field);
 					for(j = 0; input = field._input[j]; j++) {
@@ -156,8 +162,17 @@ Util.Form = u.f = new function() {
 						this.formIndex(form, input);
 					}
 				}
+				// tags initialization
+				else if(u.hc(field, "tags")) {
+
+					field._input = u.qs("input", field);
+					field._input.field = field;
+
+					// add to form index
+					this.formIndex(form, field._input);
+				}
 				// file input initialization
-				else if(u.hc(field, "file")) {
+				else if(u.hc(field, "files")) {
 
 					field._input = u.qs("input", field);
 					field._input.field = field;
@@ -211,8 +226,13 @@ Util.Form = u.f = new function() {
 						this.form._submit_input = false;
 
 						// internal submit
-						this.form._submit(event);
+						this.form._submit(event, this);
 					}
+
+					// TODO: what is default action when not a submit button??
+					// else {
+					// 	location.href = this.url;
+					// }
 				}
 			}
 
@@ -223,9 +243,10 @@ Util.Form = u.f = new function() {
 			this.activateButton(action._input);
 
 			// add to actions index if button has a name
-			if(action._input.name && action._input.name) {
-				form.actions[action._input.name] = action._input;
-			}
+			var action_name = action._input.name ? action._input.name : action.className;
+//			if(action._input.name && action._input.name) {
+				form.actions[action_name] = action._input;
+//			}
 
 			// shortcuts - BETA
 //			u.bug("shortcut: "+ u.hc(action._input, "key:[a-z0-9]+"));
@@ -246,6 +267,7 @@ Util.Form = u.f = new function() {
 			this.value = value;
 
 			// validate after setting value
+//			u.bug("validate from set value")
 			u.f.validate(this);
 		}
 		return this.value;
@@ -353,7 +375,7 @@ Util.Form = u.f = new function() {
 				this.form.submitButton = false;
 
 				// internal submit
-				this.form._submit(event);
+				this.form._submit(event, this);
 			}
 		}
 
@@ -387,56 +409,62 @@ Util.Form = u.f = new function() {
 
 
 	// add to form index and extend according to node type
-	this.formIndex = function(form, node) {
-//		u.bug("formIndex:" + u.nodeId(node) + ", " + node.field + ", " + node.name)
+	this.formIndex = function(form, iN) {
+//		u.bug("formIndex:" + u.nodeId(iN) + ", " + iN.field + ", " + iN.name)
 
 		// know position in field-order (tab index)
 		// TODO: tabindex contains fields only - could be separated to contain both inputs and buttons
-		node.tab_index = form.tab_order.length;
-		form.tab_order[node.tab_index] = node;
+		iN.tab_index = form.tab_order.length;
+		form.tab_order[iN.tab_index] = iN;
 
-		if(node.field && node.name) {
-			form.fields[node.name] = node;
+		if(iN.field && iN.name) {
+			form.fields[iN.name] = iN;
 
 			// input
-			if(node.nodeName.match(/input/i) && node.type && node.type.match(/text|email|number|password/)) {
+			// type=text
+			// type=email
+			// type=number
+			// type=password
+			// type=date
+			// type=datetime
+			if(iN.nodeName.match(/input/i) && iN.type && iN.type.match(/text|email|tel|number|password|datetime|date/)) {
 
-				node.val = this._value;
+				iN.val = this._value;
 
-				u.e.addEvent(node, "keyup", this._updated);
-				u.e.addEvent(node, "change", this._changed);
+				u.e.addEvent(iN, "keyup", this._updated);
+				u.e.addEvent(iN, "change", this._changed);
 
 				// submit on enter (checks for autocomplete etc)
-				this.inputOnEnter(node);
+				this.inputOnEnter(iN);
 			}
 			// textarea
-			else if(node.nodeName.match(/textarea/i)) {
+			else if(iN.nodeName.match(/textarea/i)) {
 
-				node.val = this._value;
+				iN.val = this._value;
 
-				u.e.addEvent(node, "keyup", this._updated);
-				u.e.addEvent(node, "change", this._changed);
+				u.e.addEvent(iN, "keyup", this._updated);
+				u.e.addEvent(iN, "change", this._changed);
 
 				// resize textarea while typing
-				if(u.hc(node.field, "autoexpand")) {
+				if(u.hc(iN.field, "autoexpand")) {
 
 					// no scrollbars on auto expanded fields
-					u.as(node, "overflow", "hidden");
+					u.as(iN, "overflow", "hidden");
 
 					// get textarea height value offset - webkit and IE/Opera scrollHeight differs from height
 					// implenting different solutions is the only way to achive similar behaviour across browsers
 					// fallback support is Mozilla 
 
-					node.autoexpand_offset = 0;
-					if(parseInt(u.gcs(node, "height")) != node.scrollHeight) {
-						node.autoexpand_offset = node.scrollHeight - parseInt(u.gcs(node, "height"));
+					iN.autoexpand_offset = 0;
+					if(parseInt(u.gcs(iN, "height")) != iN.scrollHeight) {
+						iN.autoexpand_offset = iN.scrollHeight - parseInt(u.gcs(iN, "height"));
 					}
 
 					// set correct height
-					node.setHeight = function() {
+					iN.setHeight = function() {
 						var textarea_height = parseInt(u.gcs(this, "height"));
 
-						if(this.value) {
+						if(this.val()) {
 							if(u.browser("webkit")) {
 								if(this.scrollHeight - this.autoexpand_offset > textarea_height) {
 									u.a.setHeight(this, this.scrollHeight);
@@ -452,57 +480,57 @@ Util.Form = u.f = new function() {
 							}
 						}
 					}
-					u.e.addEvent(node, "keyup", node.setHeight);
+					u.e.addEvent(iN, "keyup", iN.setHeight);
 				}
 			}
 			// select
-			else if(node.nodeName.match(/select/i)) {
+			else if(iN.nodeName.match(/select/i)) {
 
-				node.val = this._value_select;
+				iN.val = this._value_select;
 
-				u.e.addEvent(node, "change", this._updated);
-				u.e.addEvent(node, "keyup", this._updated);
-				u.e.addEvent(node, "change", this._changed);
+				u.e.addEvent(iN, "change", this._updated);
+				u.e.addEvent(iN, "keyup", this._updated);
+				u.e.addEvent(iN, "change", this._changed);
 			}
 			// type=checkbox
-			else if(node.type && node.type.match(/checkbox/)) {
+			else if(iN.type && iN.type.match(/checkbox/)) {
 
-				node.val = this._value_checkbox;
+				iN.val = this._value_checkbox;
 
 				// special setting for IE8 and less (bad onchange handler)
 				if(u.browser("explorer", "<=8")) {
-					node.pre_state = node.checked;
-					node._changed = u.f._changed;
-					node._updated = u.f._updated;
-					node._clicked = function(event) {
+					iN.pre_state = iN.checked;
+					iN._changed = u.f._changed;
+					iN._updated = u.f._updated;
+					iN._clicked = function(event) {
 						if(this.checked != this.pre_state) {
 							this._changed(window.event);
 							this._updated(window.event);
 						}
 						this.pre_state = this.checked;
 					}
-					u.e.addEvent(node, "click", node._clicked);
+					u.e.addEvent(iN, "click", iN._clicked);
 
 				}
 				else {
-					u.e.addEvent(node, "change", this._updated);
-					u.e.addEvent(node, "change", this._changed);
+					u.e.addEvent(iN, "change", this._updated);
+					u.e.addEvent(iN, "change", this._changed);
 				}
 
 				// submit on enter (checks for autocomplete etc)
-				this.inputOnEnter(node);
+				this.inputOnEnter(iN);
 			}
 			// type=radio
-			else if(node.type && node.type.match(/radio/)) {
+			else if(iN.type && iN.type.match(/radio/)) {
 			
-				node.val = this._value_radio;
+				iN.val = this._value_radio;
 
 				// special setting for IE8 and less (bad onchange handler)
 				if(u.browser("explorer", "<=8")) {
-					node.pre_state = node.checked;
-					node._changed = u.f._changed;
-					node._updated = u.f._updated;
-					node._clicked = function(event) {
+					iN.pre_state = iN.checked;
+					iN._changed = u.f._changed;
+					iN._updated = u.f._updated;
+					iN._clicked = function(event) {
 						var i, input;
 						if(this.checked != this.pre_state) {
 							this._changed(window.event);
@@ -513,34 +541,47 @@ Util.Form = u.f = new function() {
 							input.pre_state = input.checked;
 						}
 					}
-					u.e.addEvent(node, "click", node._clicked);
+					u.e.addEvent(iN, "click", iN._clicked);
 				}
 				else {
-					u.e.addEvent(node, "change", this._updated);
-					u.e.addEvent(node, "change", this._changed);
+					u.e.addEvent(iN, "change", this._updated);
+					u.e.addEvent(iN, "change", this._changed);
 				}
 
 				// submit on enter (checks for autocomplete etc)
-				this.inputOnEnter(node);
+				this.inputOnEnter(iN);
 			}
 			// type=file
-			else if(node.type && node.type.match(/file/)) {
+			else if(iN.type && iN.type.match(/file/)) {
 
-				u.e.addEvent(node, "keyup", this._updated);
-				u.e.addEvent(node, "change", this._changed);
+				iN.val = function(value) {
+					if(value !== undefined) {
+						alert('adding values manually to input type="file" is not supported')
+					}
+					else {
+						var i, file, files = [];
+						for(i = 0; file = this.files[i]; i++) {
+							files.push(file);
+						}
+						return files.join(",");
+					}
+				}
+
+				u.e.addEvent(iN, "keyup", this._updated);
+				u.e.addEvent(iN, "change", this._changed);
 
 			}
 
 
 			// activate field
-			this.activateField(node);
+			this.activateField(iN);
 
 			// validate field now
-			this.validate(node);
+			this.validate(iN);
 		}
 	}
 
-	// input is changed (onchange event)
+	// input is changed (onchange event) - attached to input
 	this._changed = function(event) {
 //		u.bug("value changed:" + this.name + ":" + event.type + ":" + u.nodeId(event.srcElement));
 
@@ -556,7 +597,7 @@ Util.Form = u.f = new function() {
 		}
 	}
 
-	// input is updated (onkeyup event)
+	// input is updated (onkeyup event) - attached to input
 	this._updated = function(event) {
 //		u.bug("value updated:" + this.name + ":" + event.type + ":" + u.nodeId(event.srcElement));
 
@@ -566,6 +607,7 @@ Util.Form = u.f = new function() {
 
 			// only validate onkeyup if field has been used before or already contains error
 			if(this.used || u.hc(this.field, "error")) {
+//				u.bug("validate from updated")
 				u.f.validate(this);
 			}
 
@@ -580,13 +622,14 @@ Util.Form = u.f = new function() {
 
 	}
 
-	// validate input (event handler)
+	// validate input (event handler) - attached to input
 	this._validate = function() {
+//		u.bug("validate from _validate")
 		u.f.validate(this);
 	}
 
-	// internal submit handler
-	this._submit = function(event, input) {
+	// internal submit handler - attatched to form
+	this._submit = function(event, iN) {
 
 		// do pre validation of all fields
 		for(name in this.fields) {
@@ -595,6 +638,7 @@ Util.Form = u.f = new function() {
 				// change used state for input
 				this.fields[name].used = true;
 				// validate
+//				u.bug("validate from _submit")
 				u.f.validate(this.fields[name]);
 			}
 		}
@@ -608,7 +652,7 @@ Util.Form = u.f = new function() {
 		else {
 			// does callback exist
 			if(typeof(this.submitted) == "function") {
-				this.submitted(input);
+				this.submitted(iN);
 			}
 			// actual submit
 			else {
@@ -617,74 +661,115 @@ Util.Form = u.f = new function() {
 		}
 	}
 
+	// internal focus handler - attatched to inputs
+	this._focus = function(event) {
+		this.field.focused = true;
+		u.ac(this.field, "focus");
+		u.ac(this, "focus");
+
+		if(typeof(this.focused) == "function") {
+			this.focused();
+		}
+
+		if(typeof(this.form.focused) == "function") {
+			this.form.focused(this);
+		}
+	}
+	// internal blur handler - attatched to inputs
+	this._blur = function(event) {
+		this.field.focused = false;
+		u.rc(this.field, "focus");
+		u.rc(this, "focus");
+
+		// field has been interacted with
+		this.used = true;
+
+
+		if(typeof(this.blurred) == "function") {
+			this.blurred();
+		}
+		if(typeof(this.form.blurred) == "function") {
+			this.form.blurred(this);
+		}
+	}
+
+	// internal blur handler - attatched to buttons
+	this._button_focus = function(event) {
+		u.ac(this, "focus");
+
+		if(typeof(this.focused) == "function") {
+			this.focused();
+		}
+
+		if(typeof(this.form.focused) == "function") {
+			this.form.focused(this);
+		}
+	}
+	// internal blur handler - attatched to buttons
+	this._button_blur = function(event) {
+		u.rc(this, "focus");
+
+		if(typeof(this.blurred) == "function") {
+			this.blurred();
+		}
+		if(typeof(this.form.blurred) == "function") {
+			this.form.blurred(this);
+		}
+	}
+
+
+
+	// internal blur handler for default value controller - attatched to inputs
+	this._default_value_focus = function() {
+		u.rc(this, "default");
+		if(this.val() == this.default_value) {
+			this.val("");
+		}
+	}
+	// internal blur handler for default value controller - attatched to inputs
+	this._default_value_blur = function() {
+		if(this.val() == "") {
+			u.ac(this, "default");
+			this.val(this.default_value);
+		}
+	}
 
 	// activate input - add focus and blur events
-	this.activateField = function(input) {
+	this.activateField = function(iN) {
+//		u.bug("activateField:" + u.nodeId(iN.field))
 
-		this._focus = function(event) {
-			this.field.focused = true;
-			u.ac(this.field, "focus");
-			u.ac(this, "focus");
-
-			if(typeof(this.focused) == "function") {
-				this.focused();
-			}
-
-			if(typeof(this.form.focused) == "function") {
-				this.form.focused(this);
-			}
-		}
-
-		this._blur = function(event) {
-			this.field.focused = false;
-			u.rc(this.field, "focus");
-			u.rc(this, "focus");
-
-			// field has been interacted with
-			this.used = true;
-
-
-			if(typeof(this.blurred) == "function") {
-				this.blurred();
-			}
-			if(typeof(this.form.blurred) == "function") {
-				this.form.blurred(this);
-			}
-		}
-
-		u.e.addEvent(input, "focus", this._focus);
-		u.e.addEvent(input, "blur", this._blur);
+		u.e.addEvent(iN, "focus", this._focus);
+		u.e.addEvent(iN, "blur", this._blur);
 
 		// validate on field blur
-		u.e.addEvent(input, "blur", this._validate);
+		u.e.addEvent(iN, "blur", this._validate);
+
+//		u.bug(u.nodeId(iN) + ", " + u.hc(iN.form, "labelstyle:[a-z]+"));
+		if(iN.form.labelstyle || u.hc(iN.form, "labelstyle:[a-z]+")) {
+
+			iN.form.labelstyle = iN.form.labelstyle ? iN.form.labelstyle : u.cv(iN.form, "labelstyle");
+
+			// currently only one input style
+			// inject in input
+			if(iN.form.labelstyle == "inject" && (!iN.type || !iN.type.match(/file|radio|checkbox/))) {
+				iN.default_value = iN.field._label.innerHTML;
+
+				u.e.addEvent(iN, "focus", this._default_value_focus);
+				u.e.addEvent(iN, "blur", this._default_value_blur);
+
+//				u.bug(u.nodeId(iN) + ", " + typeof(iN.val));
+//				u.bug(iN.val());
+				if(iN.val() == "") {
+					iN.val(iN.default_value);
+					u.ac(iN, "default");
+				}
+			}
+		}
 
 	}
 
 	// activate button - add focus and blur events
 	this.activateButton = function(button) {
-
-		this._button_focus = function(event) {
-			u.ac(this, "focus");
-
-			if(typeof(this.focused) == "function") {
-				this.focused();
-			}
-
-			if(typeof(this.form.focused) == "function") {
-				this.form.focused(this);
-			}
-		}
-
-		this._button_blur = function(event) {
-			u.rc(this, "focus");
-
-			if(typeof(this.blurred) == "function") {
-				this.blurred();
-			}
-			if(typeof(this.form.blurred) == "function") {
-				this.form.blurred(this);
-			}
-		}
 
 		u.e.addEvent(button, "focus", this._button_focus);
 		u.e.addEvent(button, "blur", this._button_blur);
@@ -692,59 +777,61 @@ Util.Form = u.f = new function() {
 
 
 	// check if input value is default value
-	this.isDefault = function(input) {
-		if(input.field.default_value && input.val() == iN.field.default_value) {
+ 	this.isDefault = function(iN) {
+		if(iN.default_value && iN.val() == iN.default_value) {
 			return true;
 		}
 		return false;
 	}
 
+
+
 	// field has error - decide whether it is reasonable to show it or not
-	this.fieldError = function(input) {
-//		u.bug("error:" + input.name);
-		u.rc(input, "correct");
-		u.rc(input.field, "correct");
+	this.fieldError = function(iN) {
+//		u.bug("fieldError:" + u.nodeId(iN));
+		u.rc(iN, "correct");
+		u.rc(iN.field, "correct");
 
 		// do not add visual feedback until field has been used by user - or if it contains value (reloads)
-		if(input.used || !this.isDefault(input) && input.val()) {
+		if(iN.used || !this.isDefault(iN) && iN.val()) {
 //			u.bug("ready for error state")
-			u.ac(input, "error");
-			u.ac(input.field, "error");
+			u.ac(iN, "error");
+			u.ac(iN.field, "error");
 
 			// input validation failed
-			if(typeof(input.validationFailed) == "function") {
-				input.validationFailed();
+			if(typeof(iN.validationFailed) == "function") {
+				iN.validationFailed();
 			}
 
 		}
 	}
 
 	// field is correct - decide whether to show it or not
-	this.fieldCorrect = function(input) {
-//		u.bug("correct:" + input.name);
+	this.fieldCorrect = function(iN) {
+//		u.bug("fieldCorrect:" + u.nodeId(iN));
 
 		// does field have value? Non-required fields can be empty - but should not have visual validation
-		if(!this.isDefault(input) && input.val()) {
+		if(!this.isDefault(iN) && iN.val()) {
 //			u.bug("ready for correct state")
-			u.ac(input, "correct");
-			u.ac(input.field, "correct");
-			u.rc(input, "error");
-			u.rc(input.field, "error");
+			u.ac(iN, "correct");
+			u.ac(iN.field, "correct");
+			u.rc(iN, "error");
+			u.rc(iN.field, "error");
 		}
 		// remove visual validation on empty fields
 		else {
 //			u.bug("not ready for correct state")
-			u.rc(input, "correct");
-			u.rc(input.field, "correct");
-			u.rc(input, "error");
-			u.rc(input.field, "error");
+			u.rc(iN, "correct");
+			u.rc(iN.field, "correct");
+			u.rc(iN, "error");
+			u.rc(iN.field, "error");
 		}
 	}
 
 
 
 	// validate input
-	// - numeric
+	// - number
 	// - integer
 	// - tel
 	// - email
@@ -754,18 +841,35 @@ Util.Form = u.f = new function() {
 	// - checkbox|boolean
 	// - password
 	// - string
-	//
-	this.validate = function(input) {
+	// - date
+	// - datetime
+	// - files
+	this.validate = function(iN) {
 //		u.bug("validate:" + iN.name)
-		var min, max;
+		var min, max, pattern;
 		var not_validated = true;
+
+
+		// start by checking if value is empty or default_value
+		// not required
+		if(!u.hc(iN.field, "required") && (iN.val() == "" || this.isDefault(iN))) {
+//			u.bug("valid empty")
+			this.fieldCorrect(iN);
+			return true;
+		}
+		// required
+		else if(u.hc(iN.field, "required") && (iN.val() == "" || this.isDefault(iN))) {
+//			u.bug("invalid empty")
+			this.fieldError(iN);
+			return false;
+		}
 
 
 		// loop through custom validations
 		var custom_validate;
 		for(custom_validate in u.f.customValidate) {
-			if(u.hc(input.field, custom_validate)) {
-				u.f.customValidate[custom_validate](input);
+			if(u.hc(iN.field, custom_validate)) {
+				u.f.customValidate[custom_validate](iN);
 				not_validated = false;
 			}
 		}
@@ -773,137 +877,216 @@ Util.Form = u.f = new function() {
 		// still not validated?
 		if(not_validated) {
 			// password validation
-			if(u.hc(input.field, "password")) {
+			if(u.hc(iN.field, "password")) {
 
 				// min and max length
-				min = Number(u.cv(input.field, "min"));
-				max = Number(u.cv(input.field, "max"));
+				min = Number(u.cv(iN.field, "min"));
+				max = Number(u.cv(iN.field, "max"));
 				min = min ? min : 8;
 				max = max ? max : 20;
+				pattern = iN.getAttribute("pattern");
 
-				if((input.value.length >= min && input.value.length <= max && !this.isDefault(input)) || (!u.hc(input.field, "required") && !input.value)) {
-					this.fieldCorrect(input);
+				if(
+					iN.val().length >= min && 
+					iN.val().length <= max && 
+					(!pattern || iN.val().match("^"+pattern+"$"))
+				) {
+					this.fieldCorrect(iN);
 				}
 				else {
-					this.fieldError(input);
+					this.fieldError(iN);
 				}
 			}
-
 			// number validation
-			else if(u.hc(input.field, "numeric")) {
+			else if(u.hc(iN.field, "number")) {
 
 				// min and max length
-				min = Number(u.cv(input.field, "min"));
-				max = Number(u.cv(input.field, "max"));
+				min = Number(u.cv(iN.field, "min"));
+				max = Number(u.cv(iN.field, "max"));
 				min = min ? min : 0;
 				max = max ? max : 99999999999999999999999999999;
+				pattern = iN.getAttribute("pattern");
 
-				if((input.value && !isNaN(input.value) && input.value >= min && input.value <= max && !this.isDefault(input)) || (!u.hc(input.field, "required") && !input.value)) {
-					this.fieldCorrect(input);
+				if(
+					!isNaN(iN.val()) && 
+					iN.val() >= min && 
+					iN.val() <= max && 
+					(!pattern || iN.val().match("^"+pattern+"$"))
+				) {
+					this.fieldCorrect(iN);
 				}
 				else {
-					this.fieldError(input);
+					this.fieldError(iN);
 				}
 			}
-
 			// integer validation
-			else if(u.hc(input.field, "integer")) {
+			else if(u.hc(iN.field, "integer")) {
 
 				// min and max length
-				min = Number(u.cv(input.field, "min"));
-				max = Number(u.cv(input.field, "max"));
+				min = Number(u.cv(iN.field, "min"));
+				max = Number(u.cv(iN.field, "max"));
 				min = min ? min : 0;
 				max = max ? max : 99999999999999999999999999999;
+				pattern = iN.getAttribute("pattern");
 
-				if((input.value && !isNaN(input.value) && Math.round(input.value) == input.value && input.value >= min && input.value <= max && !this.isDefault(input)) || (!u.hc(input.field, "required") && !input.value)) {
-					this.fieldCorrect(input);
+				if(
+					!isNaN(iN.val()) && 
+					Math.round(iN.val()) == iN.val() && 
+					iN.val() >= min && 
+					iN.val() <= max && 
+					(!pattern || iN.val().match("^"+pattern+"$"))
+				) {
+					this.fieldCorrect(iN);
 				}
 				else {
-					this.fieldError(input);
+					this.fieldError(iN);
 				}
 			}
-
 			// telephone validation
-			else if(u.hc(input.field, "tel")) {
+			else if(u.hc(iN.field, "tel")) {
 
-				if((input.value.match(/^([\+0-9\-\.\s\(\)]){5,16}$/) && !this.isDefault(input)) || (!u.hc(input.field, "required") && !input.value)) {
-					this.fieldCorrect(input);
+				pattern = iN.getAttribute("pattern");
+
+				if(
+					!pattern && iN.val().match(/^([\+0-9\-\.\s\(\)]){5,18}$/) ||
+					(pattern && iN.val().match("^"+pattern+"$"))
+				) {
+					this.fieldCorrect(iN);
 				}
 				else {
-					this.fieldError(input);
+					this.fieldError(iN);
 				}
 			}
-
 			// email validation
-			else if(u.hc(input.field, "email")) {
-
-				if((input.value.match(/^([^<>\\\/%$])+\@([^<>\\\/%$])+\.([^<>\\\/%$]{2,20})$/) && !this.isDefault(input)) || (!u.hc(input.field, "required") && !input.value)) {
-					this.fieldCorrect(input);
+			else if(u.hc(iN.field, "email")) {
+				if(
+					!pattern && iN.val().match(/^([^<>\\\/%$])+\@([^<>\\\/%$])+\.([^<>\\\/%$]{2,20})$/) ||
+					(pattern && iN.val().match("^"+pattern+"$"))
+				) {
+					this.fieldCorrect(iN);
 				}
 				else {
-					this.fieldError(input);
+					this.fieldError(iN);
 				}
 			}
-
 			// text validation
-			else if(u.hc(input.field, "text")) {
+			else if(u.hc(iN.field, "text")) {
 
 				// min and max length
-				min = Number(u.cv(input.field, "min"));
-				max = Number(u.cv(input.field, "max"));
+				min = Number(u.cv(iN.field, "min"));
+				max = Number(u.cv(iN.field, "max"));
 				min = min ? min : 1;
 				max = max ? max : 10000000;
+				pattern = iN.getAttribute("pattern");
 
-				if((input.value.length >= min && input.value.length <= max && !this.isDefault(input)) || (!u.hc(input.field, "required") && !input.value)) {
-					this.fieldCorrect(input);
+				if(
+					iN.val().length >= min && 
+					iN.val().length <= max && 
+					(!pattern || iN.val().match("^"+pattern+"$"))
+				) {
+					this.fieldCorrect(iN);
 				}
 				else {
-					this.fieldError(input);
+					this.fieldError(iN);
 				}
 			}
 
+			// TODO: needs to be tested
 			// select validation
-			else if(u.hc(input.field, "select")) {
+			else if(u.hc(iN.field, "select")) {
 
-				if(input.val() != "" || !u.hc(input.field, "required")) {
-					this.fieldCorrect(input);
+				if(iN.val()) {
+					this.fieldCorrect(iN);
 				}
 				else {
-					this.fieldError(input);
+					this.fieldError(iN);
 				}
 			}
-
+			// TODO: needs to be tested
 			// checkbox/radio validation
-			else if(u.hc(input.field, "checkbox|boolean|radio|radio_buttons")) {
+			else if(u.hc(iN.field, "checkbox|boolean|radio|radio_buttons")) {
 
-				if(input.val() != "" || !u.hc(input.field, "required")) {
-					this.fieldCorrect(input);
+				if(iN.val()) {
+					this.fieldCorrect(iN);
 				}
 				else {
-					this.fieldError(input);
+					this.fieldError(iN);
 				}
 			}
+
 			// string validation (has been known to exist on other types, so leave it last giving other types precedence)
-			else if(u.hc(input.field, "string")) {
+			else if(u.hc(iN.field, "string")) {
 
 				// min and max length
-				min = Number(u.cv(input.field, "min"));
-				max = Number(u.cv(input.field, "max"));
+				min = Number(u.cv(iN.field, "min"));
+				max = Number(u.cv(iN.field, "max"));
 				min = min ? min : 1;
-				max = max ? max : 10000000;
+				max = max ? max : 255;
+				pattern = iN.getAttribute("pattern");
 
-				if((input.value.length >= min && input.value.length <= max && !this.isDefault(input)) || (!u.hc(input.field, "required") && !input.value)) {
-					this.fieldCorrect(input);
+				if(
+					iN.val().length >= min &&
+					iN.val().length <= max && 
+					(!pattern || iN.val().match("^"+pattern+"$"))
+				) {
+					this.fieldCorrect(iN);
 				}
 				else {
-					this.fieldError(input);
+					this.fieldError(iN);
+				}
+			}
+			// date validation
+			else if(u.hc(iN.field, "date")) {
+				if(
+					!pattern && iN.val().match(/^([\d]{4}[\-\/\ ]{1}[\d]{2}[\-\/\ ][\d]{2})$/) ||
+					(pattern && iN.val().match("^"+pattern+"$"))
+				) {
+					this.fieldCorrect(iN);
+				}
+				else {
+					this.fieldError(iN);
+				}
+			}
+			// datetime validation
+			else if(u.hc(iN.field, "datetime")) {
+				if(
+					!pattern && iN.val().match(/^([\d]{4}[\-\/\ ]{1}[\d]{2}[\-\/\ ][\d]{2} [\d]{2}[\-\/\ \:]{1}[\d]{2}[\-\/\ \:]{0,1}[\d]{0,2})$/) ||
+					(pattern && iN.val().match("^"+pattern+"$"))
+				) {
+					this.fieldCorrect(iN);
+				}
+				else {
+					this.fieldError(iN);
+				}
+			}
+			// tags validation
+			else if(u.hc(iN.field, "tags")) {
+				if(
+					!pattern && iN.val().match(/\:/) ||
+					(pattern && iN.val().match("^"+pattern+"$"))
+				) {
+					this.fieldCorrect(iN);
+				}
+				else {
+					this.fieldError(iN);
+				}
+			}
+			// files validation
+			else if(u.hc(iN.field, "files")) {
+				if(
+					1
+				) {
+					this.fieldCorrect(iN);
+				}
+				else {
+					this.fieldError(iN);
 				}
 			}
 		}
 
 
 		// did validation result in error?
-		if(u.hc(input.field, "error")) {
+		if(u.hc(iN.field, "error")) {
 			return false;
 		}
 		else {
@@ -977,20 +1160,27 @@ Util.Form = u.f = new function() {
 
 				// if checkbox/radio and node is checked
 				if((input.type == "checkbox" || input.type == "radio") && input.checked) {
-					params[input.name] = input.value;
+					if(!this.isDefault(input)) {
+						params[input.name] = input.value;
+					}
 //					params.append(input.name, input.value);
 				}
 				// file input
 				else if(input.type == "file") {
 //					u.bug("file:" + input.files[0]);
-					params[input.name] = input.value;
+					if(!this.isDefault(input)) {
+						params[input.name] = input.value;
+					}
 //					params.append(input.name, input.files[0], input.value);
 				}
 
 				// if anything but buttons and radio/checkboxes
 				// - hidden, text, html5 input-types
 				else if(!input.type.match(/button|submit|reset|file|checkbox|radio/i)) {
-					params[input.name] = input.value;
+
+					if(!this.isDefault(input)) {
+						params[input.name] = input.value;
+					}
 //					params.append(input.name, input.value);
 				}
 			}
@@ -999,7 +1189,9 @@ Util.Form = u.f = new function() {
 		for(i = 0; select = selects[i]; i++) {
 			// exclude specific inputs (defined by ignore_inputs)
 			if(!u.hc(select, ignore_inputs)) {
-				params[select.name] = select.options[select.selectedIndex].value;
+				if(!this.isDefault(select)) {
+					params[select.name] = select.options[select.selectedIndex].value;
+				}
 //				params.append(select.name, select.options[select.selectedIndex].value);
 			}
 		}
@@ -1007,7 +1199,9 @@ Util.Form = u.f = new function() {
 		for(i = 0; textarea = textareas[i]; i++) {
 			// exclude specific inputs (defined by ignore_inputs)
 			if(!u.hc(textarea, ignore_inputs)) {
-				params[textarea.name] = textarea.value;
+				if(!this.isDefault(textarea)) {
+					params[textarea.name] = textarea.value;
+				}
 //				params.append(textarea.name, textarea.value);
 			}
 		}
