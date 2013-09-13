@@ -171,6 +171,15 @@ Util.Form = u.f = new function() {
 					// add to form index
 					this.formIndex(form, field._input);
 				}
+				// tags initialization
+				else if(u.hc(field, "prices")) {
+
+					field._input = u.qs("input", field);
+					field._input.field = field;
+
+					// add to form index
+					this.formIndex(form, field._input);
+				}
 				// file input initialization
 				else if(u.hc(field, "files")) {
 
@@ -1064,6 +1073,17 @@ Util.Form = u.f = new function() {
 				if(
 					!pattern && iN.val().match(/\:/) ||
 					(pattern && iN.val().match("^"+pattern+"$"))
+				) {
+					this.fieldCorrect(iN);
+				}
+				else {
+					this.fieldError(iN);
+				}
+			}
+			// prices validation
+			else if(u.hc(iN.field, "prices")) {
+				if(
+					!isNaN(iN.val())
 				) {
 					this.fieldCorrect(iN);
 				}
