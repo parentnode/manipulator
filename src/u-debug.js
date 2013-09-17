@@ -19,7 +19,7 @@ Util.nodeId = function(node, include_path) {
 				return u.nodeId(node);
 			}
 		}
-	}
+//	}
 	// catch(exception) {
 	// 	u.bug("Exception ("+exception+") in u.nodeId("+node+"), called from: "+arguments.callee.caller);
 	// }
