@@ -4,8 +4,10 @@ u.scrollTo = function(to, options) {
 	// scrollIn - node to do scrolling in??
 
 
-	var callback, scrollIn = window;
-	
+	var callback;
+	var scrollIn = window;
+	var offset_y = 0;
+	var offset_x = 0;
 
 	// additional info passed to function as JSON object
 	if(typeof(options) == "object") {
@@ -15,6 +17,8 @@ u.scrollTo = function(to, options) {
 			switch(argument) {
 				case "callback"				: callback				= options[argument]; break;
 				case "scrollIn"				: scrollIn				= options[argument]; break;
+				case "offset_y"				: offset_y				= options[argument]; break;
+				case "offset_x"				: offset_x				= options[argument]; break;
 			}
 
 		}
@@ -32,9 +36,18 @@ u.scrollTo = function(to, options) {
 
 	// TODO: adjust for page not being high enough for end scroll point - currently relies on #page node
 	scrollIn._to_y = u.absY(to);
+
+	// offset y is specified
+	if(offset_y) {
+		scrollIn._to_y = scrollIn._to_y - offset_y;
+	}
+
+	// correct for page height
 	if(scrollIn._to_y > u.qs("#page").offsetHeight-u.browserH()) {
 		scrollIn._to_y = u.qs("#page").offsetHeight-u.browserH();
 	}
+
+
 
 	scrollIn._scroll_direction = scrollIn._to_y - u.scrollY();
 
