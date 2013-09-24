@@ -31,16 +31,18 @@ u.textscaler = function(node, settings) {
 
 	node.scaleText = function() {
 
-		var width = u.browserW();
 
 		// loop through all tags with settings
 		for(tag in this.text_settings) {
 			var settings = this.text_settings[tag];
 			// TODO: re-SET MIN and MAX sizes when out of scope, to be more precise 
 
-			if(settings.min_width <= width && settings.max_width >= width) {
+//			u.bug("window._jes_text._width:" + window._jes_text._width);
+			if(settings.min_width <= window._jes_text._width && settings.max_width >= window._jes_text._width) {
 //				u.bug(width + ", " + settings.min_width + ", " + settings.width_factor)
-				var font_size = settings.min_size + (settings.size_factor * (width - settings.min_width) / settings.width_factor);
+				var font_size = settings.min_size + (settings.size_factor * (window._jes_text._width - settings.min_width) / settings.width_factor);
+//				u.bug("font-size:" + font_size);
+
 //				var size = settings.size_factor * prop;
 //				u.bug("prop:" + this.text_settings[tag].max_width +"-"+ this.text_settings[tag].min_width+") / ("+width+"-"+this.text_settings[tag].min_width+")")
 //				u.bug("prop:" + prop)
@@ -60,6 +62,19 @@ u.textscaler = function(node, settings) {
 
 				// set size for
 //				u.bug("size for:" + node.css_rule.cssText);
+			}
+			// too big
+			else if(settings.max_width < window._jes_text._width) {
+//				u.bug("font-size max:" + settings.max_size);
+
+				settings.css_rule.style.setProperty("font-size", settings.max_size + settings.unit, "important");
+				
+			}
+			// too small
+			else if(settings.min_width > window._jes_text._width) {
+
+				settings.css_rule.style.setProperty("font-size", settings.min_size + settings.unit, "important");
+				
 			}
 		}
 
@@ -90,8 +105,14 @@ u.textscaler = function(node, settings) {
 
 		// create scale controller
 		window._jes_text = jes_text;
+		// get base value for first run
+		window._jes_text._width = u.browserW();
 		window._jes_text.scale = function() {
-			for(i = 0; node = this._jes_text.nodes[i]; i++) {
+
+			// get width just once for each event
+			window._jes_text._width = u.browserW();
+
+			for(i = 0; node = window._jes_text.nodes[i]; i++) {
 //				u.bug("scale:" + node);
 				if(node.parentNode) { // && node.offsetHeight
 					node.scaleText();
@@ -104,6 +125,28 @@ u.textscaler = function(node, settings) {
 		}
 		// scale on resize
 		u.e.addEvent(window, "resize", window._jes_text.scale);
+
+
+
+		window._jes_text.precalculate = function() {
+//			u.bug("precalc")
+			var i, node;
+			for(i = 0; node = window._jes_text.nodes[i]; i++) {
+//				u.bug("scale:" + node);
+				if(node.parentNode) { // && node.offsetHeight
+
+					var settings = node.text_settings;
+					for(tag in settings) {
+						// precalculate values for speedy execution
+						settings[tag].width_factor = settings[tag].max_width-settings[tag].min_width;
+						settings[tag].size_factor = settings[tag].max_size-settings[tag].min_size;
+
+//						u.xInObject(settings[tag])
+					}
+				}
+			}
+			
+		}
 	}
 
 
@@ -116,8 +159,8 @@ u.textscaler = function(node, settings) {
 	for(tag in settings) {
 
 		// precalculate values for speedy execution
-		settings[tag].width_factor = settings[tag].max_width-settings[tag].min_width;
-		settings[tag].size_factor = settings[tag].max_size-settings[tag].min_size;
+		// settings[tag].width_factor = settings[tag].max_width-settings[tag].min_width;
+		// settings[tag].size_factor = settings[tag].max_size-settings[tag].min_size;
 
 //			u.bug(settings[tag].size_factor + ", " + settings[tag].width_factor)
 
@@ -139,10 +182,13 @@ u.textscaler = function(node, settings) {
 		// scale node to current size
 
 	}
-	node.scaleText();
+
 //	node.text_settings = settings;
 	 
 	window._jes_text.nodes.push(node);
+
+	window._jes_text.precalculate();
+	node.scaleText();
 
 //	u.xInObject(window._jes_text)
 
