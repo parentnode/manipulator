@@ -23,10 +23,11 @@ u.textscaler = function(node, settings) {
 		};
 	}
 
-	
+	// apply unique identifier
 	node.text_key = u.randomString(8);
 	u.ac(node, node.text_key);
 
+	// map setting on node
 	node.text_settings = settings;
 
 	node.scaleText = function() {
@@ -35,7 +36,6 @@ u.textscaler = function(node, settings) {
 		// loop through all tags with settings
 		for(tag in this.text_settings) {
 			var settings = this.text_settings[tag];
-			// TODO: re-SET MIN and MAX sizes when out of scope, to be more precise 
 
 //			u.bug("window._jes_text._width:" + window._jes_text._width);
 			if(settings.min_width <= window._jes_text._width && settings.max_width >= window._jes_text._width) {
@@ -43,38 +43,19 @@ u.textscaler = function(node, settings) {
 				var font_size = settings.min_size + (settings.size_factor * (window._jes_text._width - settings.min_width) / settings.width_factor);
 //				u.bug("font-size:" + font_size);
 
-//				var size = settings.size_factor * prop;
-//				u.bug("prop:" + this.text_settings[tag].max_width +"-"+ this.text_settings[tag].min_width+") / ("+width+"-"+this.text_settings[tag].min_width+")")
-//				u.bug("prop:" + prop)
-
 //				u.xInObject(jes_text.style_tag.sheet.cssRules.style);
-
-//				var css_string = node.css_rule_selector + '{font-size: 10px;}';
-//				if(!getCSSRule("."+this.text_settings[tag].text_key + ' ' + tag)) {
-				
-//				u.bug("size:"+ font_size + settings.unit + ", " + settings.css_rule.cssText);
-//				u.xInObject(settings);
 				// update font size
 				settings.css_rule.style.setProperty("font-size", font_size + settings.unit, "important");
-//				node.css_rule.style.setProperty("font-size", u.random(100, 200) + "px", "important");
-//				node.offsetHeight;
-//				}
-
-				// set size for
 //				u.bug("size for:" + node.css_rule.cssText);
 			}
 			// too big
 			else if(settings.max_width < window._jes_text._width) {
 //				u.bug("font-size max:" + settings.max_size);
-
 				settings.css_rule.style.setProperty("font-size", settings.max_size + settings.unit, "important");
-				
 			}
 			// too small
 			else if(settings.min_width > window._jes_text._width) {
-
 				settings.css_rule.style.setProperty("font-size", settings.min_size + settings.unit, "important");
-				
 			}
 		}
 
@@ -98,6 +79,7 @@ u.textscaler = function(node, settings) {
 		style_tag.setAttribute("media", "all")
 		style_tag.setAttribute("type", "text/css")
 		jes_text.style_tag = u.ae(document.head, style_tag);
+		// TODO: suposedly fix for webkit problem - check if real
 		jes_text.style_tag.appendChild(document.createTextNode(""))
 
 //		u.bug("node:" + jes_text.style_tag);
@@ -114,6 +96,7 @@ u.textscaler = function(node, settings) {
 
 			for(i = 0; node = window._jes_text.nodes[i]; i++) {
 //				u.bug("scale:" + node);
+				// is node still a part of the dom
 				if(node.parentNode) { // && node.offsetHeight
 					node.scaleText();
 				}
@@ -127,7 +110,7 @@ u.textscaler = function(node, settings) {
 		u.e.addEvent(window, "resize", window._jes_text.scale);
 
 
-
+		// precalculate values for speedy execution
 		window._jes_text.precalculate = function() {
 //			u.bug("precalc")
 			var i, node;
@@ -137,7 +120,6 @@ u.textscaler = function(node, settings) {
 
 					var settings = node.text_settings;
 					for(tag in settings) {
-						// precalculate values for speedy execution
 						settings[tag].width_factor = settings[tag].max_width-settings[tag].min_width;
 						settings[tag].size_factor = settings[tag].max_size-settings[tag].min_size;
 
@@ -151,47 +133,30 @@ u.textscaler = function(node, settings) {
 
 
 
-	// add rule for each tag in settings
-//	u.bug("jes_text.style_tag.rules:" + jes_text.style_tag.sheet.cssRules);
 //	u.xInObject(window._jes_text.style_tag)
 //	u.xInObject(window._jes_text.style_tag.sheet)
 
+	// add rule for each tag in settings
 	for(tag in settings) {
 
-		// precalculate values for speedy execution
-		// settings[tag].width_factor = settings[tag].max_width-settings[tag].min_width;
-		// settings[tag].size_factor = settings[tag].max_size-settings[tag].min_size;
-
-//			u.bug(settings[tag].size_factor + ", " + settings[tag].width_factor)
-
-//			u.bug(window._jes_text.style_tag.sheet);
 		// create specific rule for each tag
 		selector = "."+node.text_key + ' ' + tag + ' ';
 		node.css_rules_index = window._jes_text.style_tag.sheet.insertRule(selector+'{}', 0);
-//		u.bug("node.css_rules_index:" + node.css_rules_index + "("+window._jes_text.style_tag.sheet.cssRules.length+")");
-//			u.bug(window._jes_text.style_tag.sheet.insertRule(selector+'{}', 0));
 
 		// save rule reference to avoid looking for it later
 		settings[tag].css_rule = window._jes_text.style_tag.sheet.cssRules[0];
-//		settings[tag].css_rule = window._jes_text.style_tag.sheet.cssRules[window._jes_text.style_tag.sheet.cssRules.length-1];
-//					u.bug("node.css_rule:" + settings[tag].css_rule);
-		//			u.xInObject(node.css_rule);
 		
 //					u.xInObject(settings[tag].css_rule);
-	
-		// scale node to current size
-
 	}
 
-//	node.text_settings = settings;
 	 
 	window._jes_text.nodes.push(node);
 
+	// precalculate value as many values for nodes
 	window._jes_text.precalculate();
+	// scale text based on current width
 	node.scaleText();
 
 //	u.xInObject(window._jes_text)
-
-//	u.e.removeEvent(window, "resize", this._scrollToHandler);
 
 }

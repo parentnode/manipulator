@@ -18,13 +18,24 @@ u.frederik = function() {
 
 		event = event ? event : window.event;
 		if(event.keyCode == 38) {
-			this.value = (parseInt(this.value)+1);
+			if((event.ctrlKey || event.metaKey || event.shiftKey)) {
+				this.value = (parseInt(this.value)+10);
+			}
+			else {
+				this.value = (parseInt(this.value)+1);
+			}
 		}
 		else if(event.keyCode == 40) {
-			this.value = (parseInt(this.value)-1);
+			if((event.ctrlKey || event.metaKey || event.shiftKey)) {
+				this.value = (parseInt(this.value)-10);
+			}
+			else {
+				this.value = (parseInt(this.value)-1);
+			}
 		}
 		window._jes_text.nodes[0].text_settings[this.node.s_tag][this.node.s_size] = this.value/window._frederik._base_size;
 
+		window._jes_text.precalculate();
 		window._jes_text.scale();
 //		u.xInObject(window._jes_text.nodes[0].text_settings[this.node.s_tag]);
 
@@ -120,6 +131,17 @@ u.frederikEnableDrag = function(node) {
 		u.e.addMoveEvent(document.body, u.frederikDrag);
 		u.e.addEndEvent(document.body, u.frederikDrop);
 	}
+	
+	node._hessitate_at = {
+		"600":true,
+		"800":true,
+		"960":true,
+		"1024":true,
+		"1366":true,
+		"1280":true,
+		"1600":true,
+		"1920":true
+	}
 }
 
 u.frederikDrag = function(event) {
@@ -127,13 +149,21 @@ u.frederikDrag = function(event) {
 	var node = document.body._frederik_is_dragging;
 
 	var x = u.eventX(event)+node._offset_x;
-	node._width.innerHTML = x;
 
 	window._jes_text.nodes[0].text_settings[node.s_tag][node.s_width] = x;
-//	node.width_setting = x;
+	// if x is hessitation point, start timer
+	// TODO: extend to check if number is passed since last event
+	if(node._hessitate_at[x]) {
+		node._width.innerHTML = x;
+		node._hessitate_for = 17;
+	}
 
-	if(node) {
+	if(node && !node._hessitate_for) {
+		node._width.innerHTML = x;
 		u.as(node, "left", x + "px");
+	}
+	if(node._hessitate_for) {
+		node._hessitate_for = node._hessitate_for-1;
 	}
 
 	window._jes_text.precalculate();
