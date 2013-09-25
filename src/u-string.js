@@ -62,7 +62,7 @@ Util.uuid = function() {
 }
 
 // return string if string is valid - else return optional replacement or ""
-Util.stringOr = function(value, replacement) {
+Util.stringOr = u.eitherOr = function(value, replacement) {
 	if(value !== undefined && value !== null) {
 		return value;
 	}
