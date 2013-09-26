@@ -60,8 +60,8 @@ Util.uuid = function() {
  	}
 	return uuid.join('');
 }
-
-// return string if string is valid - else return optional replacement or ""
+// TODO: stringOr is DEPRECATED for eitherOr
+// return string if string is valid (not null or undefined) - else return optional replacement or ""
 Util.stringOr = u.eitherOr = function(value, replacement) {
 	if(value !== undefined && value !== null) {
 		return value;
