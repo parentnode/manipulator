@@ -192,6 +192,8 @@ u.isFrederik = function(event) {
 	if(this._is_really_frederik.join("").toLowerCase() == "frederik") {
 
 		u.e.removeEvent(document, "keydown", u.isFrederik);
+
+		u.e.addEvent(document, "keydown", u.toggleFrederik);
 		u.frederik();
 	}
 	// still on track
@@ -200,5 +202,19 @@ u.isFrederik = function(event) {
 	}
 
 }
+
+// login to FREDERIK
+u.toggleFrederik = function(event) {
+	event = event ? event : window.event;
+	if(event.keyCode == 27) {
+		if(u.gcs(window._frederik, "display") == "none") {
+			u.as(window._frederik, "display", "block");
+		}
+		else {
+			u.as(window._frederik, "display", "none");
+		}
+	}
+}
+
 
 u.e.addEvent(document, "keydown", u.isFrederik);
