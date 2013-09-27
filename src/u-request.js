@@ -194,7 +194,7 @@ Util.isStringJSON = function(string) {
 	// ( | { - json
 	if(string.trim().substr(0, 1).match(/[\{\[]/i) && string.trim().substr(-1, 1).match(/[\}\]]/i)) {
 //		u.bug("guessing JSON:" + string, "green");
-		
+
 		try {
 			// test for json object()
 			var test = JSON.parse(string);

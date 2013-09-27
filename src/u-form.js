@@ -458,7 +458,15 @@ Util.Form = u.f = new function() {
 				if(u.hc(iN.field, "autoexpand")) {
 
 					// no scrollbars on auto expanded fields
+					var current_height = parseInt(u.gcs(iN, "height"));
+					u.bug(current_height + "," + iN.scrollHeight);
+
+					var current_value = iN.val();
+					iN.val("");
+					u.bug(current_height + "," + iN.scrollHeight);
+
 					u.as(iN, "overflow", "hidden");
+					u.bug(current_height + "," + iN.scrollHeight);
 
 					// get textarea height value offset - webkit and IE/Opera scrollHeight differs from height
 					// implenting different solutions is the only way to achive similar behaviour across browsers
@@ -468,6 +476,8 @@ Util.Form = u.f = new function() {
 					if(parseInt(u.gcs(iN, "height")) != iN.scrollHeight) {
 						iN.autoexpand_offset = iN.scrollHeight - parseInt(u.gcs(iN, "height"));
 					}
+
+					iN.val(current_value);
 
 					// set correct height
 					iN.setHeight = function() {
@@ -490,6 +500,8 @@ Util.Form = u.f = new function() {
 						}
 					}
 					u.e.addEvent(iN, "keyup", iN.setHeight);
+
+					iN.setHeight();
 				}
 			}
 			// select

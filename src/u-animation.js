@@ -85,8 +85,7 @@ Util.Animation = u.a = new function() {
 	* Apply CSS transition to node
 	*/
 	this.transition = function(node, transition) {
-		try {
-		
+		try {		
 			node.style[this.variant() + "Transition"] = transition;
 
 			// automatically enable transitionend callback
@@ -107,11 +106,19 @@ Util.Animation = u.a = new function() {
 			}
 			else {
 				node.duration = false;
+
+				if(transition.match(/none/i)) {
+					// if(u.hc(node, "subjects")) {
+					// 	u.bug("EXPERIMENTAL subjects reset transition end:" + transition + ", " + u.nodeId(node), 2, "red")
+					// }
+					// TODO: experimental - auto reset of transitioned callback
+					node.transitioned = null;
+				}
 			}
 
 		}
 		catch(exception) {
-			u.bug("Exception ("+exception+") in u.a.transition(" + u.nodeId(node) + "), called from: "+arguments.callee.caller);
+			u.bug("Exception ("+exception+") in u.a.transition(" + node + "), called from: "+arguments.callee.caller);
 		}
 		
 	}
