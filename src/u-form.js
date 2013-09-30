@@ -205,6 +205,9 @@ Util.Form = u.f = new function() {
 		}
 
 
+		// TODO: DELETE FORM HAS NO .actions INSIDE FORM - CAN IT STILL USE form.init
+
+
 		// get all actions
 		var actions = u.qsa(".actions li", form);
 		for(i = 0; action = actions[i]; i++) {
@@ -1058,6 +1061,9 @@ Util.Form = u.f = new function() {
 			}
 			// date validation
 			else if(u.hc(iN.field, "date")) {
+
+				pattern = iN.getAttribute("pattern");
+
 				if(
 					!pattern && iN.val().match(/^([\d]{4}[\-\/\ ]{1}[\d]{2}[\-\/\ ][\d]{2})$/) ||
 					(pattern && iN.val().match("^"+pattern+"$"))
@@ -1070,9 +1076,12 @@ Util.Form = u.f = new function() {
 			}
 			// datetime validation
 			else if(u.hc(iN.field, "datetime")) {
+
+				pattern = iN.getAttribute("pattern");
+
 				if(
 					!pattern && iN.val().match(/^([\d]{4}[\-\/\ ]{1}[\d]{2}[\-\/\ ][\d]{2} [\d]{2}[\-\/\ \:]{1}[\d]{2}[\-\/\ \:]{0,1}[\d]{0,2})$/) ||
-					(pattern && iN.val().match("^"+pattern+"$"))
+					(pattern && iN.val().match(pattern))
 				) {
 					this.fieldCorrect(iN);
 				}

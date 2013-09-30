@@ -1,11 +1,19 @@
-
 u.frederik = function() {
 //	u.bug("activate frederik")
 
 //	u.xInObject(window._jes_text);
 	window._frederik = u.ae(document.body, "div", {"class":"frederik"});
+	window._frederik._version = 2;
 	window._frederik._base_size = parseInt(u.gcs(document.body, "font-size"));
 	window._frederik._toolbar = u.ae(window._frederik, "div", {"class":"toolbar", "html":"<h1>FREDERIK!</h1>"});
+
+	// show intro
+	if(!u.getCookie("frederik") || u.getCookie("frederik") < window._frederik._version) {
+		window._frederik._whatisnew = u.ae(window._frederik, "div", {"class":"whatisnew"});
+		u.ae(window._frederik._whatisnew, "h1", {"html":"Frederik has been updated"});
+		u.ae(window._frederik._whatisnew, "p", {"html":"Check out the new features:"});
+		
+	}
 
 	window._frederik._focus = function() {
 		u.e.addEvent(this, "keydown", window._frederik._update);
@@ -203,7 +211,7 @@ u.isFrederik = function(event) {
 
 }
 
-// login to FREDERIK
+// toggle FREDERIK ON/OFF
 u.toggleFrederik = function(event) {
 	event = event ? event : window.event;
 	if(event.keyCode == 27) {
