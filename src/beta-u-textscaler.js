@@ -102,7 +102,13 @@ u.textscaler = function(node, settings) {
 				}
 				else {
 					// TODO: pop node from window._jes_text.nodes and remove listener when no more nodes
-					u.e.removeEvent(window, "resize", window._jes_text.scale);
+//					u.xInObject(window._jes_text.nodes);
+					window._jes_text.nodes.splice(window._jes_text.nodes.indexOf(node), 1);
+//					u.xInObject(window._jes_text.nodes);
+					if(!window._jes_text.nodes.length) {
+//						u.bug("end textscaler event")
+						u.e.removeEvent(window, "resize", window._jes_text.scale);
+					}
 				}
 			}
 		}

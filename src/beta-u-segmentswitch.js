@@ -5,11 +5,11 @@ u.segmentSwitch = function(page) {
 
 		// global mobile size detection
 		if(u.browserW() < 600 && typeof(page.switchToMobile) == "function") {
-//					u.bug("switch")
+					u.bug("switch")
 			page.switchToMobile();
 		}
 		else if(u.browserW() > 600 && typeof(page.switchToMobileOutdated) == "function") {
-//					u.bug("outdated")
+					u.bug("outdated")
 			page.switchToMobileOutdated();
 		}
 

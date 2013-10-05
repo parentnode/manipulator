@@ -224,6 +224,14 @@ Util.Events = u.e = new function() {
 
 			// move callback - for custom handling of mousedown+move combo
 			u.e.addMoveEvent(this, u.e._move);
+
+			// TODO: EXPERIMENTAL
+			// cancel click on move for touch devices as default
+			if(u.e.event_pref == "touch") {
+				u.e.addMoveEvent(this, u.e._cancelClick);
+			}
+
+			//
 			// execute on mouse up
 			u.e.addEndEvent(this, u.e._dblclicked);
 
