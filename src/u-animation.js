@@ -131,6 +131,12 @@ Util.Animation = u.a = new function() {
 	}
 
 
+	// EXPERIMENTAL: remove transform, because Firefox 23 makes render-error, when returning to 0 in translates
+	this.removeTransform = function(node) {
+		node.style[this.variant() + "Transform"] = "none";
+	}
+
+
 	/**
 	* Simple translate cross-browser
 	*/

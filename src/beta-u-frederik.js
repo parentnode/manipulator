@@ -7,12 +7,36 @@ u.frederik = function() {
 	window._frederik._base_size = parseInt(u.gcs(document.body, "font-size"));
 	window._frederik._toolbar = u.ae(window._frederik, "div", {"class":"toolbar", "html":"<h1>FREDERIK!</h1>"});
 
-	// show intro
+	// full change log included
+	window._frederik._change_log = {
+		2:[
+			"Added toggle on/off using ESC key",
+			"Added changelog sceen on new version"
+		],
+		3:[
+			"TODO: Added fake save using CTRL/CMD + S"
+		]
+	}
+
+	// show intro + changelog
 	if(!u.getCookie("frederik") || u.getCookie("frederik") < window._frederik._version) {
 		window._frederik._whatisnew = u.ae(window._frederik, "div", {"class":"whatisnew"});
 		u.ae(window._frederik._whatisnew, "h1", {"html":"Frederik has been updated"});
 		u.ae(window._frederik._whatisnew, "p", {"html":"Check out the new features:"});
-		
+
+		var logs = u.ae(window._frederik._whatisnew, "ul");
+		for(i = u.eitherOr(u.getCookie("frederik"), 0); i <= window._frederik._version; i++) {
+			if(window._frederik._change_log[i]) {
+				for(j in window._frederik._change_log[i]) {
+					u.ae(logs, "li", {"html":window._frederik._change_log[i][j]});
+				}
+			}
+		}
+		u.e.click(window._frederik._whatisnew);
+		window._frederik._whatisnew.clicked = function() {
+			this.parentNode.removeChild(this);
+			u.saveCookie("frederik", window._frederik._version);
+		}
 	}
 
 	window._frederik._focus = function() {
