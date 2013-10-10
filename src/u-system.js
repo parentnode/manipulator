@@ -73,7 +73,6 @@ Util.browser = function(model, version) {
 
 Util.segment = function(segment) {
 
-
 	if(!u.current_segment) {
 		var scripts = document.getElementsByTagName("script");
 		var script, i, src;
@@ -86,7 +85,7 @@ Util.segment = function(segment) {
 	}
 
 	if(segment) {
-		return segment = u.current_segment;
+		return segment == u.current_segment;
 	}
 	
 	return u.current_segment;
