@@ -70,6 +70,30 @@ Util.browser = function(model, version) {
 
 }
 
+
+Util.segment = function(segment) {
+
+
+	if(!u.current_segment) {
+		var scripts = document.getElementsByTagName("script");
+		var script, i, src;
+		for(i = 0; script = scripts[i]; i++) {
+			seg_src = script.src.match(/\/seg_([a-z_]+)/);
+			if(seg_src) {
+				u.current_segment = seg_src[1];
+			}
+		}
+	}
+
+	if(segment) {
+		return segment = u.current_segment;
+	}
+	
+	return u.current_segment;
+}
+
+
+
 // TODO - detect OS
 Util.system = function(os, version) {
 	
