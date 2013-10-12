@@ -2,7 +2,7 @@ u.scrollTo = function(to, options) {
 
 	// scrollIn - node to do scrolling in??
 
-	u.bug_console_only = true;
+//	u.bug_console_only = true;
 
 
 	var callback;

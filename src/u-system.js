@@ -70,7 +70,10 @@ Util.browser = function(model, version) {
 
 }
 
-
+// get current segment
+// loop through all script tags and look for /seg_
+// optional parameter to match for 
+// TODO: check how this matches seg_desktop_include?
 Util.segment = function(segment) {
 
 	if(!u.current_segment) {
