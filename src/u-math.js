@@ -11,3 +11,9 @@ Util.numToHex = function(num) {
 Util.hexToNum = function(hex) {
 	return parseInt(hex,16);
 }
+
+// TODO: document and write test
+Util.round = function(number, decimals) {
+	var round_number = number*Math.pow(10, decimals);
+	return Math.round(round_number)/Math.pow(10, decimals);
+}

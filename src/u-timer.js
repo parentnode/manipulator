@@ -25,6 +25,7 @@ Util.Timer = u.t = new function() {
 
 	// execute added function on onTimeout
 	this._executeTimer = function(id) {
+//		u.bug("executeTimer:" + typeof(this._timers[id]._a) + ", " + this._timers[id]._n)
 
 		var node = this._timers[id]._n;
 		node._timer_action = this._timers[id]._a;
