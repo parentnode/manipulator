@@ -54,9 +54,13 @@ u.navigation = function(page, options) {
 		}
 		else {
 
-			// forward navigation event to .scene
+			// forward navigation event to .scene if it has navigate function
 			if(this.cN.scene && this.cN.scene.parentNode && typeof(this.cN.scene.navigate) == "function") {
 				this.cN.scene.navigate(url);
+			}
+			// else forward to content
+			else if(this.cN && typeof(this.cN.navigate) == "function") {
+				this.cN.navigate(url);
 			}
 
 		}
