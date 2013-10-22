@@ -1,4 +1,4 @@
-Util.videoPlayer = function(node, _options) {
+Util.videoPlayer = function(_options) {
 
 	var player;
 
@@ -6,14 +6,14 @@ Util.videoPlayer = function(node, _options) {
 
 
 	// attach videoplay to node on creation
-	if(node) {
-		player = u.ae(node, "div", {"class":"videoplayer"});
-	}
-	// create wrapper and standalone videoplayer node
-	else {
+	// if(node) {
+	// 	player = u.ae(node, "div", {"class":"videoplayer"});
+	// }
+	// // create wrapper and standalone videoplayer node
+	// else {
 		player = document.createElement("div");
 		u.ac(player, "videoplayer");
-	}
+//	}
 
 
 	// set ff and rw skip-rate
