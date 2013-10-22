@@ -1,20 +1,59 @@
-Util.videoPlayer = function(node) {
+Util.videoPlayer = function(node, _options) {
 
 	var player;
 
-	// work with just one player
+	// designed to work with just one player being moved around
+
+
+	// attach videoplay to node on creation
 	if(node) {
 		player = u.ae(node, "div", {"class":"videoplayer"});
 	}
+	// create wrapper and standalone videoplayer node
 	else {
 		player = document.createElement("div");
 		u.ac(player, "videoplayer");
 	}
 
+
 	// set ff and rw skip-rate
 	// can be overwritten locally
 	player.ff_skip = 2;
 	player.rw_skip = 2;
+
+
+	// controls default settings
+	// play/pause button
+	player._default_playpause = false;
+
+	// TODO: zoom button
+	player._default_zoom = false;
+	// TODO: volume button
+	player._default_volume = false;
+	// TODO: rw/ff buttons
+	player._default_search = false;
+
+
+	// additional info passed to function as JSON object
+	if(typeof(_options) == "object") {
+		var argument;
+		for(argument in _options) {
+
+			switch(argument) {
+				case "playpause"	: player._default_playpause		= _options[argument]; break;
+//				case "zoom"			: player._default_zoom			= _options[argument]; break;
+//				case "volume"		: player._default_volume		= _options[argument]; break;
+//				case "search"		: player._default_search		= _options[argument]; break;
+			}
+		}
+	}
+
+
+
+
+
+
+	// flash fallback (auto detection)
 	player.flash = false;
 
 	// test for HTML5 video
@@ -25,7 +64,27 @@ Util.videoPlayer = function(node) {
 	if(typeof(player.video.play) == "function") {
 
 		// load video
-		player.load = function(src) {
+		player.load = function(src, _options) {
+
+			// controller settings
+			player._controls_playpause = player._default_playpause;
+			player._controls_zoom = player._default_zoom;
+			player._controls_volume = player._default_volume;
+			player._controls_search = player._default_search;
+
+			// optional controls override
+			if(typeof(_options) == "object") {
+				var argument;
+				for(argument in _options) {
+
+					switch(argument) {
+						case "playpause"	: player._controls_playpause	= _options[argument]; break;
+		//				case "zoom"			: player._controls_zoom			= _options[argument]; break;
+		//				case "volume"		: player._controls_volume		= _options[argument]; break;
+		//				case "search"		: player._controls_search		= _options[argument]; break;
+					}
+				}
+			}
 
 			// reset video safety net (or old video may show before new one loads)
 			this.setup();
@@ -56,9 +115,23 @@ Util.videoPlayer = function(node) {
 		}
 
 		// load and play
-		player.loadAndPlay = function(src, position) {
+		player.loadAndPlay = function(src, _options) {
 			// load src
-			this.load(src);
+			var position = 0;
+
+			// optional position
+			if(typeof(_options) == "object") {
+				var argument;
+				for(argument in _options) {
+
+					switch(argument) {
+						case "position"		: position		= _options[argument]; break;
+					}
+				}
+			}
+
+			// load and send player options
+			this.load(src, _options);
 
 			// firefox does not throw canplaythrough event unless I call play when loading
 			// play when ready
@@ -111,6 +184,11 @@ Util.videoPlayer = function(node) {
 			this.video = u.ie(this, "video");
 			this.video.player = this;
 
+
+			// set up controls (based on JSON settings)
+			this.setControls();
+
+
 			// reset external values
 			this.currentTime = 0;
 			this.duration = 0;
@@ -118,6 +196,9 @@ Util.videoPlayer = function(node) {
 			this.metaLoaded = false;
 
 
+			// CALLBACK EVENTS
+
+			// loading has started
 			this.video._loadstart = function(event) {
 //				u.bug("_loadstart");
 
@@ -180,7 +261,7 @@ Util.videoPlayer = function(node) {
 			}
 			u.e.addEvent(this.video, "stalled", this.video._paused);
 
-			// movie has play til its end
+			// movie has played til its end
 			this.video._ended = function(event) {
 //				u.bug("_ended");
 
@@ -309,6 +390,88 @@ Util.videoPlayer = function(node) {
 		}
 
 	}
+
+	player.setControls = function() {
+
+		// make sure we do not set double event listeners
+		if(this.showControls) {
+			u.e.removeEvent(this, "mousemove", this.showControls);
+		}
+
+		// inject controls layer in video player
+		if(this._controls_playpause || this._controls_zoom || this._controls_volume || this._controls_search) {
+
+			if(!this.controls) {
+				// player controls
+				this.controls = u.ae(this, "div", {"class":"controls"});
+
+				// hide controls
+				this.hideControls = function() {
+					// reset timer to avoid double actions
+					this.t_controls = u.t.resetTimer(this.t_controls);
+
+					u.a.transition(this.controls, "all 0.3s ease-out");
+					u.a.setOpacity(this.controls, 0);
+				}
+
+				// show controls
+				this.showControls = function() {
+					// reset timer to keep visible
+					if(this.t_controls) {
+						this.t_controls = u.t.resetTimer(this.t_controls);
+					}
+					// fade up
+					else {
+						u.a.transition(this.controls, "all 0.5s ease-out");
+						u.a.setOpacity(this.controls, 1);
+					}
+
+					// auto hide after 1 sec of inactivity
+					this.t_controls = u.t.setTimer(this, this.hideControls, 1500);
+				}
+			}
+			// show controls
+			else {
+				u.as(this.controls, "display", "block");
+			}
+
+			// play/pause
+			if(this._default_playpause && !this.controls.playpause) {
+			
+				// set up playback controls
+				this.controls.playpause = u.ae(this.controls, "a", {"class":"playpause"});
+				this.controls.playpause.player = this;
+
+	//			player.controls.playpause = playpause;
+				u.e.click(this.controls.playpause);
+				this.controls.playpause.clicked = function(event) {
+			//		u.bug("play/pause")
+					this.player.togglePlay();
+				}
+
+			}
+
+			// TODO: zoom
+			if(this._default_zoom && !this.controls.zoom) {}
+
+			// TODO: volume
+			if(this._default_volume && !this.controls.volume) {}
+
+			// TODO: search (rw/ff)
+			if(this._default_search && !this.controls.search) {}
+
+
+			// enable controls on mousemove
+			u.e.addEvent(this, "mousemove", this.showControls);
+
+		}
+		else if(this.controls) {
+			u.as(this.controls, "display", "none");
+		}
+
+
+	}
+
 
 	return player;
 }
