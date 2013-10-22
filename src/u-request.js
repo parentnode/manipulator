@@ -16,6 +16,7 @@ Util.Request = u.request = function(node, url, settings) {
 	node.request_async = true;
 	node.request_params = "";
 	node.request_headers = false;
+	node.response_callback = "response";
 
 
 	// additional info passed to function as JSON object
@@ -24,10 +25,11 @@ Util.Request = u.request = function(node, url, settings) {
 		for(argument in settings) {
 
 			switch(argument) {
-				case "method"	: node.request_method	= settings[argument]; break;
-				case "params"	: node.request_params	= settings[argument]; break;
-				case "async"	: node.request_async	= settings[argument]; break;
-				case "headers"	: node.request_headers	= settings[argument]; break;
+				case "method"		: node.request_method		= settings[argument]; break;
+				case "params"		: node.request_params		= settings[argument]; break;
+				case "async"		: node.request_async		= settings[argument]; break;
+				case "headers"		: node.request_headers		= settings[argument]; break;
+				case "callback"		: node.response_callback	= settings[argument]; break;
 			}
 
 		}
@@ -333,12 +335,17 @@ Util.validateResponse = function(response){
 	if(object) {
 
 		// callback to Response handler
-		if(typeof(response.node.Response) == "function") {
-			response.node.Response(object);
+		if(typeof(response.node[response.node.response_callback]) == "function") {
+			response.node[response.node.response_callback](object);
 		}
-		if(typeof(response.node.response) == "function") {
-			response.node.response(object);
-		}
+
+		// // callback to Response handler
+		// if(typeof(response.node.Response) == "function") {
+		// 	response.node.Response(object);
+		// }
+		// if(typeof(response.node.response) == "function") {
+		// 	response.node.response(object);
+		// }
 	}
 	else {
 
