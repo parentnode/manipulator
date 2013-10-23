@@ -317,7 +317,7 @@ u.e.drag = function(node, boundaries, settings) {
 * Calls return function element.picked to notify of event
 */
 u.e._pick = function(event) {
-//	u.bug("_pick:" + u.nodeId(this) + ":" + this._x + " x " + this._y);
+//	u.bug("_pick:" + u.nodeId(this) + ":" + this._x + " x " + this._y + ", " + this.only_horizontal + ", " + this.only_vertical);
 
 
 	// reset inital events to avoid unintended bubbling - only reset if pick makes sense

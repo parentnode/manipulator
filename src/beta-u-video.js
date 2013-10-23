@@ -435,30 +435,44 @@ Util.videoPlayer = function(_options) {
 				u.as(this.controls, "display", "block");
 			}
 
-			// play/pause
-			if(this._default_playpause && !this.controls.playpause) {
+			// play/pause enabled
+			if(this._controls_playpause) {
+
+				// if button does not already exist
+				if(!this.controls.playpause) {
 			
-				// set up playback controls
-				this.controls.playpause = u.ae(this.controls, "a", {"class":"playpause"});
-				this.controls.playpause.player = this;
+					// set up playback controls
+					this.controls.playpause = u.ae(this.controls, "a", {"class":"playpause"});
+					this.controls.playpause.player = this;
 
-	//			player.controls.playpause = playpause;
-				u.e.click(this.controls.playpause);
-				this.controls.playpause.clicked = function(event) {
-			//		u.bug("play/pause")
-					this.player.togglePlay();
+		//			player.controls.playpause = playpause;
+					u.e.click(this.controls.playpause);
+					this.controls.playpause.clicked = function(event) {
+				//		u.bug("play/pause")
+						this.player.togglePlay();
+					}
 				}
-
+				// it already exists, make it visible
+				else {
+					u.as(this.controls.playpause, "display", "block");
+				}
+			}
+			// hide if exists
+			else if(this.controls.playpause) {
+				u.as(this.controls.playpause, "display", "none");
 			}
 
 			// TODO: zoom
-			if(this._default_zoom && !this.controls.zoom) {}
+			if(this._controls_zoom && !this.controls.zoom) {}
+			else if(this.controls.zoom) {}
 
 			// TODO: volume
-			if(this._default_volume && !this.controls.volume) {}
+			if(this._controls_volume && !this.controls.volume) {}
+			else if(this.controls.volume) {}
 
 			// TODO: search (rw/ff)
-			if(this._default_search && !this.controls.search) {}
+			if(this._controls_search && !this.controls.search) {}
+			else if(this.controls.search) {}
 
 
 			// enable controls on mousemove
