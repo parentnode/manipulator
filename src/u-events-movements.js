@@ -163,6 +163,11 @@ u.e.drag = function(node, boundaries, settings) {
 	// debug displaying of boundaries
 	node.show_bounds = false;
 
+	// default callbacks
+	node.callback_picked = "picked";
+	node.callback_moved = "moved";
+	node.callback_dropped = "dropped";
+
 
 	// additional info passed to function as JSON object
 	if(typeof(settings) == "object") {
@@ -179,6 +184,10 @@ u.e.drag = function(node, boundaries, settings) {
 
 				case "vertical_lock"	: node.vertical_lock		= settings[argument]; break;
 				case "horizontal_lock"	: node.horizontal_lock		= settings[argument]; break;
+
+				case "callback_picked"	: node.callback_picked		= settings[argument]; break;
+				case "callback_moved"	: node.callback_moved		= settings[argument]; break;
+				case "callback_dropped"	: node.callback_dropped		= settings[argument]; break;
 			}
 
 		}
@@ -397,8 +406,8 @@ y: 3 -> -2 = 5 (3 - -2)
 		u.a.transition(this, "none");
 
 		// notify of pick
-		if(typeof(this.picked) == "function") {
-			this.picked(event);
+		if(typeof(this[this.callback_picked]) == "function") {
+			this[this.callback_picked](event);
 		}
 
 
@@ -606,9 +615,12 @@ u.e._drag = function(event) {
 	}
 
 	// notify of movement
-	if(typeof(this.moved) == "function") {
-		this.moved(event);
+	if(typeof(this[this.callback_moved]) == "function") {
+		this[this.callback_moved](event);
 	}
+	// if(typeof(this.moved) == "function") {
+	// 	this.moved(event);
+	// }
 
 }
 
@@ -707,9 +719,13 @@ u.e._drop = function(event) {
 	
 
 	// notify of drop
-	if(typeof(this.dropped) == "function") {
-		this.dropped(event);
+	if(typeof(this[this.callback_dropped]) == "function") {
+		this[this.callback_dropped](event);
 	}
+
+	// if(typeof(this.dropped) == "function") {
+	// 	this.dropped(event);
+	// }
 
 }
 
