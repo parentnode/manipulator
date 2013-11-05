@@ -357,7 +357,13 @@ Util.videoPlayer = function(_options) {
 
 	// find the correct source for the browser
 	player.correctSource = function(src) {
+
+//		alert(src)
+		// remove parameters
+		src = src.replace(/\?[^$]+/, "");
 		src = src.replace(/\.m4v|\.mp4|\.webm|\.ogv|\.3gp|\.mov/, "");
+
+//		alert(src)
 
 		/*
 		u.bug("cpt:m4v"+this.video.canPlayType("video/x-m4v"));
