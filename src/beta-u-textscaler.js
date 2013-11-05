@@ -11,7 +11,7 @@ u.textscaler = function(node, settings) {
 
 
 	// additional info passed to function as JSON object
-	if(!typeof(settings) == "object") {
+	if(typeof(settings) != "object") {
 		settings = {
 			"*":{
 				"unit":"rem",
