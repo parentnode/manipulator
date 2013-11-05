@@ -422,7 +422,7 @@ y: 3 -> -2 = 5 (3 - -2)
 
 	// Undesired effect when sliding the presentation, could be enabled for small elements in large scopes using mouse
 	if(this.drag_dropout && u.e.event_pref == "mouse") {
-		u.e.addEvent(this, "mouseout", u.e._drop);
+		u.e.addEvent(this, "mouseout", u.e._drop_mouse);
 	}
 
 }
@@ -729,6 +729,13 @@ u.e._drop = function(event) {
 
 }
 
+u.e._drop_mouse = function(event) {
+	if(event.target == this) {
+		this._drop = u.e._drop;
+		this._drop(event);
+//		u.e._drop(event);
+	}
+}
 
 
 /**
