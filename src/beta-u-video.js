@@ -360,6 +360,7 @@ Util.videoPlayer = function(_options) {
 
 //		alert(src)
 		// remove parameters
+		// TODO: make parameter replacement better - keep parameter
 		src = src.replace(/\?[^$]+/, "");
 		src = src.replace(/\.m4v|\.mp4|\.webm|\.ogv|\.3gp|\.mov/, "");
 
