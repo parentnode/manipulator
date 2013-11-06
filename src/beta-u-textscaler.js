@@ -28,11 +28,24 @@ u.textscaler = function(node, settings) {
 	u.ac(node, node.text_key);
 
 	// map setting on node
-	node.text_settings = settings;
+	node.text_settings = JSON.parse(JSON.stringify(settings));
+//	node.text_settings = settings;
 
 	node.scaleText = function() {
+		var tag;
+
+		// var i, blob;
+		// for(i = 0; blob = window._jes_text.nodes[i]; i++) {
+		// 	u.bug("blob:" + u.nodeId(blob) + "; " + blob.text_settings["h2"].css_rule);
+		// 	u.xInObject(blob.text_settings["h2"].css_rule);
+		// }
 
 
+//		if(u.hc(this, "i1")) {
+//			u.bug("scale text:" + u.nodeId(this))
+//			u.xInObject(this.text_settings["h2"])
+//			u.bug(this.text_settings["h2"].css_rule.cssText)
+//		}
 		// loop through all tags with settings
 		for(tag in this.text_settings) {
 			var settings = this.text_settings[tag];
@@ -46,7 +59,7 @@ u.textscaler = function(node, settings) {
 //				u.xInObject(jes_text.style_tag.sheet.cssRules.style);
 				// update font size
 				settings.css_rule.style.setProperty("font-size", font_size + settings.unit, "important");
-//				u.bug("size for:" + node.css_rule.cssText);
+//				u.bug("size for:" + font_size + settings.unit + "," + settings.css_rule.cssText);
 			}
 			// too big
 			else if(settings.max_width < window._jes_text._width) {
@@ -55,6 +68,7 @@ u.textscaler = function(node, settings) {
 			}
 			// too small
 			else if(settings.min_width > window._jes_text._width) {
+//				u.bug("font-size min:" + settings.min_size);
 				settings.css_rule.style.setProperty("font-size", settings.min_size + settings.unit, "important");
 			}
 		}
@@ -94,6 +108,7 @@ u.textscaler = function(node, settings) {
 			// get width just once for each event
 			window._jes_text._width = u.browserW();
 
+			var i, node;
 			for(i = 0; node = window._jes_text.nodes[i]; i++) {
 //				u.bug("scale:" + node);
 				// is node still a part of the dom
@@ -119,7 +134,7 @@ u.textscaler = function(node, settings) {
 		// precalculate values for speedy execution
 		window._jes_text.precalculate = function() {
 //			u.bug("precalc")
-			var i, node;
+			var i, node, tag;
 			for(i = 0; node = window._jes_text.nodes[i]; i++) {
 //				u.bug("scale:" + node);
 				if(node.parentNode) { // && node.offsetHeight
@@ -138,25 +153,42 @@ u.textscaler = function(node, settings) {
 	}
 
 
-
+//	u.bug("index:" + u.nodeId(node))
 //	u.xInObject(window._jes_text.style_tag)
 //	u.xInObject(window._jes_text.style_tag.sheet)
-
+	var tag;
 	// add rule for each tag in settings
-	for(tag in settings) {
+	for(tag in node.text_settings) {
 
 		// create specific rule for each tag
 		selector = "."+node.text_key + ' ' + tag + ' ';
 		node.css_rules_index = window._jes_text.style_tag.sheet.insertRule(selector+'{}', 0);
+//		u.bug("selector:" + selector + ", " + node.css_rules_index + "; " + u.nodeId(node))
 
-		// save rule reference to avoid looking for it later
-		settings[tag].css_rule = window._jes_text.style_tag.sheet.cssRules[0];
-		
+		// save rule reference to avoid looking for it later (insert puts new rule as first index)
+		node.text_settings[tag].css_rule = window._jes_text.style_tag.sheet.cssRules[0];
+
+//		u.bug("cssText:" + node.text_settings[tag].css_rule.cssText + ", " + u.nodeId(node));
 //					u.xInObject(settings[tag].css_rule);
 	}
 
-	 
+
 	window._jes_text.nodes.push(node);
+
+	// var rule;
+	// for(rule in window._jes_text.style_tag.sheet.cssRules) {
+	// 	if(!isNaN(rule)) {
+	// 		u.bug("rules:" + rule + "," + window._jes_text.style_tag.sheet.cssRules[rule].cssText +", "+ u.nodeId(window._jes_text.style_tag.sheet.cssRules[rule].node))
+	// 	}
+	// }
+	// 
+	// 
+	// var i, blob;
+	// for(i = 0; blob = window._jes_text.nodes[i]; i++) {
+	// 	u.bug("blob2:" + u.nodeId(blob) + "; " + blob.text_settings["h2"].css_rule.cssText);
+	// 	u.xInObject(blob.text_settings["h2"].css_rule);
+	// }
+
 
 	// precalculate value as many values for nodes
 	window._jes_text.precalculate();
