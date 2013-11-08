@@ -93,8 +93,9 @@ u.gridMaster = function(list, _options) {
 
 					// insert static node in existing node structure
 					// more nodes
-					if(this.nodes.length > j+1) {
-						node = this.nodes[j].parentNode.insertBefore(static_node, this.nodes[j]);
+					u.bug(this.nodes.length + ":" + j + ", " + grid_node.class)
+					if(this.nodes.length > j) {
+						node = this.nodes[0].parentNode.insertBefore(static_node, this.nodes[j]);
 					}
 					// append to the end
 					else {
@@ -174,7 +175,7 @@ u.gridMaster = function(list, _options) {
 		for(i = 0, j = 0; node = this.nodes[i]; i++) {
 
 			// apply filter if it exists
-			if(!this.scene.filterPanel || this.scene.filterPanel.filter(node)) {
+			if(!this.scene || !this.scene.filterPanel || this.scene.filterPanel.filter(node)) {
 //			u.bug(u.nodeId(this) + ", " + typeof(this.buildNode))
 
 

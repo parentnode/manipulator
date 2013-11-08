@@ -11,6 +11,8 @@
 
 u.navigation = function(page, options) {
 
+	u.bug("set up navigation")
+
 	// this._nav_navigate_callback = null;
 	// 
 	// // additional info passed to function as JSON object
@@ -77,7 +79,6 @@ u.navigation = function(page, options) {
 		location.hash = u.h.getCleanUrl(url);
 
 	}
-
 
 	// set default hash if no hash value is present
 	// no further navigation - initialize content
