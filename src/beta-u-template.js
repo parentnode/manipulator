@@ -26,8 +26,10 @@ u.template = function(node, response) {
 		
 		// multiple results
 		if(response.length) {
-			for(item in response) {
+			// use _item (WITH UNDERSCORE) to help IE, where item will be interpreted as item()
+			for(_item in response) {
 
+//				u.bug("item:" + item)
 				item_template = template;
 
 				// look for functions
@@ -68,23 +70,23 @@ u.template = function(node, response) {
 				html += item_template.replace(/\{(.+?)\}/g, 
 					function(string) {
 						if(string == "{children}") {
-							if(response[item].children && response[item].children.length) {
+							if(response[_item].children && response[_item].children.length) {
 								var parent_node = node.parentNode.nodeName.toLowerCase();
 								var parent_class = node.parentNode.className;
-								return '<'+parent_node+' class="'+parent_class+'">'+u.template(node, response[item].children)+'</'+parent_node+'>';
+								return '<'+parent_node+' class="'+parent_class+'">'+u.template(node, response[_item].children)+'</'+parent_node+'>';
 							}
 							else {
 								return "";
 							}
 						}
-						else if(response[item][string.replace(/[\{\}]/g, "")]) {
-							if(response[item][string.replace(/[\{\}]/g, "")] === true) {
+						else if(response[_item][string.replace(/[\{\}]/g, "")]) {
+							if(response[_item][string.replace(/[\{\}]/g, "")] === true) {
 								return "true";
 							}
 							
-							return response[item][string.replace(/[\{\}]/g, "")];
+							return response[_item][string.replace(/[\{\}]/g, "")];
 						}
-						else if(response[item][string.replace(/[\{\}]/g, "")] === false) {
+						else if(response[_item][string.replace(/[\{\}]/g, "")] === false) {
 							return "false";
 						}
 						else {
