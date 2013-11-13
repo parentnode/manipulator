@@ -6,7 +6,7 @@ if(u.ga_account) {
     m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
     })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
-    ga('create', u.ga_account, 'soulland.com');
+    ga('create', u.ga_account, u.ga_domain);
     ga('send', 'pageview');
 
 
