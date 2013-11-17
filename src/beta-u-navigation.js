@@ -11,7 +11,7 @@
 
 u.navigation = function(page, options) {
 
-	u.bug("set up navigation")
+//	u.bug("set up navigation")
 
 	// this._nav_navigate_callback = null;
 	// 
