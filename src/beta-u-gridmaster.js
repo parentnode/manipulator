@@ -177,8 +177,8 @@ u.gridMaster = function(list, _options) {
 //					u.ac(node, "item", false);
 
 					// grid class
-					if(grid_node.class) {
-						u.ac(node, grid_node.class);
+					if(grid_node["class"]) {
+						u.ac(node, grid_node["class"]);
 					}
 
 					// grid can contain any kind of additional settings, so map grid_node to node
