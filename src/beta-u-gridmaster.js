@@ -3,20 +3,42 @@ u.gridMaster = function(list, _options) {
 //	u.bug("new grid master")
 
 	var gm = u.we(list, "div", {"class":"gridmaster"});
-	gm.list = list;
+//	gm.list = list;
 
 
+	// default callbacks
+
+	// callback to prepare node
+	gm.callback_node_prepare = "prepareNode";
+	// callback to build node
+	gm.callback_node_build = "buildNode";
+	// callback when node has been rendered
+	gm.callback_node_render = "renderNode";
+	// callback when node has been rendered
+	gm.callback_node_rendered = "nodeRendered";
+	// callback to do actual resizing
+	gm.callback_node_resize = "resize";
 
 
-	gm.callback_resized = "resized";
+	// callback when grid has been built
 	gm.callback_built = "built";
-	gm._callback_prepare = "prepareNode";
+	// callback when grid has been resized
+	gm.callback_resized = "resized";
 
+
+	// min delay for rendering GM nodes
 	gm.render_delay = 100;
+
+	// grid has a fixed height - no used  - checking values from grid instead
+//	gm.fixed_height = false;
+
+	// grid has a fixed height
+	gm.loop_grid = true;
 
 	// controls or autoplay+loop only options at this point
 	gm.video_controls = false;
 
+	// grid master node selector
 	gm.selector = "li.item";
 
 	// default grid
@@ -35,16 +57,23 @@ u.gridMaster = function(list, _options) {
 		for(argument in _options) {
 
 			switch(argument) {
-				case "callback_resized"			: gm.callback_resized			= _options[argument]; break;
-				case "callback_built"			: gm.callback_built				= _options[argument]; break;
-				case "callback_prepare"			: gm._callback_prepare			= _options[argument]; break;
+				case "callback_prepare"			: gm.callback_node_prepare			= _options[argument]; break;
+				case "callback_build"			: gm.callback_node_build			= _options[argument]; break;
+				case "callback_resize"			: gm.callback_node_resize			= _options[argument]; break;
+				case "callback_rendered"		: gm.callback_node_rendered			= _options[argument]; break;
 
-				case "selector"					: gm.selector					= _options[argument]; break;
+				case "callback_resized"			: gm.callback_resized				= _options[argument]; break;
+				case "callback_built"			: gm.callback_built					= _options[argument]; break;
 
-				case "grid"						: gm.grid						= _options[argument]; break;
+				case "selector"					: gm.selector						= _options[argument]; break;
 
-				case "render_delay"				: gm.render_delay				= _options[argument]; break;
-				case "video_controls"			: gm.video_controls				= _options[argument]; break;
+				case "grid"						: gm.grid							= _options[argument]; break;
+
+//				case "fixed_height"				: gm.fixed_height					= _options[argument]; break;
+				case "loop_grid"				: gm.loop_grid						= _options[argument]; break;
+
+				case "render_delay"				: gm.render_delay					= _options[argument]; break;
+				case "video_controls"			: gm.video_controls					= _options[argument]; break;
 			}
 
 		}
@@ -55,13 +84,19 @@ u.gridMaster = function(list, _options) {
 	gm.org_html = gm.innerHTML;
 
 
+	// prepare grid
+	// precalculate and set up HTML
+	// this function it thought as being executed at a time when nothing 
+	// important is going on, to make to actual build run as fast as possible 
+	// (because build is likely be run when a lot of other things are also going on)
 	gm.prepare = function(grid) {
+//		u.bug("gridmaster prepare:" + u.nodeId(this))
 
 		// restore to original state
 		this.innerHTML = this.org_html;
 
 		// TODO: hardcoded for ul's - it does not have to be
-		this.list = u.qs("ul", this)
+		this.list = u.qs("ul", this);
 		this.list.gridmaster = this;
 
 		this.nodes = u.qsa(this.selector, this);
@@ -69,15 +104,19 @@ u.gridMaster = function(list, _options) {
 		// new grid for this preparation
 		if(grid) {
 			this.grid = grid;
+			// set to null if no base is stated - will use individual node width instead
+			this.grid.calc_base = this.grid.calc_base ? this.grid.calc_base/100 : null;
 		}
+
+		// is grid height or width based
+		this.fixed_height = this.grid.nodes[0].height ? true : false;
 
 //		u.xInObject(this.grid)
 
-		var i, j, k, node, grid_node, static_node;
 //		u.bug("grid_nodes:" + this.grid.nodes.length);
 //		u.bug("nodes:" + gm.nodes.length);
 
-		// set grid index class
+		var i, j, k, node, grid_node, static_node;
 		for(i = 0, j = 0, k = 0; grid_node = this.grid.nodes[i]; i++, k++) {
 
 			if(this.nodes.length > j) {
@@ -93,13 +132,15 @@ u.gridMaster = function(list, _options) {
 
 					// insert static node in existing node structure
 					// more nodes
-					u.bug(this.nodes.length + ":" + j + ", " + grid_node.class)
+//					u.bug(this.nodes.length + ":" + j + ", " + grid_node.class)
 					if(this.nodes.length > j) {
-						node = this.nodes[0].parentNode.insertBefore(static_node, this.nodes[j]);
+//						node = this.nodes[0].parentNode.insertBefore(static_node, this.gm_nodes[j]);
+						node = this.list.insertBefore(static_node, this.nodes[j]);
 					}
 					// append to the end
 					else {
-						node = this.nodes[0].parentNode.appendChild(static_node);
+//						node = this.nodes[0].parentNode.appendChild(static_node);
+						node = this.list.appendChild(static_node);
 					}
 
 				}
@@ -114,40 +155,53 @@ u.gridMaster = function(list, _options) {
 				// if node exists - add additional info
 				if(node) {
 
-					node._prepare = u.eitherOr(grid_node.prepare, this._callback_prepare);
+					// prefix all gridmaster values with gm_
+					node.gm_prepare = u.eitherOr(grid_node.prepare, this.callback_node_prepare);
+					node.gm_build = u.eitherOr(grid_node.build, this.callback_node_build);
+					node.gm_resize = u.eitherOr(grid_node.resize, this.callback_node_resize);
+					node.gm_render = u.eitherOr(grid_node.render, this.callback_node_render);
+					node.gm_rendered = u.eitherOr(grid_node.rendered, this.callback_node_rendered);
 
-					node._resize = grid_node.resize;
-					node._grid_width = grid_node.width/100;
-					node._grid_height = grid_node.height/100;
-					node._grid_proportion = grid_node.proportion;
+
+					node.gm_grid_width = grid_node.width/100;
+					node.gm_grid_height = grid_node.height/100;
+					node.gm_grid_proportion = grid_node.proportion;
+
+					// does grid have a calculation base
+					node.gm_calc_base = u.eitherOr(this.grid.calc_base, u.eitherOr(node.gm_grid_width, node.gm_grid_height));
+
 //					node._i = k;
 
-					u.ac(node, "i"+(i+1), false);
-					u.ac(node, "item", false);
+					// set grid index class
+					u.ac(node, "i"+(k+1), false);
+//					u.ac(node, "item", false);
 
 					// grid class
 					if(grid_node.class) {
 						u.ac(node, grid_node.class);
 					}
 
-					node._grid_node = grid_node;
+					// grid can contain any kind of additional settings, so map grid_node to node
+					node.gm_grid_node = grid_node;
 
-					// // call local preparation 
-					// if(typeof(this.prepareNode) == "function") {
-					// 	this.prepareNode(node, grid_node);
-					// }
+					// individual prepare node
+//					u.bug(typeof(this[node.gm_prepare]) + ", " + node.gm_prepare);
 
-					// does ready fuction exist
-					if(typeof(this[node._prepare]) == "function") {
-						node = this[node._prepare](node);
+					// does prepare fuction exist
+					if(typeof(this[node.gm_prepare]) == "function") {
+						this[node.gm_prepare](node);
 					}
 
+					// inject media wrapper, if preparation revealed video or image src
+					if(node.gm_video_src || node.gm_image_src) {
+						node.gm_media_mask = u.ae(node, "div", {"class":"media"});
+					}
 
 				}
 
-				// loop grid
+				// loop grid if loop_grid is on
 //				u.bug(gm.nodes.length + ", " + j + "; " + gm.grid.nodes.length + ", " + i)
-				if(this.nodes.length > j && i+1 >= this.grid.nodes.length) {
+				if(this.loop_grid && this.nodes.length > j && i+1 >= this.grid.nodes.length) {
 					i = -1;
 				}
 
@@ -159,6 +213,9 @@ u.gridMaster = function(list, _options) {
 	}
 
 
+
+	// build the node
+	// load image/video content and render node
 	gm.build = function() {
 //		u.bug("gridmaster build:" + u.nodeId(this));
 
@@ -167,31 +224,33 @@ u.gridMaster = function(list, _options) {
 		this.render_count = 0;
 
 		// update nodes collection
-		this.nodes = u.qsa(".item", this);
-		var i, node, j;
+		this.nodes = u.qsa(this.selector, this.list);
 
 //		u.bug("nodes:" + this.nodes.length)
 		// loop through nodes
+		var i, node, j;
 		for(i = 0, j = 0; node = this.nodes[i]; i++) {
 
+
 			// apply filter if it exists
-			if(!this.scene || !this.scene.filterPanel || this.scene.filterPanel.filter(node)) {
-//			u.bug(u.nodeId(this) + ", " + typeof(this.buildNode))
+			// TODO: integrate filter in more elegant way
+			if((!this.scene || !this.scene.filterPanel || this.scene.filterPanel.filter(node))) {
+// 				u.bug(u.nodeId(this) + ", " + typeof(this[node.gm_build]))
 
 
-				// delayed rendering loop
+				// default delayed rendering loop
 				// can be overwritten by buildNode
-				node.delayedRendering = function() {
+				node.renderNode = function() {
 					// get current time for render delay calculation
 					var current_time = new Date().getTime();
 
 					// delay rendering further
-//					u.bug(u.nodeId(this) + ", " + (current_time - this.gm.render_time) + "<" +this.gm.render_delay)
+//					u.bug(u.nodeId(this) + ", " + (current_time - this.gm.render_timerender_time) + "<" +this.gm.render_delay)
 					if(current_time - this.gm.render_time < this.gm.render_delay) {
 						this.gm.combined_delay += (this.gm.render_delay - (current_time - this.gm.render_time))+5;
 	//					u.bug("delayed rendering:" + u.nodeId(this) + ", " + this.gm.combined_delay);
 	
-						u.t.setTimer(this, this.delayedRendering, this.gm.combined_delay);
+						u.t.setTimer(this, this.renderNode, this.gm.combined_delay);
 	//					u.t.setTimer(this, this.delayedRendering, this.gm.render_delay - (current_time - this.gm.render_time));
 					}
 					// show node
@@ -213,84 +272,145 @@ u.gridMaster = function(list, _options) {
 				 		u.a.setOpacity(this, 1);
 
 	//					u.bug("renderedNode:" + this.gm.renderedNode);
-						if(typeof(this.gm.nodeRendered) == "function") {
-							this.gm.nodeRendered(this);
+						if(typeof(this.gm[this.gm_rendered]) == "function") {
+							this.gm[this.gm_rendered](this);
 						}
 					}
 				}
+
 	//			u.bug("build")
+
 				// node index - compensating for hidden nodes
-				node._i = j;
+				node.gm_i = j;
+//				node.gm_i = j;
 
 				// local build manipulation
-				this.buildNode(node);
+				if(typeof(this[node.gm_build]) == "function") {
+					this[node.gm_build](node);
+				}
 
 				// reset grid
 				this.resized();
 
+				// save reference to Gridmaster on node
 				node.gm = this;
 
 
 				// does node have video src
-				if(node._video_src) {
-	//				u.bug("video_src:" + node._video_src)
+				if(node.gm_video_src) {
+//					u.bug("video_src:" + node.gm_video_src)
 
-					node._video = u.videoPlayer();
-					u.ae(node._image_mask, node._video);
-					node._video.node = node;
 
-					// add controls to video
+					// add video
+					node.gm_video = u.videoPlayer();
+					u.ae(node.gm_media_mask, node.gm_video);
+					node.gm_video.node = node;
+
+					// if video controls are enabled, check for poster image
 					if(this.video_controls) {
-						node._video.load(node._video_src, {"playpause":true});
+//						u.bug("with controls")
+
+						// poster image
+						if(node.gm_image_src) {
+//							u.bug("image_src:" + node.gm_image_src);
+
+							// add image
+							node.gm_image = u.ae(node.gm_media_mask, "img");
+
+							node.loaded = function(queue) {
+								this.loaded = null;
+
+			//					u.bug("loaded:" + u.nodeId(this))
+								//u.as(this, "backgroundImage", "url("+queue[0]._image.src+")");
+								// set image source, so node is ready for rendering
+								this.gm_image.src = queue[0]._image.src;
+
+								if(typeof(this[this.gm_render]) == "function") {
+									this[this.gm_render]();
+								}
+							}
+							// preload image
+							u.preloader(node, [node.gm_image_src]);
+
+						}
+						// load video - but do nothing (waiting for user interaction)
+						node.gm_video.load(node.gm_video_src, {"playpause":true});
+
 					}
+					// no video controls - video should autoplay and loop
 					else {
+//						u.bug("no video controls")
+
+						// add video
+						node.gm_video = u.videoPlayer();
+						u.ae(node.gm_media_mask, node.gm_video);
+						node.gm_video.node = node;
+
+						// add controls to video
 						// auto play and loop on ended
-						node._video.ended = function() {
+						node.gm_video.ended = function() {
 							this.play();
 						}
-						node._video.loadAndPlay(node._video_src, {"playpause":false});
+						node.gm_video.loadAndPlay(node.gm_video_src, {"playpause":false});
+
+						node.gm_video.canplaythrough = function() {
+		//					u.bug("video canplaythrough")
+							// control the rendering
+							if(typeof(this.node[this.node.gm_render]) == "function") {
+								this.node[this.node.gm_render]();
+							}
+	//						this.node.renderNode();
+						}
 					}
 
-					node._video.canplaythrough = function() {
-	//					u.bug("video canplaythrough")
-						// control the rendering
-						this.node.delayedRendering();
-					}
+
 				}
 
 				// does node have image src
-				if(node._image_src) {
-	//				u.bug("image_src:" + node._image_src);
+				else if(node.gm_image_src) {
+	//				u.bug("image_src:" + node.gm_image_src);
 
 					// add image
-					node._image = u.ae(node._image_mask, "img");
+					node.gm_image = u.ae(node.gm_media_mask, "img");
 
 					node.loaded = function(queue) {
+						this.loaded = null;
+
 	//					u.bug("loaded:" + u.nodeId(this))
-						//u.as(this, "backgroundImage", "url("+queue[0]._image.src+")");
 						// set image source, so node is ready for rendering
-						this._image.src = queue[0]._image.src;
+						this.gm_image.src = queue[0]._image.src;
 
 						// control the rendering
-						this.delayedRendering();
+//						u.bug(typeof(this[this.gm_render]));
+
+						if(typeof(this[this.gm_render]) == "function") {
+							this[this.gm_render]();
+						}
+//						this.renderNode();
 					}
 					// preload image
-					u.preloader(node, [node._image_src]);
+					u.preloader(node, [node.gm_image_src]);
 				}
 
-		
+				// no media to load
 				else {
 	//				u.bug("delayedRendering")
-					node.delayedRendering();
+					if(typeof(node[node.gm_render]) == "function") {
+						node[node.gm_render]();
+					}
+
+//					node.renderNode();
 				}
 
+				// next 
 				j++;
 
-//			u.bug("done building")
+//				u.bug("done building")
 			}
+
 			// node not matching filter - so hide it
 			else {
-//					u.bug("hide node:" + u.nodeId(node));
+//				u.bug("hide node if filter and not valid:" + u.nodeId(node));
 				node._hidden = true;
 				u.as(node, "display", "none");
 			}
@@ -304,59 +424,83 @@ u.gridMaster = function(list, _options) {
 	gm.resized = function() {
 //		u.bug("gm resized:" + u.nodeId(this))
 
-		var calc_width = this.offsetWidth;
-		var calc_height = this.offsetHeight;
+		// prevent wrapping in Safari when scaling down by added 10 extra px in ul width
+		//  (for some reason this does not cause same effect when scaling up
+		// - if at some point it does, solve it by resetting list width on each node update)
+
+		// fixed height calculation
+		if(this.fixed_height) {
+			var calc_height = this.offsetHeight;
+			u.a.setHeight(this.list, calc_height + 10);
+			
+		}
+		else {
+			var calc_width = this.offsetWidth;
+			u.a.setWidth(this.list, calc_width + 10);
+			
+		}
 
 //		u.bug(calc_width + ", " + this.offsetWidth +","+ this.list.offsetWidth);
 //		u.bug(calc_height + ", " + this.offsetHeight +","+ this.list.offsetHeight);
 
-		// prevent wrapping in Safari when scaling down (for some reason this does not cause same effect when scrolling up - if at some point it does, solve it by resetting list width on each node update)
-		// problem not seen in other browsers so far
-		u.a.setWidth(this.list, calc_width + 5);
-		u.a.setHeight(this.list, calc_height + 5);
 
+		// resize all visible nodes
 		for(i = 0; node = this.nodes[i]; i++) {
 //			u.bug("node resize:" + u.nodeId(node));
 
-			
-			if(!node._hidden && node._grid_width && node._grid_proportion) {
+			// grid is based on width
+			if(!node._hidden && node.gm_grid_width && node.gm_grid_proportion) {
 //	 			u.bug(node._grid_proportion + ", " + node._grid_width + ", " + calc_width);
 
 				// custom resize
-				if(node._resize && typeof(this[node._resize]) == "function") {
-					this[node._resize](node, calc_width);
+				if(typeof(this[node.gm_resize]) == "function") {
+					this[node.gm_resize](node, calc_width);
 				}
-				// regular resize
+
 				else {
-					u.as(node, "width", Math.ceil(node._grid_width * calc_width) + "px", false);
-					if(node._image_mask) {
+					u.as(node, "width", Math.ceil(node.gm_calc_base * calc_width) * (node.gm_grid_width/node.gm_calc_base) + "px", false);
+					if(node.gm_media_mask) {
 //						u.bug("set height on image:" + u.nodeId(node))
-						u.as(node._image_mask, "height", (Math.floor(node._image_mask.offsetWidth / node._grid_proportion)) + "px", false);
+						u.as(node.gm_media_mask, "height", (Math.floor(node.gm_media_mask.offsetWidth / node.gm_grid_proportion)) + "px", false);
 					}
 					else {
 //						u.bug("set height on node:" + u.nodeId(node))
-						u.as(node, "height", (Math.floor(node.offsetWidth / node._grid_proportion)) + "px", false);
+						u.as(node, "height", (Math.floor(node.offsetWidth / node.gm_grid_proportion)) + "px", false);
 					}
 				}
+
+				// OLD: regular resize
+// 				else {
+// 					u.as(node, "width", Math.ceil(node.gm_grid_width * calc_width) + "px", false);
+// 					if(node.gm_media_mask) {
+// //						u.bug("set height on image:" + u.nodeId(node))
+// 						u.as(node.gm_media_mask, "height", (Math.floor(node.gm_media_mask.offsetWidth / node.gm_grid_proportion)) + "px", false);
+// 					}
+// 					else {
+// //						u.bug("set height on node:" + u.nodeId(node))
+// 						u.as(node, "height", (Math.floor(node.offsetWidth / node.gm_grid_proportion)) + "px", false);
+// 					}
+// 				}
 			}
-			else if(!node._hidden && node._grid_height && node._grid_proportion) {
+			// grid is based on heights
+			else if(!node._hidden && node.gm_grid_height && node.gm_grid_proportion) {
 //	 			u.bug(node._grid_proportion + ", " + node._grid_height + ", " + calc_height);
 
 				// custom resize
-				if(node._resize && typeof(this[node._resize]) == "function") {
-					this[node._resize](node, calc_height);
+				if(typeof(this[node.gm_resize]) == "function") {
+					this[node.gm_resize](node, calc_height);
 				}
 				// regular resize
 				else {
 //					u.bug("::" + Math.ceil(node._grid_height * calc_height))
-					u.as(node, "height", Math.ceil(node._grid_height * calc_height) + "px", false);
-					if(node._image_mask) {
+					u.as(node, "height", Math.ceil(node.gm_calc_base * calc_height) * (node.gm_grid_height/node.gm_calc_base) + "px", false);
+					if(node.gm_media_mask) {
 //						u.bug("set height on image:" + u.nodeId(node))
-						u.as(node._image_mask, "width", (Math.floor(node._image_mask.offsetHeight / node._grid_proportion)) + "px", false);
+						u.as(node.gm_media_mask, "width", (Math.floor(node.gm_media_mask.offsetHeight / node.gm_grid_proportion)) + "px", false);
 					}
 					else {
 //						u.bug("set height on node:" + u.nodeId(node))
-						u.as(node, "width", (Math.floor(node.offsetHeight / node._grid_proportion)) + "px", false);
+						u.as(node, "width", (Math.floor(node.offsetHeight / node.gm_grid_proportion)) + "px", false);
 					}
 				}
 			}
@@ -368,6 +512,7 @@ u.gridMaster = function(list, _options) {
 
 	}
 
+	// TODO: Create global resize handler for all gridmasters in page - like textscaler
 	// gm resize handler
 	var key = u.randomString(8);
 	u.ac(gm, key);
