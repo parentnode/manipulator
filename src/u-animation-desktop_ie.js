@@ -9,6 +9,14 @@ u.a.transition = function(node, transition) {
 	else {
 		node.duration = false;
 
+		if(transition.match(/none/i)) {
+			// if(u.hc(node, "subjects")) {
+			// 	u.bug("EXPERIMENTAL subjects reset transition end:" + transition + ", " + u.nodeId(node), 2, "red")
+			// }
+			// TODO: experimental - auto reset of transitioned callback
+			node.transitioned = null;
+		}
+
 		// TODO: reset running animations?
 		// u.t.resetTimer(e.t_transition);
 	}
