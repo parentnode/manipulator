@@ -671,8 +671,8 @@ u.e._drop = function(event) {
 		// this.start_input_y = false;
 
 		// get projected coords based on current speed (devided by 2 for better visual effect)
-		this.current_x = this._x + (this.current_xps/2);
-		this.current_y = this._y + (this.current_yps/2);
+		this.current_x = Math.round(this._x + (this.current_xps/2));
+		this.current_y = Math.round(this._y + (this.current_yps/2));
 
 
 		// correct out of scope values for projected coordinates
