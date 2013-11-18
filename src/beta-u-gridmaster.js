@@ -110,11 +110,12 @@ u.gridMaster = function(list, _options) {
 
 		// is grid height or width based
 		this.fixed_height = this.grid.nodes[0].height ? true : false;
+//		u.bug("fixed_height:" + this.fixed_height);
 
 //		u.xInObject(this.grid)
 
 //		u.bug("grid_nodes:" + this.grid.nodes.length);
-//		u.bug("nodes:" + gm.nodes.length);
+//		u.bug("nodes:" + this.nodes.length + ", " + this.selector);
 
 		var i, j, k, node, grid_node, static_node;
 		for(i = 0, j = 0, k = 0; grid_node = this.grid.nodes[i]; i++, k++) {
@@ -163,12 +164,13 @@ u.gridMaster = function(list, _options) {
 					node.gm_rendered = u.eitherOr(grid_node.rendered, this.callback_node_rendered);
 
 
-					node.gm_grid_width = grid_node.width/100;
-					node.gm_grid_height = grid_node.height/100;
+					node.gm_grid_width = grid_node.width ? grid_node.width/100 : null;
+					node.gm_grid_height = grid_node.height ? grid_node.height/100 : null;
 					node.gm_grid_proportion = grid_node.proportion;
 
 					// does grid have a calculation base
 					node.gm_calc_base = u.eitherOr(this.grid.calc_base, u.eitherOr(node.gm_grid_width, node.gm_grid_height));
+//					u.bug(node.gm_calc_base + ", " + this.grid.calc_base + ", " + node.gm_grid_width + ", " + node.gm_grid_height);
 
 //					node._i = k;
 
@@ -431,14 +433,17 @@ u.gridMaster = function(list, _options) {
 		// fixed height calculation
 		if(this.fixed_height) {
 			var calc_height = this.offsetHeight;
-			u.a.setHeight(this.list, calc_height + 10);
+
+			// in theory this should never be needed
+//			u.a.setHeight(this.list, calc_height + 10);
 			
 		}
-		else {
+		// allways adjust width to avoid wrapping
+//		else {
 			var calc_width = this.offsetWidth;
 			u.a.setWidth(this.list, calc_width + 10);
 			
-		}
+//		}
 
 //		u.bug(calc_width + ", " + this.offsetWidth +","+ this.list.offsetWidth);
 //		u.bug(calc_height + ", " + this.offsetHeight +","+ this.list.offsetHeight);
@@ -450,7 +455,7 @@ u.gridMaster = function(list, _options) {
 
 			// grid is based on width
 			if(!node._hidden && node.gm_grid_width && node.gm_grid_proportion) {
-//	 			u.bug(node._grid_proportion + ", " + node._grid_width + ", " + calc_width);
+//	 			u.bug(node.gm_grid_proportion + ", " + node.gm_grid_width + ", " + calc_width);
 
 				// custom resize
 				if(typeof(this[node.gm_resize]) == "function") {
@@ -484,7 +489,7 @@ u.gridMaster = function(list, _options) {
 			}
 			// grid is based on heights
 			else if(!node._hidden && node.gm_grid_height && node.gm_grid_proportion) {
-//	 			u.bug(node._grid_proportion + ", " + node._grid_height + ", " + calc_height);
+//	 			u.bug(node.gm_grid_proportion + ", " + node.gm_grid_height + ", " + calc_height);
 
 				// custom resize
 				if(typeof(this[node.gm_resize]) == "function") {
@@ -492,7 +497,8 @@ u.gridMaster = function(list, _options) {
 				}
 				// regular resize
 				else {
-//					u.bug("::" + Math.ceil(node._grid_height * calc_height))
+//					u.bug("Math.ceil(" + node.gm_calc_base +"*"+ calc_height)
+//					u.bug("::" + (Math.ceil(node.gm_calc_base * calc_height) * (node.gm_grid_height/node.gm_calc_base)))
 					u.as(node, "height", Math.ceil(node.gm_calc_base * calc_height) * (node.gm_grid_height/node.gm_calc_base) + "px", false);
 					if(node.gm_media_mask) {
 //						u.bug("set height on image:" + u.nodeId(node))
