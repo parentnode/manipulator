@@ -270,8 +270,7 @@ u.gridMaster = function(list, _options) {
 						this.transitioned = function() {
 							u.a.transition(this, "none");
 						}
-						u.a.transition(this, "none");
-//						u.a.transition(this, "opacity 0.5s ease-in-out");
+						u.a.transition(this, "opacity 0.5s ease-in-out");
 						u.a.setOpacity(this, 1);
 
 	//					u.bug("renderedNode:" + this.gm.renderedNode);
