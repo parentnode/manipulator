@@ -61,7 +61,7 @@ u.queueLoader = function() {
 //	u.bug("li.waiting:" + u.qs("li.waiting", u._preloader_queue))
 	if(u.qs("li.waiting", u._preloader_queue)) {
 
-		while(u._preloader_processes < 4) {
+		while(u._preloader_processes < 1) {
 
 			var next = u.qs("li.waiting", u._preloader_queue);
 			if(next) {
