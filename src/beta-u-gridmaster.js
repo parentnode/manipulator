@@ -195,7 +195,7 @@ u.gridMaster = function(list, _options) {
 					}
 
 					// inject media wrapper, if preparation revealed video or image src
-					if(node.gm_video_src || node.gm_image_src) {
+					if((node.gm_video_src || node.gm_image_src) && !node.gm_media_mask) {
 						node.gm_media_mask = u.ae(node, "div", {"class":"media"});
 					}
 
@@ -233,6 +233,7 @@ u.gridMaster = function(list, _options) {
 		var i, node, j;
 		for(i = 0, j = 0; node = this.nodes[i]; i++) {
 
+//			u.bug(u.nodeId(node) + ", " + typeof(this[node.gm_build]))
 
 			// apply filter if it exists
 			// TODO: integrate filter in more elegant way
@@ -308,6 +309,7 @@ u.gridMaster = function(list, _options) {
 					u.ae(node.gm_media_mask, node.gm_video);
 					node.gm_video.node = node;
 
+//					u.bug("gm_video:" + node.gm_video)
 					// if video controls are enabled, check for poster image
 					if(this.video_controls) {
 //						u.bug("with controls")
@@ -344,9 +346,9 @@ u.gridMaster = function(list, _options) {
 //						u.bug("no video controls")
 
 						// add video
-						node.gm_video = u.videoPlayer();
-						u.ae(node.gm_media_mask, node.gm_video);
-						node.gm_video.node = node;
+						// node.gm_video = u.videoPlayer();
+						// u.ae(node.gm_media_mask, node.gm_video);
+						// node.gm_video.node = node;
 
 						// add controls to video
 						// auto play and loop on ended
@@ -465,7 +467,7 @@ u.gridMaster = function(list, _options) {
 				else {
 					u.as(node, "width", Math.ceil(node.gm_calc_base * calc_width) * (node.gm_grid_width/node.gm_calc_base) + "px", false);
 					if(node.gm_media_mask) {
-//						u.bug("set height on image:" + u.nodeId(node))
+//						u.bug("set height on image:" + u.nodeId(node) + ":" + node.gm_media_mask.offsetWidth +"/"+ node.gm_grid_proportion)
 						u.as(node.gm_media_mask, "height", (Math.floor(node.gm_media_mask.offsetWidth / node.gm_grid_proportion)) + "px", false);
 					}
 					else {
