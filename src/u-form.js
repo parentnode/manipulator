@@ -261,9 +261,9 @@ Util.Form = u.f = new function() {
 //			}
 
 			// shortcuts - BETA
-//			u.bug("shortcut: "+ u.hc(action._input, "key:[a-z0-9]+"));
-			if(typeof(u.e.k) == "object" && u.hc(action._input, "key:[a-z0-9]+")) {
-				u.e.k.addShortcut(u.cv(action._input, "key"), action._input);
+//			u.bug("shortcut: " + u.nodeId(action._input) + ", " + u.hc(action._input, "key:[a-z0-9]+"));
+			if(typeof(u.k) == "object" && u.hc(action._input, "key:[a-z0-9]+")) {
+				u.k.addKey(u.cv(action._input, "key"), action._input);
 			}
 		}
 
