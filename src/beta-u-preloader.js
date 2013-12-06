@@ -21,7 +21,18 @@ u.preloader = function(node, files, options) {
 		u._preloader_queue = document.createElement("div");
 //		u._preloader_queue = u.ae(document.body, "div");
 		u._preloader_processes = 0;
+
+		if(u.e && u.e.event_pref == "touch") {
+			u._preloader_max_processes = 1;
+		}
+		// TODO: option to load more simultaneously (currently not uses) - implement as parameter as well?
+		else {
+			u._preloader_max_processes = 1;
+		}
+
 	}
+
+
 
 	if(node && files) {
 
@@ -61,7 +72,7 @@ u.queueLoader = function() {
 //	u.bug("li.waiting:" + u.qs("li.waiting", u._preloader_queue))
 	if(u.qs("li.waiting", u._preloader_queue)) {
 
-		while(u._preloader_processes < 1) {
+		while(u._preloader_processes < u._preloader_max_processes) {
 
 			var next = u.qs("li.waiting", u._preloader_queue);
 			if(next) {
