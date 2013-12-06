@@ -210,7 +210,7 @@ u.link = u.ce;
 
 // Get JSS class value
 Util.classVar = u.cv = function(node, var_name) {
-//	u.bug(u.nodeId(e) + ":" + e.className);
+//	u.bug(u.nodeId(node) + ":" + node.className);
 	try {
 		var regexp = new RegExp(var_name + ":[?=\\w/\\#~:.?+=?&%@!\\-]*");
 		if(node.className.match(regexp)) {
