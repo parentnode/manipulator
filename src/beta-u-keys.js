@@ -1,6 +1,6 @@
 
 // Onkeydown event handler object
-Util.Events.keydown = u.e.k = new function() {
+Util.Keys = u.k = new function() {
 
 	// container for shortcuts
 	this.shortcuts = new Array();
@@ -12,7 +12,7 @@ Util.Events.keydown = u.e.k = new function() {
 	// forwarding function (onkeydown event happens on window object)
 	this.onkeydownCatcher = function(event) {
 //		Util.nonClick(event);
-		u.e.k.catchKey(event);
+		u.k.catchKey(event);
 	}
 
 	// end time loop (has to be global because setTimeout executes on window object)
@@ -22,9 +22,9 @@ Util.Events.keydown = u.e.k = new function() {
 //	}
 
 	// add new shortcut
-	this.addShortcut = function(key, action) {
+	this.addKey = function(key, action) {
 
-//		Util.debug("ad");
+//		u.bug("ad");
 		// start catching event
 		if(!this.shortcuts.length) {
 			u.e.addEvent(document, "keydown", this.onkeydownCatcher);
@@ -71,7 +71,7 @@ Util.Events.keydown = u.e.k = new function() {
 		event = event ? event : window.event;
 		key = String.fromCharCode(event.keyCode);
 
-//		Util.debug("e:" + key + "::" + this.shortcuts.length)
+		u.bug("e:" + key + ":"+event.keyCode+":" + this.shortcuts.length)
 		if((event.ctrlKey || event.metaKey) && this.shortcuts[key]) {
 			u.e.kill(event);
 			action = this.shortcuts[key].pop();
@@ -94,9 +94,9 @@ Util.Events.keydown = u.e.k = new function() {
 
 			action = this.shortcuts["ESC"].pop();
 //			for(i = 0; action = this.shortcuts["ESC"][i]; i++) {
-//				u.bug("esc:"+action + "::" + action.parentNode);
+				u.bug("esc:"+action + "::" + u.nodeId(action) + ", " + typeof(action));
 				if(typeof(action) == "object") {
-					action.click();
+					action.clicked();
 				}
 				else if(typeof(action) == "function") {
 					action();
