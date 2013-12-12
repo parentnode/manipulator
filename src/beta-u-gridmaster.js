@@ -426,7 +426,7 @@ u.gridMaster = function(list, _options) {
 
 
 	gm.resized = function() {
-		u.bug("gm resized:" + u.nodeId(this))
+//		u.bug("gm resized:" + u.nodeId(this))
 
 		// prevent wrapping in Safari when scaling down by added 10 extra px in ul width
 		//  (for some reason this does not cause same effect when scaling up
