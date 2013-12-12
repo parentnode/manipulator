@@ -335,6 +335,7 @@ Util.validateResponse = function(response){
 	if(object) {
 
 		// callback to Response handler
+//		u.bug("response:" + typeof(response.node[response.node.response_callback]))
 		if(typeof(response.node[response.node.response_callback]) == "function") {
 			response.node[response.node.response_callback](object);
 		}
