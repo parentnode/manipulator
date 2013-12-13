@@ -41,7 +41,8 @@ Util.bug = function(message, corner, color) {
 			}
 			option = options[corner];
 
-			if(!u.qs("#debug_id_"+corner)) {
+			if(!document.getElementById("#debug_id_"+corner)) {
+//			if(!u.qs("#debug_id_"+corner)) {
 				var d_target = u.ae(document.body, "div", {"class":"debug_"+corner, "id":"debug_id_"+corner});
 				d_target.style.position = u.bug_position ? u.bug_position : "absolute";
 				d_target.style.zIndex = 16000;
@@ -61,7 +62,8 @@ Util.bug = function(message, corner, color) {
 			if(typeof(message) != "string") {
 				message = message.toString();
 			}
-			u.ae(u.qs("#debug_id_"+corner), "div", ({"style":"color: " + color})).innerHTML = message ? message.replace(/>/g, "&gt;").replace(/</g, "&lt;").replace(/&lt;br&gt;/g, "<br>") : "Util.bug with no message?";
+//			u.ae(u.qs("#debug_id_"+corner), "div", ({"style":"color: " + color})).innerHTML = message ? message.replace(/>/g, "&gt;").replace(/</g, "&lt;").replace(/&lt;br&gt;/g, "<br>") : "Util.bug with no message?";
+			u.ae(document.getElementById("#debug_id_"+corner), "div", ({"style":"color: " + color})).innerHTML = message ? message.replace(/>/g, "&gt;").replace(/</g, "&lt;").replace(/&lt;br&gt;/g, "<br>") : "Util.bug with no message?";
 		}
 		if(typeof(console) == "object") {
 			console.log(message);
