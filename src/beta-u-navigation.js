@@ -31,8 +31,16 @@ u.navigation = function(page, options) {
 	page._nav_path = page._nav_path ? page._nav_path : "/";
 	page._nav_history = page._nav_history ? page._nav_history : [];
 
-	// internal haash change distribution - content or scene level
+	// internal hash change distribution - content or scene level
 	page._navigate = function() {
+
+		// no url or invalid path
+		// update hash, triggering new _navigate request
+		if(!location.hash || !location.hash.match(/^#\//)) {
+			location.hash = "#/"
+			return;
+		}
+
 
 		var url = u.h.getCleanHash(location.hash);
 
@@ -80,6 +88,13 @@ u.navigation = function(page, options) {
 
 	}
 
+	// sharing via social media (linkedin) might add hashbang
+	// remove invalid hash value
+	if(location.hash.length && location.hash.match(/^#!/)) {
+		location.hash = location.hash.replace(/!/, "");
+	}
+
+
 	// set default hash if no hash value is present
 	// no further navigation - initialize content
 	if(location.hash.length < 2) {
@@ -92,8 +107,9 @@ u.navigation = function(page, options) {
 		// init content
 		u.init(page.cN);
 	}
-	// if different hash and url, load content based on hash
-	else if(u.h.getCleanHash(location.hash) != u.h.getCleanUrl(location.href)) {
+	// if different hash and url, hash value starts with /
+	// load content based on hash
+	else if(u.h.getCleanHash(location.hash) != u.h.getCleanUrl(location.href) && location.hash.match(/^#\//)) {
 //		u.bug("init navigate:" + u.h.getCleanHash(location.hash) + "!=" + u.h.getCleanUrl(location.href) + "; ")
 
 		// update internal value, so navigation doesn't mess up
@@ -101,7 +117,8 @@ u.navigation = function(page, options) {
 		// manually invoke navigation to load correct page
 		page._navigate();
 	}
-	// hash and url is aligned - init existing content
+	// hash and url is aligned, or unusable value
+	// init existing content
 	else {
 //		u.bug("init content")
 
