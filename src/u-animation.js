@@ -246,5 +246,37 @@ Util.Animation = u.a = new function() {
 		node.offsetHeight;
 	}
 
+	// Combined Transforms. Make it possible to run several animation effects at the same time (EX: rotate + scale + translate).
+
+	// Rotate & Scale
+	this.rotateScale = function(node, deg, scale) {
+		node.style[this.variant() + "Transform"] = "rotate("+deg+"deg) scale("+scale+")";
+		node._rotation = deg;
+		node._scale = scale;
+
+		// update dom
+		node.offsetHeight;
+	}
+	
+	// Scale, Rotate, Translate
+	this.scaleRotateTranslate = function(node, scale, deg, x, y) {
+
+		if(this.support3d()) {
+			node.style[this.variant() + "Transform"] = "scale("+scale+") rotate("+deg+"deg) translate3d("+x+"px, "+y+"px, 0)";
+		}
+		else {
+			node.style[this.variant() + "Transform"] = "scale("+scale+") rotate("+deg+"deg) translate("+x+"px, "+y+"px, 0)";
+		}
+
+		// store value
+		node._rotation = deg;
+		node._scale = scale;
+		node._x = x;
+		node._y = y;
+
+		// update dom
+		node.offsetHeight;
+	}
+
 
 }
