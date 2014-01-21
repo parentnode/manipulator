@@ -750,3 +750,29 @@ u.a.setBgColor = function(node, color) {
 	// update dom
 	node.offsetHeight;
 }
+
+
+// Rotate & Scale
+u.a.rotateScale = function(node, deg, scale) {
+	node.style[u.a.variant() + "Transform"] = "rotate("+deg+"deg) scale("+scale+")";
+	node._rotation = deg;
+	node._scale = scale;
+
+	// update dom
+	node.offsetHeight;
+}
+
+// Scale, Rotate, Translate
+u.a.scaleRotateTranslate = function(node, scale, deg, x, y) {
+
+	node.style[u.a.variant() + "Transform"] = "scale("+scale+") rotate("+deg+"deg) translate("+x+"px, "+y+"px)";
+
+	// store value
+	node._rotation = deg;
+	node._scale = scale;
+	node._x = x;
+	node._y = y;
+
+	// update dom
+	node.offsetHeight;
+}
