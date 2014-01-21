@@ -45,7 +45,7 @@ u.navigation = function(page, options) {
 		var url = u.h.getCleanHash(location.hash);
 
 		page._nav_history.unshift(url);
-//		u.bug("navigate:" + url + "("+ (this._nav_path) + ")")
+//		u.bug("page._navigate:" + url + "("+ (this._nav_path) + ")")
 
 		// stats
 		// TODO: this.hash_node add to stats
@@ -135,7 +135,7 @@ u.navigation = function(page, options) {
 
 	// set hash event handler with small delay to avoid redirecting when actually just trying to update HASH
 	u.t.setTimer(page, page._initHash, 100);
-
+//	page._initHash();
 
 
 	page.historyBack = function() {
