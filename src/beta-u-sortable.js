@@ -88,6 +88,8 @@ Util.Sort = u.s = new function() {
 	// node picked
 	this._pick = function(event) {
 
+//		u.bug("pick:" + u.nodeId(this));
+
 		// only pick if sorting is not disabled
 		if(!this._sorting_disabled) {
 
@@ -456,7 +458,7 @@ u.sortable = function(node, options) {
 	// node picked - attached to draggable node
 	node._sortablepick = function(event) {
 
-		u.bug("pick:" + u.nodeId(this) + "; "+ u.nodeId(this.d_node));
+		u.bug("pick:" + u.nodeId(this) + "; "+ u.nodeId(this.d_node) + ";" + u.nodeId(this.d_node.node));
 
 		// only pick if sorting is not disabled
 		if(!this.d_node.node._sorting_disabled) {
