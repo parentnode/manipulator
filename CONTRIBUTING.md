@@ -1,3 +1,3 @@
-# Contributing to JES
+# Contributing to Manipulator
 
-Contact us at [contribute@whattheframework.org](mailto:contribute@whattheframework.org)
+Contact us at [contribute@parentnode.dk](mailto:contribute@parentnode.dk)

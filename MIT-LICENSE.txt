@@ -1,7 +1,7 @@
-Copyright 2013 Martin Kaestel Nielsen, think.dk and hvadhedderde.com
-http://whattheframework.org
+Copyright 2013, 2014 Martin Kaestel Nielsen
+http://parentnode.dk
 
-Copyright 2013 jQuery Foundation and other contributors (Sizzle)
+Copyright 2013 jQuery Foundation and other contributors (Sizzle JS selector engine)
 
 
 Permission is hereby granted, free of charge, to any person obtaining
