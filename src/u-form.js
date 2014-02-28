@@ -381,6 +381,9 @@ Util.Form = u.f = new function() {
 
 //				u.bug("[ENTER] pressed:" + u.nodeId(this));
 
+				// make sure autocomplete dropdown disappears
+				this.blur();
+
 				// store submit info
 				this.form.submitInput = this;
 				// delete any previous submit info
