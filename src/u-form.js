@@ -82,6 +82,11 @@ Util.Form = u.f = new function() {
 
 			// get input label, hint and error
 			field._label = u.qs("label", field);
+
+			// TODO: Help element needs to be refined. 
+			// Is currently semi positioned to iN element, but should be done better
+			// positioning happens in this._blur, this._focus, this.fieldError
+			field._help = u.qs(".help", field);
 			field._hint = u.qs(".hint", field);
 			field._error = u.qs(".error", field);
 
@@ -205,11 +210,12 @@ Util.Form = u.f = new function() {
 		}
 
 
-		// TODO: DELETE FORM HAS NO .actions INSIDE FORM - CAN IT STILL USE form.init
+		// TODO: DUPLICATE ACTION INITIALIZION FOR BOTH REGULAR ACTIONS LI AND STANDALONE BUTTON
+		// - Create initAction function
 
 
-		// get all actions
-		var actions = u.qsa(".actions li", form);
+		// get all regular actions
+		var actions = u.qsa(".actions li, .actions", form);
 		for(i = 0; action = actions[i]; i++) {
 //			u.bug("action:" + u.nodeId(action));
 
@@ -266,6 +272,66 @@ Util.Form = u.f = new function() {
 				u.k.addKey(u.cv(action._input, "key"), action._input);
 			}
 		}
+
+		// could be form inside .actions li for isolated form action
+		// only one button in form - will never occur if field is also necessary
+		if(!actions.length) {
+
+			// check if form is inside ul.actions
+			var p_ul = u.pn(form, "ul");
+			if(u.hc(p_ul, "actions")) {
+				u.bug("valid pure button form found")
+
+				// get action input-button/a
+				var input = u.qs("input,a", form);
+
+				// if submit button, make sure it does not submit form without validation
+				if(input.type && input.type == "submit") {
+					// need to cancel onclick event to avoid normal post in older browsers where killing mouseup/down is not enough
+					input.onclick = function(event) {
+						u.e.kill(event ? event : window.event);
+					}
+				}
+
+				// handle button click
+				u.ce(input);
+				input.clicked = function(event) {
+					u.e.kill(event);
+
+					// don't execute if button is disabled
+					if(!u.hc(this, "disabled")) {
+						if(this.type && this.type.match(/submit/i)) {
+							// store submit button info
+							this.form._submit_button = this;
+							// remove any previous submit info
+							this.form._submit_input = false;
+
+							// internal submit
+							this.form._submit(event, this);
+						}
+					}
+				}
+
+				// handle [ENTER] on button
+				this.buttonOnEnter(input);
+
+				// activate button, adding focus and blur
+				this.activateButton(input);
+
+				// add to actions index if button has a name
+				if(input.name) {
+					form.actions[input.name] = input;
+				}
+
+				// shortcuts - BETA
+	//			u.bug("shortcut: " + u.nodeId(action._input) + ", " + u.hc(action._input, "key:[a-z0-9]+"));
+				if(typeof(u.k) == "object" && u.hc(input, "key:[a-z0-9]+")) {
+					u.k.addKey(u.cv(input, "key"), input);
+				}
+
+			}
+		}
+
 
 //		u.bug(u.nodeId(form) + ", fields:", "red");
 //		u.xInObject(form.fields);
@@ -694,6 +760,14 @@ Util.Form = u.f = new function() {
 		u.ac(this.field, "focus");
 		u.ac(this, "focus");
 
+		u.as(this.field, "zIndex", 99);
+
+		// is help element available, then position it appropriately to input
+		if(this.field._help) {
+			u.as(this.field._help, "top", ((this.offsetTop + this.offsetHeight/2 + 2) - (this.field._help.offsetHeight/2)) + "px")
+		}
+
+
 		if(typeof(this.focused) == "function") {
 			this.focused();
 		}
@@ -707,6 +781,15 @@ Util.Form = u.f = new function() {
 		this.field.focused = false;
 		u.rc(this.field, "focus");
 		u.rc(this, "focus");
+
+		u.as(this.field, "zIndex", 90);
+
+		// is help element available, then position it appropriately to input
+		// it might still be shown, is error has occured
+		if(this.field._help) {
+			u.as(this.field._help, "top", ((this.offsetTop + this.offsetHeight/2 + 2) - (this.field._help.offsetHeight/2)) + "px")
+		}
+
 
 		// field has been interacted with
 		this.used = true;
@@ -824,6 +907,11 @@ Util.Form = u.f = new function() {
 //			u.bug("ready for error state")
 			u.ac(iN, "error");
 			u.ac(iN.field, "error");
+
+			// if help element is available
+			if(iN.field._help) {
+				u.as(iN.field._help, "top", ((iN.offsetTop + iN.offsetHeight/2 + 2) - (iN.field._help.offsetHeight/2)) + "px")
+			}
 
 			// input validation failed
 			if(typeof(iN.validationFailed) == "function") {
@@ -1430,3 +1518,134 @@ u.f.recurseName = function(object, indexes, value) {
 
 	return object;
 }
+
+
+
+
+/* JS FORM BUILDING */
+
+/* Add new form element */
+u.f.addForm = function(node, settings) {
+	
+	// default values
+	var form_name = "js_form";
+	var form_action = "#";
+	var form_method = "post";
+	var form_class = "";
+
+	// additional info passed to function as JSON object
+	if(typeof(settings) == "object") {
+		var argument;
+		for(argument in settings) {
+
+			switch(argument) {
+				case "name"			: form_name				= settings[argument]; break;
+				case "action"		: form_action			= settings[argument]; break;
+				case "method"		: form_method			= settings[argument]; break;
+				case "class"		: form_class			= settings[argument]; break;
+			}
+
+		}
+	}
+
+	var form = u.ae(node, "form", {"class":form_class, "name": form_name, "action":form_action, "method":form_method});
+	return form;
+}
+
+u.f.addFieldset = function(node) {
+	return u.ae(node, "fieldset");
+}
+
+u.f.addField = function(node, settings) {
+	
+	// default values
+	var field_type = "string";
+	var field_label = "Value";
+	var field_name = "js_name";
+	var field_value = "";
+	var field_class = "";
+
+	// additional info passed to function as JSON object
+	if(typeof(settings) == "object") {
+		var argument;
+		for(argument in settings) {
+
+			switch(argument) {
+				case "type"			: field_type			= settings[argument]; break;
+				case "label"		: field_label			= settings[argument]; break;
+				case "name"			: field_name			= settings[argument]; break;
+				case "value"		: field_value			= settings[argument]; break;
+				case "class"		: field_class			= settings[argument]; break;
+			}
+		}
+	}
+
+	var input_id = "input_"+field_type+"_"+field_name;
+	var field = u.ae(node, "div", {"class":"field "+field_type+" "+field_class});
+
+
+	// TODO: add all field types
+	if(field_type == "string") {
+		var label = u.ae(field, "label", {"for":input_id, "html":field_label});
+		var input = u.ae(field, "input", {"id":input_id, "value":field_value, "name":field_name, "type":"text"});
+	}
+	else if(field_type == "email" || field_type == "number" || field_type == "tel") {
+		var label = u.ae(field, "label", {"for":input_id, "html":field_label});
+		var input = u.ae(field, "input", {"id":input_id, "value":field_value, "name":field_name, "type":field_type});
+	}
+	else if(field_type == "select") {
+		u.bug("Select not implemented yet")
+	}
+	else {
+		u.bug("input type not implemented yet")
+	}
+
+	return field;
+}
+
+u.f.addAction = function(node, settings) {
+
+
+	// default values
+	var action_type = "submit";
+	var action_name = "js_name";
+	var action_value = "";
+	var action_class = "";
+
+	// additional info passed to function as JSON object
+	if(typeof(settings) == "object") {
+		var argument;
+		for(argument in settings) {
+
+			switch(argument) {
+				case "type"			: action_type			= settings[argument]; break;
+				case "name"			: action_name			= settings[argument]; break;
+				case "value"		: action_value			= settings[argument]; break;
+				case "class"		: action_class			= settings[argument]; break;
+			}
+		}
+	}
+
+	// find actions ul
+	var p_ul = node.nodeName.toLowerCase() == "ul" ? node : u.pn(node, "ul");
+	// check if ul is actions ul
+	// if not, it should be created automatically
+	if(!u.hc(p_ul, "actions")) {
+		p_ul = u.ae(node, "ul", {"class":"actions"});
+	}
+
+	// check if action is injected into ul.actions li
+	var p_li = node.nodeName.toLowerCase() == "li" ? node : u.pn(node, "li");
+	// li should be directly in parent ul.actions
+	if(p_ul != p_li.parentNode) {
+		p_li = u.ae(p_ul, "li", {"class":action_name});
+	}
+	else {
+		p_li = node;
+	}
+
+	var action = u.ae(p_li, "input", {"type":action_type, "class":action_class, "value":action_value, "name":action_name})
+
+	return action;
+}
+
