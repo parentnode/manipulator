@@ -1313,6 +1313,10 @@ Util.Form = u.f = new function() {
 					if(!this.isDefault(input)) {
 						params[input.name] = input.value;
 					}
+					// empty
+					else {
+						params[input.name] = "";
+					}
 //					params.append(input.name, input.value);
 				}
 			}
@@ -1333,6 +1337,10 @@ Util.Form = u.f = new function() {
 			if(!u.hc(textarea, ignore_inputs)) {
 				if(!this.isDefault(textarea)) {
 					params[textarea.name] = textarea.value;
+				}
+				// empty
+				else {
+					params[textarea.name] = "";
 				}
 //				params.append(textarea.name, textarea.value);
 			}
