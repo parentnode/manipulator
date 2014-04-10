@@ -187,8 +187,8 @@ Util.textContent = u.text = function(node) {
 }
 
 
-// make element clickable
-Util.clickableElement = u.ce = function(node) {
+// make element clickable with options
+Util.clickableElement = u.ce = function(node, options) {
 	// look for link
 	var a = (node.nodeName.toLowerCase() == "a" ? node : u.qs("a", node));
 	if(a) {
@@ -199,8 +199,42 @@ Util.clickableElement = u.ce = function(node) {
 			a.removeAttribute("href");
 		}
 	}
+	else {
+		u.ac(node, "clickable");
+	}
+
+
 	if(typeof(u.e.click) == "function") {
 		u.e.click(node);
+
+		if(typeof(options) == "object") {
+			var argument;
+			for(argument in options) {
+
+				switch(argument) {
+					case "type"			: node._click_type		= options[argument]; break;
+					case "method"		: node._click_method	= options[argument]; break;
+				}
+
+			}
+
+			if(node._click_type == "link") {
+				node.clicked = function(event) {
+					if(event.metaKey || event.ctrlKey) {
+						window.open(this.url);
+					}
+					else {
+						// HASH navigation
+						if(this._click_method == "hash") {
+							location.hash = this.url;
+						}
+						else {
+							location.href = this.url;
+						}
+					}
+				}
+			}
+		}
 	}
 	return node;
 }
