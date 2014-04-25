@@ -29,7 +29,7 @@ u.template = function(node, response) {
 			// use _item (WITH UNDERSCORE) to help IE, where item will be interpreted as item()
 			for(_item in response) {
 
-//				u.bug("item:" + item)
+//				u.bug("item:" + _item)
 				item_template = template;
 
 				// look for functions
