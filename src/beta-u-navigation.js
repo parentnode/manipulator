@@ -31,21 +31,14 @@ u.navigation = function(page, options) {
 	page._nav_path = page._nav_path ? page._nav_path : "/";
 	page._nav_history = page._nav_history ? page._nav_history : [];
 
+
 	// internal hash change distribution - content or scene level
-	page._navigate = function() {
-
-		// no url or invalid path
-		// update hash, triggering new _navigate request
-		if(!location.hash || !location.hash.match(/^#\//)) {
-			location.hash = "#/"
-			return;
-		}
+	page._navigate = function(url) {
 
 
-		var url = u.h.getCleanHash(location.hash);
+		url = u.h.getCleanUrl(url);
 
 		page._nav_history.unshift(url);
-//		u.bug("page._navigate:" + url + "("+ (this._nav_path) + ")")
 
 		// stats
 		// TODO: this.hash_node add to stats
@@ -54,7 +47,7 @@ u.navigation = function(page, options) {
 
 		// direct navigation callback to correct level
 		// first request or new base-level
-		if(!this._nav_path || this._nav_path != u.h.getCleanHash(location.hash, 1)) {
+		if(!this._nav_path || ((this._nav_path != u.h.getCleanHash(location.hash, 1) && !u.h.popstate) || (this._nav_path != u.h.getCleanUrl(location.href, 1) && u.h.popstate))) {
 
 			// forward navigation event to #content
 			if(this.cN && typeof(this.cN.navigate) == "function") {
@@ -75,18 +68,34 @@ u.navigation = function(page, options) {
 
 		}
 
-		// remember base-level
-		this._nav_path = u.h.getCleanHash(location.hash, 1);
+		if(!u.h.popstate) {
+			// remember base-level
+			this._nav_path = u.h.getCleanHash(location.hash, 1);
+		}
+		else {
+			this._nav_path = u.h.getCleanUrl(location.href, 1);
+		}
 	}
 
 	// update hash and set hash back node if any
 	page.navigate = function(url, node) {
 //		u.bug("url:" + url + ", " + u.nodeId(node))
 
-		this.hash_node = node ? node : false;
-		location.hash = u.h.getCleanUrl(url);
+		// remember history node (for tracking purposes)
+		this.history_node = node ? node : false;
+
+		// popstate handling
+		if(u.h.popstate) {
+			history.pushState({}, url, url);
+			page._navigate(url);
+		}
+		// hash handling
+		else {
+			location.hash = u.h.getCleanUrl(url);
+		}
 
 	}
+
 
 	// sharing via social media (linkedin) might add hashbang
 	// remove invalid hash value
@@ -94,49 +103,75 @@ u.navigation = function(page, options) {
 		location.hash = location.hash.replace(/!/, "");
 	}
 
+	// If HASH navigation is preferred - reading initial state from URL
 
-	// set default hash if no hash value is present
+	// set default hash if no hash value is present ()
 	// no further navigation - initialize content
-	if(location.hash.length < 2) {
-//		u.bug("set hash + init content")
+	if(!u.h.popstate) {
 
-		// update hash
-		page.navigate(location.href, page);
-		// update internal value, so navigation doesn't mess up
-		page._nav_path = u.h.getCleanUrl(location.href);
-		// init content
-		u.init(page.cN);
-	}
-	// if different hash and url, hash value starts with /
-	// load content based on hash
-	else if(u.h.getCleanHash(location.hash) != u.h.getCleanUrl(location.href) && location.hash.match(/^#\//)) {
-//		u.bug("init navigate:" + u.h.getCleanHash(location.hash) + "!=" + u.h.getCleanUrl(location.href) + "; ")
+		if(location.hash.length < 2) {
+	//		u.bug("set hash + init content")
 
-		// update internal value, so navigation doesn't mess up
-		page._nav_path = u.h.getCleanUrl(location.href);
-		// manually invoke navigation to load correct page
-		page._navigate();
+			// update hash
+			page.navigate(location.href, page);
+			// update internal value, so navigation doesn't mess up
+			page._nav_path = u.h.getCleanUrl(location.href);
+			// init content
+			u.init(page.cN);
+		}
+		// if different hash and url, hash value starts with /
+		// load content based on hash
+		else if(u.h.getCleanHash(location.hash) != u.h.getCleanUrl(location.href) && location.hash.match(/^#\//)) {
+	//		u.bug("init navigate:" + u.h.getCleanHash(location.hash) + "!=" + u.h.getCleanUrl(location.href) + "; ")
+
+			// update internal value, so navigation doesn't mess up
+			page._nav_path = u.h.getCleanUrl(location.href);
+			// manually invoke navigation to load correct page
+			page._navigate();
+		}
+		// hash and url is aligned, or unusable value
+		// init existing content
+		else {
+	//		u.bug("init content")
+
+			// just go for it
+			u.init(page.cN);
+		}
+
 	}
-	// hash and url is aligned, or unusable value
-	// init existing content
+	// History Object is preferred
 	else {
-//		u.bug("init content")
 
-		// just go for it
-		u.init(page.cN);
+		// if HASH exists and different from url, translate to url (could be a bookmark shared from HASH enabled browser)
+		if(u.h.getCleanHash(location.hash) != u.h.getCleanUrl(location.href) && location.hash.match(/^#\//)) {
+
+			// update internal value, so navigation doesn't mess up
+			page._nav_path = u.h.getCleanHash(location.hash);
+
+			// update hash
+			page.navigate(u.h.getCleanHash(location.hash), page);
+
+		}
+		// everything is ready for go
+		else {
+
+			// just go for it
+			u.init(page.cN);
+		}
 	}
 
 
-	page._initHash = function() {
+	page._initHistory = function() {
 //		u.bug("enable HASH navigation")
 
 		u.h.catchEvent(page._navigate, page);
 	}
 
 	// set hash event handler with small delay to avoid redirecting when actually just trying to update HASH
-	u.t.setTimer(page, page._initHash, 100);
-//	page._initHash();
+	u.t.setTimer(page, page._initHistory, 100);
 
+
+	// TODO: enable crossbrowser history
 
 	page.historyBack = function() {
 		if(this._nav_history.length > 1) {
@@ -148,4 +183,3 @@ u.navigation = function(page, options) {
 		}
 	}
 }
-

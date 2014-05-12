@@ -1,4 +1,7 @@
-Util.Hash = u.h = new function() {
+Util.History = u.h = new function() {
+
+	this.popstate = ("onpopstate" in window);
+//	this.popstate = false;
 
 	this.catchEvent = function(callback, node) {
 	
@@ -8,31 +11,40 @@ Util.Hash = u.h = new function() {
 		this.node.callback = callback;
 
 		// invoke capture function
-		hashChanged = function(event) {
-//			u.bug("changed")
-			u.h.node.callback();
+		var hashChanged = function(event) {
+
+			// no url or invalid path
+			// update hash, triggering new _navigate request
+			if(!location.hash || !location.hash.match(/^#\//)) {
+				location.hash = "#/"
+				return;
+			}
+
+
+			var url = u.h.getCleanHash(location.hash);
+
+//			u.bug("hash changed:" + url)
+			u.h.node.callback(url);
+		}
+
+		var urlChanged = function(event) {
+
+			var url = u.h.getCleanUrl(location.href);
+
+//			u.bug("popstate changed:" + url)
+			u.h.node.callback(url);
 		}
 
 
-//		var s = "";
-//		for(x in window) {
-//			s += x + "=" + window[x]+ "<br>";
-//		}
-//		u.bug(s)
-
-		// onhashchange support
-//		u.bug("hash change support?" + ("onhashchange" in window) +";"+ (window.onhashchange))
-
-
-		// TODO: temp fix in plane - IE7 does not work
-
-		if("onhashchange" in window && !u.browser("explorer", "<=7")) {
-//			u.bug("change")
-//			u.e.addEvent(window, "hashchange", function() {alert("fisk")});
-//			window.onhashchange = function() {alert("fisk")}
-//			window.hashchanged = hashChanged;
+		// popstate support
+		if(this.popstate) {
+			window.onpopstate = urlChanged;
+		}
+		// hash change support
+		else if("onhashchange" in window && !u.browser("explorer", "<=7")) {
 			window.onhashchange = hashChanged;
 		}
+		// old school timerbased
 		else {
 			u.current_hash = window.location.hash;
 			window.onhashchange = hashChanged;
@@ -47,26 +59,6 @@ Util.Hash = u.h = new function() {
 			);
 		}
 	}
-
-	// old method
-	// basic hash cleaner
-	this.cleanHash = function(string, levels) {
-		if(!levels) {
-			return string.replace(location.protocol+"//"+document.domain, "");
-		}
-		else {
-			var i, return_string = "";
-			var hash = string.replace(location.protocol+"//"+document.domain, "").split("/");
-			// url always starts with / so first index is empty
-			for(i = 1; i <= levels; i++) {
-				return_string += "/" + hash[i];
-			}
-			return return_string;
-		}
-	}
-
-
-	// HASH thoughts
 
 
 
