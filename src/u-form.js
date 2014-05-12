@@ -80,8 +80,9 @@ Util.Form = u.f = new function() {
 			field._indicator = u.ae(field, "div", {"class":"indicator"});
 
 
-			// get input label, hint and error
-			field._label = u.qs("label", field);
+			// // get input label, hint and error
+			// field._label = u.qs("label", field);
+
 
 			// TODO: Help element needs to be refined. 
 			// Is currently semi positioned to iN element, but should be done better
@@ -114,32 +115,54 @@ Util.Form = u.f = new function() {
 					field._input = u.qs("input", field);
 					field._input.field = field;
 
+					// get input label
+					field._input._label = u.qs("label[for="+field._input.id+"]", field);
+
 					// add to form index
 					this.formIndex(form, field._input);
 				}
+
 				// textarea initialization
 				else if(u.hc(field, "text")) {
 
 					field._input = u.qs("textarea", field);
 					field._input.field = field;
 
+					// get input label
+					field._input._label = u.qs("label[for="+field._input.id+"]", field);
+
 					// add to form index
 					this.formIndex(form, field._input);
+
+					// resize textarea while typing
+					if(u.hc(field, "autoexpand")) {
+						this.autoExpand(field._input)
+					}
+
+
 				}
+
 				// select initialization
 				else if(u.hc(field, "select")) {
 
 					field._input = u.qs("select", field);
 					field._input.field = field;
 
+					// get input label
+					field._input._label = u.qs("label[for="+field._input.id+"]", field);
+
 					// add to form index
 					this.formIndex(form, field._input);
 				}
+
 				// checkbox/boolean (also checkbox) initialization
 				else if(u.hc(field, "checkbox|boolean")) {
 
 					field._input = u.qs("input[type=checkbox]", field);
 					field._input.field = field;
+
+					// get input label
+					field._input._label = u.qs("label[for="+field._input.id+"]", field);
 
 					// add to form index
 					this.formIndex(form, field._input);
@@ -152,10 +175,14 @@ Util.Form = u.f = new function() {
 					for(j = 0; input = field._input[j]; j++) {
 						input.field = field;
 
+						// get input label
+						input._label = u.qs("label[for="+input.id+"]", field);
+
 						// add to form index
 						this.formIndex(form, input);
 					}
 				}
+
 				// date field initialization
 				else if(u.hc(field, "date|datetime")) {
 
@@ -163,37 +190,74 @@ Util.Form = u.f = new function() {
 					for(j = 0; input = field._input[j]; j++) {
 						input.field = field;
 
+						// get input label
+						input._label = u.qs("label[for="+input.id+"]", field);
+
 						// add to form index
 						this.formIndex(form, input);
 					}
 				}
+
 				// tags initialization
 				else if(u.hc(field, "tags")) {
 
 					field._input = u.qs("input", field);
 					field._input.field = field;
 
+					// get input label
+					field._input._label = u.qs("label\[for\="+field._input.id+"\]", field);
+
 					// add to form index
 					this.formIndex(form, field._input);
 				}
+
 				// tags initialization
 				else if(u.hc(field, "prices")) {
 
 					field._input = u.qs("input", field);
 					field._input.field = field;
 
+					// get input label
+					field._input._label = u.qs("label[for="+field._input.id+"]", field);
+
 					// add to form index
 					this.formIndex(form, field._input);
 				}
+
 				// file input initialization
 				else if(u.hc(field, "files")) {
 
 					field._input = u.qs("input", field);
 					field._input.field = field;
 
+					// get input label
+					field._input._label = u.qs("label[for="+field._input.id+"]", field);
+
 					// add to form index
 					this.formIndex(form, field._input);
 				}
+
+				// location field initialization
+				else if(u.hc(field, "location")) {
+
+					field._input = u.qsa("input", field);
+					for(j = 0; input = field._input[j]; j++) {
+						input.field = field;
+
+						// get input label
+						input._label = u.qs("label[for="+input.id+"]", field);
+
+						// add to form index
+						this.formIndex(form, input);
+					}
+
+					// inject Geolocation button
+					if(navigator.geolocation) {
+						this.geoLocation(field);
+					}
+
+				}
+
 			}
 		}
 
@@ -526,55 +590,6 @@ Util.Form = u.f = new function() {
 				u.e.addEvent(iN, "keyup", this._updated);
 				u.e.addEvent(iN, "change", this._changed);
 
-				// resize textarea while typing
-				if(u.hc(iN.field, "autoexpand")) {
-
-					// no scrollbars on auto expanded fields
-					var current_height = parseInt(u.gcs(iN, "height"));
-					u.bug(current_height + "," + iN.scrollHeight);
-
-					var current_value = iN.val();
-					iN.val("");
-					u.bug(current_height + "," + iN.scrollHeight);
-
-					u.as(iN, "overflow", "hidden");
-					u.bug(current_height + "," + iN.scrollHeight);
-
-					// get textarea height value offset - webkit and IE/Opera scrollHeight differs from height
-					// implenting different solutions is the only way to achive similar behaviour across browsers
-					// fallback support is Mozilla 
-
-					iN.autoexpand_offset = 0;
-					if(parseInt(u.gcs(iN, "height")) != iN.scrollHeight) {
-						iN.autoexpand_offset = iN.scrollHeight - parseInt(u.gcs(iN, "height"));
-					}
-
-					iN.val(current_value);
-
-					// set correct height
-					iN.setHeight = function() {
-						var textarea_height = parseInt(u.gcs(this, "height"));
-
-						if(this.val()) {
-							if(u.browser("webkit")) {
-								if(this.scrollHeight - this.autoexpand_offset > textarea_height) {
-									u.a.setHeight(this, this.scrollHeight);
-								}
-							}
-							else if(u.browser("opera") || u.browser("explorer")) {
-								if(this.scrollHeight > textarea_height) {
-									u.a.setHeight(this, this.scrollHeight);
-								}
-							}
-							else {
-								u.a.setHeight(this, this.scrollHeight);
-							}
-						}
-					}
-					u.e.addEvent(iN, "keyup", iN.setHeight);
-
-					iN.setHeight();
-				}
 			}
 			// select
 			else if(iN.nodeName.match(/select/i)) {
@@ -764,7 +779,15 @@ Util.Form = u.f = new function() {
 
 		// is help element available, then position it appropriately to input
 		if(this.field._help) {
-			u.as(this.field._help, "top", ((this.offsetTop + this.offsetHeight/2 + 2) - (this.field._help.offsetHeight/2)) + "px")
+			var f_h =  this.field.offsetHeight;
+			var f_p_t = parseInt(u.gcs(this.field, "padding-top"));
+			var f_p_b = parseInt(u.gcs(this.field, "padding-bottom"));
+			var f_h_h = this.field._help.offsetHeight;
+
+			// u.bug("((" + f_h + " - (" + f_p_t + "+" + f_p_b + ")) / 2) + 2 = " + (((f_h - (f_p_t + f_p_b)) / 2) + 2));
+			// u.bug("(" + (((f_h - (f_p_t + f_p_b)) / 2) + 2) + ")" + " - " + "(" + (f_h_h / 2) + ")");
+
+			u.as(this.field._help, "top", (((f_h - (f_p_t + f_p_b)) / 2) + 2) - (f_h_h / 2) + "px");
 		}
 
 
@@ -862,17 +885,17 @@ Util.Form = u.f = new function() {
 			// currently only one input style
 			// inject in input
 			if(iN.form.labelstyle == "inject" && (!iN.type || !iN.type.match(/file|radio|checkbox/))) {
-				iN.default_value = iN.field._label.innerHTML;
+
+				iN.default_value = iN._label.innerHTML;
 
 				u.e.addEvent(iN, "focus", this._default_value_focus);
 				u.e.addEvent(iN, "blur", this._default_value_blur);
 
-//				u.bug(u.nodeId(iN) + ", " + typeof(iN.val));
-//				u.bug(iN.val());
 				if(iN.val() == "") {
 					iN.val(iN.default_value);
 					u.ac(iN, "default");
 				}
+
 			}
 		}
 
@@ -944,6 +967,99 @@ Util.Form = u.f = new function() {
 	}
 
 
+	// ADDITIONAL EXTENSION FUNCTIONS
+
+	// enable auto expanding text area
+	this.autoExpand = function(iN) {
+
+		// no scrollbars on auto expanded fields
+		var current_height = parseInt(u.gcs(iN, "height"));
+		u.bug("AE:" + current_height + "," + iN.scrollHeight);
+
+		var current_value = iN.val();
+		iN.val("");
+		u.bug(current_height + "," + iN.scrollHeight);
+
+		u.as(iN, "overflow", "hidden");
+		u.bug(current_height + "," + iN.scrollHeight);
+
+		// get textarea height value offset - webkit and IE/Opera scrollHeight differs from height
+		// implenting different solutions is the only way to achive similar behaviour across browsers
+		// fallback support is Mozilla 
+
+		iN.autoexpand_offset = 0;
+		if(parseInt(u.gcs(iN, "height")) != iN.scrollHeight) {
+			iN.autoexpand_offset = iN.scrollHeight - parseInt(u.gcs(iN, "height"));
+		}
+
+		iN.val(current_value);
+
+		// set correct height
+		iN.setHeight = function() {
+			u.bug("iN.setHeight:" + u.nodeId(this));
+
+			var textarea_height = parseInt(u.gcs(this, "height"));
+
+			if(this.val()) {
+				if(u.browser("webkit")) {
+					if(this.scrollHeight - this.autoexpand_offset > textarea_height) {
+						u.a.setHeight(this, this.scrollHeight);
+					}
+				}
+				else if(u.browser("opera") || u.browser("explorer")) {
+					if(this.scrollHeight > textarea_height) {
+						u.a.setHeight(this, this.scrollHeight);
+					}
+				}
+				else {
+					u.a.setHeight(this, this.scrollHeight);
+				}
+			}
+		}
+		u.e.addEvent(iN, "keyup", iN.setHeight);
+
+		iN.setHeight();
+	}
+
+
+	// inject GeoLocation button in location field
+	this.geoLocation = function(field) {
+		u.ac(field, "geolocation");
+
+		var bn_geolocation = u.ae(field, "div", {"class":"geolocation"});
+		bn_geolocation.field = field;
+		u.ce(bn_geolocation);
+
+
+		bn_geolocation.clicked = function() {
+
+			window._geoLocationField = this.field;
+
+			window._foundLocation = function(position) {
+				var lat = position.coords.latitude;
+				var lon = position.coords.longitude;
+
+				var lat_input = u.qs("div.latitude input", window._geolocationField);
+				var lon_input = u.qs("div.longitude input", window._geolocationField);
+
+				lat_input.val(lat);
+				lat_input.focus();
+				lon_input.val(lon);
+				lon_input.focus();
+			}
+
+			// Location error
+			window._noLocation = function() {
+				alert('Could not find location');
+			}
+
+			navigator.geolocation.getCurrentPosition(window._foundLocation, window._noLocation);
+
+		}
+	}
+
+
+
 
 	// validate input
 	// - number
@@ -991,6 +1107,7 @@ Util.Form = u.f = new function() {
 
 		// still not validated?
 		if(not_validated) {
+
 			// password validation
 			if(u.hc(iN.field, "password")) {
 
@@ -1012,6 +1129,7 @@ Util.Form = u.f = new function() {
 					this.fieldError(iN);
 				}
 			}
+
 			// number validation
 			else if(u.hc(iN.field, "number")) {
 
@@ -1034,6 +1152,7 @@ Util.Form = u.f = new function() {
 					this.fieldError(iN);
 				}
 			}
+
 			// integer validation
 			else if(u.hc(iN.field, "integer")) {
 
@@ -1057,6 +1176,7 @@ Util.Form = u.f = new function() {
 					this.fieldError(iN);
 				}
 			}
+
 			// telephone validation
 			else if(u.hc(iN.field, "tel")) {
 
@@ -1072,6 +1192,7 @@ Util.Form = u.f = new function() {
 					this.fieldError(iN);
 				}
 			}
+
 			// email validation
 			else if(u.hc(iN.field, "email")) {
 				if(
@@ -1084,6 +1205,7 @@ Util.Form = u.f = new function() {
 					this.fieldError(iN);
 				}
 			}
+
 			// text validation
 			else if(u.hc(iN.field, "text")) {
 
@@ -1150,6 +1272,7 @@ Util.Form = u.f = new function() {
 					this.fieldError(iN);
 				}
 			}
+
 			// date validation
 			else if(u.hc(iN.field, "date")) {
 
@@ -1165,6 +1288,7 @@ Util.Form = u.f = new function() {
 					this.fieldError(iN);
 				}
 			}
+
 			// datetime validation
 			else if(u.hc(iN.field, "datetime")) {
 
@@ -1180,6 +1304,8 @@ Util.Form = u.f = new function() {
 					this.fieldError(iN);
 				}
 			}
+
+
 			// tags validation
 			else if(u.hc(iN.field, "tags")) {
 				if(
@@ -1192,6 +1318,7 @@ Util.Form = u.f = new function() {
 					this.fieldError(iN);
 				}
 			}
+
 			// prices validation
 			else if(u.hc(iN.field, "prices")) {
 				if(
@@ -1203,8 +1330,70 @@ Util.Form = u.f = new function() {
 					this.fieldError(iN);
 				}
 			}
+
+			// location validation
+			else if(u.hc(iN.field, "location")) {
+
+				if(u.hc(iN, "location")) {
+
+					min = min ? min : 1;
+					max = max ? max : 255;
+
+					if(
+						iN.val().length >= min &&
+						iN.val().length <= max
+					) {
+						this.fieldCorrect(iN);
+					}
+					else {
+						this.fieldError(iN);
+					}
+				}
+				if(u.hc(iN, "latitude")) {
+
+					min = min ? min : -90;
+					max = max ? max : 90;
+
+					if(
+						!isNaN(iN.val()) && 
+						iN.val() >= min && 
+						iN.val() <= max
+					) {
+						this.fieldCorrect(iN);
+					}
+					else {
+						this.fieldError(iN);
+					}
+				}
+				if(u.hc(iN, "longitude")) {
+
+					min = min ? min : -180;
+					max = max ? max : 180;
+
+					if(
+						!isNaN(iN.val()) && 
+						iN.val() >= min && 
+						iN.val() <= max
+					) {
+						this.fieldCorrect(iN);
+					}
+					else {
+						this.fieldError(iN);
+					}
+				}
+
+				if(u.qsa(".correct", iN.field).length != 3) {
+					u.rc(iN.field, "correct");
+					u.ac(iN.field, "error");
+				}
+
+			}
+
 			// files validation
 			else if(u.hc(iN.field, "files")) {
+
+				u.bug("files:" + iN.files.length);
+
 				if(
 					1
 				) {
