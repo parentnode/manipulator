@@ -6,17 +6,20 @@ Util.createRequestObject = u.createRequestObject = function() {
 }
 
 // Request object
-Util.Request = u.request = function(node, url, settings) {
+Util.request = u.request = function(node, url, settings) {
 //	u.bug("request")
 
-	node.request_url = url;
+	var request_id = u.randomString(6);
+
+	node[request_id] = {};
+	node[request_id].request_url = url;
 
 	// set default values
-	node.request_method = "GET";
-	node.request_async = true;
-	node.request_params = "";
-	node.request_headers = false;
-	node.response_callback = "response";
+	node[request_id].request_method = "GET";
+	node[request_id].request_async = true;
+	node[request_id].request_params = "";
+	node[request_id].request_headers = false;
+	node[request_id].response_callback = "response";
 
 
 	// additional info passed to function as JSON object
@@ -25,11 +28,11 @@ Util.Request = u.request = function(node, url, settings) {
 		for(argument in settings) {
 
 			switch(argument) {
-				case "method"		: node.request_method		= settings[argument]; break;
-				case "params"		: node.request_params		= settings[argument]; break;
-				case "async"		: node.request_async		= settings[argument]; break;
-				case "headers"		: node.request_headers		= settings[argument]; break;
-				case "callback"		: node.response_callback	= settings[argument]; break;
+				case "method"		: node[request_id].request_method		= settings[argument]; break;
+				case "params"		: node[request_id].request_params		= settings[argument]; break;
+				case "async"		: node[request_id].request_async		= settings[argument]; break;
+				case "headers"		: node[request_id].request_headers		= settings[argument]; break;
+				case "callback"		: node[request_id].response_callback	= settings[argument]; break;
 			}
 
 		}
@@ -38,14 +41,15 @@ Util.Request = u.request = function(node, url, settings) {
 //	u.bug("request:" + node.request_url + ", " + node.request_method + ", " + node.request_params + ", " + node.request_async + ", " + node.request_headers);
 
 	// regular HTTP request
-	if(node.request_method.match(/GET|POST|PUT|PATCH/i)) {
+	if(node[request_id].request_method.match(/GET|POST|PUT|PATCH/i)) {
 
-		node.HTTPRequest = this.createRequestObject();
-		node.HTTPRequest.node = node;
+		node[request_id].HTTPRequest = this.createRequestObject();
+		node[request_id].HTTPRequest.node = node;
+		node[request_id].HTTPRequest.request_id = request_id;
 
 		// listen for async request state change
-		if(node.request_async) {
-			node.HTTPRequest.onreadystatechange = function() {
+		if(node[request_id].request_async) {
+			node[request_id].HTTPRequest.onreadystatechange = function() {
 				if(this.readyState == 4) {
 					// process async response
 					u.validateResponse(this);
@@ -56,88 +60,88 @@ Util.Request = u.request = function(node, url, settings) {
 		// perform request
 		try {
 			// perform GET request
-			if(node.request_method.match(/GET/i)) {
+			if(node[request_id].request_method.match(/GET/i)) {
 //				u.bug("GET request");
 
 				// convert JSON params to regular params, JSON cannot be sent as GET
-				var params = u.JSONtoParams(node.request_params);
+				var params = u.JSONtoParams(node[request_id].request_params);
 
 				// add params to url
-				node.request_url += params ? ((!node.request_url.match(/\?/g) ? "?" : "&") + params) : "";
+				node[request_id].request_url += params ? ((!node[request_id].request_url.match(/\?/g) ? "?" : "&") + params) : "";
 
-				node.HTTPRequest.open(node.request_method, node.request_url, node.request_async);
-				node.HTTPRequest.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+				node[request_id].HTTPRequest.open(node[request_id].request_method, node[request_id].request_url, node[request_id].request_async);
+				node[request_id].HTTPRequest.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 
 				// rails form proofing
 				var csfr_field = u.qs('meta[name="csrf-token"]');
 				if(csfr_field && csfr_field.content) {
-					node.HTTPRequest.setRequestHeader("X-CSRF-Token", csfr_field.content);
+					node[request_id].HTTPRequest.setRequestHeader("X-CSRF-Token", csfr_field.content);
 				}
 
 				// add additional headers
-				if(typeof(node.request_headers) == "object") {
+				if(typeof(node[request_id].request_headers) == "object") {
 					var header;
-					for(header in node.request_headers) {
-						node.HTTPRequest.setRequestHeader(header, node.request_headers[header]);
+					for(header in node[request_id].request_headers) {
+						node[request_id].HTTPRequest.setRequestHeader(header, node[request_id].request_headers[header]);
 					}
 				}
 
 				// send info
 				// some older browser (Firefox 3 in paticular) requires a parameter for send - an empty string is enough
-				node.HTTPRequest.send("");
+				node[request_id].HTTPRequest.send("");
 
 			}
 			// perform POST, PUT or PATCH request
-			else if(node.request_method.match(/POST|PUT|PATCH/i)) {
+			else if(node[request_id].request_method.match(/POST|PUT|PATCH/i)) {
 //				u.bug("POST|PUT|PATCH request");
 
 				// stringify possible JSON object
 				var params;
 //				u.bug("params typeof:" + typeof(node.request_params) + ", " +node.request_params.constructor.toString().match(/FormData/i));
-				if(typeof(node.request_params) == "object" && !node.request_params.constructor.toString().match(/FormData/i)) {
-					params = JSON.stringify(node.request_params);
+				if(typeof(node[request_id].request_params) == "object" && !node[request_id].request_params.constructor.toString().match(/FormData/i)) {
+					params = JSON.stringify(node[request_id].request_params);
 				}
 				else {
-					params = node.request_params;
+					params = node[request_id].request_params;
 				}
 
-				node.HTTPRequest.open(node.request_method, node.request_url, node.request_async);
-				node.HTTPRequest.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+				node[request_id].HTTPRequest.open(node[request_id].request_method, node[request_id].request_url, node[request_id].request_async);
+				node[request_id].HTTPRequest.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 
 				// rails form proofing
 				var csfr_field = u.qs('meta[name="csrf-token"]');
 				if(csfr_field && csfr_field.content) {
-					node.HTTPRequest.setRequestHeader("X-CSRF-Token", csfr_field.content);
+					node[request_id].HTTPRequest.setRequestHeader("X-CSRF-Token", csfr_field.content);
 				}
 
 				// add additional headers
-				if(typeof(node.request_headers) == "object") {
+				if(typeof(node[request_id].request_headers) == "object") {
 					var header;
-					for(header in node.request_headers) {
-						node.HTTPRequest.setRequestHeader(header, node.request_headers[header]);
+					for(header in node[request_id].request_headers) {
+						node[request_id].HTTPRequest.setRequestHeader(header, node[request_id].request_headers[header]);
 					}
 				}
 
 				// send params
-				node.HTTPRequest.send(params);
+				node[request_id].HTTPRequest.send(params);
 
 			}
 		}
 		// catch security exceptions and other exeptions
 		catch(exception) {
 //			u.bug("Request exc:" + exception)
-			node.HTTPRequest.exception = exception;
-			u.validateResponse(node.HTTPRequest);
+			node[request_id].HTTPRequest.exception = exception;
+			u.validateResponse(node[request_id].HTTPRequest);
 			return;
 		}
 
 		// process synchronous response
-		if(!node.request_async) {
-			u.validateResponse(node.HTTPRequest);
+		if(!node[request_id].request_async) {
+			u.validateResponse(node[request_id].HTTPRequest);
 		}
 	}
 	// request by script injection
-	else if(node.request_method.match(/SCRIPT/i)) {
+	else if(node[request_id].request_method.match(/SCRIPT/i)) {
 
 		// generate callback key
 		var key = u.randomString();
@@ -145,25 +149,27 @@ Util.Request = u.request = function(node, url, settings) {
 		// create global reference
 		document[key] = new Object();
 		document[key].node = node;
+		document[key].request_id = request_id;
 		document[key].responder = function(response) {
 
 			// make object to map node
 			var response_object = new Object();
 			response_object.node = this.node;
+			response_object.request_id = this.request_id;
 			response_object.responseText = response;
 			u.validateResponse(response_object);
 		}
 
 		// convert JSON params to regular params, JSON cannot be sent as GET
-		var params = u.JSONtoParams(node.request_params);
+		var params = u.JSONtoParams(node[request_id].request_params);
 
 		// add params to url
-		node.request_url += params ? ((!node.request_url.match(/\?/g) ? "?" : "&") + params) : "";
+		node[request_id].request_url += params ? ((!node[request_id].request_url.match(/\?/g) ? "?" : "&") + params) : "";
 		// add callback to url
-		node.request_url += (!node.request_url.match(/\?/g) ? "?" : "&") + "callback=document."+key+".responder";
+		node[request_id].request_url += (!node[request_id].request_url.match(/\?/g) ? "?" : "&") + "callback=document."+key+".responder";
 
 		// add JSON Request to HTML head
-		u.ae(u.qs("head"), "script", ({"type":"text/javascript", "src":node.request_url}));
+		u.ae(u.qs("head"), "script", ({"type":"text/javascript", "src":node[request_id].request_url}));
 	}
 
 }
@@ -336,8 +342,8 @@ Util.validateResponse = function(response){
 
 		// callback to Response handler
 //		u.bug("response:" + typeof(response.node[response.node.response_callback]))
-		if(typeof(response.node[response.node.response_callback]) == "function") {
-			response.node[response.node.response_callback](object);
+		if(typeof(response.node[response.node[response.request_id].response_callback]) == "function") {
+			response.node[response.node[response.request_id].response_callback](object);
 		}
 
 		// // callback to Response handler
