@@ -390,15 +390,25 @@ Util.toggleClass = u.tc = function(node, classname, _classname, dom_update) {
 // apply style
 // set style value and query DOM to force update
 Util.applyStyle = u.as = function(node, property, value, dom_update) {
-	try {
-		node.style[property] = value;
+	node.style[property] = value;
 
-		dom_update === false ? false : node.offsetTop;
-	}
-	catch(exception) {
-		u.bug("Exception ("+exception+") in u.applyStyle("+u.nodeId(node)+", "+property+", "+value+") called from: "+arguments.callee.caller);
-	}
+	dom_update === false ? false : node.offsetTop;
 }
+
+// apply styles
+// set style values and query DOM to force update
+Util.applyStyles = u.ass = function(node, styles, dom_update) {
+
+	if(styles) {
+		var style;
+		for(style in styles) {
+			node.style[style] = styles[style];
+		}
+	}
+
+	dom_update === false ? false : node.offsetTop;
+}
+
 
 // Get elements computed style value for css property
 Util.getComputedStyle = u.gcs = function(node, property) {
