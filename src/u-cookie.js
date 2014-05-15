@@ -50,7 +50,7 @@ Util.deleteCookie = function(name, options) {
 Util.saveNodeCookie = function(node, name, value) {
 
 	var ref = u.cookieReference(node);
-	var mem = JSON.parse(u.getCookie("jes_mem"));
+	var mem = JSON.parse(u.getCookie("man_mem"));
 	if(!mem) {
 		mem = {};
 	}
@@ -59,14 +59,14 @@ Util.saveNodeCookie = function(node, name, value) {
 	}
 	mem[ref][name] = (value !== false && value !== undefined) ? value : "";
 
-	u.saveCookie("jes_mem", JSON.stringify(mem), {"path":"/"});
+	u.saveCookie("man_mem", JSON.stringify(mem), {"path":"/"});
 }
 
 
 Util.getNodeCookie = function(node, name) {
 
 	var ref = u.cookieReference(node);
-	var mem = JSON.parse(u.getCookie("jes_mem"));
+	var mem = JSON.parse(u.getCookie("man_mem"));
 	if(mem && mem[ref]) {
 		if(name) {
 			return mem[ref][name] ? mem[ref][name] : "";
@@ -81,7 +81,7 @@ Util.getNodeCookie = function(node, name) {
 Util.deleteNodeCookie = function(node, name) {
 
 	var ref = u.cookieReference(node);
-	var mem = JSON.parse(u.getCookie("jes_mem"));
+	var mem = JSON.parse(u.getCookie("man_mem"));
 	if(mem && mem[ref]) {
 		if(name) {
 			delete mem[ref][name];
@@ -91,7 +91,7 @@ Util.deleteNodeCookie = function(node, name) {
 		}
 	}
 
-	u.saveCookie("jes_mem", JSON.stringify(mem), {"path":"/"});
+	u.saveCookie("man_mem", JSON.stringify(mem), {"path":"/"});
 }
 
 // create cookie reference for node - to map a certain value to a node (like open/closed/selected state or search value)
