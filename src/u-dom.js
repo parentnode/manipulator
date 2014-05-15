@@ -66,6 +66,7 @@ Util.parentNode = u.pn = function(node, node_type) {
 }
 
 // Returns previous sibling, not counting text nodes as siblings and ignoring optional exclude=className/nodeName
+// TODO: extend with include option and make exclude and include list
 Util.previousSibling = u.ps = function(node, exclude) {
 	node = node.previousSibling;
 	while(node && (node.nodeType == 3 || node.nodeType == 8 || exclude && (u.hc(node, exclude) || node.nodeName.toLowerCase().match(exclude)))) {
@@ -75,6 +76,7 @@ Util.previousSibling = u.ps = function(node, exclude) {
 }
 
 // Returns next sibling, not counting text nodes as siblings and ignoring optional exclude=className/nodeName
+// TODO: extend with include option and make exclude and include list
 Util.nextSibling = u.ns = function(node, exclude) {
 	node = node.nextSibling;
 	while(node && (node.nodeType == 3 || node.nodeType == 8 || exclude && (u.hc(node, exclude) || node.nodeName.toLowerCase().match(exclude)))) {
@@ -83,6 +85,7 @@ Util.nextSibling = u.ns = function(node, exclude) {
 	return node;
 }
 
+// TODO: extend with include option and make exclude and include list
 Util.childNodes = u.cn = function(node, exclude) {
 	var i, child;
 	var children = new Array();
@@ -113,7 +116,7 @@ Util.appendElement = u.ae = function(parent, node_type, attributes) {
 			var attribute;
 			for(attribute in attributes) {
 				if(attribute == "html") {
-					node.innerHTML = attributes[attribute]
+					node.innerHTML = attributes[attribute];
 				}
 				else {
 					node.setAttribute(attribute, attributes[attribute]);
@@ -180,6 +183,31 @@ Util.wrapElement = u.we = function(node, node_type, attributes) {
 	return false;
 }
 
+
+// wrap content of node in wrap-element and return wrapper
+Util.wrapContent = u.wc = function(node, node_type, attributes) {
+	try {
+		var wrapper_node = document.createElement(node_type);
+		if(attributes) {
+			var attribute;
+			for(attribute in attributes) {
+				wrapper_node.setAttribute(attribute, attributes[attribute]);
+			}
+		}	
+		while(node.childNodes.length) {
+			wrapper_node.appendChild(node.childNodes[0]);
+		}
+
+		node.appendChild(wrapper_node);
+		return wrapper_node;
+	}
+	catch(exception) {
+		u.bug("Exception ("+exception+") in u.wc, called from: "+arguments.callee.caller);
+		u.bug("node:" + u.nodeId(node, 1));
+		u.xInObject(attributes);
+	}
+	return false;
+}
 
 // get node textcontent shorthand (basically this is not needed for newer browsers, but required to align syntax for older browsers)
 Util.textContent = u.text = function(node) {
