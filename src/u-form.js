@@ -1719,7 +1719,10 @@ u.f.recurseName = function(object, indexes, value) {
 
 
 
-/* JS FORM BUILDING */
+/*
+JS FORM BUILDING 
+Still in debugging mode - to be included officially in v0.9
+*/
 
 /* Add new form element */
 u.f.addForm = function(node, settings) {
