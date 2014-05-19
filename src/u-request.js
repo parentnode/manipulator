@@ -172,6 +172,7 @@ Util.request = u.request = function(node, url, settings) {
 		u.ae(u.qs("head"), "script", ({"type":"text/javascript", "src":node[request_id].request_url}));
 	}
 
+	return request_id;
 }
 
 
@@ -343,7 +344,7 @@ Util.validateResponse = function(response){
 		// callback to Response handler
 //		u.bug("response:" + typeof(response.node[response.node.response_callback]))
 		if(typeof(response.node[response.node[response.request_id].response_callback]) == "function") {
-			response.node[response.node[response.request_id].response_callback](object);
+			response.node[response.node[response.request_id].response_callback](object, response.request_id);
 		}
 
 		// // callback to Response handler
