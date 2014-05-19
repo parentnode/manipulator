@@ -59,14 +59,14 @@ u.preloader = function(node, files, options) {
 		}
 	}
 
-	u.queueLoader();
+	u._queueLoader();
 
 	return u._preloader_queue;
 }
 
-u.queueLoader = function() {
+u._queueLoader = function() {
 
-//	u.bug("queueLoader:" + u.preload_processes);
+//	u.bug("_queueLoader:" + u.preload_processes);
 
 	// still items in queue
 //	u.bug("li.waiting:" + u.qs("li.waiting", u._preloader_queue))
@@ -96,7 +96,11 @@ u.queueLoader = function() {
 
 
 				next.loaded = function(event) {
-					this._image = event.target;
+					this.image = event.target;
+
+					// fallback support
+					this._image = this.image;
+
 					// this._image = {};
 					// this._image.width = event.target.width;
 					// this._image.height = event.target.height;
@@ -127,9 +131,9 @@ u.queueLoader = function() {
 						}
 					}
 
-					u.queueLoader();
+					u._queueLoader();
 				}
-				u.i.load(next, next._file);
+				u.loadImage(next, next._file);
 			}
 			else {
 				break
@@ -140,3 +144,81 @@ u.queueLoader = function() {
 
 
 }
+
+
+u.loadImage = function(node, src) {
+//		u.bug("load image: " + u.nodeId(node) + ", " + src);
+
+	// create new image
+	var image = new Image();
+	image.node = node;
+
+	u.ac(node, "loading");
+    u.e.addEvent(image, 'load', u._imageLoaded);
+	u.e.addEvent(image, 'error', u._imageLoadError);
+
+//	TODO: error handling?? missing image or other errors
+//		u.e.addEvent(image, 'data', u.i._debug);
+
+
+//		u.bug("image load:" + image.onload)
+//		u.e.addEvent(image, 'error', u.i._debug);
+//		u.e.addEvent(image, 'data', u.i._debug);
+//		u.e.addEvent(image, 'progress', u.i._debug);
+//		u.e.addEvent(image, 'done', u.i._debug);
+//		u.e.addEvent(image, 'load', u.i._debug);
+//		u.e.addEvent(image, 'complete', u.i._debug);
+
+//		image.onload = function(event) {
+		// call event reciever
+//			this.e.loaded(event);
+//		}
+
+	image.src = src;
+}
+
+/**
+*
+*/
+u._imageLoaded = function(event) {
+	u.rc(this.node, "loading");
+	// notify base
+	if(typeof(this.node.loaded) == "function") {
+		this.node.loaded(event);
+	}
+
+//		delete this;
+//		this.src = "/img/mobile_touch/dot.gif";
+
+}
+u._imageLoadError = function(event) {
+
+//		u.xInObject(event);
+	u.rc(this.node, "loading");
+	u.ac(this.node, "error");
+	// notify base
+	// fallback to loaded if no failed callback function declared 
+	if(typeof(this.node.loaded) == "function" && typeof(this.node.failed) != "function") {
+		this.node.loaded(event);
+	}
+	else if(typeof(this.node.failed) == "function") {
+		this.node.failed(event);
+	}
+}
+
+// ???
+u._imageLoadProgress = function(event) {
+
+	u.bug("progress")
+	// notify base
+	if(typeof(this.node.progress) == "function") {
+		this.node.progress(event);
+	}
+	
+}
+
+u._imageLoadDebug = function(event) {
+	u.bug("event:" + event.type);
+	u.xInObject(event);
+}
+
