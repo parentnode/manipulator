@@ -253,8 +253,8 @@ Util.clickableElement = u.ce = function(node, options) {
 					}
 					else {
 						// HASH navigation
-						if(this._click_method == "hash") {
-							location.hash = this.url;
+						if(typeof(page.navigate) == "function") {
+							page.navigate(this.url);
 						}
 						else {
 							location.href = this.url;
@@ -266,9 +266,6 @@ Util.clickableElement = u.ce = function(node, options) {
 	}
 	return node;
 }
-// TODO: DEPRECATED
-u.link = u.ce;
-
 
 // Get JSS class value
 Util.classVar = u.cv = function(node, var_name) {
