@@ -5,14 +5,14 @@
 *
 * @param e event return node
 */
-u.i.load = function(e, src) {
+u.loadImage = function(node, src) {
 //	u.bug("u.i.load:" + src)
 
 	// create new image
 	var image = new Image();
-	image.e = e;
+	image.node = node;
 
-	u.addClass(e, "loading");
+	u.addClass(node, "loading");
 
 	// regular attachevent returns to window object without any kind of reference to image
 	// this is the only way to keep it selfcontained
@@ -22,11 +22,11 @@ u.i.load = function(e, src) {
 		var event = new Object();
 		event.target = this;
 
-		u.removeClass(this.e, "loading");
+		u.rc(this.node, "loading");
 
 		// notify base
-		if(typeof(this.e.loaded) == "function") {
-			this.e.loaded(event);
+		if(typeof(this.node.loaded) == "function") {
+			this.node.loaded(event);
 		}
 	}
 
