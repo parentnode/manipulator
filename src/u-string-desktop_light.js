@@ -5,16 +5,6 @@ if(String.prototype.trim == undefined) {
 	};
 }
 
-// no textContent in IE8 - moved to DOM
-// if(Object.prototype.textContent == undefined && Object.defineProperty) {
-// 	Object.defineProperty(Element.prototype, "textContent",
-// 		{get: function() {
-// 			return this.innerText;
-// 			}
-// 		}
-// 	);
-// }
-
 
 // bad substr in IE8 and less
 if(String.prototype.substr == undefined || "ABC".substr(-1,1) == "A") {
