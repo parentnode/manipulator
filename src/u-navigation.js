@@ -4,7 +4,7 @@
 // flow
 
 // click internal link
-// updates hash
+// updates hash/History object
 // hash envokes navigate
 // if 1st level is changed tells #content navigation has been invoked 
 // if 2nd level is changed tells .scene navigation has been invoked 
@@ -164,7 +164,7 @@ u.navigation = function(page, options) {
 	page._initHistory = function() {
 //		u.bug("enable HASH navigation")
 
-		u.h.catchEvent(page._navigate, page);
+		u.h.catchEvent(page, page._navigate);
 	}
 
 	// set hash event handler with small delay to avoid redirecting when actually just trying to update HASH
