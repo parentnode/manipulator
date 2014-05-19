@@ -3,7 +3,7 @@ Util.History = u.h = new function() {
 	this.popstate = ("onpopstate" in window);
 //	this.popstate = false;
 
-	this.catchEvent = function(callback, node) {
+	this.catchEvent = function(node, callback) {
 	
 //		u.bug("catch hash")
 	
@@ -67,7 +67,7 @@ Util.History = u.h = new function() {
 	// this function is removing domain from given url, and returning local path for use as hash value
 
 	// this function should remove any hash value from url
-
+	// receives location.href
 	this.getCleanUrl = function(string, levels) {
 //		u.bug("getCleanUrl:" + string + " = " + (string ? string.replace(location.protocol+"//"+document.domain, "").match(/[^#$]+/) : "#error#") + ", " + arguments.callee.caller);
 
@@ -79,14 +79,14 @@ Util.History = u.h = new function() {
 		}
 		else {
 			var i, return_string = "";
-			var hash = string.split("/");
+			var path = string.split("/");
 
-			// correct levels (if hash is shorter than required)
-			levels = levels > hash.length-1 ? hash.length-1 : levels;
+			// correct levels (if path is shorter than required)
+			levels = levels > path.length-1 ? path.length-1 : levels;
 
 			// url always starts with / so first index is empty
 			for(i = 1; i <= levels; i++) {
-				return_string += "/" + hash[i];
+				return_string += "/" + path[i];
 			}
 			return return_string;
 		}
