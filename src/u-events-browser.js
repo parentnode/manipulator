@@ -43,6 +43,11 @@ u.e.addOnloadEvent = function(action) {
 }
 
 
+
+/**
+* THEORETIC STUFF - might bring more overhead than benefits
+*/
+
 // probably just use on event listener and make it call all appropriate callbacks on registrered nodes
 u.e.addResizeEvent = function(node, action) {
 
