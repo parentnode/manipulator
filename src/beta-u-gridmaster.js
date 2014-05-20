@@ -170,7 +170,7 @@ u.gridMaster = function(list, _options) {
 
 					// does grid have a calculation base
 					node.gm_calc_base = u.eitherOr(this.grid.calc_base, u.eitherOr(node.gm_grid_width, node.gm_grid_height));
-//					u.bug(node.gm_calc_base + ", " + this.grid.calc_base + ", " + node.gm_grid_width + ", " + node.gm_grid_height);
+					u.bug(node.gm_calc_base + ", " + this.grid.calc_base + ", " + node.gm_grid_width + ", " + node.gm_grid_height);
 
 //					node._i = k;
 
@@ -372,7 +372,7 @@ u.gridMaster = function(list, _options) {
 
 				// does node have image src
 				else if(node.gm_image_src) {
-	//				u.bug("image_src:" + node.gm_image_src);
+//					u.bug("image_src:" + node.gm_image_src);
 
 					// add image
 					node.gm_image = u.ae(node.gm_media_mask, "img");
