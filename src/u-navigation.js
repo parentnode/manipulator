@@ -9,7 +9,7 @@
 // if 1st level is changed tells #content navigation has been invoked 
 // if 2nd level is changed tells .scene navigation has been invoked 
 
-u.navigation = function(page, options) {
+u.navigation = function(options) {
 
 //	u.bug("set up navigation")
 
