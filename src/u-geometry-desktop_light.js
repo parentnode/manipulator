@@ -2,7 +2,7 @@
 // older IE might return auto if width is not set specifically
 Util.actualWidth = u.actualW = function(node) {
 	var width = parseInt(u.gcs(node, "width"));
-	if(isNaN(width)) {
+	if(isNaN(width) || u.browser("opera", "<=9")) {
 		return node.offsetWidth - parseInt(u.gcs(node, "padding-left")) - parseInt(u.gcs(node, "padding-right"));
 	}
 	else {
@@ -14,7 +14,7 @@ Util.actualWidth = u.actualW = function(node) {
 // older IE might return auto if height is not set specifically
 Util.actualHeight = u.actualH = function(node) {
 	var height = parseInt(u.gcs(node, "height"));
-	if(isNaN(height)) {
+	if(isNaN(height) || u.browser("opera", "<=9")) {
 		return node.offsetHeight - parseInt(u.gcs(node, "padding-top")) - parseInt(u.gcs(node, "padding-bottom"));
 	}
 	else {
@@ -60,8 +60,8 @@ Util.eventY = function(event){
 
 
 Util.pageScrollX = u.scrollX = function() {
-	if(window.pageYOffset != undefined) {
-		return window.pageYOffset;
+	if(window.pageXOffset != undefined) {
+		return window.pageXOffset;
 	}
 	else if(document.documentElement.scrollLeft != undefined) {
 		return document.documentElement.scrollLeft;

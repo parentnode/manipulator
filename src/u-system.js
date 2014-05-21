@@ -33,14 +33,15 @@ Util.browser = function(model, version) {
 		}
 	}
 	else if(model.match(/\bopera\b/i)) {
-//		u.bug("##trying to match opera:" + navigator.userAgent.match(/(Opera\/)(\d+)(.\d)/i))
+//		alert("##trying to match opera:" + navigator.userAgent + ", " + navigator.userAgent.match(/(Opera[\/ ]{1})(\d+)(.\d)/i))
+//		alert("window.opera:" + window.opera)
 		if(window.opera) {
 			if(navigator.userAgent.match(/Version\//)) {
 				current_version = navigator.userAgent.match(/(Version\/)(\d+)(.\d)/i)[2];
 			}
 			// version 9 and less has oldschool useragent
 			else {
-				current_version = navigator.userAgent.match(/(Opera\/)(\d+)(.\d)/i)[2];
+				current_version = navigator.userAgent.match(/(Opera[\/ ]{1})(\d+)(.\d)/i)[2];
 			}
 		}
 	}
