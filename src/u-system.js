@@ -3,9 +3,14 @@ Util.browser = function(model, version) {
 	var current_version = false;
 
 	if(model.match(/\bexplorer\b|\bie\b/i)) {
-//		u.bug("##trying to match IE:" + document.all + ":" + window.ActiveXObject)
-		if(window.ActiveXObject) {
+		// u.bug("##trying to match IE:" + document.all + ":" + window.ActiveXObject)
+		// u.bug(navigator.userAgent.match(/Trident\/[\d+]\.\d[^$]+rv:(\d+.\d)/i))
+
+		if(window.ActiveXObject && navigator.userAgent.match(/(MSIE )(\d+.\d)/i)) {
 			current_version = navigator.userAgent.match(/(MSIE )(\d+.\d)/i)[2];
+		}
+		else if(navigator.userAgent.match(/Trident\/[\d+]\.\d[^$]+rv:(\d+.\d)/i)) {
+			current_version = navigator.userAgent.match(/Trident\/[\d+]\.\d[^$]+rv:(\d+.\d)/i)[1];
 		}
 	}
 	else if(model.match(/\bfirefox\b|\bgecko\b/i)) {
