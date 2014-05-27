@@ -28,13 +28,12 @@ u.navigation = function(options) {
 	// }
 
 	// default starting path
-	page._nav_path = page._nav_path ? page._nav_path : "/";
+	page._nav_path = page._nav_path ? page._nav_path : u.h.getCleanUrl(location.href);
 	page._nav_history = page._nav_history ? page._nav_history : [];
 
 
 	// internal hash change distribution - content or scene level
 	page._navigate = function(url) {
-
 
 		url = u.h.getCleanUrl(url);
 
@@ -49,6 +48,8 @@ u.navigation = function(options) {
 		// first request or new base-level
 		if(!this._nav_path || ((this._nav_path != u.h.getCleanHash(location.hash, 1) && !u.h.popstate) || (this._nav_path != u.h.getCleanUrl(location.href, 1) && u.h.popstate))) {
 
+//			u.bug("base cN:" + url)
+
 			// forward navigation event to #content
 			if(this.cN && typeof(this.cN.navigate) == "function") {
 				this.cN.navigate(url);
@@ -56,6 +57,8 @@ u.navigation = function(options) {
 
 		}
 		else {
+
+//			u.bug("base decide:" + url + ", " + (this.cN.scene ? u.nodeId(this.cN.scene) : this.cN.scene))
 
 			// forward navigation event to .scene if it has navigate function
 			if(this.cN.scene && this.cN.scene.parentNode && typeof(this.cN.scene.navigate) == "function") {
