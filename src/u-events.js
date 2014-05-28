@@ -27,8 +27,12 @@ dblclick/doubletap - dblclicked/doubletapped
 */
 Util.Events = u.e = new function() {
 
+	// alert("document.ontouchmove:" + document.ontouchmove)
+	// alert("document.onmousedown:" + document.onmousedown)
+//	alert("navigator.maxTouchPoints:" + navigator.maxTouchPoints)
+
 	// auto-choose default event type
-	this.event_pref = typeof(document.ontouchmove) == "undefined" ? "mouse" : "touch";
+	this.event_pref = typeof(document.ontouchmove) == "undefined" || navigator.maxTouchPoints > 1 ? "mouse" : "touch";
 
 	/**
 	* Kill event
@@ -142,8 +146,9 @@ Util.Events = u.e = new function() {
 		this.removeEvent(node, "mouseup", this._dblclicked);
 		this.removeEvent(node, "touchend", this._dblclicked);
 
-		this.removeEvent(node, "mousemove", this._clickCancel);
-		this.removeEvent(node, "touchmove", this._clickCancel);
+		this.removeEvent(node, "mousemove", this._cancelClick);
+		this.removeEvent(node, "touchmove", this._cancelClick);
+		this.removeEvent(node, "mouseout", this._cancelClick);
 
 		this.removeEvent(node, "mousemove", this._move);
 		this.removeEvent(node, "touchmove", this._move);
@@ -320,7 +325,8 @@ Util.Events = u.e = new function() {
 	* element.clicked
 	*/
 	this.click = this.tap = function(node) {
-//		u.bug("set click:"+e.nodeName)
+//		u.bug("set click:"+u.nodeId(node));
+
 		node.e_click = true;
 		u.e.addStartEvent(node, this._inputStart);
 	}
