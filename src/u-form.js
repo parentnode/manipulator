@@ -974,14 +974,14 @@ Util.Form = u.f = new function() {
 
 		// no scrollbars on auto expanded fields
 		var current_height = parseInt(u.gcs(iN, "height"));
-		u.bug("AE:" + current_height + "," + iN.scrollHeight);
+//		u.bug("AE:" + current_height + "," + iN.scrollHeight);
 
 		var current_value = iN.val();
 		iN.val("");
-		u.bug(current_height + "," + iN.scrollHeight);
+//		u.bug(current_height + "," + iN.scrollHeight);
 
 		u.as(iN, "overflow", "hidden");
-		u.bug(current_height + "," + iN.scrollHeight);
+//		u.bug(current_height + "," + iN.scrollHeight);
 
 		// get textarea height value offset - webkit and IE/Opera scrollHeight differs from height
 		// implenting different solutions is the only way to achive similar behaviour across browsers
@@ -1001,17 +1001,20 @@ Util.Form = u.f = new function() {
 			var textarea_height = parseInt(u.gcs(this, "height"));
 
 			if(this.val()) {
-				if(u.browser("webkit")) {
+				if(u.browser("webkit") || u.browser("firefox", ">=29")) {
+//					u.bug("webkit model")
 					if(this.scrollHeight - this.autoexpand_offset > textarea_height) {
 						u.a.setHeight(this, this.scrollHeight);
 					}
 				}
 				else if(u.browser("opera") || u.browser("explorer")) {
+//					u.bug("opera model")
 					if(this.scrollHeight > textarea_height) {
 						u.a.setHeight(this, this.scrollHeight);
 					}
 				}
 				else {
+//					u.bug("fallback model")
 					u.a.setHeight(this, this.scrollHeight);
 				}
 			}
