@@ -28,7 +28,7 @@ u.navigation = function(options) {
 	// }
 
 	// default starting path
-	page._nav_path = page._nav_path ? page._nav_path : u.h.getCleanUrl(location.href);
+	page._nav_path = page._nav_path ? page._nav_path : u.h.getCleanUrl(location.href, 1);
 	page._nav_history = page._nav_history ? page._nav_history : [];
 
 
