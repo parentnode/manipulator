@@ -25,9 +25,9 @@ u.preloader = function(node, files, options) {
 		if(u.e && u.e.event_pref == "touch") {
 			u._preloader_max_processes = 1;
 		}
-		// TODO: option to load more simultaneously (currently not uses) - implement as parameter as well?
+		// TODO: option to load more simultaneously - implement as parameter as well?
 		else {
-			u._preloader_max_processes = 1;
+			u._preloader_max_processes = 4;
 		}
 
 	}
