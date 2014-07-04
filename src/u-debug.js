@@ -80,13 +80,13 @@ Util.xInObject = function(object) {
 		for(x in object) {
 		//	u.bug(x + ":" + object[x] + ":" + typeof(object[x]));
 			if(object[x] && typeof(object[x]) == "object" && typeof(object[x].nodeName) == "string") {
-				s += x + "=" + object[x]+" -> " + u.nodeId(object[x], 1) + "<br>";
+				s += x + "=" + object[x]+" -> " + u.nodeId(object[x], 1) + "<br>\n";
 			}
 			else if(object[x] && typeof(object[x]) == "function") {
-				s += x + "=function<br>";
+				s += x + "=function<br>\n";
 			}
 			else {
-				s += x + "=" + object[x]+"<br>";
+				s += x + "=" + object[x]+"<br>\n";
 			}
 		}
 		s += "--- end object ---"
