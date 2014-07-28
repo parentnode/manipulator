@@ -115,11 +115,27 @@ Util.Form = u.f = new function() {
 					field._input = u.qs("input", field);
 					field._input.field = field;
 
+					// add input to fields array
+					form.fields[field._input.name] = field._input;
+
 					// get input label
 					field._input._label = u.qs("label[for="+field._input.id+"]", field);
 
-					// add to form index
-					this.formIndex(form, field._input);
+					// get/set value function
+					field._input.val = this._value;
+
+					// change/update events
+					u.e.addEvent(field._input, "keyup", this._updated);
+					u.e.addEvent(field._input, "change", this._changed);
+
+					// submit on enter (checks for autocomplete etc)
+					this.inputOnEnter(field._input);
+
+					// activate field
+					this.activateField(field._input);
+
+					// validate field now
+					this.validate(field._input);
 				}
 
 				// textarea initialization
@@ -128,18 +144,48 @@ Util.Form = u.f = new function() {
 					field._input = u.qs("textarea", field);
 					field._input.field = field;
 
+					// add input to fields array
+					form.fields[field._input.name] = field._input;
+
 					// get input label
 					field._input._label = u.qs("label[for="+field._input.id+"]", field);
 
-					// add to form index
-					this.formIndex(form, field._input);
+					// get/set value function
+					field._input.val = this._value;
+
+					// change/update events
+					u.e.addEvent(field._input, "keyup", this._updated);
+					u.e.addEvent(field._input, "change", this._changed);
+
+					// activate field
+					this.activateField(field._input);
+
+					// validate field now
+					this.validate(field._input);
 
 					// resize textarea while typing
 					if(u.hc(field, "autoexpand")) {
-						this.autoExpand(field._input)
+						this.autoExpand(field._input);
 					}
+				}
 
+				// HTML editor initialization
+				else if(u.hc(field, "html")) {
 
+					field._input = u.qs("textarea", field);
+					field._input.field = field;
+
+					// add input to fields array
+					form.fields[field._input.name] = field._input;
+
+					// get input label
+					field._input._label = u.qs("label[for="+field._input.id+"]", field);
+
+					// get/set value function
+					field._input.val = this._value;
+
+					// create textEditor interface
+					this.textEditor(field);
 				}
 
 				// select initialization
@@ -148,11 +194,25 @@ Util.Form = u.f = new function() {
 					field._input = u.qs("select", field);
 					field._input.field = field;
 
+					// add input to fields array
+					form.fields[field._input.name] = field._input;
+
 					// get input label
 					field._input._label = u.qs("label[for="+field._input.id+"]", field);
 
-					// add to form index
-					this.formIndex(form, field._input);
+					// get/set value function
+					field._input.val = this._value_select;
+
+					// change/update events
+					u.e.addEvent(field._input, "change", this._updated);
+					u.e.addEvent(field._input, "keyup", this._updated);
+					u.e.addEvent(field._input, "change", this._changed);
+
+					// activate field
+					this.activateField(field._input);
+
+					// validate field now
+					this.validate(field._input);
 				}
 
 				// checkbox/boolean (also checkbox) initialization
@@ -164,24 +224,96 @@ Util.Form = u.f = new function() {
 					// get input label
 					field._input._label = u.qs("label[for="+field._input.id+"]", field);
 
-					// add to form index
-					this.formIndex(form, field._input);
+					// add input to fields array
+					form.fields[field._input.name] = field._input;
+
+					// get/set value function
+					field._input.val = this._value_checkbox;
+
+					// special setting for IE8 and less (bad onchange handler)
+					if(u.browser("explorer", "<=8")) {
+						field._input.pre_state = field._input.checked;
+						field._input._changed = this._changed;
+						field._input._updated = this._updated;
+						field._input._clicked = function(event) {
+							if(this.checked != this.pre_state) {
+								this._changed(window.event);
+								this._updated(window.event);
+							}
+							this.pre_state = this.checked;
+						}
+						u.e.addEvent(field._input, "click", field._input._clicked);
+
+					}
+					else {
+						u.e.addEvent(field._input, "change", this._updated);
+						u.e.addEvent(field._input, "change", this._changed);
+					}
+
+					// submit on enter (checks for autocomplete etc)
+					this.inputOnEnter(field._input);
+
+					// activate field
+					this.activateField(field._input);
+
+					// validate field now
+					this.validate(field._input);
 				}
 
 				// radio button initialization
 				else if(u.hc(field, "radio|radio_buttons")) {
 
 					field._input = u.qsa("input", field);
+
+					// add inputs to fields array using for name (radios all have same name)
+					form.fields[field._input[0].name] = field._input;
+
+					// initalize individual radio buttons
 					for(j = 0; input = field._input[j]; j++) {
 						input.field = field;
 
 						// get input label
 						input._label = u.qs("label[for="+input.id+"]", field);
 
-						// add to form index
-						this.formIndex(form, input);
+						// get/set value function
+						input.val = this._value_radio;
+
+						// special setting for IE8 and less (bad onchange handler)
+						if(u.browser("explorer", "<=8")) {
+							input.pre_state = iN.checked;
+							input._changed = this._changed;
+							input._updated = this._updated;
+							input._clicked = function(event) {
+								var i, input;
+								if(this.checked != this.pre_state) {
+									this._changed(window.event);
+									this._updated(window.event);
+								}
+								// update prestates for all radios in set
+								for(i = 0; input = this.field._input[i]; i++) {
+									input.pre_state = input.checked;
+								}
+							}
+							u.e.addEvent(input, "click", input._clicked);
+						}
+						else {
+							u.e.addEvent(input, "change", this._updated);
+							u.e.addEvent(input, "change", this._changed);
+						}
+
+						// submit on enter (checks for autocomplete etc)
+						this.inputOnEnter(input);
+
+						// activate field
+						this.activateField(input);
+
+						// validate field now
+						this.validate(field._input);
 					}
 				}
+
+
+				// TODO: the rest still needs to be migrated from formIndex
 
 				// date field initialization
 				else if(u.hc(field, "date|datetime")) {
@@ -344,10 +476,10 @@ Util.Form = u.f = new function() {
 			// check if form is inside ul.actions
 			var p_ul = u.pn(form, "ul");
 			if(u.hc(p_ul, "actions")) {
-				u.bug("valid pure button form found")
+//				u.bug("valid pure button form found")
 
 				// get action input-button/a
-				var input = u.qs("input,a", form);
+				var input = u.qs("input:NOT([type=hidden]),a", form);
 
 				// if submit button, make sure it does not submit form without validation
 				if(input.type && input.type == "submit") {
@@ -553,6 +685,15 @@ Util.Form = u.f = new function() {
 
 
 
+	// this.tabIndex = function(form, input) {
+	//
+	// 	input.tab_index = form.tab_order.length;
+	// 	form.tab_order[input.tab_index] = input;
+	//
+	// }
+
+
+	// TODO: consider merging back into primary loop for better individualization and overview
 	// add to form index and extend according to node type
 	this.formIndex = function(form, iN) {
 //		u.bug("formIndex:" + u.nodeId(iN) + ", " + iN.field + ", " + iN.name)
@@ -658,7 +799,11 @@ Util.Form = u.f = new function() {
 
 				// submit on enter (checks for autocomplete etc)
 				this.inputOnEnter(iN);
+
+
 			}
+
+
 			// type=file
 			else if(iN.type && iN.type.match(/file/)) {
 
@@ -738,6 +883,8 @@ Util.Form = u.f = new function() {
 
 	// internal submit handler - attatched to form
 	this._submit = function(event, iN) {
+
+//		u.bug("submitted")
 
 		// do pre validation of all fields
 		for(name in this.fields) {
@@ -996,7 +1143,12 @@ Util.Form = u.f = new function() {
 
 		// set correct height
 		iN.setHeight = function() {
-			u.bug("iN.setHeight:" + u.nodeId(this));
+//			u.bug("iN.setHeight:" + u.nodeId(this) + ", this.scrollHeight:" + this.scrollHeight + ", " + this.autoexpand_offset + ", " + this.scrollWidth + ", " + this.scrollTop);
+
+			// if(this.scrollTop) {
+			// 	this.rows++;
+			// }
+			
 
 			var textarea_height = parseInt(u.gcs(this, "height"));
 
@@ -1019,6 +1171,7 @@ Util.Form = u.f = new function() {
 				}
 			}
 		}
+
 		u.e.addEvent(iN, "keyup", iN.setHeight);
 
 		iN.setHeight();
@@ -1027,14 +1180,164 @@ Util.Form = u.f = new function() {
 
 	// inject GeoLocation button in location field
 	this.geoLocation = function(field) {
+//		alert("geo")
 		u.ac(field, "geolocation");
 
-		var bn_geolocation = u.ae(field, "div", {"class":"geolocation"});
-		bn_geolocation.field = field;
-		u.ce(bn_geolocation);
+		field.lat_input = u.qs("div.latitude input", field);
+		field.lat_input.autocomplete = "off";
+		field.lat_input.field = field;
 
 
-		bn_geolocation.clicked = function() {
+		field.lon_input = u.qs("div.longitude input", field);
+		field.lon_input.autocomplete = "off";
+		field.lon_input.field = field;
+
+		// create map if it doesn't exist and position according to field
+		field.showMap = function() {
+
+			if(!window._mapsiframe) {
+				var maps_url = "https://maps.googleapis.com/maps/api/js" + (u.gapi_key ? "?key="+u.gapi_key : "");
+				var html = '<html><head>';
+				html += '<style type="text/css">body {margin: 0;}#map {width: 300px; height: 300px;}</style>';
+				html += '<script type="text/javascript" src="'+maps_url+'"></script>';
+				html += '<script type="text/javascript">';
+
+				html += 'var map, marker;';
+				html += 'var initialize = function() {';
+				html += '	window._map_loaded = true;';
+				html += '	var mapOptions = {center: new google.maps.LatLng('+this.lat_input.val()+', '+this.lon_input.val()+'),zoom: 15};';
+				html += '	map = new google.maps.Map(document.getElementById("map"),mapOptions);';
+				html += '	marker = new google.maps.Marker({position: new google.maps.LatLng('+this.lat_input.val()+', '+this.lon_input.val()+'), draggable:true});';
+				html += '	marker.setMap(map);';
+
+				// html += '	map.changed = function(event_type) {';
+				// html += '		if(event_type == "center" && marker) {';
+				// html += '			var lat_marker = Math.round(marker.getPosition().lat()*100000)/100000;';
+				// html += '			var lon_marker = Math.round(marker.getPosition().lng()*100000)/100000;';
+				// html += '			var lat_map = Math.round(map.getCenter().lat()*100000)/100000;';
+				// html += '			var lon_map = Math.round(map.getCenter().lng()*100000)/100000;';
+				// html += '			if(lon_marker != lon_map || lat_marker != lat_map) {';
+				// html += '				marker.setPosition(map.getCenter());';
+				// html += '				field.lon_input.val(lon_map);'
+				// html += '				field.lat_input.val(lat_map);'
+				// html += '			};';
+				// html += '		};';
+				// html += '	};';
+
+				html += '	marker.dragend = function(event_type) {';
+				html += '		var lat_marker = Math.round(marker.getPosition().lat()*100000)/100000;';
+				html += '		var lon_marker = Math.round(marker.getPosition().lng()*100000)/100000;';
+				html += '		field.lon_input.val(lon_marker);';
+				html += '		field.lat_input.val(lat_marker);';
+				html += '	};';
+				html += '	marker.addListener("dragend", marker.dragend);';
+				html += '};';
+
+				html += 'var centerMap = function(lat, lon) {';
+				html += '	var loc = new google.maps.LatLng(lat, lon);';
+				html += '	map.setCenter(loc);';
+				html += '	marker.setPosition(loc);';
+				html += '};';
+				html += 'google.maps.event.addDomListener(window, "load", initialize);';
+				html += '</script>';
+				html += '</head><body><div id="map"></div></body></html>';
+
+				window._mapsiframe = u.ae(document.body, "iframe", {"id":"geolocationmap"});
+				window._mapsiframe.doc = window._mapsiframe.contentDocument? window._mapsiframe.contentDocument: window._mapsiframe.contentWindow.document;
+				window._mapsiframe.doc.open();
+				window._mapsiframe.doc.write(html);
+				window._mapsiframe.doc.close();
+			}
+			else {
+				this.updateMap();
+			}
+			window._mapsiframe.contentWindow.field = this;
+			u.as(window._mapsiframe, "left", (u.absX(this.bn_geolocation)+this.bn_geolocation.offsetWidth+10)+"px");
+			u.as(window._mapsiframe, "top", (u.absY(this.bn_geolocation) + (this.bn_geolocation.offsetHeight/2) -(window._mapsiframe.offsetHeight/2))+"px");
+		}
+		// update map center
+		field.updateMap = function() {
+
+			if(window._mapsiframe && window._mapsiframe.contentWindow && window._mapsiframe.contentWindow._map_loaded) {
+				window._mapsiframe.contentWindow.centerMap(this.lat_input.val(), this.lon_input.val());
+				
+			}
+		}
+		// move map based on key presses or current values
+		field.move_map = function(event) {
+
+			var factor;
+			if(this._move_direction) {
+
+				if(event && event.shiftKey) {
+					factor = 0.001;
+				}
+				else {
+					factor = 0.0001;
+				}
+				
+				if(this._move_direction == "38") {
+					this.lat_input.val(u.round(parseFloat(this.lat_input.val())+factor, 6));
+				}
+				else if(this._move_direction == "40") {
+					this.lat_input.val(u.round(parseFloat(this.lat_input.val())-factor, 6));
+				}
+				else if(this._move_direction == "39") {
+					this.lon_input.val(u.round(parseFloat(this.lon_input.val())+factor, 6));
+				}
+				else if(this._move_direction == "37") {
+					this.lon_input.val(u.round(parseFloat(this.lon_input.val())-factor, 6));
+				}
+
+				this.updateMap();
+			}
+		}
+
+		field._end_move_map = function(event) {
+
+			this.field._move_direction = false;
+		}
+		field._start_move_map = function(event) {
+
+			if(event.keyCode.toString().match(/37|38|39|40/)) {
+				this.field._move_direction = event.keyCode;
+				this.field.move_map(event);
+			}
+		}
+
+
+		u.e.addEvent(field.lat_input, "keydown", field._start_move_map);
+		u.e.addEvent(field.lon_input, "keydown", field._start_move_map);
+		u.e.addEvent(field.lat_input, "keyup", field._end_move_map);
+		u.e.addEvent(field.lon_input, "keyup", field._end_move_map);
+
+
+		field.lat_input.updated = field.lon_input.updated = function() {
+			this.field.updateMap();
+		}
+		field.lat_input.focused = field.lon_input.focused = function() {
+			this.field.showMap();
+		}
+		field.bn_geolocation = u.ae(field, "div", {"class":"geolocation"});
+		field.bn_geolocation.field = field;
+		u.ce(field.bn_geolocation);
+
+		// get location from geolocation API
+		field.bn_geolocation.clicked = function() {
+
+			// animation while waiting for location
+			u.a.transition(this, "all 0.5s ease-in-out");
+			this.transitioned = function() {
+				var new_scale;
+				if(this._scale == 1.4) {
+					new_scale = 1;
+				}
+				else {
+					new_scale = 1.4;
+				}
+				u.a.scale(this, new_scale);
+			}
+			this.transitioned();
 
 			window._geoLocationField = this.field;
 
@@ -1042,13 +1345,16 @@ Util.Form = u.f = new function() {
 				var lat = position.coords.latitude;
 				var lon = position.coords.longitude;
 
-				var lat_input = u.qs("div.latitude input", window._geolocationField);
-				var lon_input = u.qs("div.longitude input", window._geolocationField);
+				window._geoLocationField.lat_input.val(u.round(lat, 6));
+				window._geoLocationField.lon_input.val(u.round(lon, 6));
+				// trigger validation
+				window._geoLocationField.lat_input.focus();
+				window._geoLocationField.lon_input.focus();
 
-				lat_input.val(lat);
-				lat_input.focus();
-				lon_input.val(lon);
-				lon_input.focus();
+				// update map
+				window._geoLocationField.showMap();
+				u.a.transition(window._geoLocationField.bn_geolocation, "none");
+				u.a.scale(window._geoLocationField.bn_geolocation, 1);
 			}
 
 			// Location error
@@ -1062,6 +1368,689 @@ Util.Form = u.f = new function() {
 	}
 
 
+	// inject HTML editor
+	this.textEditor = function(field) {
+		
+		field._viewer = u.ae(field, "div", {"class":"viewer"});
+		field._editor = u.ae(field, "div", {"class":"editor targets:tag"});
+
+		// add new formatting node
+		field.add = function(type, value) {
+
+			var div = u.ae(this._editor, "div", {"class":"tag "+type});
+
+			// drag handle
+			div._drag = u.ae(div, "div", {"class":"drag"});
+			div._drag.field = this;
+
+
+			// type selector
+			div._select = u.ae(div, "ul", {"class":"type"});
+			u.ae(div._select, "li", {"html":"p"});
+			u.ae(div._select, "li", {"html":"h1"});
+			u.ae(div._select, "li", {"html":"h2"});
+			u.ae(div._select, "li", {"html":"h3"});
+			u.ae(div._select, "li", {"html":"h4"});
+			u.ae(div._select, "li", {"html":"h5"});
+			u.ae(div._select, "li", {"html":"h6"});
+
+
+			div._select.field = this;
+			div._select.div = div;
+			div._select.val = function(value) {
+				if(value !== undefined) {
+					var i, option;
+					for(i = 0; option = this.childNodes[i]; i++) {
+						if(u.text(option) == value) {
+
+							if(this.selected_option) {
+								u.rc(this.selected_option, "selected");
+
+								// update div tag class
+								u.rc(this.div, u.text(this.selected_option));
+							}
+							u.ac(option, "selected");
+							this.selected_option = option;
+
+							// update div tag class
+							u.ac(this.div, value);
+
+							return option;
+						}
+					}
+					return false;
+				}
+				else {
+					return u.text(this.selected_option);
+				}
+			}
+			// select current type
+			div._select.val(type);
+
+
+			u.ce(div._select);
+			div._select.clicked = function(event) {
+				if(u.hc(this, "open")) {
+					u.rc(this, "open");
+					u.rc(this.div, "focus");
+
+					u.as(this, "top", 0);
+
+					if(event.target) {
+						this.val(u.text(event.target));
+					}
+
+					u.e.removeEvent(this, "mouseout", this.autohide);
+					u.e.removeEvent(this, "mouseover", this.delayautohide);
+					u.t.resetTimer(this.t_autohide);
+
+					this.div._input.focus();
+					
+					this.field.update();
+				}
+				else {
+					u.ac(this, "open");
+					u.ac(this.div, "focus");
+
+					u.as(this, "top", -(this.selected_option.offsetTop) + "px");
+
+					u.e.addEvent(this, "mouseout", this.autohide);
+					u.e.addEvent(this, "mouseover", this.delayautohide);
+				}
+			}
+
+			// auto hide type selector
+			div._select.hide = function() {
+				u.rc(this, "open");
+				u.rc(this.div, "focus");
+
+				u.as(this, "top", 0);
+
+				u.e.removeEvent(this, "mouseout", this.autohide);
+				u.e.removeEvent(this, "mouseover", this.delayautohide);
+				u.t.resetTimer(this.t_autohide);
+
+				this.div._input.focus();
+			}
+			div._select.autohide = function(event) {
+				u.t.resetTimer(this.t_autohide);
+				this.t_autohide = u.t.setTimer(this, this.hide, 800);
+			}
+			div._select.delayautohide = function(event) {
+				u.t.resetTimer(this.t_autohide);
+			}
+
+			// text input
+			div._input = u.ae(div, "div", {"class":"text", "contentEditable":true});
+			div._input.div = div;
+			div._input.field = this;
+			div._input.val = function(value) {
+				if(value !== undefined) {
+					this.innerHTML = value;
+				}
+				return this.innerHTML;
+			}
+			div._input.val(u.stringOr(value));
+
+			// monitor changes and selections
+			u.e.addEvent(div._input, "keydown", this._changing_content);
+
+			u.e.addEvent(div._input, "keyup", this._changed_content);
+			u.e.addEvent(div._input, "mouseup", this._changed_content);
+
+			u.e.addEvent(div._input, "focus", this._focused_content);
+			u.e.addEvent(div._input, "blur", this._blurred_content);
+
+			return div;
+		}
+
+		// gained focus on individual text-tag
+		field._focused_content = function(event) {
+
+			u.ac(this.div, "focus");
+
+			// if tabbing to gain focus, move cursor to end
+			if(event.rangeOffset == 1) {
+				var range = document.createRange();
+				range.selectNodeContents(this);
+				range.collapse(false);
+
+				var selection = window.getSelection();
+				selection.removeAllRanges();
+				selection.addRange(range);
+			}
+		}
+		// lost focus on individual text-tag
+		field._blurred_content = function() {
+//			u.bug("_blurred_content:" + this.val());
+
+			u.rc(this.div, "focus");
+
+			// hide options (will not be hidden if they are needed)
+			this.field.hideSelectionOptions();
+		}
+
+
+		// text has been changed - update field
+		field._changed_type = function(event) {
+//			u.bug("updated value:" + this.field._input.val());
+
+			this.field.update();
+			
+		}
+
+		// attached to div._input node onkey down
+		// overriding default enter action 
+		// (browser will insert <br> on [ENTER] - we want to create new paragraph)
+		field._changing_content = function(event) {
+
+			// [ENTER]
+			if(event.keyCode == 13) {
+				u.e.kill(event);
+			}
+
+		}
+
+		// attached to div._input node
+		field._changed_content = function(event) {
+
+//			u.bug("changed node:" + u.nodeId(this));
+//			u.bug("changed value:" + event.keyCode + ", " + this.val());
+
+			// get selection, to use for deletion
+			var selection = window.getSelection(); 
+
+			// [ENTER]
+			if(event.keyCode == 13) {
+
+				u.e.kill(event);
+
+				// Clean [ENTER] - add new field
+				if(!event.ctrlKey && !event.metaKey) {
+
+					var new_tag = this.field.add("p");
+					var next_tag = u.ns(this.div);
+					if(next_tag) {
+						this.div.parentNode.insertBefore(new_tag, next_tag);
+					}
+					else {
+						this.div.parentNode.appendChild(new_tag);
+					}
+
+					new_tag._input.focus();
+
+					// enable dragging of html-tags
+					u.s.sortable(this.field._editor);
+
+				}
+
+				// CTRL or CMD
+				// TODO: Looks like CMD key does not work on contentEditable fields
+				// TODO: Some weirdness with <br>'s in end of text.
+				// check if we should inject <br> tag
+				else {
+
+					if(selection && selection.isCollapsed) {
+						var br = document.createElement("br");
+						range = selection.getRangeAt(0);
+						range.insertNode(br);
+						range.collapse(false);
+
+						var selection = window.getSelection();
+						selection.removeAllRanges();
+						selection.addRange(range);
+					}
+				}
+			}
+
+			// [DELETE]
+			if(event.keyCode == 8) {
+
+				// node in deletable state?
+				if(this.is_deletable) {
+//					u.bug("go ahead delete me")
+
+					u.e.kill(event);
+
+					var prev_tag = u.ps(this.div);
+					var all_tags = u.qsa("div.tag", this.field);
+
+					// never delete last one
+					if(all_tags.length > 1) {
+						this.div.parentNode.removeChild(this.div);
+
+						// is there a tag before this?
+						if(prev_tag) {
+							prev_tag._input.focus();
+
+							// move cursor to the end of the editable area
+							var range = document.createRange();
+							range.selectNodeContents(prev_tag._input);
+							range.collapse(false);
+
+							var selection = window.getSelection();
+							selection.removeAllRanges();
+							selection.addRange(range);
+						}
+						// no prev, focus on next node
+						else {
+							u.qs("div.tag", this.field)._input.focus();
+						}
+					}
+
+				}
+
+				// no value, enter deletable state
+				else if(!this.val()) {
+					this.is_deletable = true;
+				}
+
+				// make sure to delete empty formatting nodes
+				else if(selection.anchorNode != this && selection.anchorNode.innerHTML == "") {
+					selection.anchorNode.parentNode.removeChild(selection.anchorNode);
+				}
+
+			}
+			// any other key, remove deletable state 
+			else {
+				this.is_deletable = false;
+			}
+
+
+			// Text has been selected, show selection options
+
+			// hide existing options first
+			this.field.hideSelectionOptions();
+
+			// new selection
+			if(selection && !selection.isCollapsed) {
+
+				// check if
+				var node = selection.anchorNode;
+				while(node != this) {
+					if(node.nodeName == "HTML" || !node.parentNode) {
+						break;
+					}
+					node = node.parentNode;
+				}
+
+				if(node == this) {
+					this.field.showSelectionOptions(this, selection);
+				}
+
+			}
+
+			// no selection
+			// check if cursor is inside injected node and show options if it is a link
+			// TODO: too many side-effects at this point
+			// else if(selection && selection.isCollapsed) {
+			//
+			// 	// check if
+			// 	var a = selection.anchorNode.parentNode;
+			// 	u.bug("empty selection:" + a);
+			// 	if(a.nodeName == "A") {
+			// 		a.field.showSelectionOptions(this, selection);
+			// 		a.field.anchorOptions(a.field, a);
+			// 	}
+			// }
+
+			this.field.update();
+		}
+
+		// hide the options pane and update content 
+		field.hideSelectionOptions = function() {
+
+			// only hide if not in interaction mode
+			if(this.options && !this.options.is_active) {
+				this.options.parentNode.removeChild(this.options);
+				this.options = null;
+			}
+
+			this.update();
+		}
+
+		// show options for selection
+		field.showSelectionOptions = function(node, selection) {
+
+			// position of node
+			var x = u.absX(node);
+			var y = u.absY(node);
+
+			// create options div
+			this.options = u.ae(document.body, "div", {"id":"selection_options"});
+
+			// position options pane according to field
+			u.as(this.options, "top", y+"px");
+			u.as(this.options, "left", (x + node.offsetWidth) +"px");
+
+			var ul = u.ae(this.options, "ul", {"class":"options"});
+
+			// link option
+			this.options._link = u.ae(ul, "li", {"class":"link", "html":"Link"});
+			this.options._link.field = this;
+			this.options._link.selection = selection;
+			u.ce(this.options._link);
+			this.options._link.inputStarted = function(event) {
+				u.e.kill(event);
+				this.field.options.is_active = true;
+			}
+			this.options._link.clicked = function(event) {
+				u.e.kill(event);
+				this.field.addAnchorTag(this.selection);
+			}
+
+			// EM option
+			this.options._em = u.ae(ul, "li", {"class":"em", "html":"Itallic"});
+			this.options._em.field = this;
+			this.options._em.selection = selection;
+			u.ce(this.options._em);
+			this.options._em.inputStarted = function(event) {
+				u.e.kill(event);
+			}
+			this.options._em.clicked = function(event) {
+				u.e.kill(event);
+				this.field.addEmTag(this.selection);
+			}
+
+			// STRONG option
+			this.options._strong = u.ae(ul, "li", {"class":"strong", "html":"Bold"});
+			this.options._strong.field = this;
+			this.options._strong.selection = selection;
+			u.ce(this.options._strong);
+			this.options._strong.inputStarted = function(event) {
+				u.e.kill(event);
+			}
+			this.options._strong.clicked = function(event) {
+				u.e.kill(event);
+				this.field.addStrongTag(this.selection);
+			}
+
+		}
+
+		// add mouseover delete option to injected tags
+		field.deleteOption = function(node) {
+
+			node.over = function(event) {
+				u.t.resetTimer(this.t_out);
+
+				if(!this.bn_delete) {
+					this.bn_delete = u.ae(document.body, "span", {"class":"delete_selection", "html":"X"});
+					this.bn_delete.node = this;
+
+					this.bn_delete.over = function(event) {
+						u.t.resetTimer(this.node.t_out);
+					}
+					this.bn_delete.out = function(event) {
+						this.node.t_out = u.t.setTimer(this, this.node.reallyout, 300);
+					}
+					u.e.addEvent(this.bn_delete, "mouseover", this.bn_delete.over);
+					u.e.addEvent(this.bn_delete, "mouseout", this.bn_delete.out);
+
+					u.ce(this.bn_delete);
+					this.bn_delete.clicked = function() {
+						u.e.kill(event);
+						var fragment = document.createTextNode(this.node.innerHTML);
+						this.node.parentNode.replaceChild(fragment, this.node);
+						this.node.reallyout();
+						this.node.field.update();
+					}
+
+					u.as(this.bn_delete, "top", (u.absY(this)-5)+"px");
+					u.as(this.bn_delete, "left", (u.absX(this)+this.offsetWidth-5)+"px");
+				}
+			}
+
+			node.out = function(event) {
+				u.t.resetTimer(this.t_out);
+				this.t_out = u.t.setTimer(this, this.reallyout, 300);
+			}
+
+			node.reallyout = function(event) {
+				if(this.bn_delete) {
+					document.body.removeChild(this.bn_delete);
+					this.bn_delete = null;
+				}
+			}
+
+			u.e.addEvent(node, "mouseover", node.over);
+			u.e.addEvent(node, "mouseout", node.out);
+		}
+
+		// activate existing inline formatting
+		field.activateInlineFormatting = function(input) {
+			
+			var i, node;
+			var inline_tags = u.qsa("a,strong,em", input);
+
+			for(i = 0; node = inline_tags[i]; i++) {
+				node.field = input.field;
+				this.deleteOption(node);
+			}
+		}
+
+		// INLINE FORMATTING
+
+		// extend options pane with Anchor options
+		field.anchorOptions = function(node) {
+
+			var form = u.f.addForm(this.options, {"class":"labelstyle:inject"});
+			u.ae(form, "h3", {"html":"Link options"});
+			var fieldset = u.f.addFieldset(form);
+			var input_url = u.f.addField(fieldset, {"label":"url", "name":"url"});
+
+			// TODO: change to SELECT field
+			var input_target = u.f.addField(fieldset, {"label":"target", "name":"target"});
+			var bn_save = u.f.addAction(form, {"value":"Create link", "class":"button"});
+			u.f.init(form);
+
+			// // fill out with existing values
+			// if(node.href) {
+			// 	form.fields["url"].val(node.href);
+			// }
+			// if(node.target) {
+			// 	form.fields["target"].val(node.target);
+			// }
+
+			form.a = node;
+			form.field = this;
+
+			form.submitted = function() {
+
+				if(this.fields["url"].val() && this.fields["url"].val() != this.fields["url"].default_value) {
+					this.a.href = this.fields["url"].val();
+				}
+
+				if(this.fields["target"].val() && this.fields["target"].val() != this.fields["target"].default_value) {
+					this.a.target = this.fields["target"].val();
+				}
+				this.field.options.is_active = false;
+				this.field.hideSelectionOptions();
+			}
+		}
+
+		// add anchor tag
+		field.addAnchorTag = function(selection) {
+			var range, a, url, target;
+
+			var a = document.createElement("a");
+			a.field = this;
+
+			range = selection.getRangeAt(0);
+			range.surroundContents(a);
+			selection.removeAllRanges();
+
+			this.anchorOptions(a);
+			this.deleteOption(a);
+
+		}
+
+		// add string tag
+		field.addStrongTag = function(selection) {
+
+			var range, a, url, target;
+			var strong = document.createElement("strong");
+			strong.field = this;
+
+			range = selection.getRangeAt(0);
+			range.surroundContents(strong);
+			selection.removeAllRanges();
+
+			this.deleteOption(strong);
+			this.hideSelectionOptions();
+		}
+
+		// add em tag
+		field.addEmTag = function(selection) {
+
+			var range, a, url, target;
+			var em = document.createElement("em");
+			em.field = this;
+
+			range = selection.getRangeAt(0);
+			range.surroundContents(em);
+			selection.removeAllRanges();
+
+			this.deleteOption(em);
+			this.hideSelectionOptions();
+		}
+
+
+		// index existing content 
+
+		// inject value into viewer div, to be able to inspect for DOM content
+		field._viewer.innerHTML = field._input.val();
+		field._fields = new Array();
+
+		// TODO: 
+		
+		// if value of textarea is not HTML formatted
+		// change double linebreak to </p><p> (or fitting) once you are sure text is wrapped in node
+
+		var value, node, i, tag;
+
+		// check for valid nodes, excluding <br>
+		var nodes = u.cn(field._viewer, "br");
+		if(nodes.length) {
+
+			// loop through childNodes
+
+			for(i = 0; node = field._viewer.childNodes[i]; i++) {
+
+//				u.bug("node" + u.nodeId(node) + ", " + node.nodeName + ", " + typeof(node.nodeName));
+
+				// lost fragment,
+				// wrap in p tag if content is more than whitespace or newline
+				if(node.nodeName == "#text") {
+					if(node.nodeValue.trim()) {
+
+						// locate double linebreaks and split into several paragraphs 
+						var fragments = node.nodeValue.trim().split(/\n\r\n\r|\n\n|\r\r/g);
+						if(fragments) {
+							for(index in fragments) {
+								value = fragments[index].replace(/\n\r|\n|\r/g, "<br>");
+								tag = field.add("p", fragments[index]);
+								field.activateInlineFormatting(tag._input);
+							}
+						}
+						// wrap textnode in one paragraph
+						else {
+							value = node.nodeValue; //.replace(/\n\r|\n|\r/g, "<br>");
+							tag = field.add("p", value);
+							field.activateInlineFormatting(tag._input);
+						}
+
+					}
+				}
+				// valid node
+				else if(node.nodeName.toLowerCase().match(/^(p|h1|h2|h3|h4|h5|h6|ul|dl)$/)) {
+
+					value = node.innerHTML.replace(/\n\r|\n|\r/g, "<br>"); // .replace(/\<br[\/]?\>/g, "\n");
+					tag = field.add(node.nodeName.toLowerCase(), value);
+					field.activateInlineFormatting(tag._input);
+
+				}
+				// invalid node, what can it be?
+				else {
+					alert("invalid node:" + node.nodeName);
+				}
+
+
+//				u.ae(field._editor, "textarea").value = node.innerHTML;
+			}
+		}
+		// single unformatted textnode
+		// wrap in <p> and replace newline with <br>
+		else {
+
+			value = field._viewer.innerHTML.replace(/\<br[\/]?\>/g, "\n");
+			//.replace(/\n\r|\n|\r/g, "<br>");
+			tag = field.add("p", value);
+			field.activateInlineFormatting(tag._input);
+
+		}
+
+
+		// enable dragging of html-tags
+		u.s.sortable(field._editor);
+
+
+
+		field.update = function() {
+
+			this.updateViewer();
+			this.updateContent();
+
+		}
+
+		field.updateViewer = function() {
+
+			var tag_fields = u.qsa("div.tag", this);
+			var i, node, value;
+			// update html viewer
+			this._viewer.innerHTML = "";
+			for(i = 0; node = tag_fields[i]; i++) {
+				value = node._input.val();
+				 //.replace(/\n\r|\n|\r/g, "<br>");
+				u.ae(this._viewer, node._select.val(), {"html":value});
+			}
+			
+		}
+
+		field.updateContent = function() {
+//			u.bug("updateContent");
+
+			var tags = u.qsa("div.tag", this);
+
+			// update actual textarea to be saved
+			this._input.val("");
+			var i, node, tag, value, html = "";
+
+			for(i = 0; node = tags[i]; i++) {
+				u.bug(u.nodeId(node));
+				value = node._input.val();
+				 //.replace(/\n\r|\n|\r/g, "<br>");
+				tag = node._select.val();
+				html += "<"+tag+">"+value+"</"+tag+">\n";
+
+			}
+//			u.bug("updateContent ("+u.nodeId(this._input)+ "):" + html);
+			this._input.val(html);
+
+		}
+
+		// 
+		field.updateViewer();
+
+
+		// do not update submit input until content has been changed
+		// need resize on input
+		// need [ENTER] handler - different action for li/dd/dt than for regular inputs
+
+		// label as select with all options
+
+
+
+	}
 
 
 	// validate input
@@ -1222,6 +2211,29 @@ Util.Form = u.f = new function() {
 				if(
 					iN.val().length >= min && 
 					iN.val().length <= max && 
+					(!pattern || iN.val().match("^"+pattern+"$"))
+				) {
+					this.fieldCorrect(iN);
+				}
+				else {
+					this.fieldError(iN);
+				}
+			}
+
+			// html validation
+			else if(u.hc(iN.field, "html")) {
+
+				// min and max length
+				min = Number(u.cv(iN.field, "min"));
+				max = Number(u.cv(iN.field, "max"));
+				min = min ? min : 1;
+				max = max ? max : 10000000;
+				pattern = iN.getAttribute("pattern");
+
+				if(
+					u.text(iN.field._viewer) &&
+					u.text(iN.field._viewer).length >= min && 
+					u.text(iN.field._viewer).length <= max && 
 					(!pattern || iN.val().match("^"+pattern+"$"))
 				) {
 					this.fieldCorrect(iN);
@@ -1729,6 +2741,7 @@ Still in debugging mode - to be included officially in v0.9
 
 /* Add new form element */
 u.f.addForm = function(node, settings) {
+u.bug("addform")
 	
 	// default values
 	var form_name = "js_form";
