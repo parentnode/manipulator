@@ -71,7 +71,7 @@ Util.Keys = u.k = new function() {
 		event = event ? event : window.event;
 		key = String.fromCharCode(event.keyCode);
 
-		u.bug("e:" + key + ":"+event.keyCode+":" + this.shortcuts.length)
+//		u.bug("e:" + key + ":"+event.keyCode+":" + this.shortcuts.length)
 		if((event.ctrlKey || event.metaKey) && this.shortcuts[key]) {
 			u.e.kill(event);
 			action = this.shortcuts[key].pop();
