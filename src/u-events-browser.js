@@ -49,18 +49,30 @@ u.e.addOnloadEvent = function(action) {
 */
 
 // probably just use on event listener and make it call all appropriate callbacks on registrered nodes
-u.e.addResizeEvent = function(node, action) {
+u.e.addWindowResizeEvent = function(node, action) {
+	var id = u.randomString();
+	u.ac(node, id);
+	eval('window["_Onresize_' + id + '"] = function() {var node = u.qs(".'+id+'"); node._Onresize_'+id+' = '+action+'; node._Onresize_'+id+'();}');
 
+	u.e.addEvent(window, "resize", window["_Onresize_" + id]);
+	return id;
 }
-u.e.removeResizeEvent = function(node, action) {
-
+u.e.removeWindowResizeEvent = function(node, id) {
+	u.e.addEvent(window, "resize", window["_Onresize_" + id]);
 }
 
-// probably just use on event listener and make it call all appropriate callbacks on registrered nodes
-u.e.addScrollEvent = function(node, action) {
+// create window scroll event listener with callback to node.action
+// returns hidden mapping id, to enable event removal
+u.e.addWindowScrollEvent = function(node, action) {
+	var id = u.randomString();
+	u.ac(node, id);
+	eval('window["_Onscroll_' + id + '"] = function() {var node = u.qs(".'+id+'"); node._Onscroll_'+id+' = '+action+'; node._Onscroll_'+id+'();}');
 
+	u.e.addEvent(window, "scroll", window["_Onscroll_" + id]);
+	return id;
 }
-u.e.removeScrollEvent = function(node, action) {
-
+// Remove window scroll event from node based on hidden id
+u.e.removeWindowScrollEvent = function(node, id) {
+	u.e.addEvent(window, "scroll", window["_Onscroll_" + id]);
 }
 
