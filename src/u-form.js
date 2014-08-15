@@ -1370,12 +1370,21 @@ Util.Form = u.f = new function() {
 
 	// inject HTML editor
 	this.textEditor = function(field) {
-		
+
+		u.bug("init editor")
+
 		field._viewer = u.ae(field, "div", {"class":"viewer"});
 		field._editor = u.ae(field, "div", {"class":"editor targets:tag"});
 
+
+		field.allowed_tags = u.cv(field, "tags");
+		field.allowed_tags = field.allowed_tags ? field.allowed_tags.split(",") : false;
+		u.xInObject(field.allowed_tags)
+
 		// add new formatting node
 		field.add = function(type, value) {
+
+			this._tag_restrictions = new RegExp(/^(p|h1|h2|h3|h4|h5|h6|ul|dl|code)$/);
 
 			var div = u.ae(this._editor, "div", {"class":"tag "+type});
 
@@ -1386,13 +1395,21 @@ Util.Form = u.f = new function() {
 
 			// type selector
 			div._select = u.ae(div, "ul", {"class":"type"});
-			u.ae(div._select, "li", {"html":"p"});
-			u.ae(div._select, "li", {"html":"h1"});
-			u.ae(div._select, "li", {"html":"h2"});
-			u.ae(div._select, "li", {"html":"h3"});
-			u.ae(div._select, "li", {"html":"h4"});
-			u.ae(div._select, "li", {"html":"h5"});
-			u.ae(div._select, "li", {"html":"h6"});
+
+			var i, tag;
+			for(i = 0; tag = this.allowed_tags[i]; i++) {
+				if(tag.match(this._tag_restrictions)) {
+					u.ae(div._select, "li", {"html":tag, "class":tag});
+				}
+			}
+			// u.ae(div._select, "li", {"html":"p"});
+			// u.ae(div._select, "li", {"html":"h1"});
+			// u.ae(div._select, "li", {"html":"h2"});
+			// u.ae(div._select, "li", {"html":"h3"});
+			// u.ae(div._select, "li", {"html":"h4"});
+			// u.ae(div._select, "li", {"html":"h5"});
+			// u.ae(div._select, "li", {"html":"h6"});
+			// u.ae(div._select, "li", {"html":"code", "class":"code"});
 
 
 			div._select.field = this;
@@ -1418,7 +1435,8 @@ Util.Form = u.f = new function() {
 							return option;
 						}
 					}
-					return false;
+					return this.childNodes[0];
+//					return false;
 				}
 				else {
 					return u.text(this.selected_option);
@@ -1641,7 +1659,7 @@ Util.Form = u.f = new function() {
 				}
 
 				// no value, enter deletable state
-				else if(!this.val()) {
+				else if(!this.val() || !this.val().replace(/<br>/, "")) {
 					this.is_deletable = true;
 				}
 
@@ -1781,7 +1799,7 @@ Util.Form = u.f = new function() {
 						u.t.resetTimer(this.node.t_out);
 					}
 					this.bn_delete.out = function(event) {
-						this.node.t_out = u.t.setTimer(this, this.node.reallyout, 300);
+						this.node.t_out = u.t.setTimer(this.node, this.node.reallyout, 300);
 					}
 					u.e.addEvent(this.bn_delete, "mouseover", this.bn_delete.over);
 					u.e.addEvent(this.bn_delete, "mouseout", this.bn_delete.out);
@@ -1818,7 +1836,7 @@ Util.Form = u.f = new function() {
 
 		// activate existing inline formatting
 		field.activateInlineFormatting = function(input) {
-			
+
 			var i, node;
 			var inline_tags = u.qsa("a,strong,em", input);
 
@@ -1962,7 +1980,7 @@ Util.Form = u.f = new function() {
 					}
 				}
 				// valid node
-				else if(node.nodeName.toLowerCase().match(/^(p|h1|h2|h3|h4|h5|h6|ul|dl)$/)) {
+				else if(node.nodeName.toLowerCase().match(field._tag_restrictions)) {
 
 					value = node.innerHTML.replace(/\n\r|\n|\r/g, "<br>"); // .replace(/\<br[\/]?\>/g, "\n");
 					tag = field.add(node.nodeName.toLowerCase(), value);
@@ -2026,7 +2044,7 @@ Util.Form = u.f = new function() {
 			var i, node, tag, value, html = "";
 
 			for(i = 0; node = tags[i]; i++) {
-				u.bug(u.nodeId(node));
+//				u.bug(u.nodeId(node));
 				value = node._input.val();
 				 //.replace(/\n\r|\n|\r/g, "<br>");
 				tag = node._select.val();

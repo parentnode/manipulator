@@ -271,7 +271,7 @@ Util.clickableElement = u.ce = function(node, options) {
 Util.classVar = u.cv = function(node, var_name) {
 //	u.bug(u.nodeId(node) + ":" + node.className);
 	try {
-		var regexp = new RegExp(var_name + ":[?=\\w/\\#~:.?+=?&%@!\\-]*");
+		var regexp = new RegExp(var_name + ":[?=\\w/\\#~:.,?+=?&%@!\\-]*");
 		if(node.className.match(regexp)) {
 			return node.className.match(regexp)[0].replace(var_name + ":", "");
 		}

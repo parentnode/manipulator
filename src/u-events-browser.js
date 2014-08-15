@@ -58,7 +58,8 @@ u.e.addWindowResizeEvent = function(node, action) {
 	return id;
 }
 u.e.removeWindowResizeEvent = function(node, id) {
-	u.e.addEvent(window, "resize", window["_Onresize_" + id]);
+	u.rc(node, id);
+	u.e.removeEvent(window, "resize", window["_Onresize_" + id]);
 }
 
 // create window scroll event listener with callback to node.action
@@ -73,6 +74,38 @@ u.e.addWindowScrollEvent = function(node, action) {
 }
 // Remove window scroll event from node based on hidden id
 u.e.removeWindowScrollEvent = function(node, id) {
-	u.e.addEvent(window, "scroll", window["_Onscroll_" + id]);
+	u.rc(node, id);
+	u.e.removeEvent(window, "scroll", window["_Onscroll_" + id]);
+}
+
+
+
+// Move event on window with rerouting of event
+u.e.addWindowMoveEvent = function(node, action) {
+	var id = u.randomString();
+	u.ac(node, id);
+	eval('window["_Onmove_' + id + '"] = function(event) {var node = u.qs(".'+id+'"); node._Onmove_'+id+' = '+action+'; node._Onmove_'+id+'(event);}');
+
+	u.e.addMoveEvent(window, window["_Onmove_" + id]);
+	return id;
+}
+u.e.removeWindowMoveEvent = function(node, id) {
+	u.rc(node, id);
+	u.e.removeMoveEvent(window, window["_Onmove_" + id]);
+}
+
+
+// End event on window with rerouting of event
+u.e.addWindowEndEvent = function(node, action) {
+	var id = u.randomString();
+	u.ac(node, id);
+	eval('window["_Onend_' + id + '"] = function(event) {var node = u.qs(".'+id+'"); node._Onend_'+id+' = '+action+'; u.bug("event:" + u.nodeId(event.target, true)); u.bug("no:" + u.nodeId(node, true)); node._Onend_'+id+'(event);}');
+
+	u.e.addEndEvent(window, window["_Onend_" + id]);
+	return id;
+}
+u.e.removeWindowEndEvent = function(node, id) {
+	u.rc(node, id);
+	u.e.removeEndEvent(window, window["_Onend_" + id]);
 }
 
