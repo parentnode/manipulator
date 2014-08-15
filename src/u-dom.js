@@ -429,3 +429,41 @@ Util.hasFixedParent = u.hfp = function(node) {
 	}
 	return false;
 }
+
+
+
+// FOR CONSIDERATION
+
+// is node in NodeList
+Util.inNodeList = function(node, list) {
+
+	var i, list_node;
+	for(i = 0; list_node = list[i]; i++) {
+		if(list_node = node) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+// is node within scope
+Util.nodeWithin = u.nw = function(node, scope) {
+	var node_key = u.randomString(8);
+	var scope_key = u.randomString(8);
+	u.ac(node, node_key);
+	u.ac(scope, scope_key);
+
+	if(u.qs("."+scope_key+" ."+node_key)) {
+
+		u.rc(node, node_key);
+		u.rc(scope, scope_key);
+
+		return true;
+	}
+
+	u.rc(node, node_key);
+	u.rc(scope, scope_key);
+	return false;
+}
+
