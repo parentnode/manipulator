@@ -83,10 +83,6 @@ Util.Form = u.f = new function() {
 			// // get input label, hint and error
 			// field._label = u.qs("label", field);
 
-
-			// TODO: Help element needs to be refined. 
-			// Is currently semi positioned to iN element, but should be done better
-			// positioning happens in this._blur, this._focus, this.fieldError
 			field._help = u.qs(".help", field);
 			field._hint = u.qs(".hint", field);
 			field._error = u.qs(".error", field);
@@ -181,11 +177,11 @@ Util.Form = u.f = new function() {
 					// get input label
 					field._input._label = u.qs("label[for="+field._input.id+"]", field);
 
-					// get/set value function
-					field._input.val = this._value;
-
 					// create textEditor interface
 					this.textEditor(field);
+
+					// validate field now
+					this.validate(field._input);
 				}
 
 				// select initialization
@@ -312,6 +308,31 @@ Util.Form = u.f = new function() {
 					}
 				}
 
+				// file input initialization
+				else if(u.hc(field, "files")) {
+
+					field._input = u.qs("input", field);
+					field._input.field = field;
+
+					// add input to fields array
+					form.fields[field._input.name] = field._input;
+
+					// get input label
+					field._input._label = u.qs("label[for="+field._input.id+"]", field);
+
+					// change and update event
+					u.e.addEvent(field._input, "change", this._updated);
+					u.e.addEvent(field._input, "change", this._changed);
+
+					// create file upload interface
+					this.fileUpload(field);
+
+					// validate field now
+					this.validate(field._input);
+
+				}
+
+
 
 				// TODO: the rest still needs to be migrated from formIndex
 
@@ -356,18 +377,6 @@ Util.Form = u.f = new function() {
 					this.formIndex(form, field._input);
 				}
 
-				// file input initialization
-				else if(u.hc(field, "files")) {
-
-					field._input = u.qs("input", field);
-					field._input.field = field;
-
-					// get input label
-					field._input._label = u.qs("label[for="+field._input.id+"]", field);
-
-					// add to form index
-					this.formIndex(form, field._input);
-				}
 
 				// location field initialization
 				else if(u.hc(field, "location")) {
@@ -726,80 +735,87 @@ Util.Form = u.f = new function() {
 			// textarea
 			else if(iN.nodeName.match(/textarea/i)) {
 
-				iN.val = this._value;
+				alert("unexpected formIndex in u.form");
 
-				u.e.addEvent(iN, "keyup", this._updated);
-				u.e.addEvent(iN, "change", this._changed);
+				// iN.val = this._value;
+				//
+				// u.e.addEvent(iN, "keyup", this._updated);
+				// u.e.addEvent(iN, "change", this._changed);
 
 			}
 			// select
 			else if(iN.nodeName.match(/select/i)) {
 
-				iN.val = this._value_select;
+				alert("unexpected formIndex in u.form");
 
-				u.e.addEvent(iN, "change", this._updated);
-				u.e.addEvent(iN, "keyup", this._updated);
-				u.e.addEvent(iN, "change", this._changed);
+				// iN.val = this._value_select;
+				//
+				// u.e.addEvent(iN, "change", this._updated);
+				// u.e.addEvent(iN, "keyup", this._updated);
+				// u.e.addEvent(iN, "change", this._changed);
 			}
 			// type=checkbox
 			else if(iN.type && iN.type.match(/checkbox/)) {
 
-				iN.val = this._value_checkbox;
+				alert("unexpected formIndex in u.form");
 
-				// special setting for IE8 and less (bad onchange handler)
-				if(u.browser("explorer", "<=8")) {
-					iN.pre_state = iN.checked;
-					iN._changed = u.f._changed;
-					iN._updated = u.f._updated;
-					iN._clicked = function(event) {
-						if(this.checked != this.pre_state) {
-							this._changed(window.event);
-							this._updated(window.event);
-						}
-						this.pre_state = this.checked;
-					}
-					u.e.addEvent(iN, "click", iN._clicked);
-
-				}
-				else {
-					u.e.addEvent(iN, "change", this._updated);
-					u.e.addEvent(iN, "change", this._changed);
-				}
-
-				// submit on enter (checks for autocomplete etc)
-				this.inputOnEnter(iN);
+				// iN.val = this._value_checkbox;
+				//
+				// // special setting for IE8 and less (bad onchange handler)
+				// if(u.browser("explorer", "<=8")) {
+				// 	iN.pre_state = iN.checked;
+				// 	iN._changed = u.f._changed;
+				// 	iN._updated = u.f._updated;
+				// 	iN._clicked = function(event) {
+				// 		if(this.checked != this.pre_state) {
+				// 			this._changed(window.event);
+				// 			this._updated(window.event);
+				// 		}
+				// 		this.pre_state = this.checked;
+				// 	}
+				// 	u.e.addEvent(iN, "click", iN._clicked);
+				//
+				// }
+				// else {
+				// 	u.e.addEvent(iN, "change", this._updated);
+				// 	u.e.addEvent(iN, "change", this._changed);
+				// }
+				//
+				// // submit on enter (checks for autocomplete etc)
+				// this.inputOnEnter(iN);
 			}
 			// type=radio
 			else if(iN.type && iN.type.match(/radio/)) {
 			
-				iN.val = this._value_radio;
+				alert("unexpected formIndex in u.form");
 
-				// special setting for IE8 and less (bad onchange handler)
-				if(u.browser("explorer", "<=8")) {
-					iN.pre_state = iN.checked;
-					iN._changed = u.f._changed;
-					iN._updated = u.f._updated;
-					iN._clicked = function(event) {
-						var i, input;
-						if(this.checked != this.pre_state) {
-							this._changed(window.event);
-							this._updated(window.event);
-						}
-						// update prestates for all radios in set
-						for(i = 0; input = this.field._input[i]; i++) {
-							input.pre_state = input.checked;
-						}
-					}
-					u.e.addEvent(iN, "click", iN._clicked);
-				}
-				else {
-					u.e.addEvent(iN, "change", this._updated);
-					u.e.addEvent(iN, "change", this._changed);
-				}
-
-				// submit on enter (checks for autocomplete etc)
-				this.inputOnEnter(iN);
-
+				// iN.val = this._value_radio;
+				//
+				// // special setting for IE8 and less (bad onchange handler)
+				// if(u.browser("explorer", "<=8")) {
+				// 	iN.pre_state = iN.checked;
+				// 	iN._changed = u.f._changed;
+				// 	iN._updated = u.f._updated;
+				// 	iN._clicked = function(event) {
+				// 		var i, input;
+				// 		if(this.checked != this.pre_state) {
+				// 			this._changed(window.event);
+				// 			this._updated(window.event);
+				// 		}
+				// 		// update prestates for all radios in set
+				// 		for(i = 0; input = this.field._input[i]; i++) {
+				// 			input.pre_state = input.checked;
+				// 		}
+				// 	}
+				// 	u.e.addEvent(iN, "click", iN._clicked);
+				// }
+				// else {
+				// 	u.e.addEvent(iN, "change", this._updated);
+				// 	u.e.addEvent(iN, "change", this._changed);
+				// }
+				//
+				// // submit on enter (checks for autocomplete etc)
+				// this.inputOnEnter(iN);
 
 			}
 
@@ -807,21 +823,23 @@ Util.Form = u.f = new function() {
 			// type=file
 			else if(iN.type && iN.type.match(/file/)) {
 
-				iN.val = function(value) {
-					if(value !== undefined) {
-						alert('adding values manually to input type="file" is not supported')
-					}
-					else {
-						var i, file, files = [];
-						for(i = 0; file = this.files[i]; i++) {
-							files.push(file);
-						}
-						return files.join(",");
-					}
-				}
+				alert("unexpected formIndex in u.form");
 
-				u.e.addEvent(iN, "keyup", this._updated);
-				u.e.addEvent(iN, "change", this._changed);
+				// iN.val = function(value) {
+				// 	if(value !== undefined) {
+				// 		alert('adding values manually to input type="file" is not supported')
+				// 	}
+				// 	else {
+				// 		var i, file, files = [];
+				// 		for(i = 0; file = this.files[i]; i++) {
+				// 			files.push(file);
+				// 		}
+				// 		return files.join(",");
+				// 	}
+				// }
+				//
+				// u.e.addEvent(iN, "keyup", this._updated);
+				// u.e.addEvent(iN, "change", this._changed);
 
 			}
 
@@ -916,6 +934,52 @@ Util.Form = u.f = new function() {
 		}
 	}
 
+
+	// position hint appropriately to input
+	this.positionHint = function(field) {
+
+		// is help element available, then position it appropriately to input
+		if(field._help) {
+			var f_h =  field.offsetHeight;
+			var f_p_t = parseInt(u.gcs(field, "padding-top"));
+			var f_p_b = parseInt(u.gcs(field, "padding-bottom"));
+			var f_b_t = parseInt(u.gcs(field, "border-top-width"));
+			var f_b_b = parseInt(u.gcs(field, "border-bottom-width"));
+			var f_h_h = field._help.offsetHeight;
+
+//			u.bug(f_b_t + ", " + f_b_b)
+//			u.bug("((" + f_h + " - (" + f_p_t + "+" + f_p_b + ")) / 2) + 2 = " + (((f_h - (f_p_t + f_p_b)) / 2) + 2));
+//			u.bug("(" + (((f_h - (f_p_t + f_p_b)) / 2) + 2) + ")" + " - " + "(" + (f_h_h / 2) + ")");
+
+			u.as(field._help, "top", (((f_h - (f_p_t + f_p_b + f_b_b + f_b_t)) / 2) + 2) - (f_h_h / 2) + "px");
+		}
+
+		
+	}
+
+	// internal mouseenter handler - attatched to inputs
+	this._mouseenter = function(event) {
+		u.ac(this.field, "hover");
+		u.ac(this, "hover");
+
+		u.as(this.field, "zIndex", 99);
+
+		u.f.positionHint(this.field);
+	}
+	// internal mouseleave handler - attatched to inputs
+	this._mouseleave = function(event) {
+		u.rc(this.field, "hover");
+		u.rc(this, "hover");
+
+		u.as(this.field, "zIndex", 90);
+
+
+		// is help element available, then position it appropriately to input
+		// it might still be shown, is error has occured
+		u.f.positionHint(this.field);
+	}
+
+
 	// internal focus handler - attatched to inputs
 	this._focus = function(event) {
 		this.field.focused = true;
@@ -924,19 +988,7 @@ Util.Form = u.f = new function() {
 
 		u.as(this.field, "zIndex", 99);
 
-		// is help element available, then position it appropriately to input
-		if(this.field._help) {
-			var f_h =  this.field.offsetHeight;
-			var f_p_t = parseInt(u.gcs(this.field, "padding-top"));
-			var f_p_b = parseInt(u.gcs(this.field, "padding-bottom"));
-			var f_h_h = this.field._help.offsetHeight;
-
-			// u.bug("((" + f_h + " - (" + f_p_t + "+" + f_p_b + ")) / 2) + 2 = " + (((f_h - (f_p_t + f_p_b)) / 2) + 2));
-			// u.bug("(" + (((f_h - (f_p_t + f_p_b)) / 2) + 2) + ")" + " - " + "(" + (f_h_h / 2) + ")");
-
-			u.as(this.field._help, "top", (((f_h - (f_p_t + f_p_b)) / 2) + 2) - (f_h_h / 2) + "px");
-		}
-
+		u.f.positionHint(this.field);
 
 		if(typeof(this.focused) == "function") {
 			this.focused();
@@ -956,9 +1008,7 @@ Util.Form = u.f = new function() {
 
 		// is help element available, then position it appropriately to input
 		// it might still be shown, is error has occured
-		if(this.field._help) {
-			u.as(this.field._help, "top", ((this.offsetTop + this.offsetHeight/2 + 2) - (this.field._help.offsetHeight/2)) + "px")
-		}
+		u.f.positionHint(this.field);
 
 
 		// field has been interacted with
@@ -1020,6 +1070,12 @@ Util.Form = u.f = new function() {
 
 		u.e.addEvent(iN, "focus", this._focus);
 		u.e.addEvent(iN, "blur", this._blur);
+
+		// added accessibility
+		if(u.e.event_pref == "mouse") {
+			u.e.addEvent(iN, "mouseenter", this._mouseenter);
+			u.e.addEvent(iN, "mouseleave", this._mouseleave);
+		}
 
 		// validate on field blur
 		u.e.addEvent(iN, "blur", this._validate);
@@ -1175,6 +1231,40 @@ Util.Form = u.f = new function() {
 		u.e.addEvent(iN, "keyup", iN.setHeight);
 
 		iN.setHeight();
+	}
+
+
+	// enable file upload interface
+	this.fileUpload = function(field) {
+
+		// activate field mouse/drag interaction
+		if(u.e.event_pref == "mouse") {
+			u.e.addEvent(field._input, "dragenter", this._focus);
+			u.e.addEvent(field._input, "dragleave", this._blur);
+
+			u.e.addEvent(field._input, "mouseenter", this._mouseenter);
+			u.e.addEvent(field._input, "mouseleave", this._mouseleave);
+		}
+
+		// validate on field blur
+		u.e.addEvent(field._input, "blur", this._validate);
+
+		// custom val() function for file inputs
+		field._input.val = function(value) {
+			if(value !== undefined) {
+				this.value = value;
+//				alert('adding values manually to input type="file" is not supported')
+			}
+			else {
+				var i, file, files = [];
+				for(i = 0; file = this.files[i]; i++) {
+					files.push(file);
+				}
+				return files;
+//				return files.join(",");
+			}
+		}
+
 	}
 
 
@@ -1375,6 +1465,11 @@ Util.Form = u.f = new function() {
 
 		field._viewer = u.ae(field, "div", {"class":"viewer"});
 		field._editor = u.ae(field, "div", {"class":"editor targets:tag"});
+
+
+		// TODO: update to specific val function
+		// get/set value function
+		field._input.val = this._value;
 
 
 		field.allowed_tags = u.cv(field, "tags");
@@ -2261,6 +2356,8 @@ Util.Form = u.f = new function() {
 				}
 			}
 
+
+
 			// TODO: needs to be tested
 			// select validation
 			else if(u.hc(iN.field, "select")) {
@@ -2283,6 +2380,8 @@ Util.Form = u.f = new function() {
 					this.fieldError(iN);
 				}
 			}
+
+
 
 			// string validation (has been known to exist on other types, so leave it last giving other types precedence)
 			else if(u.hc(iN.field, "string")) {
@@ -2425,10 +2524,15 @@ Util.Form = u.f = new function() {
 			// files validation
 			else if(u.hc(iN.field, "files")) {
 
-				u.bug("files:" + iN.files.length);
+				// min and max length
+				min = Number(u.cv(iN.field, "min"));
+				max = Number(u.cv(iN.field, "max"));
+				min = min ? min : 1;
+				max = max ? max : 10000000;
 
 				if(
-					1
+					iN.val().length >= min && 
+					iN.val().length <= max
 				) {
 					this.fieldCorrect(iN);
 				}
