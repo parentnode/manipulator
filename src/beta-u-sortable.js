@@ -421,6 +421,8 @@ Util.Sort = u.s = new function() {
 
 u.sortable = function(scope, options) {
 
+	u.bug("u.sortable init")
+
 	scope.callback_picked = "picked";
 	scope.callback_moved = "moved";
 	scope.callback_dropped = "dropped";
@@ -718,7 +720,7 @@ u.sortable = function(scope, options) {
 					var o_top = u.absY(node);
 //					var o_height = node.offsetHeight;
 					var o_height = this.draggable_node_height;
-					u.bug("o_height:" + o_height);
+//					u.bug("o_height:" + o_height);
 
 					// overlap with element
 				 	if(event_y > o_top && event_y < o_top + o_height) {
@@ -889,7 +891,12 @@ u.sortable = function(scope, options) {
 		return node.parentNode.relation_id;
 	}
 
-
+	// remove drag start event from node
+	// if a node is no longer active in drag structure
+	scope.disableNodeDrag = function(node) {
+		u.bug("disableNodeDrag:" + u.nodeId(node))
+		u.e.removeStartEvent(node.drag, this._sortablepick);
+	}
 
 	// base initialization of targets and draggables
 	var i, j, d_node;
@@ -901,6 +908,11 @@ u.sortable = function(scope, options) {
 	}
 	else {
 		scope.draggable_nodes = u.qsa("."+scope.draggables, scope);
+	}
+
+	// no draggable nodes found, sorting is impossible
+	if(!scope.draggable_nodes.length) {
+		return;
 	}
 
 	// save global node height
@@ -953,7 +965,7 @@ u.sortable = function(scope, options) {
 	// set up dragables
 	for(i = 0; d_node = scope.draggable_nodes[i]; i++) {
 
-//		u.bug("d_node:" + u.nodeId(d_node));
+		u.bug("d_node:" + u.nodeId(d_node));
 
 		// remember wrapper
 		d_node.scope = scope;
@@ -987,6 +999,9 @@ u.sortable = function(scope, options) {
 
 			}
 		}
+
+		// remove existing start handler (to be able to reinitialize scope without double events)
+		u.e.removeStartEvent(d_node.drag, scope._sortablepick);
 
 		// set start drag event handler
 		u.e.addStartEvent(d_node.drag, scope._sortablepick);
