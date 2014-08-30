@@ -1614,6 +1614,9 @@ Util.Form = u.f = new function() {
 			u.e.addEvent(div._input, "focus", this._focused_content);
 			u.e.addEvent(div._input, "blur", this._blurred_content);
 
+			// add paste event handler
+			u.e.addEvent(div._input, "paste", this._pasted_content);
+
 			return div;
 		}
 
@@ -1623,6 +1626,7 @@ Util.Form = u.f = new function() {
 			u.ac(this.div, "focus");
 
 			// if tabbing to gain focus, move cursor to end
+			// TODO: does not always detect tabbing
 			if(event.rangeOffset == 1) {
 				var range = document.createRange();
 				range.selectNodeContents(this);
@@ -1662,6 +1666,42 @@ Util.Form = u.f = new function() {
 				u.e.kill(event);
 			}
 
+		}
+
+		// clean pasted content - first version
+		field._pasted_content = function(event) {
+			u.e.kill(event);
+
+			var i, node;
+			var paste_content = event.clipboardData.getData("text/plain");
+
+			// only do anything if paste content is not empty
+			if(paste_content !== "") {
+				// add break tags for newlines
+				var paste_parts = paste_content.split(/\n\r|\n|\r/g);
+				var text_nodes = [];
+				for(i = 0; text = paste_parts[i]; i++) {
+					text_nodes.push(document.createTextNode(text));
+					text_nodes.push(document.createElement("br"));
+				}
+
+ 				var text_node = document.createTextNode(paste_content);
+				for(i = text_nodes.length-1; node = text_nodes[i]; i--) {
+					window.getSelection().getRangeAt(0).insertNode(node);
+				}
+
+				// position cursor at end
+				var range = document.createRange();
+				range.selectNodeContents(this);
+				range.collapse(false);
+
+				var selection = window.getSelection();
+				selection.removeAllRanges();
+				selection.addRange(range);
+			}
+
+			// u.bug("pasted content:" + event.clipboardData.getData("text/plain"));
+			// u.bug("pasted content:" + event.clipboardData.getData("text/html"));
 		}
 
 		// attached to div._input node
@@ -2104,7 +2144,7 @@ Util.Form = u.f = new function() {
 
 
 		// enable dragging of html-tags
-		u.s.sortable(field._editor);
+		u.sortable(field._editor);
 
 
 
