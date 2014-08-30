@@ -99,7 +99,7 @@ u.e.removeWindowMoveEvent = function(node, id) {
 u.e.addWindowEndEvent = function(node, action) {
 	var id = u.randomString();
 	u.ac(node, id);
-	eval('window["_Onend_' + id + '"] = function(event) {var node = u.qs(".'+id+'"); node._Onend_'+id+' = '+action+'; u.bug("event:" + u.nodeId(event.target, true)); u.bug("no:" + u.nodeId(node, true)); node._Onend_'+id+'(event);}');
+	eval('window["_Onend_' + id + '"] = function(event) {var node = u.qs(".'+id+'"); node._Onend_'+id+' = '+action+'; node._Onend_'+id+'(event);}');
 
 	u.e.addEndEvent(window, window["_Onend_" + id]);
 	return id;
