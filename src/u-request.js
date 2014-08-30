@@ -97,7 +97,8 @@ Util.request = u.request = function(node, url, settings) {
 
 				// stringify possible JSON object
 				var params;
-//				u.bug("params typeof:" + typeof(node.request_params) + ", " +node.request_params.constructor.toString().match(/FormData/i));
+//				u.bug("params typeof:" + typeof(node[request_id].request_params) + ", " + node[request_id].request_params.constructor.toString().match(/FormData/i));
+
 				if(typeof(node[request_id].request_params) == "object" && !node[request_id].request_params.constructor.toString().match(/FormData/i)) {
 					params = JSON.stringify(node[request_id].request_params);
 				}
@@ -105,8 +106,13 @@ Util.request = u.request = function(node, url, settings) {
 					params = node[request_id].request_params;
 				}
 
+				// open connection
 				node[request_id].HTTPRequest.open(node[request_id].request_method, node[request_id].request_url, node[request_id].request_async);
-				node[request_id].HTTPRequest.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+
+				// use appropriate header
+				if(!params.constructor.toString().match(/FormData/i)) {
+					node[request_id].HTTPRequest.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+				}
 
 				// rails form proofing
 				var csfr_field = u.qs('meta[name="csrf-token"]');
