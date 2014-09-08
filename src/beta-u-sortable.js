@@ -421,7 +421,7 @@ Util.Sort = u.s = new function() {
 
 u.sortable = function(scope, options) {
 
-	u.bug("u.sortable init")
+	u.bug("u.sortable init: " + u.nodeId(scope))
 
 	scope.callback_picked = "picked";
 	scope.callback_moved = "moved";
@@ -534,7 +534,6 @@ u.sortable = function(scope, options) {
 		}
 
 	}
-
 
 	// drag element
 	// event handling on document.body
@@ -695,8 +694,6 @@ u.sortable = function(scope, options) {
 	}
 
 
-	// TODO: detect whether to inject in sub-UL
-
 
 	// detect overlap based on mouse position and inject target accordingly
 	scope.detectAndInject = function(event_x, event_y) {
@@ -832,6 +829,7 @@ u.sortable = function(scope, options) {
 		}
 	}
 
+
 	// get current structure
 	scope.getStructure = function() {
 
@@ -860,7 +858,6 @@ u.sortable = function(scope, options) {
 		return structure;
 	}
 	
-
 	// get position of node in list
 	scope.getPositionInList = function(node) {
 
@@ -922,13 +919,18 @@ u.sortable = function(scope, options) {
 	// defined targets to drop on or just all ul's
 	if(!scope.targets) {
 		scope.target_nodes = u.qsa("ul", scope);
+		u.bug("node.target_nodes_ul:" + " ("+scope.targets+")" + scope.target_nodes.length);
 	}
 	else {
 		scope.target_nodes = u.qsa("."+scope.targets, scope);
+		u.bug("node.target_nodes_qsa:" + " ("+scope.targets+")" + scope.target_nodes.length);
 	}
 
+	u.bug("node.target_nodes_a:" + scope.target_nodes.length);
+
 	// add scope to target_nodes if it is valid
-	if(scope.nodeName == "UL" && (!scope.targets || u.hc(scope, scope.targets))) {
+	//if(scope.nodeName == "UL" && (!scope.targets || u.hc(scope, scope.targets))) {
+	if((!scope.targets || u.hc(scope, scope.targets))) {
 		if(scope.target_nodes.length) {
 			var temp_scope = scope.target_nodes;
 			scope.target_nodes = [scope];
@@ -943,7 +945,7 @@ u.sortable = function(scope, options) {
 	}
 
 //	u.bug("node.draggable_nodes:" + scope.draggable_nodes.length);
-//	u.bug("node.target_nodes:" + scope.target_nodes.length);
+	u.bug("node.target_nodes_b:" + scope.target_nodes.length);
 
 
 
