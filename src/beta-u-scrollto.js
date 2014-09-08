@@ -60,7 +60,7 @@ u.scrollTo = function(to, options) {
 
 
 	scrollIn._scroll_direction = scrollIn._to_y - u.scrollY();
-
+//	u.bug("scrollIn._scroll_direction:" + scrollIn._scroll_direction)
 
 	// _scroll_to_y is the value to scroll to in next event
 	scrollIn._scroll_to_y = false;
