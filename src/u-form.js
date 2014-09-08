@@ -19,7 +19,7 @@ Util.Form = u.f = new function() {
 
 
 	this.init = function(form, settings) {
-//		u.bug("init form")
+//		u.bug("init form:" + u.nodeId(form));
 		var i, j, field, action, input;
 
 		// prepared for additional settings - NOT used now
@@ -939,26 +939,34 @@ Util.Form = u.f = new function() {
 	this.positionHint = function(field) {
 
 		// is help element available, then position it appropriately to input
-		if(field._help) {
-			var f_h =  field.offsetHeight;
-			var f_p_t = parseInt(u.gcs(field, "padding-top"));
-			var f_p_b = parseInt(u.gcs(field, "padding-bottom"));
-			var f_b_t = parseInt(u.gcs(field, "border-top-width"));
-			var f_b_b = parseInt(u.gcs(field, "border-bottom-width"));
-			var f_h_h = field._help.offsetHeight;
+		// custom for HTML fields
+		var f_h =  field.offsetHeight;
+		var f_p_t = parseInt(u.gcs(field, "padding-top"));
+		var f_p_b = parseInt(u.gcs(field, "padding-bottom"));
+		var f_b_t = parseInt(u.gcs(field, "border-top-width"));
+		var f_b_b = parseInt(u.gcs(field, "border-bottom-width"));
+		var f_h_h = field._help.offsetHeight;
+
+		if(field._help && u.hc(field, "html")) {
+
+			var l_h = field._input._label.offsetHeight;
+			var help_top = (((f_h - (f_p_t + f_p_b + f_b_b + f_b_t)) / 2)) - (f_h_h / 2) + l_h;
+			u.as(field._help, "top", help_top + "px");
+		}
+		else if(field._help) {
 
 //			u.bug(f_b_t + ", " + f_b_b)
 //			u.bug("((" + f_h + " - (" + f_p_t + "+" + f_p_b + ")) / 2) + 2 = " + (((f_h - (f_p_t + f_p_b)) / 2) + 2));
 //			u.bug("(" + (((f_h - (f_p_t + f_p_b)) / 2) + 2) + ")" + " - " + "(" + (f_h_h / 2) + ")");
-
-			u.as(field._help, "top", (((f_h - (f_p_t + f_p_b + f_b_b + f_b_t)) / 2) + 2) - (f_h_h / 2) + "px");
+			var help_top = (((f_h - (f_p_t + f_p_b + f_b_b + f_b_t)) / 2) + 2) - (f_h_h / 2)
+			u.as(field._help, "top", help_top + "px");
 		}
 
-		
 	}
 
 	// internal mouseenter handler - attatched to inputs
 	this._mouseenter = function(event) {
+//		u.bug("this._mouseenter:" + u.nodeId(this.field));
 		u.ac(this.field, "hover");
 		u.ac(this, "hover");
 
@@ -968,11 +976,11 @@ Util.Form = u.f = new function() {
 	}
 	// internal mouseleave handler - attatched to inputs
 	this._mouseleave = function(event) {
+//		u.bug("this._mouseleave:" + u.nodeId(this.field));
 		u.rc(this.field, "hover");
 		u.rc(this, "hover");
 
 		u.as(this.field, "zIndex", 90);
-
 
 		// is help element available, then position it appropriately to input
 		// it might still be shown, is error has occured
@@ -1135,9 +1143,7 @@ Util.Form = u.f = new function() {
 			u.ac(iN.field, "error");
 
 			// if help element is available
-			if(iN.field._help) {
-				u.as(iN.field._help, "top", ((iN.offsetTop + iN.offsetHeight/2 + 2) - (iN.field._help.offsetHeight/2)) + "px")
-			}
+			this.positionHint(iN.field);
 
 			// input validation failed
 			if(typeof(iN.validationFailed) == "function") {
@@ -1464,7 +1470,8 @@ Util.Form = u.f = new function() {
 		u.bug("init editor")
 
 		field._viewer = u.ae(field, "div", {"class":"viewer"});
-		field._editor = u.ae(field, "div", {"class":"editor targets:tag"});
+		field._editor = u.ae(field, "div", {"class":"editor"});
+
 
 
 		// TODO: update to specific val function
@@ -1497,15 +1504,6 @@ Util.Form = u.f = new function() {
 					u.ae(div._select, "li", {"html":tag, "class":tag});
 				}
 			}
-			// u.ae(div._select, "li", {"html":"p"});
-			// u.ae(div._select, "li", {"html":"h1"});
-			// u.ae(div._select, "li", {"html":"h2"});
-			// u.ae(div._select, "li", {"html":"h3"});
-			// u.ae(div._select, "li", {"html":"h4"});
-			// u.ae(div._select, "li", {"html":"h5"});
-			// u.ae(div._select, "li", {"html":"h6"});
-			// u.ae(div._select, "li", {"html":"code", "class":"code"});
-
 
 			div._select.field = this;
 			div._select.div = div;
@@ -1543,6 +1541,8 @@ Util.Form = u.f = new function() {
 
 			u.ce(div._select);
 			div._select.clicked = function(event) {
+				u.bug("select clicked");
+
 				if(u.hc(this, "open")) {
 					u.rc(this, "open");
 					u.rc(this.div, "focus");
@@ -1614,6 +1614,11 @@ Util.Form = u.f = new function() {
 			u.e.addEvent(div._input, "focus", this._focused_content);
 			u.e.addEvent(div._input, "blur", this._blurred_content);
 
+			if(u.e.event_pref == "mouse") {
+				u.e.addEvent(div._input, "mouseenter", u.f._mouseenter);
+				u.e.addEvent(div._input, "mouseleave", u.f._mouseleave);
+			}
+
 			// add paste event handler
 			u.e.addEvent(div._input, "paste", this._pasted_content);
 
@@ -1622,8 +1627,15 @@ Util.Form = u.f = new function() {
 
 		// gained focus on individual text-tag
 		field._focused_content = function(event) {
+//			u.bug("field._focused_content");
 
 			u.ac(this.div, "focus");
+			this.field.focused = true;
+			u.ac(this.field, "focus");
+
+			u.as(this.field, "zIndex", 99);
+
+			u.f.positionHint(this.field);
 
 			// if tabbing to gain focus, move cursor to end
 			// TODO: does not always detect tabbing
@@ -1642,6 +1654,12 @@ Util.Form = u.f = new function() {
 //			u.bug("_blurred_content:" + this.val());
 
 			u.rc(this.div, "focus");
+			this.field.focused = false;
+			u.rc(this.field, "focus");
+
+			u.as(this.field, "zIndex", 90);
+
+			u.f.positionHint(this.field);
 
 			// hide options (will not be hidden if they are needed)
 			this.field.hideSelectionOptions();
@@ -1733,7 +1751,7 @@ Util.Form = u.f = new function() {
 					new_tag._input.focus();
 
 					// enable dragging of html-tags
-					u.s.sortable(this.field._editor);
+					u.sortable(this.field._editor, {"draggables":"tag", "targets":"editor"});
 
 				}
 
@@ -1789,6 +1807,10 @@ Util.Form = u.f = new function() {
 						else {
 							u.qs("div.tag", this.field)._input.focus();
 						}
+
+
+						// enable dragging of html-tags
+						u.sortable(this.field._editor, {"draggables":"tag", "targets":"editor"});
 					}
 
 				}
@@ -1981,6 +2003,7 @@ Util.Form = u.f = new function() {
 			}
 		}
 
+
 		// INLINE FORMATTING
 
 		// extend options pane with Anchor options
@@ -2144,7 +2167,7 @@ Util.Form = u.f = new function() {
 
 
 		// enable dragging of html-tags
-		u.sortable(field._editor);
+		u.sortable(field._editor, {"draggables":"tag", "targets":"editor"});
 
 
 
