@@ -20,6 +20,7 @@ Util.request = u.request = function(node, url, settings) {
 	node[request_id].request_params = "";
 	node[request_id].request_headers = false;
 	node[request_id].response_callback = "response";
+	node[request_id].jsonp_callback = "callback";
 
 
 	// additional info passed to function as JSON object
@@ -28,11 +29,12 @@ Util.request = u.request = function(node, url, settings) {
 		for(argument in settings) {
 
 			switch(argument) {
-				case "method"		: node[request_id].request_method		= settings[argument]; break;
-				case "params"		: node[request_id].request_params		= settings[argument]; break;
-				case "async"		: node[request_id].request_async		= settings[argument]; break;
-				case "headers"		: node[request_id].request_headers		= settings[argument]; break;
-				case "callback"		: node[request_id].response_callback	= settings[argument]; break;
+				case "method"				: node[request_id].request_method		= settings[argument]; break;
+				case "params"				: node[request_id].request_params		= settings[argument]; break;
+				case "async"				: node[request_id].request_async		= settings[argument]; break;
+				case "headers"				: node[request_id].request_headers		= settings[argument]; break;
+				case "callback"				: node[request_id].response_callback	= settings[argument]; break;
+				case "jsonp_callback"		: node[request_id].jsonp_callback		= settings[argument]; break;
 			}
 
 		}
@@ -172,7 +174,7 @@ Util.request = u.request = function(node, url, settings) {
 		// add params to url
 		node[request_id].request_url += params ? ((!node[request_id].request_url.match(/\?/g) ? "?" : "&") + params) : "";
 		// add callback to url
-		node[request_id].request_url += (!node[request_id].request_url.match(/\?/g) ? "?" : "&") + "callback=document."+key+".responder";
+		node[request_id].request_url += (!node[request_id].request_url.match(/\?/g) ? "?" : "&") + node[request_id].jsonp_callback + "=document."+key+".responder";
 
 		// add JSON Request to HTML head
 		u.ae(u.qs("head"), "script", ({"type":"text/javascript", "src":node[request_id].request_url}));
