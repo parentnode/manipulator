@@ -224,6 +224,7 @@ Util.Form = u.f = new function() {
 					form.fields[field._input.name] = field._input;
 
 					// get/set value function
+					u.bug("set value function:" + u.nodeId(field._input))
 					field._input.val = this._value_checkbox;
 
 					// special setting for IE8 and less (bad onchange handler)
@@ -471,10 +472,9 @@ Util.Form = u.f = new function() {
 				form.actions[action_name] = action._input;
 //			}
 
-			// shortcuts - BETA
-//			u.bug("shortcut: " + u.nodeId(action._input) + ", " + u.hc(action._input, "key:[a-z0-9]+"));
+			// keyboard shortcut
 			if(typeof(u.k) == "object" && u.hc(action._input, "key:[a-z0-9]+")) {
-				u.k.addKey(u.cv(action._input, "key"), action._input);
+				u.k.addKey(action._input, u.cv(action._input, "key"));
 			}
 		}
 
@@ -528,10 +528,9 @@ Util.Form = u.f = new function() {
 					form.actions[input.name] = input;
 				}
 
-				// shortcuts - BETA
-	//			u.bug("shortcut: " + u.nodeId(action._input) + ", " + u.hc(action._input, "key:[a-z0-9]+"));
+				// keyboard shortcut
 				if(typeof(u.k) == "object" && u.hc(input, "key:[a-z0-9]+")) {
-					u.k.addKey(u.cv(input, "key"), input);
+					u.k.addKey(input, u.cv(input, "key"));
 				}
 
 			}
@@ -902,7 +901,7 @@ Util.Form = u.f = new function() {
 	// internal submit handler - attatched to form
 	this._submit = function(event, iN) {
 
-//		u.bug("submitted")
+		// u.bug("_submitted")
 
 		// do pre validation of all fields
 		for(name in this.fields) {
@@ -939,29 +938,31 @@ Util.Form = u.f = new function() {
 	this.positionHint = function(field) {
 
 		// is help element available, then position it appropriately to input
-		// custom for HTML fields
-		var f_h =  field.offsetHeight;
-		var f_p_t = parseInt(u.gcs(field, "padding-top"));
-		var f_p_b = parseInt(u.gcs(field, "padding-bottom"));
-		var f_b_t = parseInt(u.gcs(field, "border-top-width"));
-		var f_b_b = parseInt(u.gcs(field, "border-bottom-width"));
-		var f_h_h = field._help.offsetHeight;
+		if(field._help) {
 
-		if(field._help && u.hc(field, "html")) {
+			// custom for HTML fields
+			var f_h =  field.offsetHeight;
+			var f_p_t = parseInt(u.gcs(field, "padding-top"));
+			var f_p_b = parseInt(u.gcs(field, "padding-bottom"));
+			var f_b_t = parseInt(u.gcs(field, "border-top-width"));
+			var f_b_b = parseInt(u.gcs(field, "border-bottom-width"));
+			var f_h_h = field._help.offsetHeight;
 
-			var l_h = field._input._label.offsetHeight;
-			var help_top = (((f_h - (f_p_t + f_p_b + f_b_b + f_b_t)) / 2)) - (f_h_h / 2) + l_h;
-			u.as(field._help, "top", help_top + "px");
+			if(u.hc(field, "html")) {
+
+				var l_h = field._input._label.offsetHeight;
+				var help_top = (((f_h - (f_p_t + f_p_b + f_b_b + f_b_t)) / 2)) - (f_h_h / 2) + l_h;
+				u.as(field._help, "top", help_top + "px");
+			}
+			else {
+
+	//			u.bug(f_b_t + ", " + f_b_b)
+	//			u.bug("((" + f_h + " - (" + f_p_t + "+" + f_p_b + ")) / 2) + 2 = " + (((f_h - (f_p_t + f_p_b)) / 2) + 2));
+	//			u.bug("(" + (((f_h - (f_p_t + f_p_b)) / 2) + 2) + ")" + " - " + "(" + (f_h_h / 2) + ")");
+				var help_top = (((f_h - (f_p_t + f_p_b + f_b_b + f_b_t)) / 2) + 2) - (f_h_h / 2)
+				u.as(field._help, "top", help_top + "px");
+			}
 		}
-		else if(field._help) {
-
-//			u.bug(f_b_t + ", " + f_b_b)
-//			u.bug("((" + f_h + " - (" + f_p_t + "+" + f_p_b + ")) / 2) + 2 = " + (((f_h - (f_p_t + f_p_b)) / 2) + 2));
-//			u.bug("(" + (((f_h - (f_p_t + f_p_b)) / 2) + 2) + ")" + " - " + "(" + (f_h_h / 2) + ")");
-			var help_top = (((f_h - (f_p_t + f_p_b + f_b_b + f_b_t)) / 2) + 2) - (f_h_h / 2)
-			u.as(field._help, "top", help_top + "px");
-		}
-
 	}
 
 	// internal mouseenter handler - attatched to inputs
@@ -1483,10 +1484,23 @@ Util.Form = u.f = new function() {
 		field.allowed_tags = field.allowed_tags ? field.allowed_tags.split(",") : false;
 		u.xInObject(field.allowed_tags)
 
-		// add new formatting node
-		field.add = function(type, value) {
 
-			this._tag_restrictions = new RegExp(/^(p|h1|h2|h3|h4|h5|h6|ul|dl|code)$/);
+		field.makeTextInput = function() {}
+		field.makeImageInput = function() {}
+		field.makeValueInput = function() {}
+
+		// add new formatting node
+		field.addObject = function(type, value) {
+		if(type.match(/vimeo|youtube|img/)) {
+			// TODO: figure out how to handle these very different types
+		}
+		
+		}
+
+		// add new formatting node
+		field.addText = function(type, value) {
+
+			this._tag_restrictions = new RegExp(/^(p|h1|h2|h3|h4|h5|h6|ul|dl)$/);
 
 			var div = u.ae(this._editor, "div", {"class":"tag "+type});
 
@@ -1494,11 +1508,11 @@ Util.Form = u.f = new function() {
 			div._drag = u.ae(div, "div", {"class":"drag"});
 			div._drag.field = this;
 
-
 			// type selector
 			div._select = u.ae(div, "ul", {"class":"type"});
 
 			var i, tag;
+			// create selector for text-based tags
 			for(i = 0; tag = this.allowed_tags[i]; i++) {
 				if(tag.match(this._tag_restrictions)) {
 					u.ae(div._select, "li", {"html":tag, "class":tag});
@@ -1543,12 +1557,14 @@ Util.Form = u.f = new function() {
 			div._select.clicked = function(event) {
 				u.bug("select clicked");
 
+				// already show - close selector
 				if(u.hc(this, "open")) {
 					u.rc(this, "open");
 					u.rc(this.div, "focus");
 
 					u.as(this, "top", 0);
 
+					// was a new type selected?
 					if(event.target) {
 						this.val(u.text(event.target));
 					}
@@ -1557,10 +1573,13 @@ Util.Form = u.f = new function() {
 					u.e.removeEvent(this, "mouseover", this.delayautohide);
 					u.t.resetTimer(this.t_autohide);
 
+					// cause input focus to activate focus chain
 					this.div._input.focus();
-					
+
+					// update content
 					this.field.update();
 				}
+				// closed - open selector
 				else {
 					u.ac(this, "open");
 					u.ac(this.div, "focus");
@@ -1739,7 +1758,7 @@ Util.Form = u.f = new function() {
 				// Clean [ENTER] - add new field
 				if(!event.ctrlKey && !event.metaKey) {
 
-					var new_tag = this.field.add("p");
+					var new_tag = this.field.addText("p");
 					var next_tag = u.ns(this.div);
 					if(next_tag) {
 						this.div.parentNode.insertBefore(new_tag, next_tag);
@@ -2124,14 +2143,14 @@ Util.Form = u.f = new function() {
 						if(fragments) {
 							for(index in fragments) {
 								value = fragments[index].replace(/\n\r|\n|\r/g, "<br>");
-								tag = field.add("p", fragments[index]);
+								tag = field.addText("p", fragments[index]);
 								field.activateInlineFormatting(tag._input);
 							}
 						}
 						// wrap textnode in one paragraph
 						else {
 							value = node.nodeValue; //.replace(/\n\r|\n|\r/g, "<br>");
-							tag = field.add("p", value);
+							tag = field.addText("p", value);
 							field.activateInlineFormatting(tag._input);
 						}
 
@@ -2141,7 +2160,7 @@ Util.Form = u.f = new function() {
 				else if(node.nodeName.toLowerCase().match(field._tag_restrictions)) {
 
 					value = node.innerHTML.replace(/\n\r|\n|\r/g, "<br>"); // .replace(/\<br[\/]?\>/g, "\n");
-					tag = field.add(node.nodeName.toLowerCase(), value);
+					tag = field.addText(node.nodeName.toLowerCase(), value);
 					field.activateInlineFormatting(tag._input);
 
 				}
@@ -2160,7 +2179,7 @@ Util.Form = u.f = new function() {
 
 			value = field._viewer.innerHTML.replace(/\<br[\/]?\>/g, "\n");
 			//.replace(/\n\r|\n|\r/g, "<br>");
-			tag = field.add("p", value);
+			tag = field.addText("p", value);
 			field.activateInlineFormatting(tag._input);
 
 		}
