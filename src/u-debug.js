@@ -76,7 +76,7 @@ Util.bug = function(message, corner, color) {
 
 Util.xInObject = function(object) {
 	if(u.debugURL()) {
-		var x, s = "--- start object ---<br>";
+		var x, s = "--- start object ---<br>\n";
 		for(x in object) {
 		//	u.bug(x + ":" + object[x] + ":" + typeof(object[x]));
 			if(object[x] && typeof(object[x]) == "object" && typeof(object[x].nodeName) == "string") {
