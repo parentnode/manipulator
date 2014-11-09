@@ -3,12 +3,28 @@ Util.History = u.h = new function() {
 	this.popstate = ("onpopstate" in window);
 //	this.popstate = false;
 
-	this.catchEvent = function(node, callback) {
+	this.catchEvent = function(node, _options) {
 	
 //		u.bug("catch hash")
 	
+
+		node.callback_urlchange = "navigate";
+
+		// additional info passed to function as JSON object
+		if(typeof(_options) == "object") {
+			var argument;
+			for(argument in _options) {
+
+				switch(argument) {
+					case "callback"		: node.callback_urlchange		= _options[argument]; break;
+				}
+
+			}
+		}
+
+
 		this.node = node;
-		this.node.callback = callback;
+
 
 		// invoke capture function
 		var hashChanged = function(event) {
@@ -24,7 +40,13 @@ Util.History = u.h = new function() {
 			var url = u.h.getCleanHash(location.hash);
 
 //			u.bug("hash changed:" + url)
-			u.h.node.callback(url);
+
+			// notify of url change
+			if(typeof(u.h.node[u.h.node.callback_urlchange]) == "function") {
+				u.h.node[u.h.node.callback_urlchange](url);
+			}
+
+//			u.h.node.callback(url);
 		}
 
 		var urlChanged = function(event) {
@@ -32,7 +54,12 @@ Util.History = u.h = new function() {
 			var url = u.h.getCleanUrl(location.href);
 
 //			u.bug("popstate changed:" + url)
-			u.h.node.callback(url);
+// notify of url change
+			if(typeof(u.h.node[u.h.node.callback_urlchange]) == "function") {
+				u.h.node[u.h.node.callback_urlchange](url);
+			}
+
+//			u.h.node.callback(url);
 		}
 
 

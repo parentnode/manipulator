@@ -6,7 +6,7 @@ Util.createRequestObject = u.createRequestObject = function() {
 }
 
 // Request object
-Util.request = u.request = function(node, url, settings) {
+Util.request = u.request = function(node, url, _options) {
 //	u.bug("request")
 
 	var request_id = u.randomString(6);
@@ -19,22 +19,26 @@ Util.request = u.request = function(node, url, settings) {
 	node[request_id].request_async = true;
 	node[request_id].request_params = "";
 	node[request_id].request_headers = false;
-	node[request_id].response_callback = "response";
+
+	node[request_id].callback_response = "response";
+
 	node[request_id].jsonp_callback = "callback";
 
 
 	// additional info passed to function as JSON object
-	if(typeof(settings) == "object") {
+	if(typeof(_options) == "object") {
 		var argument;
-		for(argument in settings) {
+		for(argument in _options) {
 
 			switch(argument) {
-				case "method"				: node[request_id].request_method		= settings[argument]; break;
-				case "params"				: node[request_id].request_params		= settings[argument]; break;
-				case "async"				: node[request_id].request_async		= settings[argument]; break;
-				case "headers"				: node[request_id].request_headers		= settings[argument]; break;
-				case "callback"				: node[request_id].response_callback	= settings[argument]; break;
-				case "jsonp_callback"		: node[request_id].jsonp_callback		= settings[argument]; break;
+				case "method"				: node[request_id].request_method		= _options[argument]; break;
+				case "params"				: node[request_id].request_params		= _options[argument]; break;
+				case "async"				: node[request_id].request_async		= _options[argument]; break;
+				case "headers"				: node[request_id].request_headers		= _options[argument]; break;
+
+				case "callback"				: node[request_id].callback_response	= _options[argument]; break;
+
+				case "jsonp_callback"		: node[request_id].jsonp_callback		= _options[argument]; break;
 			}
 
 		}
@@ -350,9 +354,9 @@ Util.validateResponse = function(response){
 	if(object) {
 
 		// callback to Response handler
-//		u.bug("response:" + typeof(response.node[response.node.response_callback]))
-		if(typeof(response.node[response.node[response.request_id].response_callback]) == "function") {
-			response.node[response.node[response.request_id].response_callback](object, response.request_id);
+//		u.bug("response:" + typeof(response.node[response.node.callback_response]))
+		if(typeof(response.node[response.node[response.request_id].callback_response]) == "function") {
+			response.node[response.node[response.request_id].callback_response](object, response.request_id);
 		}
 
 		// // callback to Response handler

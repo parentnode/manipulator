@@ -3,7 +3,7 @@
 
 // Sorts draggable nodes within a scope
 
-u.sortable = function(scope, options) {
+u.sortable = function(scope, _options) {
 
 //	u.bug("u.sortable init: " + u.nodeId(scope))
 
@@ -20,23 +20,23 @@ u.sortable = function(scope, options) {
 	scope.allow_nesting = false;
 
 	// additional info passed to function as JSON object
-	if(typeof(options) == "object") {
+	if(typeof(_options) == "object") {
 		var argument;
-		for(argument in options) {
+		for(argument in _options) {
 
 			switch(argument) {
-				case "picked"				: scope.callback_picked		= options[argument]; break;
-				case "moved"				: scope.callback_moved		= options[argument]; break;
-				case "dropped"				: scope.callback_dropped	= options[argument]; break;
+				case "picked"				: scope.callback_picked		= _options[argument]; break;
+				case "moved"				: scope.callback_moved		= _options[argument]; break;
+				case "dropped"				: scope.callback_dropped	= _options[argument]; break;
 
-				case "draggables"			: scope.draggables			= options[argument]; break;
-				case "targets"				: scope.targets				= options[argument]; break;
+				case "draggables"			: scope.draggables			= _options[argument]; break;
+				case "targets"				: scope.targets				= _options[argument]; break;
 
-//				case "sources"				: sources					= options[argument]; break;
+//				case "sources"				: sources					= _options[argument]; break;
 
-				case "layout"				: scope.layout				= options[argument]; break;
+				case "layout"				: scope.layout				= _options[argument]; break;
 
-				case "allow_nesting"		: scope.allow_nesting		= options[argument]; break;
+				case "allow_nesting"		: scope.allow_nesting		= _options[argument]; break;
 			}
 
 		}

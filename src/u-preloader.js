@@ -1,15 +1,15 @@
-u.preloader = function(node, files, options) {
+u.preloader = function(node, files, _options) {
 
 	var callback, callback_min_delay
 
 	// additional info passed to function as JSON object
-	if(typeof(options) == "object") {
+	if(typeof(_options) == "object") {
 		var argument;
-		for(argument in options) {
+		for(argument in _options) {
 
 			switch(argument) {
-				case "callback"				: callback				= options[argument]; break;
-				case "callback_min_delay"	: callback_min_delay	= options[argument]; break;
+				case "callback"				: callback				= _options[argument]; break;
+				case "callback_min_delay"	: callback_min_delay	= _options[argument]; break;
 			}
 
 		}

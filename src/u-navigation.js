@@ -9,19 +9,19 @@
 // if 1st level is changed tells #content navigation has been invoked 
 // if 2nd level is changed tells .scene navigation has been invoked 
 
-u.navigation = function(options) {
+u.navigation = function(_options) {
 
 //	u.bug("set up navigation")
 
-	// this._nav_navigate_callback = null;
+	// this.callback_navigate = "navigate";
 	// 
 	// // additional info passed to function as JSON object
-	// if(typeof(options) == "object") {
+	// if(typeof(_options) == "object") {
 	// 	var argument;
-	// 	for(argument in options) {
+	// 	for(argument in _options) {
 	// 
 	// 		switch(argument) {
-	// 			case "navigate_callback"	: this._nav_navigate_callback		= options[argument]; break;
+	// 			case "callback"	: this.callback_navigate		= _options[argument]; break;
 	// 		}
 	// 
 	// 	}
@@ -167,7 +167,7 @@ u.navigation = function(options) {
 	page._initHistory = function() {
 //		u.bug("enable HASH navigation")
 
-		u.h.catchEvent(page, page._navigate);
+		u.h.catchEvent(page, {"callback":"_navigate"});
 	}
 
 	// set hash event handler with small delay to avoid redirecting when actually just trying to update HASH
