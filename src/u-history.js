@@ -4,9 +4,6 @@ Util.History = u.h = new function() {
 //	this.popstate = false;
 
 	this.catchEvent = function(node, _options) {
-	
-//		u.bug("catch hash")
-	
 
 		node.callback_urlchange = "navigate";
 
@@ -36,30 +33,33 @@ Util.History = u.h = new function() {
 				return;
 			}
 
-
 			var url = u.h.getCleanHash(location.hash);
-
 //			u.bug("hash changed:" + url)
 
 			// notify of url change
 			if(typeof(u.h.node[u.h.node.callback_urlchange]) == "function") {
 				u.h.node[u.h.node.callback_urlchange](url);
 			}
-
-//			u.h.node.callback(url);
 		}
 
 		var urlChanged = function(event) {
 
 			var url = u.h.getCleanUrl(location.href);
+//			u.bug("popstate changed:" + url + ", " + event.state)
 
-//			u.bug("popstate changed:" + url)
-// notify of url change
-			if(typeof(u.h.node[u.h.node.callback_urlchange]) == "function") {
-				u.h.node[u.h.node.callback_urlchange](url);
+			// broken webkit popstate onload (still issue in Safari, Chrome seems to be fixed)
+			if(event.state) {
+
+				// notify of url change
+				if(typeof(u.h.node[u.h.node.callback_urlchange]) == "function") {
+					u.h.node[u.h.node.callback_urlchange](url);
+				}
+
 			}
-
-//			u.h.node.callback(url);
+			// replace non-state, to enable back linking in Safari
+			else {
+				history.replaceState({}, url, url);
+			}
 		}
 
 

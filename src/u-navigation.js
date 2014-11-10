@@ -34,6 +34,7 @@ u.navigation = function(_options) {
 
 	// internal hash change distribution - content or scene level
 	page._navigate = function(url) {
+//		u.bug("page._navigate:" + url)
 
 		url = u.h.getCleanUrl(url);
 
@@ -82,7 +83,7 @@ u.navigation = function(_options) {
 
 	// update hash and set hash back node if any
 	page.navigate = function(url, node) {
-//		u.bug("url:" + url + ", " + u.nodeId(node))
+//		u.bug("page.navigate:" + url + ", " + (node ? u.nodeId(node) : "no node"))
 
 		// remember history node (for tracking purposes)
 		this.history_node = node ? node : false;
@@ -144,6 +145,7 @@ u.navigation = function(_options) {
 	}
 	// History Object is preferred
 	else {
+//		u.bug("history")
 
 		// if HASH exists and different from url, translate to url (could be a bookmark shared from HASH enabled browser)
 		if(u.h.getCleanHash(location.hash) != u.h.getCleanUrl(location.href) && location.hash.match(/^#\//)) {
