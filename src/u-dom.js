@@ -248,7 +248,7 @@ Util.clickableElement = u.ce = function(node, options) {
 
 			if(node._click_type == "link") {
 				node.clicked = function(event) {
-					if(event.metaKey || event.ctrlKey) {
+					if(event && (event.metaKey || event.ctrlKey)) {
 						window.open(this.url);
 					}
 					else {
