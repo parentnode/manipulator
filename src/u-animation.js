@@ -1,23 +1,5 @@
 Util.Animation = u.a = new function() {
 
-	
-	// transitions support - required to perform animations
-	// this.support = function() {
-	// 
-	// 	// only run detection once
-	// 	if(this._support === undefined) {
-	// 		var node = document.createElement("div");
-	// 		u.bug("transition:" + node.style[this.variant() + "Transition"] + ", " + (this.variant() + "Transition" in document.documentElement.style));
-	// 		if(node.style[this.variant() + "Transition"] !== undefined) {
-	// 			this._support = true;
-	// 		}
-	// 		else {
-	// 			this._support = false;
-	// 		}
-	// 	}
-	// 
-	// 	return this._support;
-	// }
 
 	// translate3d support?
 	this.support3d = function() {
@@ -86,17 +68,6 @@ Util.Animation = u.a = new function() {
 	*/
 	this.transition = function(node, transition) {
 		try {		
-			node.style[this.variant() + "Transition"] = transition;
-
-			// automatically enable transitionend callback
-			// Moz implementation is off track :)
-			if(this.variant() == "Moz") {
-				u.e.addEvent(node, "transitionend", this._transitioned);
-			}
-			// standard 
-			else {
-				u.e.addEvent(node, this.variant() + "TransitionEnd", this._transitioned);
-			}
 
 			// get duration
 			var duration = transition.match(/[0-9.]+[ms]+/g);
@@ -116,6 +87,19 @@ Util.Animation = u.a = new function() {
 				}
 			}
 
+			node.style[this.variant() + "Transition"] = transition;
+
+			// automatically enable transitionend callback
+			// Moz implementation is off track :)
+			if(this.variant() == "Moz") {
+				u.e.addEvent(node, "transitionend", this._transitioned);
+			}
+			// standard 
+			else {
+				u.e.addEvent(node, this.variant() + "TransitionEnd", this._transitioned);
+			}
+
+
 		}
 		catch(exception) {
 			u.bug("Exception ("+exception+") in u.a.transition(" + node + "), called from: "+arguments.callee.caller);
@@ -128,6 +112,11 @@ Util.Animation = u.a = new function() {
 		if(event.target == this && typeof(this.transitioned) == "function") {
 			this.transitioned(event);
 		}
+
+		// automatically remove transition
+		// EXPERIMENTAL
+		u.bug("remve transition")
+		u.a.transition(this, "none");
 	}
 
 
