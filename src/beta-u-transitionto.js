@@ -1,3 +1,85 @@
+// example of function call
+
+
+// one node, 
+// one transition
+// multiple attributes
+u.a.to(node, "1s ease-in 0.5s", {"left":100,"top":200});
+
+// examples
+u.a.to(node, "1s ease-in", {"rotate:"20});
+u.a.to(node, "1s ease-in 0.5s", {"x1":100,"x2":200});
+u.a.to(node, "1s ease-in 0.5s", {"translate":[20,40]});
+u.a.to(node, "1000ms cubic-bezier(.2, 0.51, .7, .71) 0.5s", {"left":100,"top":200,"width":130,"opacity":20});
+
+// syntax alternative
+// one node,
+// one transition
+// multiple attributes
+u.a.to(node, "1000ms cubic-bezier(.2, 0.51, .7, .71) 0.5s", {
+	"radius":100,
+	"stroke-width":20,
+	"fill":"#232323"
+});
+u.a.to(
+	node1, 
+	"1000ms cubic-bezier(.2, 0.51, .7, .71) 0.5s", 
+	{
+		"radius":100,
+		"stroke-width":20,
+		"fill":"#232323"
+	}
+);
+
+
+// theoretic syntax alternative
+// one node,
+// one transition
+// multiple attributes
+u.a.to(node1, "1000ms cubic-bezier(.2, 0.51, .7, .71) 0.5s", {
+	left:100,
+	right:200,
+	width:130,
+	opacity:20
+});
+
+
+
+// one node, 
+// multiple transitions
+// multiple attributes, 
+u.a.to(node1, [
+	"1s cubic-bezier(.21, .5, .71, 0.7)", {"border-radius":20,"top":130},
+	"1s cubic-bezier(.2, 0.51, .7, .71)", {"x1":130,"x2":120}
+]);
+
+// syntax alternative
+// one node, 
+// multiple transitions
+// multiple incremental and drecremental attributes 
+u.a.to(node1, [
+	"1s ease-in", {"x1":"+30","x2":"-80"},
+	"1s ease-in", {"x1":"+30","x2":"-80"}
+]);
+
+
+
+// multiple nodes, 
+// multiple transitions
+// multiple attributes 
+// :-)
+u.a.to(node1, "1s ease-in 0.5s", {"x1":100,"x2":200});
+u.a.to(node2, "2s ease-in" {"x1":200,"x2":100});
+u.a.to(node3, "2s ease-in" {"x1":200,"x2":100}();
+
+
+
+
+
+
+/* OLD CRAP */
+
+
 // u-transtions.js
 // 
 // transitionTo = function
@@ -27,6 +109,10 @@
 // 		slidebtt_transition
 // 
 // 		atomize_transition
+
+
+
+
 
 
 			u.transitionto = new Object();
