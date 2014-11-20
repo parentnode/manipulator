@@ -1,26 +1,23 @@
 Util.Form = u.f = new function() {
 
 	// create extension object
+	// this is used to add custom init, validate and send methods to the form module
 	this.customInit = {};
 	this.customValidate = {};
 	this.customSend = {};
 
+
+
 	// extensive activation of form
-	// indexes fields and 
+	// indexes fields and actions (inputs and buttons)
 	// - adds realtime validation, by settng correct/error classname
 	// - sets focus classname on field focus
-	// - adds callback for form change, update, submit and validationFailed
-
-
-	// TODO: add error callback
-	// TODO: add onclicks to buttons to avoid any ordinary submitting
-	// TODO: set all click handlers and callbacks on buttons?
-	// TODO: catch [ENTER] on buttons?
-
-
+	// - adds callback
 	this.init = function(form, settings) {
 //		u.bug("init form:" + u.nodeId(form));
-		var i, j, field, action, input;
+
+		var i, j, field, action, input, hidden_field;
+
 
 		// prepared for additional settings - NOT used now
 		// set default values
@@ -28,6 +25,7 @@ Util.Form = u.f = new function() {
 		// form.form_validation = true;
 		form.form_send = "params";
 		form.ignore_inputs = "ignoreinput";
+
 
 		// additional info passed to function as JSON object
 		if(typeof(settings) == "object") {
@@ -47,66 +45,74 @@ Util.Form = u.f = new function() {
 		form.onsubmit = function(event) {return false;}
 
 		// do not use HTML5 validation
+		// we'll do all validation internally
 		form.setAttribute("novalidate", "novalidate");
 
 		// set submit reference to internal submit handler
-		form._submit = this._submit;
+		// but keep reference to DOM submot
+		form.DOMsubmit = form.submit;
+		form.submit = this._submit;
 
 
-		// objects for fields, actions
+		// objects for fields and actions
+		// all named fields and buttons can be accessed through this objects
 		form.fields = {};
-		form.tab_order = [];
 		form.actions = {};
+
+
+		// Label styles - defines special handling of label values
+		// specified via form classname as labelstyle:inject
+		// Currently implemented: none or inject
+		form.labelstyle = u.cv(form, "labelstyle");
 
 
 		// get all fields
 		var fields = u.qsa(".field", form);
 		for(i = 0; field = fields[i]; i++) {
-//			u.bug("field:" + u.nodeId(field))
-
-			// remove requirement indicators (simple_form)
-			var abbr = u.qs("abbr", field);
-			if(abbr) {
-				abbr.parentNode.removeChild(abbr);
-			}
-
-			// optional error message in data-error attribute
-			var error_message = field.getAttribute("data-error");
-			if(error_message) {
-				u.ae(field, "div", {"class":"error", "html":error_message})
-			}
-
-			// required indicator (for showing icons)
-			field._indicator = u.ae(field, "div", {"class":"indicator"});
+//			u.bug("field found:" + u.nodeId(field))
 
 
-			// // get input label, hint and error
-			// field._label = u.qs("label", field);
+			field._base_z_index = u.gcs(field, "z-index");
+			u.bug("field" + u.nodeId(field) + ", " + field._base_z_index)
 
+			// find help (hints and errors)
 			field._help = u.qs(".help", field);
 			field._hint = u.qs(".hint", field);
 			field._error = u.qs(".error", field);
 
 
-			// setup fields
-			var not_initialized = true;
+			// Implementing support for non-manipulator system HTML output
+			// This allows for Manipulator form to run on HTML output which cannot be fine-tuned serverside
+			if(typeof(u.f.fixFieldHTML) == "function") {
+				u.f.fixFieldHTML(field);
+			}
+
+
+			// Add required indicator (for showing icons)
+			field._indicator = u.ae(field, "div", {"class":"indicator"});
+
+
+			// setup field status
+			field._initialized = false;
 
 
 			// check for custom inits
+			// allows to overwrite any field type or built custom field types
 			var custom_init;
 			for(custom_init in this.customInit) {
 				if(field.className.match(custom_init)) {
 					this.customInit[custom_init](field);
-					not_initialized = false;
+					field._initialized = true;
 				}
 			}
 
 
-			// do not perform other inits if custom init exists
-			if(not_initialized) {
+			// do not perform other inits if custom init was executed
+			if(!field._initialized) {
+
 
 				// regular inputs initialization
-				if(u.hc(field, "string|email|tel|number|integer|password")) {
+				if(u.hc(field, "string|email|tel|number|integer|password|date|datetime")) {
 
 					field._input = u.qs("input", field);
 					field._input.field = field;
@@ -127,8 +133,8 @@ Util.Form = u.f = new function() {
 					// submit on enter (checks for autocomplete etc)
 					this.inputOnEnter(field._input);
 
-					// activate field
-					this.activateField(field._input);
+					// activate input
+					this.activateInput(field._input);
 
 					// validate field now
 					this.validate(field._input);
@@ -153,8 +159,8 @@ Util.Form = u.f = new function() {
 					u.e.addEvent(field._input, "keyup", this._updated);
 					u.e.addEvent(field._input, "change", this._changed);
 
-					// activate field
-					this.activateField(field._input);
+					// activate input
+					this.activateInput(field._input);
 
 					// validate field now
 					this.validate(field._input);
@@ -176,6 +182,9 @@ Util.Form = u.f = new function() {
 
 					// get input label
 					field._input._label = u.qs("label[for="+field._input.id+"]", field);
+
+					// get/set value function
+					field._input.val = this._value;
 
 					// create textEditor interface
 					this.textEditor(field);
@@ -204,8 +213,8 @@ Util.Form = u.f = new function() {
 					u.e.addEvent(field._input, "keyup", this._updated);
 					u.e.addEvent(field._input, "change", this._changed);
 
-					// activate field
-					this.activateField(field._input);
+					// activate input
+					this.activateInput(field._input);
 
 					// validate field now
 					this.validate(field._input);
@@ -224,7 +233,6 @@ Util.Form = u.f = new function() {
 					form.fields[field._input.name] = field._input;
 
 					// get/set value function
-					u.bug("set value function:" + u.nodeId(field._input))
 					field._input.val = this._value_checkbox;
 
 					// special setting for IE8 and less (bad onchange handler)
@@ -250,34 +258,42 @@ Util.Form = u.f = new function() {
 					// submit on enter (checks for autocomplete etc)
 					this.inputOnEnter(field._input);
 
-					// activate field
-					this.activateField(field._input);
+					// activate input
+					this.activateInput(field._input);
 
 					// validate field now
 					this.validate(field._input);
 				}
 
 				// radio button initialization
-				else if(u.hc(field, "radio|radio_buttons")) {
+				else if(u.hc(field, "radiobuttons")) {
 
-					field._input = u.qsa("input", field);
+					// Radio buttons are tricky, because there are multiple inputs but only one name
+					// field input reference points to first radio button
+					// Requires some extra checks, which are built into all event handlers
 
-					// add inputs to fields array using for name (radios all have same name)
-					form.fields[field._input[0].name] = field._input;
+					// get all inputs
+					field._inputs = u.qsa("input", field);
+
+					// use first input as field input 
+					field._input = field._inputs[0];
+
+					// add first input to fields array (radios all have same name)
+					form.fields[field._input.name] = field._input;
 
 					// initalize individual radio buttons
-					for(j = 0; input = field._input[j]; j++) {
+					for(j = 0; input = field._inputs[j]; j++) {
 						input.field = field;
 
 						// get input label
 						input._label = u.qs("label[for="+input.id+"]", field);
 
 						// get/set value function
-						input.val = this._value_radio;
+						input.val = this._value_radiobutton;
 
 						// special setting for IE8 and less (bad onchange handler)
 						if(u.browser("explorer", "<=8")) {
-							input.pre_state = iN.checked;
+							input.pre_state = input.checked;
 							input._changed = this._changed;
 							input._updated = this._updated;
 							input._clicked = function(event) {
@@ -301,12 +317,12 @@ Util.Form = u.f = new function() {
 						// submit on enter (checks for autocomplete etc)
 						this.inputOnEnter(input);
 
-						// activate field
-						this.activateField(input);
-
-						// validate field now
-						this.validate(field._input);
+						// activate input
+						this.activateInput(input);
 					}
+
+					// validate field now
+					this.validate(field._input);
 				}
 
 				// file input initialization
@@ -333,232 +349,239 @@ Util.Form = u.f = new function() {
 
 				}
 
-
-
-				// TODO: the rest still needs to be migrated from formIndex
-
-				// date field initialization
-				else if(u.hc(field, "date|datetime")) {
-
-					field._input = u.qsa("select,input", field);
-					for(j = 0; input = field._input[j]; j++) {
-						input.field = field;
-
-						// get input label
-						input._label = u.qs("label[for="+input.id+"]", field);
-
-						// add to form index
-						this.formIndex(form, input);
-					}
-				}
-
-				// tags initialization
-				else if(u.hc(field, "tags")) {
-
-					field._input = u.qs("input", field);
-					field._input.field = field;
-
-					// get input label
-					field._input._label = u.qs("label\[for\="+field._input.id+"\]", field);
-
-					// add to form index
-					this.formIndex(form, field._input);
-				}
-
-				// tags initialization
-				else if(u.hc(field, "prices")) {
-
-					field._input = u.qs("input", field);
-					field._input.field = field;
-
-					// get input label
-					field._input._label = u.qs("label[for="+field._input.id+"]", field);
-
-					// add to form index
-					this.formIndex(form, field._input);
-				}
-
-
 				// location field initialization
 				else if(u.hc(field, "location")) {
 
-					field._input = u.qsa("input", field);
-					for(j = 0; input = field._input[j]; j++) {
+					// Location is a multi input field
+					// location, latitude and longitude
+
+					// get all inputs
+					field._inputs = u.qsa("input", field);
+
+					// use first input as field input 
+					field._input = field._inputs[0];
+
+					for(j = 0; input = field._inputs[j]; j++) {
 						input.field = field;
+
+						// add input to fields array
+						form.fields[input.name] = input;
 
 						// get input label
 						input._label = u.qs("label[for="+input.id+"]", field);
 
-						// add to form index
-						this.formIndex(form, input);
+
+						// get/set value function
+						input.val = this._value;
+
+						// change/update events
+						u.e.addEvent(input, "keyup", this._updated);
+						u.e.addEvent(input, "change", this._changed);
+
+						// submit on enter (checks for autocomplete etc)
+						this.inputOnEnter(input);
+
+						// activate input
+						this.activateInput(input);
 					}
 
-					// inject Geolocation button
+					// validate field now
+					this.validate(field._input);
+
+					// inject Geolocation button if browser supports geolocation
 					if(navigator.geolocation) {
 						this.geoLocation(field);
 					}
 
 				}
 
+
+
+				// when these gets extended they should end up as custom initializers
+
+
+				// tags initialization (standard Janitor implementation)
+				// currently identical to string - but keep separate for customization
+				else if(u.hc(field, "tags")) {
+
+					field._input = u.qs("input", field);
+					field._input.field = field;
+
+					// add input to fields array
+					form.fields[field._input.name] = field._input;
+
+					// get input label
+					field._input._label = u.qs("label[for="+field._input.id+"]", field);
+
+					// get/set value function
+					field._input.val = this._value;
+
+					// change/update events
+					u.e.addEvent(field._input, "keyup", this._updated);
+					u.e.addEvent(field._input, "change", this._changed);
+
+					// submit on enter (checks for autocomplete etc)
+					this.inputOnEnter(field._input);
+
+					// activate input
+					this.activateInput(field._input);
+
+					// validate field now
+					this.validate(field._input);
+				}
+
+
+				// prices initialization (standard Janitor implementation)
+				// currently identical to string - but keep separate for customization
+				else if(u.hc(field, "prices")) {
+
+					field._input = u.qs("input", field);
+					field._input.field = field;
+
+					// add input to fields array
+					form.fields[field._input.name] = field._input;
+
+					// get input label
+					field._input._label = u.qs("label[for="+field._input.id+"]", field);
+
+					// get/set value function
+					field._input.val = this._value;
+
+					// change/update events
+					u.e.addEvent(field._input, "keyup", this._updated);
+					u.e.addEvent(field._input, "change", this._changed);
+
+					// submit on enter (checks for autocomplete etc)
+					this.inputOnEnter(field._input);
+
+					// activate input
+					this.activateInput(field._input);
+
+					// validate field now
+					this.validate(field._input);
+				}
+
+
+				// UNKNOWN FIELD
+				// Give developer a fair chance of finding it
+				else {
+					u.bug("UNKNOWN FIELD IN FORM INITIALIZATION:" + u.nodeId(field));
+				}
 			}
 		}
 
 
-		// reference hidden fields
+		// reference hidden fields to allow accessing them through form fields array
 		var hidden_fields = u.qsa("input[type=hidden]", form);
 		for(i = 0; hidden_field = hidden_fields[i]; i++) {
-//			u.bug("hidden_field:" + u.nodeId(hidden_field));
 
+			// do not overwrite fields index with hidden field
 			if(!form.fields[hidden_field.name]) {
 				form.fields[hidden_field.name] = hidden_field;
+
+				// add get/set value funtion
 				hidden_field.val = this._value;
 			}
 		}
 
 
-		// TODO: DUPLICATE ACTION INITIALIZION FOR BOTH REGULAR ACTIONS LI AND STANDALONE BUTTON
-		// - Create initAction function
-
-
-		// get all regular actions
-		var actions = u.qsa(".actions li, .actions", form);
+		// get all actions
+		var actions = u.qsa(".actions li input[type=button],.actions li input[type=submit],.actions li a.button", form);
 		for(i = 0; action = actions[i]; i++) {
-//			u.bug("action:" + u.nodeId(action));
 
-			// get action input-button/a
-			action._input = u.qs("input,a", action);
-
-			// if submit button, make sure it does not submit form without validation
-			if(action._input.type && action._input.type == "submit") {
-				// need to cancel onclick event to avoid normal post in older browsers where killing mouseup/down is not enough
-				action._input.onclick = function(event) {
-					u.e.kill(event ? event : window.event);
-				}
-			}
-
-			// handle button click
-			u.ce(action._input);
-			action._input.clicked = function(event) {
-				u.e.kill(event);
-
-				// don't execute if button is disabled
-				if(!u.hc(this, "disabled")) {
-					if(this.type && this.type.match(/submit/i)) {
-						// store submit button info
-						this.form._submit_button = this;
-						// remove any previous submit info
-						this.form._submit_input = false;
-
-						// internal submit
-						this.form._submit(event, this);
-					}
-
-					// TODO: what is default action when not a submit button??
-					// else {
-					// 	location.href = this.url;
-					// }
-				}
-			}
-
-			// handle [ENTER] on button
-			this.buttonOnEnter(action._input);
+			// make sure even a.buttons knows form
+			action.form = form;
 
 			// activate button, adding focus and blur
-			this.activateButton(action._input);
+			this.activateButton(action);
 
-			// add to actions index if button has a name
-			var action_name = action._input.name ? action._input.name : action.className;
-//			if(action._input.name && action._input.name) {
-				form.actions[action_name] = action._input;
-//			}
-
-			// keyboard shortcut
-			if(typeof(u.k) == "object" && u.hc(action._input, "key:[a-z0-9]+")) {
-				u.k.addKey(action._input, u.cv(action._input, "key"));
-			}
 		}
-
-		// could be form inside .actions li for isolated form action
-		// only one button in form - will never occur if field is also necessary
-		if(!actions.length) {
-
-			// check if form is inside ul.actions
-			var p_ul = u.pn(form, "ul");
-			if(u.hc(p_ul, "actions")) {
-//				u.bug("valid pure button form found")
-
-				// get action input-button/a
-				var input = u.qs("input:NOT([type=hidden]),a", form);
-
-				// if submit button, make sure it does not submit form without validation
-				if(input.type && input.type == "submit") {
-					// need to cancel onclick event to avoid normal post in older browsers where killing mouseup/down is not enough
-					input.onclick = function(event) {
-						u.e.kill(event ? event : window.event);
-					}
-				}
-
-				// handle button click
-				u.ce(input);
-				input.clicked = function(event) {
-					u.e.kill(event);
-
-					// don't execute if button is disabled
-					if(!u.hc(this, "disabled")) {
-						if(this.type && this.type.match(/submit/i)) {
-							// store submit button info
-							this.form._submit_button = this;
-							// remove any previous submit info
-							this.form._submit_input = false;
-
-							// internal submit
-							this.form._submit(event, this);
-						}
-					}
-				}
-
-				// handle [ENTER] on button
-				this.buttonOnEnter(input);
-
-				// activate button, adding focus and blur
-				this.activateButton(input);
-
-				// add to actions index if button has a name
-				if(input.name) {
-					form.actions[input.name] = input;
-				}
-
-				// keyboard shortcut
-				if(typeof(u.k) == "object" && u.hc(input, "key:[a-z0-9]+")) {
-					u.k.addKey(input, u.cv(input, "key"));
-				}
-
-			}
-		}
-
 
 //		u.bug(u.nodeId(form) + ", fields:", "red");
 //		u.xInObject(form.fields);
+
 //		u.bug(u.nodeId(form) + ", actions:", "red");
 //		u.xInObject(form.actions);
 	}
 
+
+
+	// Submit
+
+	// internal submit handler - attatched to form as form.submit
+	// original form.submit will be available as form.DOMsubmit
+	this._submit = function(event, iN) {
+
+		// u.bug("_submitted")
+
+		// do pre validation of all fields
+		for(name in this.fields) {
+			if(this.fields[name].field) {
+//				u.bug("field:" + name);
+				// change used state for input
+				this.fields[name].used = true;
+				// validate
+//				u.bug("validate from _submit")
+				u.f.validate(this.fields[name]);
+			}
+		}
+
+		// if error is found after validation
+		if(u.qs(".field.error", this)) {
+			if(typeof(this.validationFailed) == "function") {
+				this.validationFailed();
+			}
+		}
+		else {
+			// does callback exist
+			if(typeof(this.submitted) == "function") {
+				this.submitted(iN);
+			}
+			// actual submit
+			else {
+				this.DOMsubmit();
+			}
+		}
+	}
+
+
+
+	// Cross type get/set value functions 
+
 	// value get/setter for regular inputs
 	this._value = function(value) {
+
+		// only return value if no value is passed (value could be false or 0)
 		if(value !== undefined) {
 			this.value = value;
 
-			// validate after setting value
+			// if input has pseudolabel, hide it
+			if(this.pseudolabel) {
+				u.as(this.pseudolabel, "display", "none");
+			}
+
+			// TODO: consider wheter to show default value if value is set to "" (empty string)
+
 //			u.bug("validate from set value")
+
+			// validate after setting value
 			u.f.validate(this);
 		}
 		return this.value;
 	}
-	// value get/setter for radio inputs
-	this._value_radio = function(value) {
-		if(value) {
+	// value get/setter for radio buttons
+	this._value_radiobutton = function(value) {
+		var i, option;
+
+		// only return value if no value is passed (value could be false or 0)
+		if(value !== undefined) {
+
+			// find option with matching value
 			for(i = 0; option = this.form[this.name][i]; i++) {
-				if(option.value == value) {
+
+				// finding it not unlikely that radio value could be strings "true"/"false"
+				// compensate for forgetting the string aspect of true/false
+				if(option.value == value || (option.value == "true" && value) || (option.value == "false" && value === false)) {
 					option.checked = true;
 
 					// validate after setting value
@@ -566,8 +589,8 @@ Util.Form = u.f = new function() {
 				}
 			}
 		}
+		// find checked option
 		else {
-			var i, option;
 			for(i = 0; option = this.form[this.name][i]; i++) {
 				if(option.checked) {
 					return option.value;
@@ -578,8 +601,15 @@ Util.Form = u.f = new function() {
 	}
 	// value get/setter for checkbox inputs
 	this._value_checkbox = function(value) {
-		if(value) {
-			this.checked = true
+
+		// only return value if no value is passed (value could be false or 0)
+		if(value !== undefined) {
+			if(value) {
+				this.checked = true
+			}
+			else {
+				this.checked = false;
+			}
 
 			// validate after setting value
 			u.f.validate(this);
@@ -593,8 +623,12 @@ Util.Form = u.f = new function() {
 	}
 	// value get/setter for seelcts
 	this._value_select = function(value) {
+
+		// only return value if no value is passed (value could be false or 0)
 		if(value !== undefined) {
+
 			var i, option;
+			// find option with matching value option
 			for(i = 0; option = this.options[i]; i++) {
 				if(option.value == value) {
 					this.selectedIndex = i;
@@ -612,6 +646,9 @@ Util.Form = u.f = new function() {
 		}
 	}
 
+
+
+	// [ENTER] handling
 
 	// submit form when [ENTER] is pressed
 	this.inputOnEnter = function(node) {
@@ -660,7 +697,7 @@ Util.Form = u.f = new function() {
 				this.form.submitButton = false;
 
 				// internal submit
-				this.form._submit(event, this);
+				this.form.submit(event, this);
 			}
 		}
 
@@ -684,7 +721,7 @@ Util.Form = u.f = new function() {
 				this.form.submit_button = this;
 
 				// internal submit
-				this.form._submit(event);
+				this.form.submit(event);
 			}
 		}
 
@@ -693,181 +730,33 @@ Util.Form = u.f = new function() {
 
 
 
-	// this.tabIndex = function(form, input) {
-	//
-	// 	input.tab_index = form.tab_order.length;
-	// 	form.tab_order[input.tab_index] = input;
-	//
-	// }
+	// Event handlers
 
-
-	// TODO: consider merging back into primary loop for better individualization and overview
-	// add to form index and extend according to node type
-	this.formIndex = function(form, iN) {
-//		u.bug("formIndex:" + u.nodeId(iN) + ", " + iN.field + ", " + iN.name)
-
-		// know position in field-order (tab index)
-		// TODO: tabindex contains fields only - could be separated to contain both inputs and buttons
-		iN.tab_index = form.tab_order.length;
-		form.tab_order[iN.tab_index] = iN;
-
-		if(iN.field && iN.name) {
-			form.fields[iN.name] = iN;
-
-			// input
-			// type=text
-			// type=email
-			// type=number
-			// type=password
-			// type=date
-			// type=datetime
-			if(iN.nodeName.match(/input/i) && iN.type && iN.type.match(/text|email|tel|number|password|datetime|date/)) {
-
-				iN.val = this._value;
-
-				u.e.addEvent(iN, "keyup", this._updated);
-				u.e.addEvent(iN, "change", this._changed);
-
-				// submit on enter (checks for autocomplete etc)
-				this.inputOnEnter(iN);
-			}
-			// textarea
-			else if(iN.nodeName.match(/textarea/i)) {
-
-				alert("unexpected formIndex in u.form");
-
-				// iN.val = this._value;
-				//
-				// u.e.addEvent(iN, "keyup", this._updated);
-				// u.e.addEvent(iN, "change", this._changed);
-
-			}
-			// select
-			else if(iN.nodeName.match(/select/i)) {
-
-				alert("unexpected formIndex in u.form");
-
-				// iN.val = this._value_select;
-				//
-				// u.e.addEvent(iN, "change", this._updated);
-				// u.e.addEvent(iN, "keyup", this._updated);
-				// u.e.addEvent(iN, "change", this._changed);
-			}
-			// type=checkbox
-			else if(iN.type && iN.type.match(/checkbox/)) {
-
-				alert("unexpected formIndex in u.form");
-
-				// iN.val = this._value_checkbox;
-				//
-				// // special setting for IE8 and less (bad onchange handler)
-				// if(u.browser("explorer", "<=8")) {
-				// 	iN.pre_state = iN.checked;
-				// 	iN._changed = u.f._changed;
-				// 	iN._updated = u.f._updated;
-				// 	iN._clicked = function(event) {
-				// 		if(this.checked != this.pre_state) {
-				// 			this._changed(window.event);
-				// 			this._updated(window.event);
-				// 		}
-				// 		this.pre_state = this.checked;
-				// 	}
-				// 	u.e.addEvent(iN, "click", iN._clicked);
-				//
-				// }
-				// else {
-				// 	u.e.addEvent(iN, "change", this._updated);
-				// 	u.e.addEvent(iN, "change", this._changed);
-				// }
-				//
-				// // submit on enter (checks for autocomplete etc)
-				// this.inputOnEnter(iN);
-			}
-			// type=radio
-			else if(iN.type && iN.type.match(/radio/)) {
-			
-				alert("unexpected formIndex in u.form");
-
-				// iN.val = this._value_radio;
-				//
-				// // special setting for IE8 and less (bad onchange handler)
-				// if(u.browser("explorer", "<=8")) {
-				// 	iN.pre_state = iN.checked;
-				// 	iN._changed = u.f._changed;
-				// 	iN._updated = u.f._updated;
-				// 	iN._clicked = function(event) {
-				// 		var i, input;
-				// 		if(this.checked != this.pre_state) {
-				// 			this._changed(window.event);
-				// 			this._updated(window.event);
-				// 		}
-				// 		// update prestates for all radios in set
-				// 		for(i = 0; input = this.field._input[i]; i++) {
-				// 			input.pre_state = input.checked;
-				// 		}
-				// 	}
-				// 	u.e.addEvent(iN, "click", iN._clicked);
-				// }
-				// else {
-				// 	u.e.addEvent(iN, "change", this._updated);
-				// 	u.e.addEvent(iN, "change", this._changed);
-				// }
-				//
-				// // submit on enter (checks for autocomplete etc)
-				// this.inputOnEnter(iN);
-
-			}
-
-
-			// type=file
-			else if(iN.type && iN.type.match(/file/)) {
-
-				alert("unexpected formIndex in u.form");
-
-				// iN.val = function(value) {
-				// 	if(value !== undefined) {
-				// 		alert('adding values manually to input type="file" is not supported')
-				// 	}
-				// 	else {
-				// 		var i, file, files = [];
-				// 		for(i = 0; file = this.files[i]; i++) {
-				// 			files.push(file);
-				// 		}
-				// 		return files.join(",");
-				// 	}
-				// }
-				//
-				// u.e.addEvent(iN, "keyup", this._updated);
-				// u.e.addEvent(iN, "change", this._changed);
-
-			}
-
-
-			// activate field
-			this.activateField(iN);
-
-			// validate field now
-			this.validate(iN);
-		}
-	}
-
-	// input is changed (onchange event) - attached to input
+	// internal input is changed (onchange event) - attached to input
 	this._changed = function(event) {
 //		u.bug("value changed:" + this.name + ":" + event.type + ":" + u.nodeId(event.srcElement));
 
 		// input cannot be changed without being used (selects in particular)
 		this.used = true;
 
+
 		// callbacks
+		// does input have callback
 		if(typeof(this.changed) == "function") {
 			this.changed(this);
 		}
+		// certain fields with multiple input will have callback declared on first input only
+		// like radio buttons
+		else if(this.field._input && typeof(this.field._input.changed) == "function") {
+			this.field._input.changed(this);
+		}
+
+		// does form have callback declared
 		if(typeof(this.form.changed) == "function") {
 			this.form.changed(this);
 		}
 	}
-
-	// input is updated (onkeyup event) - attached to input
+	// internal input is updated (onkeyup event) - attached to input
 	this._updated = function(event) {
 //		u.bug("value updated:" + this.name + ":" + event.type + ":" + u.nodeId(event.srcElement));
 
@@ -876,15 +765,27 @@ Util.Form = u.f = new function() {
 //			u.bug("update:" + event.keyCode);
 
 			// only validate onkeyup if field has been used before or already contains error
+
+			// TODO: move this.used check to validate - to show correct state, but not error outline
+
 			if(this.used || u.hc(this.field, "error")) {
 //				u.bug("validate from updated")
 				u.f.validate(this);
 			}
 
+
 			// callbacks
+			// does input have callback
 			if(typeof(this.updated) == "function") {
 				this.updated(this);
 			}
+			// certain fields with multiple input will have callback declared on first input only
+			// like radio buttons
+			else if(this.field._input && typeof(this.field._input.updated) == "function") {
+				this.field._input.updated(this);
+			}
+
+			// does form have callback declared
 			if(typeof(this.form.updated) == "function") {
 				this.form.updated(this);
 			}
@@ -892,47 +793,179 @@ Util.Form = u.f = new function() {
 
 	}
 
-	// validate input (event handler) - attached to input
-	this._validate = function() {
+	// internal validate input (event handler) - attached to input
+	this._validate = function(event) {
 //		u.bug("validate from _validate")
 		u.f.validate(this);
 	}
 
-	// internal submit handler - attatched to form
-	this._submit = function(event, iN) {
+	// internal mouseenter handler - attatched to inputs
+	this._mouseenter = function(event) {
+//		u.bug("this._mouseenter:" + u.nodeId(this.field));
+		u.ac(this.field, "hover");
+		u.ac(this, "hover");
 
-		// u.bug("_submitted")
+		// in case of overlapping hint/errors, make sure this one is on top
+		u.as(this.field, "zIndex", 1000);
 
-		// do pre validation of all fields
-		for(name in this.fields) {
-			if(this.fields[name].field) {
-//				u.bug("field:" + name);
-				// change used state for input
-				this.fields[name].used = true;
-				// validate
-//				u.bug("validate from _submit")
-				u.f.validate(this.fields[name]);
-			}
+		u.f.positionHint(this.field);
+	}
+	// internal mouseleave handler - attatched to inputs
+	this._mouseleave = function(event) {
+//		u.bug("this._mouseleave:" + u.nodeId(this.field));
+		u.rc(this.field, "hover");
+		u.rc(this, "hover");
+
+		// in case of overlapping hint/errors, make sure this one drops back down
+		u.as(this.field, "zIndex", this.field._base_z_index);
+
+		// is help element available, then position it appropriately to input
+		// it might still be shown, is error has occured
+		u.f.positionHint(this.field);
+	}
+
+	// internal focus handler - attatched to inputs
+	this._focus = function(event) {
+//		u.bug("this._focus:" + u.nodeId(this))
+
+		this.field.focused = true;
+		u.ac(this.field, "focus");
+		u.ac(this, "focus");
+
+		// make sure field goes all the way in front - hint/error must be seen
+		u.as(this.field, "zIndex", 1000);
+
+		// is help element available, then position it appropriately to input
+		u.f.positionHint(this.field);
+
+
+		// callbacks
+		// does input have callback
+		if(typeof(this.focused) == "function") {
+			this.focused();
+		}
+		// certain fields with multiple input will have callback declared on first input only
+		// like radio buttons
+		else if(this.field._input && typeof(this.field._input.focused) == "function") {
+			this.field._input.focused(this);
 		}
 
-		// if error is found after validation
-		if(u.qs(".field.error", this)) {
-			if(typeof(this.validationFailed) == "function") {
-				this.validationFailed();
-			}
+		// does form have callback declared
+		if(typeof(this.form.focused) == "function") {
+			this.form.focused(this);
 		}
-		else {
-			// does callback exist
-			if(typeof(this.submitted) == "function") {
-				this.submitted(iN);
+	}
+	// internal blur handler - attatched to inputs
+	this._blur = function(event) {
+//		u.bug("this._blur:" + u.nodeId(this))
+
+		this.field.focused = false;
+		u.rc(this.field, "focus");
+		u.rc(this, "focus");
+
+		// drop back to base z-index
+		u.as(this.field, "zIndex", this.field._base_z_index);
+
+		// is help element available, then position it appropriately to input
+		// it might still be shown, is error has occured
+		u.f.positionHint(this.field);
+
+		// field has been interacted with (content can now be validated)
+		this.used = true;
+
+
+		// callbacks
+		// does input have callback
+		if(typeof(this.blurred) == "function") {
+			this.blurred();
+		}
+		// certain fields with multiple input will have callback declared on first input only
+		// like radio buttons
+		else if(this.field._input && typeof(this.field._input.blurred) == "function") {
+			this.field._input.blurred(this);
+		}
+
+		// does form have callback declared
+		if(typeof(this.form.blurred) == "function") {
+			this.form.blurred(this);
+		}
+	}
+
+	// internal blur handler - attatched to buttons
+	this._button_focus = function(event) {
+		u.ac(this, "focus");
+
+		// callbacks
+		// does button have callback
+		if(typeof(this.focused) == "function") {
+			this.focused();
+		}
+
+		// does form have callback
+		if(typeof(this.form.focused) == "function") {
+			this.form.focused(this);
+		}
+	}
+	// internal blur handler - attatched to buttons
+	this._button_blur = function(event) {
+		u.rc(this, "focus");
+
+
+		// callbacks
+		// does button have callback
+		if(typeof(this.blurred) == "function") {
+			this.blurred();
+		}
+
+		// does form have callback
+		if(typeof(this.form.blurred) == "function") {
+			this.form.blurred(this);
+		}
+	}
+
+	// internal blur handler for default value controller - attatched to inputs
+	this._default_value_focus = function() {
+//		u.bug("this._default_value_focus:" + u.nodeId(this))
+
+		// leave default state
+		u.rc(this, "default");
+
+		// remove default value if set
+		if(this.val() == this.default_value) {
+			this.val("");
+		}
+
+		// if input has pseudolabel, hide it
+		if(this.pseudolabel) {
+			u.as(this.pseudolabel, "display", "none");
+		}
+
+	}
+	// internal blur handler for default value controller - attatched to inputs
+	this._default_value_blur = function() {
+//		u.bug("this._default_value_blur:" + u.nodeId(this))
+
+		// only set default value if input is empty
+		if(this.val() == "") {
+
+			// add class to indicate default value
+			u.ac(this, "default");
+
+
+			// if input has pseudolabel, show it
+			if(this.pseudolabel) {
+				u.as(this.pseudolabel, "display", "block");
 			}
-			// actual submit
+			// set value in field
 			else {
-				this.submit();
+				this.val(this.default_value);
 			}
 		}
 	}
 
+
+
+	// Helper functions
 
 	// position hint appropriately to input
 	this.positionHint = function(field) {
@@ -965,118 +998,11 @@ Util.Form = u.f = new function() {
 		}
 	}
 
-	// internal mouseenter handler - attatched to inputs
-	this._mouseenter = function(event) {
-//		u.bug("this._mouseenter:" + u.nodeId(this.field));
-		u.ac(this.field, "hover");
-		u.ac(this, "hover");
+	// activate input
+	this.activateInput = function(iN) {
+//		u.bug("activateInput:" + u.nodeId(iN, true))
 
-		u.as(this.field, "zIndex", 99);
-
-		u.f.positionHint(this.field);
-	}
-	// internal mouseleave handler - attatched to inputs
-	this._mouseleave = function(event) {
-//		u.bug("this._mouseleave:" + u.nodeId(this.field));
-		u.rc(this.field, "hover");
-		u.rc(this, "hover");
-
-		u.as(this.field, "zIndex", 90);
-
-		// is help element available, then position it appropriately to input
-		// it might still be shown, is error has occured
-		u.f.positionHint(this.field);
-	}
-
-
-	// internal focus handler - attatched to inputs
-	this._focus = function(event) {
-		this.field.focused = true;
-		u.ac(this.field, "focus");
-		u.ac(this, "focus");
-
-		u.as(this.field, "zIndex", 99);
-
-		u.f.positionHint(this.field);
-
-		if(typeof(this.focused) == "function") {
-			this.focused();
-		}
-
-		if(typeof(this.form.focused) == "function") {
-			this.form.focused(this);
-		}
-	}
-	// internal blur handler - attatched to inputs
-	this._blur = function(event) {
-		this.field.focused = false;
-		u.rc(this.field, "focus");
-		u.rc(this, "focus");
-
-		u.as(this.field, "zIndex", 90);
-
-		// is help element available, then position it appropriately to input
-		// it might still be shown, is error has occured
-		u.f.positionHint(this.field);
-
-
-		// field has been interacted with
-		this.used = true;
-
-
-		if(typeof(this.blurred) == "function") {
-			this.blurred();
-		}
-		if(typeof(this.form.blurred) == "function") {
-			this.form.blurred(this);
-		}
-	}
-
-	// internal blur handler - attatched to buttons
-	this._button_focus = function(event) {
-		u.ac(this, "focus");
-
-		if(typeof(this.focused) == "function") {
-			this.focused();
-		}
-
-		if(typeof(this.form.focused) == "function") {
-			this.form.focused(this);
-		}
-	}
-	// internal blur handler - attatched to buttons
-	this._button_blur = function(event) {
-		u.rc(this, "focus");
-
-		if(typeof(this.blurred) == "function") {
-			this.blurred();
-		}
-		if(typeof(this.form.blurred) == "function") {
-			this.form.blurred(this);
-		}
-	}
-
-
-
-	// internal blur handler for default value controller - attatched to inputs
-	this._default_value_focus = function() {
-		u.rc(this, "default");
-		if(this.val() == this.default_value) {
-			this.val("");
-		}
-	}
-	// internal blur handler for default value controller - attatched to inputs
-	this._default_value_blur = function() {
-		if(this.val() == "") {
-			u.ac(this, "default");
-			this.val(this.default_value);
-		}
-	}
-
-	// activate input - add focus and blur events
-	this.activateField = function(iN) {
-//		u.bug("activateField:" + u.nodeId(iN.field))
-
+		// add focus and blur event handlers
 		u.e.addEvent(iN, "focus", this._focus);
 		u.e.addEvent(iN, "blur", this._blur);
 
@@ -1086,43 +1012,130 @@ Util.Form = u.f = new function() {
 			u.e.addEvent(iN, "mouseleave", this._mouseleave);
 		}
 
-		// validate on field blur
+		// validate on input blur
 		u.e.addEvent(iN, "blur", this._validate);
 
-//		u.bug(u.nodeId(iN) + ", " + u.hc(iN.form, "labelstyle:[a-z]+"));
-		if(iN.form.labelstyle || u.hc(iN.form, "labelstyle:[a-z]+")) {
 
-			iN.form.labelstyle = iN.form.labelstyle ? iN.form.labelstyle : u.cv(iN.form, "labelstyle");
+		// Labelstyle is defined?
+		// currently only one input style
+		// inject in input
+		if(iN.form.labelstyle == "inject") {
 
-			// currently only one input style
-			// inject in input
-			if(iN.form.labelstyle == "inject" && (!iN.type || !iN.type.match(/file|radio|checkbox/))) {
+			// some inputs cannot have labels injected
+			// textarea has no type
+			if(!iN.type || !iN.type.match(/file|radio|checkbox/)) {
 
-				iN.default_value = iN._label.innerHTML;
+				// store default value
+				iN.default_value = u.text(iN._label);
 
+				// add default handlers to focus and blur events
 				u.e.addEvent(iN, "focus", this._default_value_focus);
 				u.e.addEvent(iN, "blur", this._default_value_blur);
 
+				// only set default_value if input is not empty
 				if(iN.val() == "") {
-					iN.val(iN.default_value);
+
+					// add class to indicate default state
 					u.ac(iN, "default");
+
+					// Create psydo label for inputs that cant show label value
+					// Did experiments with with field replacement, but required too much work
+					// replacing event and references (this seems to provide sufficient backup)
+					if(iN.type.match(/number|integer/)) {
+
+						iN.pseudolabel = u.ae(iN.parentNode, "span", {"class":"pseudolabel", "html":iN.default_value});
+						iN.pseudolabel.iN = iN;
+
+						// position on top of input
+						u.as(iN.pseudolabel, "top", iN.offsetTop+"px");
+						u.as(iN.pseudolabel, "left", iN.offsetLeft+"px");
+						// create event to remove pseudolabel
+						u.ce(iN.pseudolabel)
+						iN.pseudolabel.inputStarted = function(event) {
+							u.e.kill(event);
+							this.iN.focus();
+						}
+
+					}
+					// set default value
+					else {
+
+						iN.val(iN.default_value);
+
+					}
+
 				}
+
 
 			}
 		}
 
 	}
 
-	// activate button - add focus and blur events
-	this.activateButton = function(button) {
+	// activate button
+	this.activateButton = function(action) {
 
-		u.e.addEvent(button, "focus", this._button_focus);
-		u.e.addEvent(button, "blur", this._button_blur);
+		// if submit button, make sure it does not submit form without validation
+		if(action.type && action.type == "submit") {
+			// need to cancel onclick event to avoid normal post in older browsers where killing mouseup/down is not enough
+			action.onclick = function(event) {
+				u.e.kill(event ? event : window.event);
+			}
+		}
+
+		// handle button click
+		u.ce(action);
+
+		// default handling - can be overwritten in local implementation
+		action.clicked = function(event) {
+			u.e.kill(event);
+
+			// don't execute if button is disabled
+			if(!u.hc(this, "disabled")) {
+				if(this.type && this.type.match(/submit/i)) {
+
+					// store submit button info
+					this.form._submit_button = this;
+					// remove any previous submit info
+					this.form._submit_input = false;
+
+					// internal submit
+					this.form.submit(event, this);
+				}
+
+				// TODO: what is default action when not a submit button??
+				// else {
+				// 	location.href = this.url;
+				// }
+			}
+		}
+
+		// handle [ENTER] on button
+		this.buttonOnEnter(action);
+
+
+		// add to actions index if button has a name
+		var action_name = action.name ? action.name : action.parentNode.className;
+		if(action_name) {
+			action.form.actions[action_name] = action;
+		}
+
+
+		// keyboard shortcut
+		if(typeof(u.k) == "object" && u.hc(action, "key:[a-z0-9]+")) {
+			u.k.addKey(action, u.cv(action, "key"));
+		}
+
+		// add focus and blur handlers
+		u.e.addEvent(action, "focus", this._button_focus);
+		u.e.addEvent(action, "blur", this._button_blur);
+
 	}
-
 
 	// check if input value is default value
  	this.isDefault = function(iN) {
+
+		// default_value is stored when field is indexed
 		if(iN.default_value && iN.val() == iN.default_value) {
 			return true;
 		}
@@ -1175,6 +1188,7 @@ Util.Form = u.f = new function() {
 			u.rc(iN.field, "error");
 		}
 	}
+
 
 
 	// ADDITIONAL EXTENSION FUNCTIONS
@@ -1244,7 +1258,11 @@ Util.Form = u.f = new function() {
 	// enable file upload interface
 	this.fileUpload = function(field) {
 
-		// activate field mouse/drag interaction
+		// add focus and blur event handlers
+		u.e.addEvent(field._input, "focus", this._focus);
+		u.e.addEvent(field._input, "blur", this._blur);
+
+		// activate input mouse/drag interaction
 		if(u.e.event_pref == "mouse") {
 			u.e.addEvent(field._input, "dragenter", this._focus);
 			u.e.addEvent(field._input, "dragleave", this._blur);
@@ -1283,7 +1301,6 @@ Util.Form = u.f = new function() {
 		field.lat_input = u.qs("div.latitude input", field);
 		field.lat_input.autocomplete = "off";
 		field.lat_input.field = field;
-
 
 		field.lon_input = u.qs("div.longitude input", field);
 		field.lon_input.autocomplete = "off";
@@ -1465,79 +1482,315 @@ Util.Form = u.f = new function() {
 	}
 
 
+	// Notes
+	// do not update submit input until content has been changed
+	// need resize on input
+	// need [ENTER] handler - different action for li/dd/dt than for regular inputs
+
+	// label as select with all options
+
+
 	// inject HTML editor
 	this.textEditor = function(field) {
 
 		u.bug("init editor")
 
-		field._viewer = u.ae(field, "div", {"class":"viewer"});
-		field._editor = u.ae(field, "div", {"class":"editor"});
+		// Editor support specs
+		field.text_support = "h1,h2,h3,h4,h5,h6,p,code";
+		field.list_support = "ul,ol";
+		field.media_support = "png,jpg,mp4";
+		field.ext_video_support = "youtube,vimeo";
+		field.file_support = "download"; // means any file type (file will be uploaded, zipped and made available for download)
 
 
-
-		// TODO: update to specific val function
-		// get/set value function
-		field._input.val = this._value;
-
-
+		// Allowed tags are listed in element classname
 		field.allowed_tags = u.cv(field, "tags");
-		field.allowed_tags = field.allowed_tags ? field.allowed_tags.split(",") : false;
-		u.xInObject(field.allowed_tags)
-
-
-		field.makeTextInput = function() {}
-		field.makeImageInput = function() {}
-		field.makeValueInput = function() {}
-
-		// add new formatting node
-		field.addObject = function(type, value) {
-		if(type.match(/vimeo|youtube|img/)) {
-			// TODO: figure out how to handle these very different types
-		}
-		
+		if(!field.allowed_tags) {
+			u.bug("allowed_tags not specified")
+			return;
 		}
 
-		// add new formatting node
-		field.addText = function(type, value) {
 
-			this._tag_restrictions = new RegExp(/^(p|h1|h2|h3|h4|h5|h6|ul|dl)$/);
+		// filter allowed tags before building editor
+		field.filterAllowedTags = function(type) {
 
-			var div = u.ae(this._editor, "div", {"class":"tag "+type});
+			// split allowed tags 
+			tags = this.allowed_tags.split(",");
 
-			// drag handle
-			div._drag = u.ae(div, "div", {"class":"drag"});
-			div._drag.field = this;
+			// create array for type
+			this[type+"_allowed"] = new Array();
 
-			// type selector
-			div._select = u.ae(div, "ul", {"class":"type"});
+			// loop through tags
+			var tag, i;
+			for(i = 0; tag = tags[i]; i++) {
+				// it tag is supported for type, add it to type_allowed array
+				if(tag.match(this[type+"_support"].split(",").join("|"))) {
+					this[type+"_allowed"].push(tag);
+				}
+			}
+		}
+		field.filterAllowedTags("text");
+		field.filterAllowedTags("list");
+		field.filterAllowedTags("media");
+		field.filterAllowedTags("ext_video");
+		field.filterAllowedTags("file");
 
-			var i, tag;
-			// create selector for text-based tags
-			for(i = 0; tag = this.allowed_tags[i]; i++) {
-				if(tag.match(this._tag_restrictions)) {
-					u.ae(div._select, "li", {"html":tag, "class":tag});
+//		u.bug(field.text_allowed.join(","))
+
+
+
+		// BUILD EDITOR EXTERNAL INTERFACE
+
+		// Viewer is a div containing the actual HTML output of the editor
+		// at this point purely used for inspecting the generated HTML for debugging
+		// could be used as a preview pane at a later point
+		field._viewer = u.ae(field, "div", {"class":"viewer"});
+
+		// The actual HTML editor interface
+		field._editor = u.ae(field, "div", {"class":"editor"});
+		field._editor.field = field;
+
+		field._editor.dropped = function() {
+			this.field.update();
+			//u.bug("sorted")
+		}
+
+		// Create add options panel
+		field.addOptions = function() {
+
+			// Add list for actions
+			this.options = u.ae(this, "ul", {"class":"options"});
+
+			// "Add" button
+			this.bn_add = u.ae(this.options, "li", {"class":"add", "html":"+"});
+			this.bn_add.field = field;
+			u.ce(this.bn_add);
+			this.bn_add.clicked = function(event) {
+				if(u.hc(this.field.options, "show")) {
+					u.rc(this.field.options, "show");
+				}
+				else {
+					u.ac(this.field.options, "show");
 				}
 			}
 
-			div._select.field = this;
-			div._select.div = div;
-			div._select.val = function(value) {
+
+			// Add text tag option (if allowed)
+			if(this.text_allowed.length) {
+
+				this.bn_add_text = u.ae(this.options, "li", {"class":"text", "html":"Text ("+this.text_allowed.join(", ")+")"});
+				this.bn_add_text.field = field;
+				u.ce(this.bn_add_text);
+				this.bn_add_text.clicked = function(event) {
+					this.field.addTextTag(this.field.text_allowed[0]);
+					u.rc(this.field.options, "show");
+				}
+			}
+
+			// Add list tag option (if allowed)
+			if(this.list_allowed.length) {
+
+				this.bn_add_list = u.ae(this.options, "li", {"class":"list", "html":"List ("+this.list_allowed.join(", ")+")"});
+				this.bn_add_list.field = field;
+				u.ce(this.bn_add_list);
+				this.bn_add_list.clicked = function(event) {
+					this.field.addListTag(this.field.list_allowed[0]);
+					u.rc(this.field.options, "show");
+				}
+			}
+
+			// Add media tag option (if allowed)
+			if(this.media_allowed.length) {
+
+				this.bn_add_media = u.ae(this.options, "li", {"class":"list", "html":"Media ("+this.media_allowed.join(", ")+")"});
+				this.bn_add_media.field = field;
+			}
+
+			// Add external video tag option (if allowed)
+			if(this.ext_video_allowed.length) {
+
+				this.bn_add_ext_video = u.ae(this.options, "li", {"class":"video", "html":"External video ("+this.ext_video_allowed.join(", ")+")"});
+				this.bn_add_ext_video.field = field;
+			}
+
+			// Add file tag option (if allowed)
+			if(this.file_allowed.length) {
+
+				this.bn_add_file = u.ae(this.options, "li", {"class":"file", "html":"Downloadable file"});
+				this.bn_add_file.field = field;
+				u.ce(this.bn_add_file);
+				this.bn_add_file.clicked = function(event) {
+					this.field.addFileTag();
+					u.rc(this.field.options, "show");
+				}
+			}
+
+		}
+
+
+
+		// Update viewer and Textarea
+		field.update = function() {
+
+			this.updateViewer();
+			this.updateContent();
+
+		}
+
+
+		// update HTML viewer div
+		field.updateViewer = function() {
+//			u.bug("updateViewer");
+
+			var tags = u.qsa("div.tag", this);
+			var i, tag, value;
+			// update html viewer
+			this._viewer.innerHTML = "";
+			for(i = 0; tag = tags[i]; i++) {
+
+				if(u.hc(tag, this.text_allowed.join("|"))) {
+					value = tag._input.val();
+					u.ae(this._viewer, tag._type.val(), {"html":value});
+				}
+
+				else if(u.hc(tag, this.list_allowed.join("|"))) {
+					var list = u.ae(this._viewer, tag._type.val());
+					var lis = u.qsa("div.li", tag);
+					for(j = 0; li = lis[j]; j++) {
+						value = li._input.val();
+						var li = u.ae(list, tag._type.val(), {"html":value});
+					}
+				}
+				// must be refined to not just read HTML content (for div objects)
+
+				 //.replace(/\n\r|\n|\r/g, "<br>");
+//				u.ae(this._viewer, tag._type.val(), {"html":value});
+			}
+			
+		}
+
+
+		// updates actual Textarea 
+		field.updateContent = function() {
+//			u.bug("updateContent");
+
+			var tags = u.qsa("div.tag", this);
+
+			// update actual textarea to be saved
+			this._input.val("");
+
+			var i, node, tag, value, html = "";
+
+			for(i = 0; tag = tags[i]; i++) {
+//				u.bug(u.nodeId(node));
+
+				// TODO: Create output when we know more
+
+				if(u.hc(tag, this.text_allowed.join("|"))) {
+
+					value = tag._input.val();
+					 //.replace(/\n\r|\n|\r/g, "<br>");
+					tag = tag._type.val();
+
+					html += "<"+tag+">"+value+"</"+tag+">\n";
+					
+				}
+
+				else if(u.hc(tag, this.list_allowed.join("|"))) {
+//					u.bug("tag:" + tag)
+
+					list = tag._type.val();
+					html += "<"+list+">\n";
+
+					var lis = u.qsa("div.li", tag);
+					for(j = 0; li = lis[j]; j++) {
+						value = li._input.val();
+						html += "\t<li>"+value+"</li>\n";
+					}
+
+					html += "</"+list+">\n";
+				}
+
+
+
+			}
+//			u.bug("updateContent ("+u.nodeId(this._input)+ "):" + html);
+			this._input.val(html);
+
+		}
+
+
+
+		// EDITOR FUNCTIONALity
+
+
+
+
+		// create empty tag (with drag, type selector and remove elements)
+		// 
+		field.createTag = function(allowed_tags, type) {
+
+			var tag = u.ae(this._editor, "div", {"class":"tag"});
+
+
+			// drag handle
+			tag._drag = u.ae(tag, "div", {"class":"drag"});
+			tag._drag.field = this;
+			tag._drag.tag = tag;
+
+			// type selector
+			this.createTagSelector(tag, allowed_tags);
+
+			// select current type
+			tag._type.val(type);
+
+
+			// delete button
+			tag._remove = u.ae(tag, "div", {"class":"remove"});
+			tag._remove.field = this;
+			tag._remove.tag = tag;
+
+			return tag;
+		}
+
+
+		// create tag selector helper function
+		field.createTagSelector = function(tag, allowed_tags) {
+			
+			var i, allowed_tag;
+
+			// insert node in tag
+			tag._type = u.ae(tag, "ul", {"class":"type"});
+			tag._type.field = this;
+			tag._type.tag = tag;
+
+			// create selector for text-based tags
+			for(i = 0; allowed_tag = allowed_tags[i]; i++) {
+				u.ae(tag._type, "li", {"html":allowed_tag, "class":allowed_tag});
+			}
+
+
+			// div._select.field = this;
+			// div._select.div = div;
+			tag._type.val = function(value) {
+
 				if(value !== undefined) {
 					var i, option;
 					for(i = 0; option = this.childNodes[i]; i++) {
+						u.bug("option:" + option)
 						if(u.text(option) == value) {
 
 							if(this.selected_option) {
 								u.rc(this.selected_option, "selected");
 
 								// update div tag class
-								u.rc(this.div, u.text(this.selected_option));
+								u.rc(this.tag, u.text(this.selected_option));
 							}
 							u.ac(option, "selected");
 							this.selected_option = option;
 
 							// update div tag class
-							u.ac(this.div, value);
+							u.ac(this.tag, value);
 
 							return option;
 						}
@@ -1549,115 +1802,290 @@ Util.Form = u.f = new function() {
 					return u.text(this.selected_option);
 				}
 			}
-			// select current type
-			div._select.val(type);
+
+			// enable tag switching if more than one type available
+			if(allowed_tags.length > 1) {
+
+				u.ce(tag._type);
+				tag._type.clicked = function(event) {
+					u.bug("select clicked");
+
+					// already show - close selector
+					if(u.hc(this, "open")) {
+						u.rc(this, "open");
+						u.rc(this.tag, "focus");
+
+						u.as(this, "top", 0);
+
+						// was a new type selected?
+						if(event.target) {
+							this.val(u.text(event.target));
+						}
+
+						u.e.removeEvent(this, "mouseout", this.autohide);
+						u.e.removeEvent(this, "mouseover", this.delayautohide);
+						u.t.resetTimer(this.t_autohide);
 
 
-			u.ce(div._select);
-			div._select.clicked = function(event) {
-				u.bug("select clicked");
+						// TODO: add focus to input (but not until we know what input looks like)
 
-				// already show - close selector
-				if(u.hc(this, "open")) {
+	//					this.tag._input.focus();
+
+						// update content
+						this.field.update();
+					}
+					// closed - open selector
+					else {
+						u.ac(this, "open");
+						u.ac(this.tag, "focus");
+
+						u.as(this, "top", -(this.selected_option.offsetTop) + "px");
+
+						u.e.addEvent(this, "mouseout", this.autohide);
+						u.e.addEvent(this, "mouseover", this.delayautohide);
+					}
+				}
+
+				// auto hide type selector
+				tag._type.hide = function() {
 					u.rc(this, "open");
-					u.rc(this.div, "focus");
+					u.rc(this.tag, "focus");
 
 					u.as(this, "top", 0);
-
-					// was a new type selected?
-					if(event.target) {
-						this.val(u.text(event.target));
-					}
 
 					u.e.removeEvent(this, "mouseout", this.autohide);
 					u.e.removeEvent(this, "mouseover", this.delayautohide);
 					u.t.resetTimer(this.t_autohide);
 
-					// cause input focus to activate focus chain
-					this.div._input.focus();
 
-					// update content
-					this.field.update();
+					// TODO: add focus to input (but not until we know what input looks like)
+
+	//				this.div._input.focus();
 				}
-				// closed - open selector
-				else {
-					u.ac(this, "open");
-					u.ac(this.div, "focus");
-
-					u.as(this, "top", -(this.selected_option.offsetTop) + "px");
-
-					u.e.addEvent(this, "mouseout", this.autohide);
-					u.e.addEvent(this, "mouseover", this.delayautohide);
+				tag._type.autohide = function(event) {
+					u.t.resetTimer(this.t_autohide);
+					this.t_autohide = u.t.setTimer(this, this.hide, 800);
 				}
+				tag._type.delayautohide = function(event) {
+					u.t.resetTimer(this.t_autohide);
+				}
+
 			}
 
-			// auto hide type selector
-			div._select.hide = function() {
-				u.rc(this, "open");
-				u.rc(this.div, "focus");
 
-				u.as(this, "top", 0);
 
-				u.e.removeEvent(this, "mouseout", this.autohide);
-				u.e.removeEvent(this, "mouseover", this.delayautohide);
-				u.t.resetTimer(this.t_autohide);
+		}
 
-				this.div._input.focus();
+
+
+
+		// TODO: split this up into specific chunks
+		// add new formatting node for objects
+		// file, media, youtube or vimeo
+		field.addObjectTag = function(type, value) {
+			if(type.match(/vimeo|youtube|img/)) {
+				// TODO: figure out how to handle these very different types
 			}
-			div._select.autohide = function(event) {
-				u.t.resetTimer(this.t_autohide);
-				this.t_autohide = u.t.setTimer(this, this.hide, 800);
+		
+		}
+
+
+		field.addFileTag = function(value) {
+
+			var tag = this.createTag(["file"], "file");
+
+
+			tag._input = u.ae(tag, "input", {"type":"file"});
+			tag._input.tag = tag;
+			tag._input.field = this;
+
+			// declare get/set value funtion
+			tag._input.val = function(value) {
+				// if(value !== undefined) {
+				// 	this.innerHTML = value;
+				// }
+				// return this.innerHTML;
 			}
-			div._select.delayautohide = function(event) {
-				u.t.resetTimer(this.t_autohide);
+			// set value if any is sent
+			tag._input.val(u.stringOr(value));
+
+
+			u.e.addEvent(tag._input, "change", this._file_updated);
+
+			// monitor changes and selections
+			// kills ENTER event
+//			u.e.addEvent(tag._input, "keydown", this._changing_content);
+
+			// content has been modified or selected (can happen with mouse or keys)
+			// u.e.addEvent(tag._input, "keyup", this._changed_content);
+			// u.e.addEvent(tag._input, "mouseup", this._changed_content);
+
+			// add focus and blur handlers
+			u.e.addEvent(tag._input, "focus", this._focused_content);
+			u.e.addEvent(tag._input, "blur", this._blurred_content);
+
+			// Show hint on mouseover
+			if(u.e.event_pref == "mouse") {
+				u.e.addEvent(tag._input, "mouseenter", u.f._mouseenter);
+				u.e.addEvent(tag._input, "mouseleave", u.f._mouseleave);
 			}
+
+			// add paste event handler
+//			u.e.addEvent(tag._input, "paste", this._pasted_content);
+			
+			// if(type.match(/vimeo|youtube|img/)) {
+			// 	// TODO: figure out how to handle these very different types
+			// }
+
+			// enable dragging of html-tags
+			u.sortable(this._editor, {"draggables":"tag", "targets":"editor"});
+
+			return tag;
+		}
+
+
+		// add new list node
+		field.addListTag = function(type, value) {
+
+			var tag = this.createTag(this.list_allowed, type);
+
+			// tag.items = new Array();
+			// tag.items.push(this.addListItem(tag, value));
+			this.addListItem(tag, value);
+
+			// callback for "add new"
+			// tag.addNew = function() {
+			// 	this.items.push(this.field.addListItem(this));
+			// }
+
+			// enable dragging of html-tags
+			u.sortable(this._editor, {"draggables":"tag", "targets":"editor"});
+
+			return tag;
+		}
+
+		field.addListItem = function(tag, value) {
+
+			var li = u.ae(tag, "div", {"class":"li"});
+			li.tag = tag;
+			li.field = this;
 
 			// text input
-			div._input = u.ae(div, "div", {"class":"text", "contentEditable":true});
-			div._input.div = div;
-			div._input.field = this;
-			div._input.val = function(value) {
+			li._input = u.ae(li, "div", {"class":"text", "contentEditable":true});
+			li._input.li = li;
+			li._input.tag = tag;
+			li._input.field = this;
+
+			// declare get/set value funtion
+			li._input.val = function(value) {
 				if(value !== undefined) {
 					this.innerHTML = value;
 				}
 				return this.innerHTML;
 			}
-			div._input.val(u.stringOr(value));
+			// set value if any is sent
+			li._input.val(u.stringOr(value));
+
 
 			// monitor changes and selections
-			u.e.addEvent(div._input, "keydown", this._changing_content);
+			// kills ENTER event
+			u.e.addEvent(li._input, "keydown", this._changing_content);
 
-			u.e.addEvent(div._input, "keyup", this._changed_content);
-			u.e.addEvent(div._input, "mouseup", this._changed_content);
+			// content has been modified or selected (can happen with mouse or keys)
+			u.e.addEvent(li._input, "keyup", this._changed_content);
+			u.e.addEvent(li._input, "mouseup", this._changed_content);
 
-			u.e.addEvent(div._input, "focus", this._focused_content);
-			u.e.addEvent(div._input, "blur", this._blurred_content);
+			// add focus and blur handlers
+			u.e.addEvent(li._input, "focus", this._focused_content);
+			u.e.addEvent(li._input, "blur", this._blurred_content);
 
+			// Show hint on mouseover
 			if(u.e.event_pref == "mouse") {
-				u.e.addEvent(div._input, "mouseenter", u.f._mouseenter);
-				u.e.addEvent(div._input, "mouseleave", u.f._mouseleave);
+				u.e.addEvent(li._input, "mouseenter", u.f._mouseenter);
+				u.e.addEvent(li._input, "mouseleave", u.f._mouseleave);
 			}
 
 			// add paste event handler
-			u.e.addEvent(div._input, "paste", this._pasted_content);
+			u.e.addEvent(li._input, "paste", this._pasted_content);
 
-			return div;
+			return li;
 		}
 
-		// gained focus on individual text-tag
-		field._focused_content = function(event) {
-//			u.bug("field._focused_content");
+		// add new text node
+		field.addTextTag = function(type, value) {
 
-			u.ac(this.div, "focus");
+			var tag = this.createTag(this.text_allowed, type);
+
+			// text input
+			tag._input = u.ae(tag, "div", {"class":"text", "contentEditable":true});
+			tag._input.tag = tag;
+			tag._input.field = this;
+
+			// declare get/set value funtion
+			tag._input.val = function(value) {
+				if(value !== undefined) {
+					this.innerHTML = value;
+				}
+				return this.innerHTML;
+			}
+			// set value if any is sent
+			tag._input.val(u.stringOr(value));
+
+
+			// monitor changes and selections
+			// kills ENTER event
+			u.e.addEvent(tag._input, "keydown", this._changing_content);
+
+			// content has been modified or selected (can happen with mouse or keys)
+			u.e.addEvent(tag._input, "keyup", this._changed_content);
+			u.e.addEvent(tag._input, "mouseup", this._changed_content);
+
+			// add focus and blur handlers
+			u.e.addEvent(tag._input, "focus", this._focused_content);
+			u.e.addEvent(tag._input, "blur", this._blurred_content);
+
+			// Show hint on mouseover
+			if(u.e.event_pref == "mouse") {
+				u.e.addEvent(tag._input, "mouseenter", u.f._mouseenter);
+				u.e.addEvent(tag._input, "mouseleave", u.f._mouseleave);
+			}
+
+			// add paste event handler
+			u.e.addEvent(tag._input, "paste", this._pasted_content);
+
+
+			// callback for "add new"
+			tag.addNew = function() {
+				this.field.addTextItem(this.field.text_allowed[0]);
+			}
+
+			// enable dragging of html-tags
+			u.sortable(this._editor, {"draggables":"tag", "targets":"editor"});
+
+			return tag;
+		}
+
+
+
+
+		// gained focus on individual tag._input
+		// TODO: consider looping back to original field._focused (for callbacks)
+		field._focused_content = function(event) {
+			u.bug("field._focused_content");
+
+			// add focus state
 			this.field.focused = true;
+			u.ac(this.tag, "focus");
 			u.ac(this.field, "focus");
 
-			u.as(this.field, "zIndex", 99);
+			// make sure field goes all the way in front - hint/error must be seen
+			u.as(this.field, "zIndex", 1000);
 
+			// position hint in case there is an error
 			u.f.positionHint(this.field);
 
 			// if tabbing to gain focus, move cursor to end
-			// TODO: does not always detect tabbing
+			// TODO: does not always detect tabbing correctly - maybe look at key?
 			if(event.rangeOffset == 1) {
 				var range = document.createRange();
 				range.selectNodeContents(this);
@@ -1667,17 +2095,22 @@ Util.Form = u.f = new function() {
 				selection.removeAllRanges();
 				selection.addRange(range);
 			}
+
 		}
-		// lost focus on individual text-tag
+		// lost focus on individual tag._input
+		// TODO: consider looping back to original field._blurred (for callbacks)
 		field._blurred_content = function() {
 //			u.bug("_blurred_content:" + this.val());
 
-			u.rc(this.div, "focus");
+			// remove focus state
 			this.field.focused = false;
+			u.rc(this.tag, "focus");
 			u.rc(this.field, "focus");
 
-			u.as(this.field, "zIndex", 90);
+			// put back in correct place
+			u.as(this.field, "zIndex", this.field._base_z_index);
 
+			// position hint in case there is an error
 			u.f.positionHint(this.field);
 
 			// hide options (will not be hidden if they are needed)
@@ -1685,13 +2118,24 @@ Util.Form = u.f = new function() {
 		}
 
 
-		// text has been changed - update field
-		field._changed_type = function(event) {
-//			u.bug("updated value:" + this.field._input.val());
 
-			this.field.update();
-			
+		// attached to tag._input node for text-tags and list-tags
+		field._file_updated = function(event) {
+
+
+			var form_data = new FormData();
+			form_data.append(this.name, this.files[0], this.value);
+
+			this.response = function(response) {
+
+			}
+			u.request(this, "/", {"method":"post", "params":form_data});
+//			u.bug("changed node:" + u.nodeId(this));
+			u.bug("file updated:" + this.val());
+
 		}
+
+
 
 		// attached to div._input node onkey down
 		// overriding default enter action 
@@ -1705,47 +2149,12 @@ Util.Form = u.f = new function() {
 
 		}
 
-		// clean pasted content - first version
-		field._pasted_content = function(event) {
-			u.e.kill(event);
 
-			var i, node;
-			var paste_content = event.clipboardData.getData("text/plain");
-
-			// only do anything if paste content is not empty
-			if(paste_content !== "") {
-				// add break tags for newlines
-				var paste_parts = paste_content.split(/\n\r|\n|\r/g);
-				var text_nodes = [];
-				for(i = 0; text = paste_parts[i]; i++) {
-					text_nodes.push(document.createTextNode(text));
-					text_nodes.push(document.createElement("br"));
-				}
-
- 				var text_node = document.createTextNode(paste_content);
-				for(i = text_nodes.length-1; node = text_nodes[i]; i--) {
-					window.getSelection().getRangeAt(0).insertNode(node);
-				}
-
-				// position cursor at end
-				var range = document.createRange();
-				range.selectNodeContents(this);
-				range.collapse(false);
-
-				var selection = window.getSelection();
-				selection.removeAllRanges();
-				selection.addRange(range);
-			}
-
-			// u.bug("pasted content:" + event.clipboardData.getData("text/plain"));
-			// u.bug("pasted content:" + event.clipboardData.getData("text/html"));
-		}
-
-		// attached to div._input node
+		// attached to tag._input node for text-tags and list-tags
 		field._changed_content = function(event) {
 
 //			u.bug("changed node:" + u.nodeId(this));
-//			u.bug("changed value:" + event.keyCode + ", " + this.val());
+			u.bug("changed value:" + event.keyCode + ", " + this.val());
 
 			// get selection, to use for deletion
 			var selection = window.getSelection(); 
@@ -1758,19 +2167,35 @@ Util.Form = u.f = new function() {
 				// Clean [ENTER] - add new field
 				if(!event.ctrlKey && !event.metaKey) {
 
-					var new_tag = this.field.addText("p");
-					var next_tag = u.ns(this.div);
-					if(next_tag) {
-						this.div.parentNode.insertBefore(new_tag, next_tag);
+					// list element - create new li
+					if(u.hc(this.tag, this.field.list_allowed.join("|"))) {
+
+						var new_li = this.field.addListItem(this.tag);
+						var next_li = u.ns(this.li);
+						if(next_li) {
+							this.tag.insertBefore(new_li, next_li);
+						}
+						else {
+							this.tag.appendChild(new_li);
+						}
+
+						new_li._input.focus();
 					}
+
+					// text element, create new text node
 					else {
-						this.div.parentNode.appendChild(new_tag);
+
+						var new_tag = this.field.addTextTag(this.field.text_allowed[0]);
+						var next_tag = u.ns(this.tag);
+						if(next_tag) {
+							this.tag.parentNode.insertBefore(new_tag, next_tag);
+						}
+						else {
+							this.tag.parentNode.appendChild(new_tag);
+						}
+
+						new_tag._input.focus();
 					}
-
-					new_tag._input.focus();
-
-					// enable dragging of html-tags
-					u.sortable(this.field._editor, {"draggables":"tag", "targets":"editor"});
 
 				}
 
@@ -1802,34 +2227,48 @@ Util.Form = u.f = new function() {
 
 					u.e.kill(event);
 
-					var prev_tag = u.ps(this.div);
 					var all_tags = u.qsa("div.tag", this.field);
+					var all_lis = u.qsa("div.li", this.tag);
 
-					// never delete last one
-					if(all_tags.length > 1) {
-						this.div.parentNode.removeChild(this.div);
+					// check for previous element before removing anything
+					var prev = this.field.findPreviousInput(this);
 
-						// is there a tag before this?
-						if(prev_tag) {
-							prev_tag._input.focus();
 
-							// move cursor to the end of the editable area
-							var range = document.createRange();
-							range.selectNodeContents(prev_tag._input);
-							range.collapse(false);
+					// list element
+					if(u.hc(this.tag, this.field.list_allowed.join("|"))) {
 
-							var selection = window.getSelection();
-							selection.removeAllRanges();
-							selection.addRange(range);
+						// never delete last tag - only delete li if there are more li's or tags
+						if(all_tags.length > 1 || all_lis.length > 1) {
+
+							// remove li
+							this.tag.removeChild(this.li);
+
+							// if we just removed last li in list, now remove list
+							if(!u.qsa("div.li", this.tag).length) {
+
+								// remove list
+								this.tag.parentNode.removeChild(this.tag);
+							}
 						}
-						// no prev, focus on next node
-						else {
-							u.qs("div.tag", this.field)._input.focus();
+					}
+
+					// text element
+					else {
+
+						// never delete last tag
+						if(all_tags.length > 1) {
+							this.tag.parentNode.removeChild(this.tag);
+
 						}
+					}
 
 
-						// enable dragging of html-tags
-						u.sortable(this.field._editor, {"draggables":"tag", "targets":"editor"});
+					// enable dragging of html-tags
+					u.sortable(this.field._editor, {"draggables":"tag", "targets":"editor"});
+
+					// set focus on prev element
+					if(prev) {
+						prev.focus();
 					}
 
 				}
@@ -1891,13 +2330,93 @@ Util.Form = u.f = new function() {
 			this.field.update();
 		}
 
+
+
+		// PASTE FILTERING
+
+		// clean pasted content - first version
+		field._pasted_content = function(event) {
+			u.e.kill(event);
+
+			var i, node;
+			var paste_content = event.clipboardData.getData("text/plain");
+
+			// only do anything if paste content is not empty
+			if(paste_content !== "") {
+				// add break tags for newlines
+				var paste_parts = paste_content.split(/\n\r|\n|\r/g);
+				var text_nodes = [];
+				for(i = 0; text = paste_parts[i]; i++) {
+					text_nodes.push(document.createTextNode(text));
+					text_nodes.push(document.createElement("br"));
+				}
+
+ 				var text_node = document.createTextNode(paste_content);
+				for(i = text_nodes.length-1; node = text_nodes[i]; i--) {
+					window.getSelection().getRangeAt(0).insertNode(node);
+				}
+
+				// position cursor at end
+				var range = document.createRange();
+				range.selectNodeContents(this);
+				range.collapse(false);
+
+				var selection = window.getSelection();
+				selection.removeAllRanges();
+				selection.addRange(range);
+			}
+
+			// u.bug("pasted content:" + event.clipboardData.getData("text/plain"));
+			// u.bug("pasted content:" + event.clipboardData.getData("text/html"));
+		}
+
+
+		// on delete, find the previous input to send focus to
+		field.findPreviousInput = function(iN) {
+
+			var prev = false;
+
+			// list 
+			if(u.hc(iN.tag, this.list_allowed.join("|"))) {
+
+				prev = u.ps(iN.li, "drag|remove|type");
+			}
+
+			if(!prev) {
+				prev = u.ps(iN.tag);
+
+				if(prev && u.hc(prev, this.list_allowed.join("|"))) {
+
+					var items = u.qsa("div.li", prev);
+					prev = items[items.length-1];
+				}
+			}
+
+			// no previous tags, first tag is best option
+			if(!prev) {
+				prev = u.qs("div.tag", this);
+
+				if(u.hc(prev, this.list_allowed.join("|"))) {
+
+					prev = u.qs("div.li", prev);
+				}
+			}
+
+			// return input or false
+			return prev ? prev._input : false;
+		}
+
+
+
+		// SELECTION OPTIONS PANE
+
 		// hide the options pane and update content 
 		field.hideSelectionOptions = function() {
 
 			// only hide if not in interaction mode
-			if(this.options && !this.options.is_active) {
-				this.options.parentNode.removeChild(this.options);
-				this.options = null;
+			if(this.selection_options && !this.selection_options.is_active) {
+				this.selection_options.parentNode.removeChild(this.selection_options);
+				this.selection_options = null;
 			}
 
 			this.update();
@@ -1911,55 +2430,56 @@ Util.Form = u.f = new function() {
 			var y = u.absY(node);
 
 			// create options div
-			this.options = u.ae(document.body, "div", {"id":"selection_options"});
+			this.selection_options = u.ae(document.body, "div", {"id":"selection_options"});
 
 			// position options pane according to field
-			u.as(this.options, "top", y+"px");
-			u.as(this.options, "left", (x + node.offsetWidth) +"px");
+			u.as(this.selection_options, "top", y+"px");
+			u.as(this.selection_options, "left", (x + node.offsetWidth) +"px");
 
-			var ul = u.ae(this.options, "ul", {"class":"options"});
+			var ul = u.ae(this.selection_options, "ul", {"class":"options"});
 
 			// link option
-			this.options._link = u.ae(ul, "li", {"class":"link", "html":"Link"});
-			this.options._link.field = this;
-			this.options._link.selection = selection;
-			u.ce(this.options._link);
-			this.options._link.inputStarted = function(event) {
+			this.selection_options._link = u.ae(ul, "li", {"class":"link", "html":"Link"});
+			this.selection_options._link.field = this;
+			this.selection_options._link.selection = selection;
+			u.ce(this.selection_options._link);
+			this.selection_options._link.inputStarted = function(event) {
 				u.e.kill(event);
-				this.field.options.is_active = true;
+				this.field.selection_options.is_active = true;
 			}
-			this.options._link.clicked = function(event) {
+			this.selection_options._link.clicked = function(event) {
 				u.e.kill(event);
 				this.field.addAnchorTag(this.selection);
 			}
 
 			// EM option
-			this.options._em = u.ae(ul, "li", {"class":"em", "html":"Itallic"});
-			this.options._em.field = this;
-			this.options._em.selection = selection;
-			u.ce(this.options._em);
-			this.options._em.inputStarted = function(event) {
+			this.selection_options._em = u.ae(ul, "li", {"class":"em", "html":"Itallic"});
+			this.selection_options._em.field = this;
+			this.selection_options._em.selection = selection;
+			u.ce(this.selection_options._em);
+			this.selection_options._em.inputStarted = function(event) {
 				u.e.kill(event);
 			}
-			this.options._em.clicked = function(event) {
+			this.selection_options._em.clicked = function(event) {
 				u.e.kill(event);
 				this.field.addEmTag(this.selection);
 			}
 
 			// STRONG option
-			this.options._strong = u.ae(ul, "li", {"class":"strong", "html":"Bold"});
-			this.options._strong.field = this;
-			this.options._strong.selection = selection;
-			u.ce(this.options._strong);
-			this.options._strong.inputStarted = function(event) {
+			this.selection_options._strong = u.ae(ul, "li", {"class":"strong", "html":"Bold"});
+			this.selection_options._strong.field = this;
+			this.selection_options._strong.selection = selection;
+			u.ce(this.selection_options._strong);
+			this.selection_options._strong.inputStarted = function(event) {
 				u.e.kill(event);
 			}
-			this.options._strong.clicked = function(event) {
+			this.selection_options._strong.clicked = function(event) {
 				u.e.kill(event);
 				this.field.addStrongTag(this.selection);
 			}
 
 		}
+
 
 		// add mouseover delete option to injected tags
 		field.deleteOption = function(node) {
@@ -1983,10 +2503,17 @@ Util.Form = u.f = new function() {
 					u.ce(this.bn_delete);
 					this.bn_delete.clicked = function() {
 						u.e.kill(event);
+
+						if(this.node.field.selection_options) {
+							this.node.field.selection_options.is_active = false;
+							this.node.field.hideSelectionOptions();
+						}
+
 						var fragment = document.createTextNode(this.node.innerHTML);
 						this.node.parentNode.replaceChild(fragment, this.node);
 						this.node.reallyout();
 						this.node.field.update();
+
 					}
 
 					u.as(this.bn_delete, "top", (u.absY(this)-5)+"px");
@@ -2010,11 +2537,12 @@ Util.Form = u.f = new function() {
 			u.e.addEvent(node, "mouseout", node.out);
 		}
 
+
 		// activate existing inline formatting
 		field.activateInlineFormatting = function(input) {
 
 			var i, node;
-			var inline_tags = u.qsa("a,strong,em", input);
+			var inline_tags = u.qsa("a,strong,em,span", input);
 
 			for(i = 0; node = inline_tags[i]; i++) {
 				node.field = input.field;
@@ -2023,28 +2551,24 @@ Util.Form = u.f = new function() {
 		}
 
 
-		// INLINE FORMATTING
+
+
+
+		// INLINE FORMATTING HELPERS FOR TEXT NODES
 
 		// extend options pane with Anchor options
 		field.anchorOptions = function(node) {
 
-			var form = u.f.addForm(this.options, {"class":"labelstyle:inject"});
+			var form = u.f.addForm(this.selection_options, {"class":"labelstyle:inject"});
 			u.ae(form, "h3", {"html":"Link options"});
 			var fieldset = u.f.addFieldset(form);
 			var input_url = u.f.addField(fieldset, {"label":"url", "name":"url"});
 
-			// TODO: change to SELECT field
-			var input_target = u.f.addField(fieldset, {"label":"target", "name":"target"});
+			// TODO: change to checkbox field
+			var input_target = u.f.addField(fieldset, {"type":"checkbox", "label":"New window?", "name":"target"});
 			var bn_save = u.f.addAction(form, {"value":"Create link", "class":"button"});
 			u.f.init(form);
 
-			// // fill out with existing values
-			// if(node.href) {
-			// 	form.fields["url"].val(node.href);
-			// }
-			// if(node.target) {
-			// 	form.fields["target"].val(node.target);
-			// }
 
 			form.a = node;
 			form.field = this;
@@ -2056,12 +2580,14 @@ Util.Form = u.f = new function() {
 				}
 
 				if(this.fields["target"].val() && this.fields["target"].val() != this.fields["target"].default_value) {
-					this.a.target = this.fields["target"].val();
+//					this.a.target = this.fields["target"].val();
+					this.a.target = "_blank";
 				}
-				this.field.options.is_active = false;
+				this.field.selection_options.is_active = false;
 				this.field.hideSelectionOptions();
 			}
 		}
+
 
 		// add anchor tag
 		field.addAnchorTag = function(selection) {
@@ -2085,6 +2611,7 @@ Util.Form = u.f = new function() {
 			var range, a, url, target;
 			var strong = document.createElement("strong");
 			strong.field = this;
+//			u.bug("field:" + u.nodeId(this));
 
 			range = selection.getRangeAt(0);
 			range.surroundContents(strong);
@@ -2109,19 +2636,41 @@ Util.Form = u.f = new function() {
 			this.hideSelectionOptions();
 		}
 
+		// add span options
+		field.spanOptions = function(node) {}
+		
+		// add span tag
+		field.addSpanTag = function(selection) {
 
-		// index existing content 
+			var span = document.createElement("span");
+			span.field = this;
 
-		// inject value into viewer div, to be able to inspect for DOM content
+			var range = selection.getRangeAt(0);
+			range.surroundContents(span);
+			selection.removeAllRanges();
+
+			this.deleteOption(span);
+			this.hideSelectionOptions();
+		}
+
+
+
+
+
+		// INDEX EXISTING CONTENT 
+
+
+		// inject value into viewer div, to be able to inspect for DOM content on initialization
 		field._viewer.innerHTML = field._input.val();
-		field._fields = new Array();
+
 
 		// TODO: 
-		
 		// if value of textarea is not HTML formatted
 		// change double linebreak to </p><p> (or fitting) once you are sure text is wrapped in node
 
+
 		var value, node, i, tag;
+		field._fields = new Array();
 
 		// check for valid nodes, excluding <br>
 		var nodes = u.cn(field._viewer, "br");
@@ -2133,7 +2682,7 @@ Util.Form = u.f = new function() {
 
 //				u.bug("node" + u.nodeId(node) + ", " + node.nodeName + ", " + typeof(node.nodeName));
 
-				// lost fragment,
+				// lost fragment of unspecified text
 				// wrap in p tag if content is more than whitespace or newline
 				if(node.nodeName == "#text") {
 					if(node.nodeValue.trim()) {
@@ -2143,27 +2692,58 @@ Util.Form = u.f = new function() {
 						if(fragments) {
 							for(index in fragments) {
 								value = fragments[index].replace(/\n\r|\n|\r/g, "<br>");
-								tag = field.addText("p", fragments[index]);
+								tag = field.addTextTag("p", fragments[index]);
 								field.activateInlineFormatting(tag._input);
 							}
 						}
 						// wrap textnode in one paragraph
 						else {
 							value = node.nodeValue; //.replace(/\n\r|\n|\r/g, "<br>");
-							tag = field.addText("p", value);
+							tag = field.addTextTag("p", value);
 							field.activateInlineFormatting(tag._input);
 						}
 
 					}
 				}
-				// valid node
-				else if(node.nodeName.toLowerCase().match(field._tag_restrictions)) {
+
+				// valid text node (h1-h6, p, code)
+				else if(node.nodeName.toLowerCase().match(field.text_allowed.join("|"))) {
+
+					// handle plain text node
+					// TODO: this will not work with <code> (cannot replace newline in code element)
 
 					value = node.innerHTML.replace(/\n\r|\n|\r/g, "<br>"); // .replace(/\<br[\/]?\>/g, "\n");
-					tag = field.addText(node.nodeName.toLowerCase(), value);
+
+					// add new text node to editor
+					tag = field.addTextTag(node.nodeName.toLowerCase(), value);
 					field.activateInlineFormatting(tag._input);
 
 				}
+				// valid list node (ul, ol)
+				else if(node.nodeName.toLowerCase().match(field.list_allowed.join("|"))) {
+
+					// handle list node
+					// this will not work with <code> (cannot replace newline in code element)
+					var lis = u.qs("li", node);
+					value = lis[0].innerHTML.replace(/\n\r|\n|\r/g, "<br>"); // .replace(/\<br[\/]?\>/g, "\n");
+
+					// add new text node to editor
+					tag = field.addListTag(node.nodeName.toLowerCase(), value);
+					var li = u.qs("div.li", tag);
+
+					field.activateInlineFormatting(li._input);
+
+					if(lis.length > 1) {
+						for(j = 1; li = lis[j]; j++) {
+							value = li.innerHTML.replace(/\n\r|\n|\r/g, "<br>"); // .replace(/\<br[\/]?\>/g, "\n");
+							field.addListItem(tag, value);
+							field.activateInlineFormatting(li._input);
+						}
+					}
+				}
+
+
+				// divs containing file info
 				// invalid node, what can it be?
 				else {
 					alert("invalid node:" + node.nodeName);
@@ -2173,89 +2753,44 @@ Util.Form = u.f = new function() {
 //				u.ae(field._editor, "textarea").value = node.innerHTML;
 			}
 		}
+
 		// single unformatted textnode
 		// wrap in <p> and replace newline with <br>
 		else {
 
 			value = field._viewer.innerHTML.replace(/\<br[\/]?\>/g, "\n");
 			//.replace(/\n\r|\n|\r/g, "<br>");
-			tag = field.addText("p", value);
+			//
+			tag = field.addTextTag(field.text_allowed[0], value);
 			field.activateInlineFormatting(tag._input);
 
 		}
 
 
+
 		// enable dragging of html-tags
 		u.sortable(field._editor, {"draggables":"tag", "targets":"editor"});
 
-
-
-		field.update = function() {
-
-			this.updateViewer();
-			this.updateContent();
-
-		}
-
-		field.updateViewer = function() {
-
-			var tag_fields = u.qsa("div.tag", this);
-			var i, node, value;
-			// update html viewer
-			this._viewer.innerHTML = "";
-			for(i = 0; node = tag_fields[i]; i++) {
-				value = node._input.val();
-				 //.replace(/\n\r|\n|\r/g, "<br>");
-				u.ae(this._viewer, node._select.val(), {"html":value});
-			}
-			
-		}
-
-		field.updateContent = function() {
-//			u.bug("updateContent");
-
-			var tags = u.qsa("div.tag", this);
-
-			// update actual textarea to be saved
-			this._input.val("");
-			var i, node, tag, value, html = "";
-
-			for(i = 0; node = tags[i]; i++) {
-//				u.bug(u.nodeId(node));
-				value = node._input.val();
-				 //.replace(/\n\r|\n|\r/g, "<br>");
-				tag = node._select.val();
-				html += "<"+tag+">"+value+"</"+tag+">\n";
-
-			}
-//			u.bug("updateContent ("+u.nodeId(this._input)+ "):" + html);
-			this._input.val(html);
-
-		}
-
-		// 
+		// update viewer after indexing
 		field.updateViewer();
 
-
-		// do not update submit input until content has been changed
-		// need resize on input
-		// need [ENTER] handler - different action for li/dd/dt than for regular inputs
-
-		// label as select with all options
-
-
+		// add extra editor actions
+		field.addOptions();
 
 	}
 
 
+	// TODO: update validation
+
 	// validate input
+	// - string
 	// - number
 	// - integer
 	// - tel
 	// - email
 	// - text
 	// - select
-	// - radio
+	// - radiobuttons
 	// - checkbox|boolean
 	// - password
 	// - string
@@ -2453,7 +2988,7 @@ Util.Form = u.f = new function() {
 			}
 			// TODO: needs to be tested
 			// checkbox/radio validation
-			else if(u.hc(iN.field, "checkbox|boolean|radio|radio_buttons")) {
+			else if(u.hc(iN.field, "checkbox|boolean|radiobuttons")) {
 
 				if(iN.val()) {
 					this.fieldCorrect(iN);
@@ -2637,7 +3172,7 @@ Util.Form = u.f = new function() {
 
 
 
-
+	// Implement FormData method for Metro project
 
 	// get params from form
 	// optional parameters as object
@@ -2940,6 +3475,7 @@ u.f.recurseName = function(object, indexes, value) {
 
 /*
 JS FORM BUILDING 
+ADD to u-form-builder in v0.9
 Still in debugging mode - to be included officially in v0.9
 */
 
@@ -3012,6 +3548,10 @@ u.f.addField = function(node, settings) {
 	else if(field_type == "email" || field_type == "number" || field_type == "tel") {
 		var label = u.ae(field, "label", {"for":input_id, "html":field_label});
 		var input = u.ae(field, "input", {"id":input_id, "value":field_value, "name":field_name, "type":field_type});
+	}
+	else if(field_type == "checkbox") {
+		var input = u.ae(field, "input", {"id":input_id, "value":"true", "name":field_name, "type":field_type});
+		var label = u.ae(field, "label", {"for":input_id, "html":field_label});
 	}
 	else if(field_type == "select") {
 		u.bug("Select not implemented yet")
