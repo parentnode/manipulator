@@ -1761,6 +1761,11 @@ Util.Form = u.f = new function() {
 			tag._remove = u.ae(tag, "div", {"class":"remove"});
 			tag._remove.field = this;
 			tag._remove.tag = tag;
+			u.ce(tag._remove);
+			tag._remove.clicked = function() {
+				this.field.deleteTag(this.tag);
+			}
+
 
 			return tag;
 		}
@@ -2065,6 +2070,34 @@ Util.Form = u.f = new function() {
 		}
 
 
+		field.deleteTag = function(tag) {
+
+			var all_tags = u.qsa("div.tag", this);
+
+			if(all_tags.length > 1) {
+				
+				// check for previous element before removing anything
+//				var prev = this.findPreviousInput(this.tag);
+
+				tag.parentNode.removeChild(tag);
+
+				// enable dragging of html-tags
+				u.sortable(this._editor, {"draggables":"tag", "targets":"editor"});
+
+				this.update();
+				// set focus on prev element
+				// if(prev) {
+				// 	prev.focus();
+				// }
+
+			}
+
+		}
+
+
+		field.deleteFile = function(tag) {
+
+		}
 
 		// EVENT HANDLERS 
 
