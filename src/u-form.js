@@ -1661,6 +1661,14 @@ Util.Form = u.f = new function() {
 						var li = u.ae(list, tag._type.val(), {"html":value});
 					}
 				}
+				else if(u.hc(tag, "file")) {
+//					u.bug("tag:" + tag)
+
+					var file_div = u.ae(this._viewer, "div", {"class":"file"});
+					var p = u.ae(file_div, "p", {"html":"FILE: "});
+					var a = u.ae(p, "a", {"href":"/download/"+tag._item_id+"/"+tag._variant+"/"+tag._name, "html":tag._name + " ("+tag._filesize+" Kb)"});
+				}
+
 				// must be refined to not just read HTML content (for div objects)
 
 				 //.replace(/\n\r|\n|\r/g, "<br>");
@@ -1711,6 +1719,13 @@ Util.Form = u.f = new function() {
 					html += "</"+list+">\n";
 				}
 
+				else if(u.hc(tag, "file")) {
+//					u.bug("tag:" + tag)
+
+					html += '<div class="file">'+"\n";
+					html += '\t<p>FILE: <a href="/download/'+tag._item_id+'/'+tag._variant+'/'+tag._name+'">'+tag._name+" ("+tag._filesize+" Kb)</a></p>";
+					html += "</div>\n";
+				}
 
 
 			}
@@ -1724,14 +1739,12 @@ Util.Form = u.f = new function() {
 		// EDITOR FUNCTIONALity
 
 
-
-
 		// create empty tag (with drag, type selector and remove elements)
 		// 
 		field.createTag = function(allowed_tags, type) {
 
 			var tag = u.ae(this._editor, "div", {"class":"tag"});
-
+			tag.field = this;
 
 			// drag handle
 			tag._drag = u.ae(tag, "div", {"class":"drag"});
@@ -1878,64 +1891,46 @@ Util.Form = u.f = new function() {
 
 
 
-
-		// TODO: split this up into specific chunks
-		// add new formatting node for objects
-		// file, media, youtube or vimeo
-		field.addObjectTag = function(type, value) {
-			if(type.match(/vimeo|youtube|img/)) {
-				// TODO: figure out how to handle these very different types
-			}
-		
-		}
-
-
+		// File tags
 		field.addFileTag = function(value) {
 
 			var tag = this.createTag(["file"], "file");
 
+			tag._text = u.ae(tag, "div", {"class":"text"});
+			tag._label = u.ae(tag._text, "label", {"html":"Drag file here"});
 
-			tag._input = u.ae(tag, "input", {"type":"file"});
-			tag._input.tag = tag;
-			tag._input.field = this;
-
-			// declare get/set value funtion
-			tag._input.val = function(value) {
-				// if(value !== undefined) {
-				// 	this.innerHTML = value;
-				// }
-				// return this.innerHTML;
+			if(value) {
+				tag._label.innerHTML = value;
+				u.ac(tag._label, "done");
 			}
-			// set value if any is sent
-			tag._input.val(u.stringOr(value));
+			else {
+				tag._input = u.ae(tag._text, "input", {"type":"file", "name":"html_file"});
+				tag._input.tag = tag;
+				tag._input.field = this;
+
+				// declare get/set value funtion
+				tag._input.val = function(value) {
+					// if(value !== undefined) {
+					// 	this.innerHTML = value;
+					// }
+					// return this.innerHTML;
+				}
+				// set value if any is sent
+				tag._input.val(u.stringOr(value));
 
 
-			u.e.addEvent(tag._input, "change", this._file_updated);
+				u.e.addEvent(tag._input, "change", this._file_updated);
 
-			// monitor changes and selections
-			// kills ENTER event
-//			u.e.addEvent(tag._input, "keydown", this._changing_content);
+				// add focus and blur handlers
+				u.e.addEvent(tag._input, "focus", this._focused_content);
+				u.e.addEvent(tag._input, "blur", this._blurred_content);
 
-			// content has been modified or selected (can happen with mouse or keys)
-			// u.e.addEvent(tag._input, "keyup", this._changed_content);
-			// u.e.addEvent(tag._input, "mouseup", this._changed_content);
-
-			// add focus and blur handlers
-			u.e.addEvent(tag._input, "focus", this._focused_content);
-			u.e.addEvent(tag._input, "blur", this._blurred_content);
-
-			// Show hint on mouseover
-			if(u.e.event_pref == "mouse") {
-				u.e.addEvent(tag._input, "mouseenter", u.f._mouseenter);
-				u.e.addEvent(tag._input, "mouseleave", u.f._mouseleave);
+				// Show hint on mouseover
+				if(u.e.event_pref == "mouse") {
+					u.e.addEvent(tag._input, "mouseenter", u.f._mouseenter);
+					u.e.addEvent(tag._input, "mouseleave", u.f._mouseleave);
+				}
 			}
-
-			// add paste event handler
-//			u.e.addEvent(tag._input, "paste", this._pasted_content);
-			
-			// if(type.match(/vimeo|youtube|img/)) {
-			// 	// TODO: figure out how to handle these very different types
-			// }
 
 			// enable dragging of html-tags
 			u.sortable(this._editor, {"draggables":"tag", "targets":"editor"});
@@ -2067,6 +2062,7 @@ Util.Form = u.f = new function() {
 
 
 
+		// EVENT HANDLERS 
 
 		// gained focus on individual tag._input
 		// TODO: consider looping back to original field._focused (for callbacks)
@@ -2124,14 +2120,32 @@ Util.Form = u.f = new function() {
 
 
 			var form_data = new FormData();
+			var action_add_file = this.field.getAttribute("data-add-file");
+
 			form_data.append(this.name, this.files[0], this.value);
 
 			this.response = function(response) {
 
+				page.notify(response);
+
+				if(response.cms_status && response.cms_status == "success") {
+
+					// remove file input and update information for viewer and content
+					this.parentNode.removeChild(this);
+					this.tag._label.innerHTML = response.cms_object["name"] + " ("+ u.round((response.cms_object["filesize"]/1000), 2) +"Kb)";
+					this.tag._variant = response.cms_object["variant"];
+					this.tag._filesize = response.cms_object["filesize"]
+					this.tag._name = response.cms_object["name"]
+					this.tag._item_id = response.cms_object["item_id"]
+					u.ac(this.tag._label, "done");
+
+					// update viewer
+					this.tag.field.update();
+				}
 			}
-			u.request(this, "/", {"method":"post", "params":form_data});
+			u.request(this, action_add_file, {"method":"post", "params":form_data});
 //			u.bug("changed node:" + u.nodeId(this));
-			u.bug("file updated:" + this.val());
+//			u.bug("file updated:" + this.val());
 
 		}
 
@@ -2154,7 +2168,7 @@ Util.Form = u.f = new function() {
 		field._changed_content = function(event) {
 
 //			u.bug("changed node:" + u.nodeId(this));
-			u.bug("changed value:" + event.keyCode + ", " + this.val());
+//			u.bug("changed value:" + event.keyCode + ", " + this.val());
 
 			// get selection, to use for deletion
 			var selection = window.getSelection(); 
@@ -2743,10 +2757,18 @@ Util.Form = u.f = new function() {
 				}
 
 
-				// divs containing file info
+				// divs containing file info (media, vimeo, youtube, file)
 				// invalid node, what can it be?
 				else {
-					alert("invalid node:" + node.nodeName);
+					if(u.hc(node, "file")) {
+						field.addFileTag(u.qs("a", node).innerHTML);
+					}
+					// else if(u.hc(node, "youtube")) {
+					//
+					// }
+					else {
+						alert("invalid node:" + node.nodeName);
+					}
 				}
 
 
