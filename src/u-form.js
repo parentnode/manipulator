@@ -2724,7 +2724,7 @@ Util.Form = u.f = new function() {
 
 					// handle list node
 					// this will not work with <code> (cannot replace newline in code element)
-					var lis = u.qs("li", node);
+					var lis = u.qsa("li", node);
 					value = lis[0].innerHTML.replace(/\n\r|\n|\r/g, "<br>"); // .replace(/\<br[\/]?\>/g, "\n");
 
 					// add new text node to editor
@@ -2736,7 +2736,7 @@ Util.Form = u.f = new function() {
 					if(lis.length > 1) {
 						for(j = 1; li = lis[j]; j++) {
 							value = li.innerHTML.replace(/\n\r|\n|\r/g, "<br>"); // .replace(/\<br[\/]?\>/g, "\n");
-							field.addListItem(tag, value);
+							li = field.addListItem(tag, value);
 							field.activateInlineFormatting(li._input);
 						}
 					}
