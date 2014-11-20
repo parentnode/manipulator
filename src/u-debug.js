@@ -8,17 +8,22 @@ Util.debugURL = function(url) {
 // identify node
 Util.nodeId = function(node, include_path) {
 //	try {
-		if(!include_path) {
-			return node.id ? node.nodeName+"#"+node.id : (node.className ? node.nodeName+"."+node.className : (node.name ? node.nodeName + "["+node.name+"]" : node.nodeName));
+	if(!node) {
+		u.bug("Not a node:" + node + " - called from: "+arguments.callee.caller)
+		return "Unindentifiable node!";
+	}
+
+	if(!include_path) {
+		return node.id ? node.nodeName+"#"+node.id : (node.className ? node.nodeName+"."+node.className : (node.name ? node.nodeName + "["+node.name+"]" : node.nodeName));
+	}
+	else {
+		if(node.parentNode && node.parentNode.nodeName != "HTML") {
+			return u.nodeId(node.parentNode, include_path) + "->" + u.nodeId(node);
 		}
 		else {
-			if(node.parentNode && node.parentNode.nodeName != "HTML") {
-				return u.nodeId(node.parentNode, include_path) + "->" + u.nodeId(node);
-			}
-			else {
-				return u.nodeId(node);
-			}
+			return u.nodeId(node);
 		}
+	}
 //	}
 	// catch(exception) {
 	// 	u.bug("Exception ("+exception+") in u.nodeId("+node+"), called from: "+arguments.callee.caller);

@@ -312,7 +312,7 @@ Util.hasClass = u.hc = function(node, classname) {
 		}
 	}
 	catch(exception) {
-		u.bug("Exception ("+exception+") in u.hasClass("+u.nodeId(node)+"), called from: "+arguments.callee.caller);
+		u.bug("Exception ("+exception+") in u.hasClass("+u.nodeId(node)+", "+classname+"), called from: "+arguments.callee.caller);
 	}
 	// return false on error
 	return false;
