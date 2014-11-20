@@ -2127,6 +2127,7 @@ Util.Form = u.f = new function() {
 			var action_add_file = this.field.getAttribute("data-add-file");
 
 			form_data.append(this.name, this.files[0], this.value);
+			form_data.append("csrf-token", this.form.fields["csrf-token"].val());
 
 			this.response = function(response) {
 
