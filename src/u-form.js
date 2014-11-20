@@ -1664,9 +1664,9 @@ Util.Form = u.f = new function() {
 				else if(u.hc(tag, "file")) {
 //					u.bug("tag:" + tag)
 
-					var file_div = u.ae(this._viewer, "div", {"class":"file"});
+					var file_div = u.ae(this._viewer, "div", {"class":"file item_id:"+tag._item_id+" variant:"+tag._variant+" name:"+tag._name + " filesize:"+tag._filesize});
 					var p = u.ae(file_div, "p", {"html":"FILE: "});
-					var a = u.ae(p, "a", {"href":"/download/"+tag._item_id+"/"+tag._variant+"/"+tag._name, "html":tag._name + " ("+tag._filesize+" Kb)"});
+					var a = u.ae(p, "a", {"href":"/download/"+tag._item_id+"/"+tag._variant+"/"+tag._name, "html":tag._name + " ("+u.round(tag._filesize/1000, 2)+" Kb)"});
 				}
 
 				// must be refined to not just read HTML content (for div objects)
@@ -1722,11 +1722,10 @@ Util.Form = u.f = new function() {
 				else if(u.hc(tag, "file")) {
 //					u.bug("tag:" + tag)
 
-					html += '<div class="file">'+"\n";
-					html += '\t<p>FILE: <a href="/download/'+tag._item_id+'/'+tag._variant+'/'+tag._name+'">'+tag._name+" ("+tag._filesize+" Kb)</a></p>";
+					html += '<div class="file item_id:'+tag._item_id+' variant:'+tag._variant+' name:'+tag._name+' filesize:'+tag._filesize+'">'+"\n";
+					html += '\t<p>FILE: <a href="/download/'+tag._item_id+'/'+tag._variant+'/'+tag._name+'">'+tag._name+" ("+u.round(tag._filesize/1000, 2)+" Kb)</a></p>";
 					html += "</div>\n";
 				}
-
 
 			}
 //			u.bug("updateContent ("+u.nodeId(this._input)+ "):" + html);
@@ -1897,13 +1896,18 @@ Util.Form = u.f = new function() {
 			var tag = this.createTag(["file"], "file");
 
 			tag._text = u.ae(tag, "div", {"class":"text"});
-			tag._label = u.ae(tag._text, "label", {"html":"Drag file here"});
 
 			if(value) {
-				tag._label.innerHTML = value;
-				u.ac(tag._label, "done");
+
+				tag._variant = u.cv(node, "variant");
+				tag._name = u.cv(node, "name");
+				tag._item_id = u.cv(node, "item_id");
+				tag._filesize = u.cv(node, "filesize");
+
+				tag._label = u.ae(tag._text, "label", {"class":"done", "html":tag._name + " ("+u.round(tag._filesize/1000, 2)+" Kb)"});
 			}
 			else {
+				tag._label = u.ae(tag._text, "label", {"html":"Drag file here"});
 				tag._input = u.ae(tag._text, "input", {"type":"file", "name":"html_file"});
 				tag._input.tag = tag;
 				tag._input.field = this;
@@ -2761,7 +2765,8 @@ Util.Form = u.f = new function() {
 				// invalid node, what can it be?
 				else {
 					if(u.hc(node, "file")) {
-						field.addFileTag(u.qs("a", node).innerHTML);
+						
+						field.addFileTag(node);
 					}
 					// else if(u.hc(node, "youtube")) {
 					//
