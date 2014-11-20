@@ -2079,12 +2079,18 @@ Util.Form = u.f = new function() {
 				// check for previous element before removing anything
 //				var prev = this.findPreviousInput(this.tag);
 
+				if(u.hc(tag, "file")) {
+					this.deleteFile(tag);
+				}
+
 				tag.parentNode.removeChild(tag);
 
 				// enable dragging of html-tags
 				u.sortable(this._editor, {"draggables":"tag", "targets":"editor"});
 
 				this.update();
+				
+				this._input.form.submit();
 				// set focus on prev element
 				// if(prev) {
 				// 	prev.focus();
@@ -2096,6 +2102,27 @@ Util.Form = u.f = new function() {
 
 
 		field.deleteFile = function(tag) {
+
+			var form_data = new FormData();
+			var action_delete_file = tag.field.getAttribute("data-delete-file");
+			var variant = tag._variant;
+
+//			form_data.append(this.name, this.files[0], this.value);
+			form_data.append("csrf-token", this._input.form.fields["csrf-token"].val());
+
+			tag.response = function(response) {
+
+				page.notify(response);
+
+				if(response.cms_status && response.cms_status == "success") {
+
+					// all good
+
+					// update viewer
+					this.field.update();
+				}
+			}
+			u.request(tag, action_delete_file+"/"+variant, {"method":"post", "params":form_data});
 
 		}
 
@@ -2179,6 +2206,8 @@ Util.Form = u.f = new function() {
 
 					// update viewer
 					this.tag.field.update();
+
+					this.tag.field._input.form.submit();
 				}
 			}
 			u.request(this, action_add_file, {"method":"post", "params":form_data});
