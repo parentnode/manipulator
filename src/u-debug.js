@@ -31,6 +31,30 @@ Util.nodeId = function(node, include_path) {
 	return "Unindentifiable node!";
 }
 
+// exception explorer
+Util.exception = function(_in, _from, exception, regarding) {
+
+	u.bug("Exception ("+exception+") in "+_in);
+
+	var x;
+	for(x in regarding) {
+		if(x == "node") {
+			u.bug("node:" + (typeof(node.nodeName) ? u.nodeId(regarding[x], 1) : "Unindentifiable node:" + regarding[x]));
+		}
+		else {
+			if(typeof(regarding[x]) == "object") {
+				u.bug(x+":");
+				u.xInObject(regarding[x]);
+			}
+			else {
+				u.bug(x+"="+regarding[x]);
+			}
+		}
+	}
+	u.bug("Called from: "+_from);
+
+}
+
 // write output to screen
 Util.bug = function(message, corner, color) {
 	if(u.debugURL()) {

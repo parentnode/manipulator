@@ -13,33 +13,36 @@ Util.Form = u.f = new function() {
 	// - adds realtime validation, by settng correct/error classname
 	// - sets focus classname on field focus
 	// - adds callback
-	this.init = function(form, settings) {
+	this.init = function(form, _options) {
 //		u.bug("init form:" + u.nodeId(form));
 
 		var i, j, field, action, input, hidden_field;
 
 
-		// prepared for additional settings - NOT used now
-		// set default values
-		// form.form_activation = true;
-		// form.form_validation = true;
-		form.form_send = "params";
-		form.ignore_inputs = "ignoreinput";
+		// Default values
 
+		// field focus z-index
+		form._focus_z_index = 50;
+
+		// validate fields continuously and when submitting
+		form._validation = true;
+
+		// u.bug list form.fields and form.actions
+		form._debug_init = false;
 
 		// additional info passed to function as JSON object
-		if(typeof(settings) == "object") {
-			var argument;
-			for(argument in settings) {
+		if(typeof(_options) == "object") {
+			var _argument;
+			for(_argument in _options) {
+				switch(_argument) {
 
-				switch(argument) {
-					case "ignore_inputs"	: form.ignore_inputs	= settings[argument]; break;
-					case "form_send"		: form.form_send		= settings[argument]; break;
+					case "validation"       : form._validation      = _options[_argument]; break;
+					case "focus_z"          : form._focus_z_index   = _options[_argument]; break;
+
+					case "debug"            : form._debug_init      = _options[_argument]; break;
 				}
-
 			}
 		}
-
 
 		// disable regular form submit
 		form.onsubmit = function(event) {return false;}
@@ -72,8 +75,9 @@ Util.Form = u.f = new function() {
 //			u.bug("field found:" + u.nodeId(field))
 
 
+			// get field original z-index
 			field._base_z_index = u.gcs(field, "z-index");
-			u.bug("field" + u.nodeId(field) + ", " + field._base_z_index)
+
 
 			// find help (hints and errors)
 			field._help = u.qs(".help", field);
@@ -155,6 +159,11 @@ Util.Form = u.f = new function() {
 					// get/set value function
 					field._input.val = this._value;
 
+					// resize textarea while typing
+					if(u.hc(field, "autoexpand")) {
+						this.autoExpand(field._input);
+					}
+
 					// change/update events
 					u.e.addEvent(field._input, "keyup", this._updated);
 					u.e.addEvent(field._input, "change", this._changed);
@@ -165,10 +174,6 @@ Util.Form = u.f = new function() {
 					// validate field now
 					this.validate(field._input);
 
-					// resize textarea while typing
-					if(u.hc(field, "autoexpand")) {
-						this.autoExpand(field._input);
-					}
 				}
 
 				// HTML editor initialization
@@ -251,8 +256,9 @@ Util.Form = u.f = new function() {
 
 					}
 					else {
-						u.e.addEvent(field._input, "change", this._updated);
+						// opposite order of elsewhere to ensure instant validation
 						u.e.addEvent(field._input, "change", this._changed);
+						u.e.addEvent(field._input, "change", this._updated);
 					}
 
 					// submit on enter (checks for autocomplete etc)
@@ -310,8 +316,8 @@ Util.Form = u.f = new function() {
 							u.e.addEvent(input, "click", input._clicked);
 						}
 						else {
-							u.e.addEvent(input, "change", this._updated);
 							u.e.addEvent(input, "change", this._changed);
+							u.e.addEvent(input, "change", this._updated);
 						}
 
 						// submit on enter (checks for autocomplete etc)
@@ -385,13 +391,13 @@ Util.Form = u.f = new function() {
 						this.activateInput(input);
 					}
 
-					// validate field now
-					this.validate(field._input);
-
 					// inject Geolocation button if browser supports geolocation
 					if(navigator.geolocation) {
 						this.geoLocation(field);
 					}
+
+					// validate field now
+					this.validate(field._input);
 
 				}
 
@@ -497,22 +503,26 @@ Util.Form = u.f = new function() {
 
 		}
 
-//		u.bug(u.nodeId(form) + ", fields:", "red");
-//		u.xInObject(form.fields);
 
-//		u.bug(u.nodeId(form) + ", actions:", "red");
-//		u.xInObject(form.actions);
+		// u.bug list of fields and actions
+		if(form._debug_init) {
+			u.bug(u.nodeId(form) + ", fields:");
+			u.xInObject(form.fields);
+			u.bug(u.nodeId(form) + ", actions:");
+			u.xInObject(form.actions);
+		}
+
 	}
 
 
 
 	// Submit
-
+//	u.bug("fisk")
 	// internal submit handler - attatched to form as form.submit
 	// original form.submit will be available as form.DOMsubmit
 	this._submit = function(event, iN) {
 
-		// u.bug("_submitted")
+//		u.bug("_submitted:" + this._validation)
 
 		// do pre validation of all fields
 		for(name in this.fields) {
@@ -555,19 +565,24 @@ Util.Form = u.f = new function() {
 		if(value !== undefined) {
 			this.value = value;
 
-			// if input has pseudolabel, hide it
-			if(this.pseudolabel) {
-				u.as(this.pseudolabel, "display", "none");
+			// if actual value, remove default state
+			if(value !== this.default_value) {
+
+				u.rc(this, "default");
+
+				// if input has pseudolabel, hide it
+				if(this.pseudolabel) {
+					u.as(this.pseudolabel, "display", "none");
+				}
+
 			}
 
-			// TODO: consider wheter to show default value if value is set to "" (empty string)
-
-//			u.bug("validate from set value")
+//			u.bug("validate from set value:" + u.nodeId(this) + ", " + value + ", " + this.value)
 
 			// validate after setting value
 			u.f.validate(this);
 		}
-		return this.value;
+		return (this.value != this.default_value) ? this.value : "";
 	}
 	// value get/setter for radio buttons
 	this._value_radiobutton = function(value) {
@@ -597,7 +612,7 @@ Util.Form = u.f = new function() {
 				}
 			}
 		}
-		return false;
+		return "";
 	}
 	// value get/setter for checkbox inputs
 	this._value_checkbox = function(value) {
@@ -619,7 +634,7 @@ Util.Form = u.f = new function() {
 				return this.value;
 			}
 		}
-		return false;
+		return "";
 	}
 	// value get/setter for seelcts
 	this._value_select = function(value) {
@@ -642,7 +657,7 @@ Util.Form = u.f = new function() {
 			return false;
 		}
 		else {
-			return this.options[this.selectedIndex].value;
+			return this.default_value != this.options[this.selectedIndex].value ? this.options[this.selectedIndex].value : "";
 		}
 	}
 
@@ -765,9 +780,6 @@ Util.Form = u.f = new function() {
 //			u.bug("update:" + event.keyCode);
 
 			// only validate onkeyup if field has been used before or already contains error
-
-			// TODO: move this.used check to validate - to show correct state, but not error outline
-
 			if(this.used || u.hc(this.field, "error")) {
 //				u.bug("validate from updated")
 				u.f.validate(this);
@@ -806,8 +818,9 @@ Util.Form = u.f = new function() {
 		u.ac(this, "hover");
 
 		// in case of overlapping hint/errors, make sure this one is on top
-		u.as(this.field, "zIndex", 1000);
+		u.as(this.field, "zIndex", this.field._input.form._focus_z_index);
 
+		// is help element available, then position it appropriately to input
 		u.f.positionHint(this.field);
 	}
 	// internal mouseleave handler - attatched to inputs
@@ -829,11 +842,13 @@ Util.Form = u.f = new function() {
 //		u.bug("this._focus:" + u.nodeId(this))
 
 		this.field.focused = true;
+		this.focused = true;
+
 		u.ac(this.field, "focus");
 		u.ac(this, "focus");
 
 		// make sure field goes all the way in front - hint/error must be seen
-		u.as(this.field, "zIndex", 1000);
+		u.as(this.field, "zIndex", this.form._focus_z_index);
 
 		// is help element available, then position it appropriately to input
 		u.f.positionHint(this.field);
@@ -860,6 +875,8 @@ Util.Form = u.f = new function() {
 //		u.bug("this._blur:" + u.nodeId(this))
 
 		this.field.focused = false;
+		this.focused = false;
+
 		u.rc(this.field, "focus");
 		u.rc(this, "focus");
 
@@ -923,44 +940,11 @@ Util.Form = u.f = new function() {
 		}
 	}
 
-	// internal blur handler for default value controller - attatched to inputs
-	this._default_value_focus = function() {
+	// internal focus/blur handler for default value controller - attatched to inputs
+	this._changed_state = function() {
 //		u.bug("this._default_value_focus:" + u.nodeId(this))
 
-		// leave default state
-		u.rc(this, "default");
-
-		// remove default value if set
-		if(this.val() == this.default_value) {
-			this.val("");
-		}
-
-		// if input has pseudolabel, hide it
-		if(this.pseudolabel) {
-			u.as(this.pseudolabel, "display", "none");
-		}
-
-	}
-	// internal blur handler for default value controller - attatched to inputs
-	this._default_value_blur = function() {
-//		u.bug("this._default_value_blur:" + u.nodeId(this))
-
-		// only set default value if input is empty
-		if(this.val() == "") {
-
-			// add class to indicate default value
-			u.ac(this, "default");
-
-
-			// if input has pseudolabel, show it
-			if(this.pseudolabel) {
-				u.as(this.pseudolabel, "display", "block");
-			}
-			// set value in field
-			else {
-				this.val(this.default_value);
-			}
-		}
+		u.f.updateDefaultState(this);
 	}
 
 
@@ -1029,45 +1013,38 @@ Util.Form = u.f = new function() {
 				iN.default_value = u.text(iN._label);
 
 				// add default handlers to focus and blur events
-				u.e.addEvent(iN, "focus", this._default_value_focus);
-				u.e.addEvent(iN, "blur", this._default_value_blur);
+				u.e.addEvent(iN, "focus", this._changed_state);
+				u.e.addEvent(iN, "blur", this._changed_state);
 
-				// only set default_value if input is not empty
-				if(iN.val() == "") {
 
-					// add class to indicate default state
-					u.ac(iN, "default");
+				// Create psydo label for inputs that cant show label value
+				// Did experiments with with field replacement, but required too much work
+				// replacing event and references (this seems to provide sufficient backup)
+				if(iN.type.match(/number|integer/)) {
 
-					// Create psydo label for inputs that cant show label value
-					// Did experiments with with field replacement, but required too much work
-					// replacing event and references (this seems to provide sufficient backup)
-					if(iN.type.match(/number|integer/)) {
+					iN.pseudolabel = u.ae(iN.parentNode, "span", {"class":"pseudolabel", "html":iN.default_value});
+					iN.pseudolabel.iN = iN;
 
-						iN.pseudolabel = u.ae(iN.parentNode, "span", {"class":"pseudolabel", "html":iN.default_value});
-						iN.pseudolabel.iN = iN;
-
-						// position on top of input
-						u.as(iN.pseudolabel, "top", iN.offsetTop+"px");
-						u.as(iN.pseudolabel, "left", iN.offsetLeft+"px");
-						// create event to remove pseudolabel
-						u.ce(iN.pseudolabel)
-						iN.pseudolabel.inputStarted = function(event) {
-							u.e.kill(event);
-							this.iN.focus();
-						}
-
-					}
-					// set default value
-					else {
-
-						iN.val(iN.default_value);
-
+					// position on top of input
+					u.as(iN.pseudolabel, "top", iN.offsetTop+"px");
+					u.as(iN.pseudolabel, "left", iN.offsetLeft+"px");
+					// create event to remove pseudolabel
+					u.ce(iN.pseudolabel)
+					iN.pseudolabel.inputStarted = function(event) {
+						u.e.kill(event);
+						this.iN.focus();
 					}
 
 				}
 
+				u.f.updateDefaultState(iN);
 
 			}
+		}
+
+		// set empty default value for non injection forms
+		else {
+			iN.default_value = "";
 		}
 
 	}
@@ -1132,26 +1109,59 @@ Util.Form = u.f = new function() {
 
 	}
 
-	// check if input value is default value
- 	this.isDefault = function(iN) {
+	// update default state on input
+	this.updateDefaultState = function(iN) {
 
-		// default_value is stored when field is indexed
-		if(iN.default_value && iN.val() == iN.default_value) {
-			return true;
+//		u.bug("updateDefaultState for:" + u.nodeId(iN) + ", " + (iN.val() === "") + ", " + iN.focused)
+		// is input focused
+		if(iN.focused || iN.val() !== "") {
+
+			// leave default state
+			u.rc(iN, "default");
+
+			// remove default value if field does not have value
+			if(iN.val() === "") {
+				iN.val("");
+			}
+
+			// if input has pseudolabel, hide it
+			if(iN.pseudolabel) {
+				u.as(iN.pseudolabel, "display", "none");
+			}
 		}
-		return false;
+		// input does not have focus - consider dafault value
+		else {
+
+			// only set default value if input is empty
+			if(iN.val() === "") {
+
+				// add class to indicate default value
+				u.ac(iN, "default");
+
+				// if input has pseudolabel, show it
+				if(iN.pseudolabel) {
+					// in Fx bad value isn't cleared from input despite value being empty
+					iN.val(iN.default_value);
+
+					u.as(iN.pseudolabel, "display", "block");
+				}
+				// set value in field
+				else {
+//					u.bug("set value:" + u.nodeId(iN) + "," + iN.default_value)
+					iN.val(iN.default_value);
+				}
+			}
+		}
 	}
-
-
 
 	// field has error - decide whether it is reasonable to show it or not
 	this.fieldError = function(iN) {
-//		u.bug("fieldError:" + u.nodeId(iN));
+
 		u.rc(iN, "correct");
 		u.rc(iN.field, "correct");
 
 		// do not add visual feedback until field has been used by user - or if it contains value (reloads)
-		if(iN.used || !this.isDefault(iN) && iN.val()) {
+		if(iN.used || iN.val() !== "") {
 //			u.bug("ready for error state")
 			u.ac(iN, "error");
 			u.ac(iN.field, "error");
@@ -1169,10 +1179,9 @@ Util.Form = u.f = new function() {
 
 	// field is correct - decide whether to show it or not
 	this.fieldCorrect = function(iN) {
-//		u.bug("fieldCorrect:" + u.nodeId(iN));
 
 		// does field have value? Non-required fields can be empty - but should not have visual validation
-		if(!this.isDefault(iN) && iN.val()) {
+		if(iN.val() !== "") {
 //			u.bug("ready for correct state")
 			u.ac(iN, "correct");
 			u.ac(iN.field, "correct");
@@ -1193,6 +1202,8 @@ Util.Form = u.f = new function() {
 
 	// ADDITIONAL EXTENSION FUNCTIONS
 
+	// TODO: add this extended initialization to primary initialization
+
 	// enable auto expanding text area
 	this.autoExpand = function(iN) {
 
@@ -1201,7 +1212,11 @@ Util.Form = u.f = new function() {
 //		u.bug("AE:" + current_height + "," + iN.scrollHeight);
 
 		var current_value = iN.val();
-		iN.val("");
+//		u.bug("current_value:" + current_value)
+		// causes double validation loop and does not return default values - no good
+//		iN.val("");
+
+		iN.value = "";
 //		u.bug(current_height + "," + iN.scrollHeight);
 
 		u.as(iN, "overflow", "hidden");
@@ -1216,7 +1231,8 @@ Util.Form = u.f = new function() {
 			iN.autoexpand_offset = iN.scrollHeight - parseInt(u.gcs(iN, "height"));
 		}
 
-		iN.val(current_value);
+//		iN.val(current_value);
+		iN.value = current_value;
 
 		// set correct height
 		iN.setHeight = function() {
@@ -1255,6 +1271,8 @@ Util.Form = u.f = new function() {
 	}
 
 
+	// TODO: add this extended initialization to primary initialization
+
 	// enable file upload interface
 	this.fileUpload = function(field) {
 
@@ -1281,11 +1299,24 @@ Util.Form = u.f = new function() {
 //				alert('adding values manually to input type="file" is not supported')
 			}
 			else {
-				var i, file, files = [];
-				for(i = 0; file = this.files[i]; i++) {
-					files.push(file);
+
+				// TODO: files can be ok in the Janitor implementation if image has already been uploaded?
+				// should also look for existing image in field
+//				u.bug("this.files.length:" + this.files.length)
+				if(this.files.length) {
+					var i, file, files = [];
+
+					for(i = 0; file = this.files[i]; i++) {
+						files.push(file);
+					}
+					return files;
 				}
-				return files;
+				else if(u.hc(this, "uploaded")){
+					return true;
+				}
+//				u.bug("this.files.length:" + this.files.length)
+
+				return "";
 //				return files.join(",");
 			}
 		}
@@ -1293,10 +1324,12 @@ Util.Form = u.f = new function() {
 	}
 
 
+	// TODO: move geolocation to custom field
+
 	// inject GeoLocation button in location field
 	this.geoLocation = function(field) {
-//		alert("geo")
-		u.ac(field, "geolocation");
+
+ 		u.ac(field, "geolocation");
 
 		field.lat_input = u.qs("div.latitude input", field);
 		field.lat_input.autocomplete = "off";
@@ -1308,20 +1341,22 @@ Util.Form = u.f = new function() {
 
 		// create map if it doesn't exist and position according to field
 		field.showMap = function() {
-
 			if(!window._mapsiframe) {
+				var lat = this.lat_input.val() !== "" ? this.lat_input.val() : 0;
+				var lon = this.lon_input.val() !== "" ? this.lon_input.val() : 0;
+
 				var maps_url = "https://maps.googleapis.com/maps/api/js" + (u.gapi_key ? "?key="+u.gapi_key : "");
 				var html = '<html><head>';
-				html += '<style type="text/css">body {margin: 0;}#map {width: 300px; height: 300px;}</style>';
+				html += '<style type="text/css">body {margin: 0;}#map {width: 300px; height: 300px;}} </style>';
 				html += '<script type="text/javascript" src="'+maps_url+'"></script>';
 				html += '<script type="text/javascript">';
 
 				html += 'var map, marker;';
 				html += 'var initialize = function() {';
 				html += '	window._map_loaded = true;';
-				html += '	var mapOptions = {center: new google.maps.LatLng('+this.lat_input.val()+', '+this.lon_input.val()+'),zoom: 15};';
+				html += '	var mapOptions = {center: new google.maps.LatLng('+lat+', '+lon+'),zoom: 15};';
 				html += '	map = new google.maps.Map(document.getElementById("map"),mapOptions);';
-				html += '	marker = new google.maps.Marker({position: new google.maps.LatLng('+this.lat_input.val()+', '+this.lon_input.val()+'), draggable:true});';
+				html += '	marker = new google.maps.Marker({position: new google.maps.LatLng('+lat+', '+lon+'), draggable:true});';
 				html += '	marker.setMap(map);';
 
 				// html += '	map.changed = function(event_type) {';
@@ -1383,6 +1418,7 @@ Util.Form = u.f = new function() {
 			var factor;
 			if(this._move_direction) {
 
+				// TODO: find way to adjust factor to current zoom state
 				if(event && event.shiftKey) {
 					factor = 0.001;
 				}
@@ -1407,6 +1443,15 @@ Util.Form = u.f = new function() {
 			}
 		}
 
+		field.hideMap = function() {
+			u.t.resetTimer(this.t_hide_map);
+
+			if(window._mapsiframe) {
+				document.body.removeChild(window._mapsiframe);
+				window._mapsiframe = null;
+			}
+		}
+
 		field._end_move_map = function(event) {
 
 			this.field._move_direction = false;
@@ -1417,6 +1462,7 @@ Util.Form = u.f = new function() {
 				this.field._move_direction = event.keyCode;
 				this.field.move_map(event);
 			}
+
 		}
 
 
@@ -1430,8 +1476,15 @@ Util.Form = u.f = new function() {
 			this.field.updateMap();
 		}
 		field.lat_input.focused = field.lon_input.focused = function() {
+			u.t.resetTimer(this.field.t_hide_map);
+
 			this.field.showMap();
 		}
+		// hide map when lat/long fields loose focus
+		field.lat_input.blurred = field.lon_input.blurred = function() {
+			this.field.t_hide_map = u.t.setTimer(this.field, this.field.hideMap, 800);
+		}
+
 		field.bn_geolocation = u.ae(field, "div", {"class":"geolocation"});
 		field.bn_geolocation.field = field;
 		u.ce(field.bn_geolocation);
@@ -1482,18 +1535,77 @@ Util.Form = u.f = new function() {
 	}
 
 
-	// Notes
-	// do not update submit input until content has been changed
-	// need resize on input
-	// need [ENTER] handler - different action for li/dd/dt than for regular inputs
 
-	// label as select with all options
+	// TODO: move HTML editor to custom field (requires janitor functionality)
 
 
 	// inject HTML editor
 	this.textEditor = function(field) {
 
 		u.bug("init editor")
+		// show help?
+		var hint_has_been_shown = u.getCookie("html-editor-hint-v1", {"path":"/"});
+		if(!hint_has_been_shown) {
+
+			// editor help info
+			var editor_hint = u.ie(field, "div", {"class":"html_editor_hint"});
+
+			var editor_hint_open = u.ae(editor_hint, "div", {"class":"open", "html":"I'd like to know more about the Editor"});
+			var editor_hint_content = u.ae(editor_hint, "div", {"class":"html_editor_hint_content"});
+
+			editor_hint_open.editor_hint_content = editor_hint_content;
+			u.ce(editor_hint_open);
+			editor_hint_open.clicked = function() {
+				if(this.editor_hint_content.is_shown) {
+					this.innerHTML = "I'd like to know more about the Editor";
+					u.as(editor_hint_content, "display", "none");
+					this.editor_hint_content.is_shown = false;
+				}
+				else {
+					this.innerHTML = "Hide help for now";
+					u.as(editor_hint_content, "display", "block");
+					this.editor_hint_content.is_shown = true;
+				}
+			}
+
+
+			u.ae(editor_hint_content, "p", {"html":"If you are new to using the Janitor HTML editor here are a few tips to working better with the editor."});
+			u.ae(editor_hint_content, "p", {"html":"This HTML editor has been developed to maintain a strict control of the design - therefore it looks different from other HTML editors. The features available are aligned with the design of the specific page, and the Editor might not have the same features available in every context."});
+
+			u.ae(editor_hint_content, "h4", {"html":"General use:"});
+			u.ae(editor_hint_content, "p", {"html":"All HTML nodes can be deleted using the Trashcan in the Right side. The Editor allways requires one node to exist and you cannot delete the last remaining node."});
+			u.ae(editor_hint_content, "p", {"html":"HTML nodes can be re-ordered by dragging the bubble in the Left side."});
+			u.ae(editor_hint_content, "p", {"html":"You can add new nodes by clicking on the + below the editor. The options availble are the ones allowed for the current content type."});
+
+			u.ae(editor_hint_content, "h4", {"html":"Text nodes:"});
+			u.ae(editor_hint_content, "p", {"html":"&lt;H1&gt;,&lt;H2&gt;,&lt;H3&gt;,&lt;H4&gt;,&lt;H5&gt;,&lt;H6&gt;,&lt;P&gt;,&lt;CODE&gt;"});
+			u.ae(editor_hint_content, "p", {"html":"Text nodes are for headlines and paragraphs - regular text."});
+			u.ae(editor_hint_content, "p", {"html":"You can activate the inline formatting tool by selecting text in your Text node."});
+			u.ae(editor_hint_content, "p", {"html":"If you press ENTER inside a Text node, a new Text node will be created below the current one."});
+			u.ae(editor_hint_content, "p", {"html":"If you press BACKSPACE twice inside an empty Text node it will be deleted"});
+
+			u.ae(editor_hint_content, "h4", {"html":"List nodes:"});
+			u.ae(editor_hint_content, "p", {"html":"&lt;UL&gt;,&lt;OL&gt;"});
+			u.ae(editor_hint_content, "p", {"html":"There are two types of list nodes: Unordered lists (UL w/ bullets) and Ordered lists (OL w/ numbers). Each of them can have one or many List items."});
+			u.ae(editor_hint_content, "p", {"html":"You can activate the inline formatting tool by selecting text in your List item."});
+			u.ae(editor_hint_content, "p", {"html":"If you press ENTER inside a List item, a new List item will be created below the current one."});
+			u.ae(editor_hint_content, "p", {"html":"If you press BACKSPACE twice inside an empty List item it will be deleted. If it is the last List item in the List node, the List node will be deleted as well."});
+
+			u.ae(editor_hint_content, "h4", {"html":"File nodes:"});
+			u.ae(editor_hint_content, "p", {"html":"Drag you file to the node or click the node to select your file."});
+			u.ae(editor_hint_content, "p", {"html":"If you add other file-types than PDF's, the file will be zipped on the server and made availble for download as ZIP file."});
+
+			var editor_hint_close = u.ae(editor_hint_content, "div", {"class":"close", "html":"I got it, don't tell me again"});
+
+			u.ce(editor_hint_close);
+			editor_hint_close.editor_hint = editor_hint;
+			editor_hint_close.clicked = function() {
+				u.saveCookie("html-editor-hint-v1", 1, {"path":"/"});
+				this.editor_hint.parentNode.removeChild(this.editor_hint);
+			}
+
+		}
+
 
 		// Editor support specs
 		field.text_support = "h1,h2,h3,h4,h5,h6,p,code";
@@ -1535,7 +1647,19 @@ Util.Form = u.f = new function() {
 		field.filterAllowedTags("ext_video");
 		field.filterAllowedTags("file");
 
-//		u.bug(field.text_allowed.join(","))
+
+		// extended functionality urls
+		field.file_add_action = field.getAttribute("data-file-add");
+		field.file_delete_action = field.getAttribute("data-file-delete");
+
+		// find item id
+		// could be in form action (last fragment of url)
+		// could be extended to look in other places
+		field.item_id;
+		var item_id_match = field._input.form.action.match(/\/([0-9]+)(\/|$)/);
+		if(item_id_match) {
+			field.item_id = item_id_match[1];
+		}
 
 
 
@@ -1550,6 +1674,7 @@ Util.Form = u.f = new function() {
 		field._editor = u.ae(field, "div", {"class":"editor"});
 		field._editor.field = field;
 
+		// callback after sorting list
 		field._editor.dropped = function() {
 			this.field.update();
 			//u.bug("sorted")
@@ -1558,8 +1683,24 @@ Util.Form = u.f = new function() {
 		// Create add options panel
 		field.addOptions = function() {
 
+
+			// allow to toggle raw HTML view
+			this.bn_show_raw = u.ae(this._input._label, "span", {"html":"(RAW HTML)"});
+			this.bn_show_raw.field = this;
+			u.ce(this.bn_show_raw);
+			this.bn_show_raw.clicked = function() {
+				if(u.hc(this.field._input, "show")) {
+					u.rc(this.field._input, "show");
+				}
+				else {
+					u.ac(this.field._input, "show");
+				}
+			}
+
+
 			// Add list for actions
 			this.options = u.ae(this, "ul", {"class":"options"});
+
 
 			// "Add" button
 			this.bn_add = u.ae(this.options, "li", {"class":"add", "html":"+"});
@@ -1587,6 +1728,7 @@ Util.Form = u.f = new function() {
 				}
 			}
 
+
 			// Add list tag option (if allowed)
 			if(this.list_allowed.length) {
 
@@ -1599,22 +1741,35 @@ Util.Form = u.f = new function() {
 				}
 			}
 
+
 			// Add media tag option (if allowed)
 			if(this.media_allowed.length) {
 
 				this.bn_add_media = u.ae(this.options, "li", {"class":"list", "html":"Media ("+this.media_allowed.join(", ")+")"});
 				this.bn_add_media.field = field;
+				u.ce(this.bn_add_media);
+				this.bn_add_media.clicked = function(event) {
+					this.field.addMediaTag();
+					u.rc(this.field.options, "show");
+				}
 			}
+
 
 			// Add external video tag option (if allowed)
 			if(this.ext_video_allowed.length) {
 
 				this.bn_add_ext_video = u.ae(this.options, "li", {"class":"video", "html":"External video ("+this.ext_video_allowed.join(", ")+")"});
 				this.bn_add_ext_video.field = field;
+				u.ce(this.bn_add_ext_video);
+				this.bn_add_ext_video.clicked = function(event) {
+					this.field.addExternalVideoTag();
+					u.rc(this.field.options, "show");
+				}
 			}
 
+
 			// Add file tag option (if allowed)
-			if(this.file_allowed.length) {
+			if(this.file_allowed.length && this.item_id && this.file_add_action && this.file_delete_action) {
 
 				this.bn_add_file = u.ae(this.options, "li", {"class":"file", "html":"Downloadable file"});
 				this.bn_add_file.field = field;
@@ -1624,10 +1779,16 @@ Util.Form = u.f = new function() {
 					u.rc(this.field.options, "show");
 				}
 			}
+			else if(this.file_allowed.length) {
+				u.bug("some information is missing to support file upload:\nitem_id="+this.item_id+"\nfile_add_action="+this.file_add_action+"\nfile_delete_action="+this.file_delete_action);
+			}
 
 		}
 
 
+
+
+		// UPDATERS
 
 		// Update viewer and Textarea
 		field.update = function() {
@@ -1637,127 +1798,149 @@ Util.Form = u.f = new function() {
 
 		}
 
-
 		// update HTML viewer div
 		field.updateViewer = function() {
 //			u.bug("updateViewer");
 
+			// get all tags
 			var tags = u.qsa("div.tag", this);
-			var i, tag, value;
-			// update html viewer
+
+			var i, tag, j, list, li, lis, div, p, a;
+
+			// reset html viewer
 			this._viewer.innerHTML = "";
+
+			// loop through tags
 			for(i = 0; tag = tags[i]; i++) {
 
+				// is tag a text
 				if(u.hc(tag, this.text_allowed.join("|"))) {
-					value = tag._input.val();
-					u.ae(this._viewer, tag._type.val(), {"html":value});
+
+					// add text node
+					u.ae(this._viewer, tag._type.val(), {"html":tag._input.val()});
 				}
 
+				// is tag list
 				else if(u.hc(tag, this.list_allowed.join("|"))) {
-					var list = u.ae(this._viewer, tag._type.val());
-					var lis = u.qsa("div.li", tag);
+
+					// add list
+					list = u.ae(this._viewer, tag._type.val());
+
+					// add list items
+					lis = u.qsa("div.li", tag);
 					for(j = 0; li = lis[j]; j++) {
-						value = li._input.val();
-						var li = u.ae(list, tag._type.val(), {"html":value});
+						li = u.ae(list, tag._type.val(), {"html":li._input.val()});
 					}
 				}
-				else if(u.hc(tag, "file")) {
-//					u.bug("tag:" + tag)
 
-					var file_div = u.ae(this._viewer, "div", {"class":"file item_id:"+tag._item_id+" variant:"+tag._variant+" name:"+tag._name + " filesize:"+tag._filesize});
-					var p = u.ae(file_div, "p", {"html":"FILE: "});
-					var a = u.ae(p, "a", {"href":"/download/"+tag._item_id+"/"+tag._variant+"/"+tag._name, "html":tag._name + " ("+u.round(tag._filesize/1000, 2)+" Kb)"});
+				// is tag external video
+				else if(u.hc(tag, this.ext_video_allowed.join("|"))) {
+
+					// add div with video id
+					div = u.ae(this._viewer, "div", {"class":tag._type.val()+" video_id:"+tag._video_id});
 				}
 
-				// must be refined to not just read HTML content (for div objects)
+				// is tag file
+				else if(u.hc(tag, "file")) {
 
-				 //.replace(/\n\r|\n|\r/g, "<br>");
-//				u.ae(this._viewer, tag._type.val(), {"html":value});
+					// add div with <p> and <a>
+					div = u.ae(this._viewer, "div", {"class":"file item_id:"+tag._item_id+" variant:"+tag._variant+" name:"+tag._name + " filesize:"+tag._filesize});
+					p = u.ae(div, "p", {"html":"DOWNLOAD: "});
+					a = u.ae(p, "a", {"href":"/download/"+tag._item_id+"/"+tag._variant+"/"+tag._name, "html":tag._name + " ("+u.round(tag._filesize/1000, 2)+" Kb)"});
+				}
+
+				// TODO: Media
+
 			}
 			
 		}
-
 
 		// updates actual Textarea 
 		field.updateContent = function() {
 //			u.bug("updateContent");
 
+			// get all tags
 			var tags = u.qsa("div.tag", this);
 
 			// update actual textarea to be saved
 			this._input.val("");
 
-			var i, node, tag, value, html = "";
+			var i, node, tag, type, value, j, html = "";
 
 			for(i = 0; tag = tags[i]; i++) {
 //				u.bug(u.nodeId(node));
 
-				// TODO: Create output when we know more
-
+				// text node
 				if(u.hc(tag, this.text_allowed.join("|"))) {
 
-					value = tag._input.val();
-					 //.replace(/\n\r|\n|\r/g, "<br>");
-					tag = tag._type.val();
-
-					html += "<"+tag+">"+value+"</"+tag+">\n";
-					
+					// get tag type
+					type = tag._type.val();
+					html += "<"+type+">"+tag._input.val()+"</"+type+">\n";
 				}
 
+				// list node
 				else if(u.hc(tag, this.list_allowed.join("|"))) {
-//					u.bug("tag:" + tag)
 
-					list = tag._type.val();
-					html += "<"+list+">\n";
+					// get tag type
+					type = tag._type.val();
+					html += "<"+type+">\n";
 
-					var lis = u.qsa("div.li", tag);
+					// get list tiems
+					lis = u.qsa("div.li", tag);
 					for(j = 0; li = lis[j]; j++) {
-						value = li._input.val();
-						html += "\t<li>"+value+"</li>\n";
+						html += "\t<li>"+li._input.val()+"</li>\n";
 					}
 
-					html += "</"+list+">\n";
+					html += "</"+type+">\n";
 				}
 
+				// external video node
+				else if(u.hc(tag, this.ext_video_allowed.join("|"))) {
+
+					html += '<div class="'+tag._type.val()+' video_id:'+tag._video_id+'"></div>\n';
+				}
+
+				// file node
 				else if(u.hc(tag, "file")) {
-//					u.bug("tag:" + tag)
 
 					html += '<div class="file item_id:'+tag._item_id+' variant:'+tag._variant+' name:'+tag._name+' filesize:'+tag._filesize+'">'+"\n";
-					html += '\t<p>FILE: <a href="/download/'+tag._item_id+'/'+tag._variant+'/'+tag._name+'">'+tag._name+" ("+u.round(tag._filesize/1000, 2)+" Kb)</a></p>";
+					html += '\t<p>DOWNLOAD: <a href="/download/'+tag._item_id+'/'+tag._variant+'/'+tag._name+'">'+tag._name+" ("+u.round(tag._filesize/1000, 2)+" Kb)</a></p>";
 					html += "</div>\n";
 				}
 
 			}
-//			u.bug("updateContent ("+u.nodeId(this._input)+ "):" + html);
+
+			// save HTML in textarea
 			this._input.val(html);
 
 		}
 
 
 
+
 		// EDITOR FUNCTIONALity
 
-
-		// create empty tag (with drag, type selector and remove elements)
-		// 
+		// Create empty tag (with drag, type selector and remove-tag elements)
 		field.createTag = function(allowed_tags, type) {
 
+			// create tag node
 			var tag = u.ae(this._editor, "div", {"class":"tag"});
 			tag.field = this;
 
-			// drag handle
+
+			// add drag handle
 			tag._drag = u.ae(tag, "div", {"class":"drag"});
 			tag._drag.field = this;
 			tag._drag.tag = tag;
 
-			// type selector
+			// add type selector
 			this.createTagSelector(tag, allowed_tags);
 
 			// select current type
 			tag._type.val(type);
 
 
-			// delete button
+			// add remove button
 			tag._remove = u.ae(tag, "div", {"class":"remove"});
 			tag._remove.field = this;
 			tag._remove.tag = tag;
@@ -1770,7 +1953,35 @@ Util.Form = u.f = new function() {
 			return tag;
 		}
 
+		// delete tag (when clicking on remove button)
+		field.deleteTag = function(tag) {
 
+			// make sure it is not last node
+			if(u.qsa("div.tag", this).length > 1) {
+
+				// if node is file - delete file from server
+				if(u.hc(tag, "file")) {
+					this.deleteFile(tag);
+				}
+
+				// remove node
+				tag.parentNode.removeChild(tag);
+
+				// enable dragging of html-tags
+				u.sortable(this._editor, {"draggables":"tag", "targets":"editor"});
+
+				// global update
+				this.update();
+
+				// save - new state (delete is permanent)
+				this._input.form.submit();
+
+			}
+
+		}
+
+
+		// TODO: add focus to input after selection
 		// create tag selector helper function
 		field.createTagSelector = function(tag, allowed_tags) {
 			
@@ -1787,22 +1998,27 @@ Util.Form = u.f = new function() {
 			}
 
 
-			// div._select.field = this;
-			// div._select.div = div;
+			// type get/set function
 			tag._type.val = function(value) {
 
+				// set value
 				if(value !== undefined) {
 					var i, option;
+
+					// try to find option with matching value
 					for(i = 0; option = this.childNodes[i]; i++) {
-						u.bug("option:" + option)
+
 						if(u.text(option) == value) {
 
+							// already have selected options
 							if(this.selected_option) {
 								u.rc(this.selected_option, "selected");
 
 								// update div tag class
 								u.rc(this.tag, u.text(this.selected_option));
 							}
+
+							// set selected state on new option
 							u.ac(option, "selected");
 							this.selected_option = option;
 
@@ -1812,20 +2028,33 @@ Util.Form = u.f = new function() {
 							return option;
 						}
 					}
+
+					// didn't find anything
+					// set selected state on first option
+					u.ac(this.childNodes[0], "selected");
+					this.selected_option = this.childNodes[0];
+					// update div tag class
+					u.ac(this.tag, u.text(this.childNodes[0]));
+
 					return this.childNodes[0];
-//					return false;
 				}
+
+				// get value
 				else {
 					return u.text(this.selected_option);
 				}
 			}
 
-			// enable tag switching if more than one type available
+			// enable tag switching, only if more than one type available
 			if(allowed_tags.length > 1) {
+
 
 				u.ce(tag._type);
 				tag._type.clicked = function(event) {
-					u.bug("select clicked");
+//					u.bug("select clicked");
+
+					// reset auto hide (just in case)
+					u.t.resetTimer(this.t_autohide);
 
 					// already show - close selector
 					if(u.hc(this, "open")) {
@@ -1839,25 +2068,25 @@ Util.Form = u.f = new function() {
 							this.val(u.text(event.target));
 						}
 
+						// remove auto close on mouse out
 						u.e.removeEvent(this, "mouseout", this.autohide);
 						u.e.removeEvent(this, "mouseover", this.delayautohide);
-						u.t.resetTimer(this.t_autohide);
 
 
 						// TODO: add focus to input (but not until we know what input looks like)
-
-	//					this.tag._input.focus();
+						// this.div._input.focus();
 
 						// update content
 						this.field.update();
 					}
-					// closed - open selector
+					// already closed - open selector
 					else {
 						u.ac(this, "open");
 						u.ac(this.tag, "focus");
 
 						u.as(this, "top", -(this.selected_option.offsetTop) + "px");
 
+						// add auto hide
 						u.e.addEvent(this, "mouseout", this.autohide);
 						u.e.addEvent(this, "mouseover", this.delayautohide);
 					}
@@ -1870,15 +2099,17 @@ Util.Form = u.f = new function() {
 
 					u.as(this, "top", 0);
 
+					// remove auto hide
 					u.e.removeEvent(this, "mouseout", this.autohide);
 					u.e.removeEvent(this, "mouseover", this.delayautohide);
 					u.t.resetTimer(this.t_autohide);
 
 
 					// TODO: add focus to input (but not until we know what input looks like)
-
-	//				this.div._input.focus();
+					// this.div._input.focus();
 				}
+
+				// auto hide functions
 				tag._type.autohide = function(event) {
 					u.t.resetTimer(this.t_autohide);
 					this.t_autohide = u.t.setTimer(this, this.hide, 800);
@@ -1889,45 +2120,57 @@ Util.Form = u.f = new function() {
 
 			}
 
-
-
 		}
 
 
 
+		// TODO
+		field.addExternalVideoTag = function() {}
+		field.addMediaTag = function() {}
+
+
+
+		// FILE TAG
+
 		// File tags
 		field.addFileTag = function(value) {
 
+			// create new tag
 			var tag = this.createTag(["file"], "file");
 
+			// add text wrapper for file upload or file info
 			tag._text = u.ae(tag, "div", {"class":"text"});
 
+			// if we have file info
 			if(value) {
 
+				// get file info from node
 				tag._variant = u.cv(node, "variant");
 				tag._name = u.cv(node, "name");
 				tag._item_id = u.cv(node, "item_id");
 				tag._filesize = u.cv(node, "filesize");
 
+				// create label with information
 				tag._label = u.ae(tag._text, "label", {"class":"done", "html":tag._name + " ("+u.round(tag._filesize/1000, 2)+" Kb)"});
 			}
+
+			// new file tag
 			else {
+
+				// create upload input
 				tag._label = u.ae(tag._text, "label", {"html":"Drag file here"});
-				tag._input = u.ae(tag._text, "input", {"type":"file", "name":"html_file"});
+				tag._input = u.ae(tag._text, "input", {"type":"file", "name":"htmleditor_file"});
 				tag._input.tag = tag;
 				tag._input.field = this;
 
 				// declare get/set value funtion
 				tag._input.val = function(value) {
-					// if(value !== undefined) {
-					// 	this.innerHTML = value;
-					// }
-					// return this.innerHTML;
+					u.bug("this shouldn't be called from anywhere")
 				}
 				// set value if any is sent
-				tag._input.val(u.stringOr(value));
+				//tag._input.val(u.stringOr(value));
 
-
+				// wait for upload
 				u.e.addEvent(tag._input, "change", this._file_updated);
 
 				// add focus and blur handlers
@@ -1947,6 +2190,37 @@ Util.Form = u.f = new function() {
 			return tag;
 		}
 
+		// Delete file on server, when file is deleted from editor
+		field.deleteFile = function(tag) {
+
+			// create form data to submit delete request
+			var form_data = new FormData();
+
+			// append relevant data
+			form_data.append("csrf-token", this._input.form.fields["csrf-token"].val());
+
+			// request response handler
+			tag.response = function(response) {
+
+				// notify interface
+				page.notify(response);
+
+				// if every thing is good udate and save
+				if(response.cms_status && response.cms_status == "success") {
+
+					// all good
+
+					// update viewer
+					this.field.update();
+				}
+			}
+			u.request(tag, this.file_delete_action+"/"+tag._item_id+"/"+tag._variant, {"method":"post", "params":form_data});
+
+		}
+
+
+
+		// LIST TAG
 
 		// add new list node
 		field.addListTag = function(type, value) {
@@ -1968,6 +2242,7 @@ Util.Form = u.f = new function() {
 			return tag;
 		}
 
+		// add new li to list node
 		field.addListItem = function(tag, value) {
 
 			var li = u.ae(tag, "div", {"class":"li"});
@@ -2014,6 +2289,10 @@ Util.Form = u.f = new function() {
 
 			return li;
 		}
+
+
+
+		// TEXT TAG
 
 		// add new text node
 		field.addTextTag = function(type, value) {
@@ -2070,68 +2349,13 @@ Util.Form = u.f = new function() {
 		}
 
 
-		field.deleteTag = function(tag) {
-
-			var all_tags = u.qsa("div.tag", this);
-
-			if(all_tags.length > 1) {
-				
-				// check for previous element before removing anything
-//				var prev = this.findPreviousInput(this.tag);
-
-				if(u.hc(tag, "file")) {
-					this.deleteFile(tag);
-				}
-
-				tag.parentNode.removeChild(tag);
-
-				// enable dragging of html-tags
-				u.sortable(this._editor, {"draggables":"tag", "targets":"editor"});
-
-				this.update();
-				
-				this._input.form.submit();
-				// set focus on prev element
-				// if(prev) {
-				// 	prev.focus();
-				// }
-
-			}
-
-		}
-
-
-		field.deleteFile = function(tag) {
-
-			var form_data = new FormData();
-			var action_delete_file = tag.field.getAttribute("data-delete-file");
-			var variant = tag._variant;
-
-//			form_data.append(this.name, this.files[0], this.value);
-			form_data.append("csrf-token", this._input.form.fields["csrf-token"].val());
-
-			tag.response = function(response) {
-
-				page.notify(response);
-
-				if(response.cms_status && response.cms_status == "success") {
-
-					// all good
-
-					// update viewer
-					this.field.update();
-				}
-			}
-			u.request(tag, action_delete_file+"/"+variant, {"method":"post", "params":form_data});
-
-		}
-
 		// EVENT HANDLERS 
 
 		// gained focus on individual tag._input
+		// TODO: Tabbing detection flawed
 		// TODO: consider looping back to original field._focused (for callbacks)
 		field._focused_content = function(event) {
-			u.bug("field._focused_content");
+//			u.bug("field._focused_content");
 
 			// add focus state
 			this.field.focused = true;
@@ -2139,7 +2363,7 @@ Util.Form = u.f = new function() {
 			u.ac(this.field, "focus");
 
 			// make sure field goes all the way in front - hint/error must be seen
-			u.as(this.field, "zIndex", 1000);
+			u.as(this.field, "zIndex", this.field._input.form._focus_z_index);
 
 			// position hint in case there is an error
 			u.f.positionHint(this.field);
@@ -2182,13 +2406,14 @@ Util.Form = u.f = new function() {
 		// attached to tag._input node for text-tags and list-tags
 		field._file_updated = function(event) {
 
-
+			// create data form object to upload file
 			var form_data = new FormData();
-			var action_add_file = this.field.getAttribute("data-add-file");
 
+			// append relevant data
 			form_data.append(this.name, this.files[0], this.value);
 			form_data.append("csrf-token", this.form.fields["csrf-token"].val());
 
+			// response handler
 			this.response = function(response) {
 
 				page.notify(response);
@@ -2207,12 +2432,11 @@ Util.Form = u.f = new function() {
 					// update viewer
 					this.tag.field.update();
 
+					// save after upload is complete
 					this.tag.field._input.form.submit();
 				}
 			}
-			u.request(this, action_add_file, {"method":"post", "params":form_data});
-//			u.bug("changed node:" + u.nodeId(this));
-//			u.bug("file updated:" + this.val());
+			u.request(this, this.field.file_add_action+"/"+this.field.item_id, {"method":"post", "params":form_data});
 
 		}
 
@@ -2300,7 +2524,7 @@ Util.Form = u.f = new function() {
 			}
 
 			// [DELETE]
-			if(event.keyCode == 8) {
+			else if(event.keyCode == 8) {
 
 				// node in deletable state?
 				if(this.is_deletable) {
@@ -2365,22 +2589,25 @@ Util.Form = u.f = new function() {
 				}
 
 			}
+
 			// any other key, remove deletable state 
 			else {
 				this.is_deletable = false;
 			}
 
 
-			// Text has been selected, show selection options
-
-			// hide existing options first
+			// hide existing options
 			this.field.hideSelectionOptions();
+
 
 			// new selection
 			if(selection && !selection.isCollapsed) {
 
 				// check if
 				var node = selection.anchorNode;
+
+				// test u.nodeWithin for this purpose
+
 				while(node != this) {
 					if(node.nodeName == "HTML" || !node.parentNode) {
 						break;
@@ -2388,6 +2615,7 @@ Util.Form = u.f = new function() {
 					node = node.parentNode;
 				}
 
+				// Text has been selected, show selection options
 				if(node == this) {
 					this.field.showSelectionOptions(this, selection);
 				}
@@ -2408,8 +2636,10 @@ Util.Form = u.f = new function() {
 			// 	}
 			// }
 
+			// global update
 			this.field.update();
 		}
+
 
 
 
@@ -2750,18 +2980,20 @@ Util.Form = u.f = new function() {
 		// change double linebreak to </p><p> (or fitting) once you are sure text is wrapped in node
 
 
-		var value, node, i, tag;
-		field._fields = new Array();
+		var value, node, i, tag, j, lis, li;
+//		field._fields = new Array();
+
 
 		// check for valid nodes, excluding <br>
 		var nodes = u.cn(field._viewer, "br");
 		if(nodes.length) {
 
-			// loop through childNodes
 
+			// loop through childNodes
 			for(i = 0; node = field._viewer.childNodes[i]; i++) {
 
 //				u.bug("node" + u.nodeId(node) + ", " + node.nodeName + ", " + typeof(node.nodeName));
+
 
 				// lost fragment of unspecified text
 				// wrap in p tag if content is more than whitespace or newline
@@ -2803,20 +3035,24 @@ Util.Form = u.f = new function() {
 				// valid list node (ul, ol)
 				else if(node.nodeName.toLowerCase().match(field.list_allowed.join("|"))) {
 
+
 					// handle list node
-					// this will not work with <code> (cannot replace newline in code element)
 					var lis = u.qsa("li", node);
-					value = lis[0].innerHTML.replace(/\n\r|\n|\r/g, "<br>"); // .replace(/\<br[\/]?\>/g, "\n");
+					value = lis[0].innerHTML.replace(/\n\r|\n|\r/g, "<br>");
 
-					// add new text node to editor
+
+					// add new list node, and first li to editor
 					tag = field.addListTag(node.nodeName.toLowerCase(), value);
-					var li = u.qs("div.li", tag);
 
+					// activate Inline
+					var li = u.qs("div.li", tag);
 					field.activateInlineFormatting(li._input);
 
+
+					// loop through remaining li-element and add them, one by one
 					if(lis.length > 1) {
 						for(j = 1; li = lis[j]; j++) {
-							value = li.innerHTML.replace(/\n\r|\n|\r/g, "<br>"); // .replace(/\<br[\/]?\>/g, "\n");
+							value = li.innerHTML.replace(/\n\r|\n|\r/g, "<br>");
 							li = field.addListItem(tag, value);
 							field.activateInlineFormatting(li._input);
 						}
@@ -2825,22 +3061,22 @@ Util.Form = u.f = new function() {
 
 
 				// divs containing file info (media, vimeo, youtube, file)
-				// invalid node, what can it be?
 				else {
+
+					// FILE
 					if(u.hc(node, "file")) {
-						
 						field.addFileTag(node);
 					}
+
+					// TODO: implement media and external video
 					// else if(u.hc(node, "youtube")) {
 					//
 					// }
 					else {
-						alert("invalid node:" + node.nodeName);
+						alert("HTML contains unautorized node:" + node.nodeName + "\nIt has been altered to conform with SEO and design.");
 					}
 				}
 
-
-//				u.ae(field._editor, "textarea").value = node.innerHTML;
 			}
 		}
 
@@ -2870,6 +3106,8 @@ Util.Form = u.f = new function() {
 	}
 
 
+
+
 	// TODO: update validation
 
 	// validate input
@@ -2889,20 +3127,30 @@ Util.Form = u.f = new function() {
 	// - files
 	this.validate = function(iN) {
 //		u.bug("validate:" + iN.name)
+
+
+		// validation is disabled
+		if(!iN.form._validation) {
+			return true;
+		}
+
+
 		var min, max, pattern;
-		var not_validated = true;
+		var validated = false;
 
 
 		// start by checking if value is empty or default_value
-		// not required
-		if(!u.hc(iN.field, "required") && (iN.val() == "" || this.isDefault(iN))) {
-//			u.bug("valid empty")
+		// not required, and empty (should still be validated if it has content)
+		if(!u.hc(iN.field, "required") && iN.val() === "") {
+//			u.bug("valid empty:" + u.nodeId(iN))
+
 			this.fieldCorrect(iN);
 			return true;
 		}
-		// required
-		else if(u.hc(iN.field, "required") && (iN.val() == "" || this.isDefault(iN))) {
-//			u.bug("invalid empty")
+		// required, and empty
+		else if(u.hc(iN.field, "required") && iN.val() === "") {
+//			u.bug("invalid empty:" + u.nodeId(iN) + ", " + iN.val() + ", " + (iN.val() === ""))
+
 			this.fieldError(iN);
 			return false;
 		}
@@ -2913,12 +3161,12 @@ Util.Form = u.f = new function() {
 		for(custom_validate in u.f.customValidate) {
 			if(u.hc(iN.field, custom_validate)) {
 				u.f.customValidate[custom_validate](iN);
-				not_validated = false;
+				validated = true;
 			}
 		}
 
 		// still not validated?
-		if(not_validated) {
+		if(!validated) {
 
 			// password validation
 			if(u.hc(iN.field, "password")) {
@@ -3069,13 +3317,14 @@ Util.Form = u.f = new function() {
 			// select validation
 			else if(u.hc(iN.field, "select")) {
 
-				if(iN.val()) {
+				if(iN.val() !== "") {
 					this.fieldCorrect(iN);
 				}
 				else {
 					this.fieldError(iN);
 				}
 			}
+
 			// TODO: needs to be tested
 			// checkbox/radio validation
 			else if(u.hc(iN.field, "checkbox|boolean|radiobuttons")) {
@@ -3173,57 +3422,80 @@ Util.Form = u.f = new function() {
 			// location validation
 			else if(u.hc(iN.field, "location")) {
 
-				if(u.hc(iN, "location")) {
+				// location is typically a three input structure
+				// try to validate all three
+				var loc_fields = 0;
 
-					min = min ? min : 1;
-					max = max ? max : 255;
+				// location input
+				if(iN.field._input) {
 
-					if(
-						iN.val().length >= min &&
-						iN.val().length <= max
-					) {
-						this.fieldCorrect(iN);
-					}
-					else {
-						this.fieldError(iN);
-					}
-				}
-				if(u.hc(iN, "latitude")) {
+					loc_fields++;
 
-					min = min ? min : -90;
-					max = max ? max : 90;
+					min = 1;
+					max = 255;
 
 					if(
-						!isNaN(iN.val()) && 
-						iN.val() >= min && 
-						iN.val() <= max
+						iN.field._input.val().length >= min &&
+						iN.field._input.val().length <= max
 					) {
-						this.fieldCorrect(iN);
+						this.fieldCorrect(iN.field._input);
 					}
 					else {
-						this.fieldError(iN);
-					}
-				}
-				if(u.hc(iN, "longitude")) {
-
-					min = min ? min : -180;
-					max = max ? max : 180;
-
-					if(
-						!isNaN(iN.val()) && 
-						iN.val() >= min && 
-						iN.val() <= max
-					) {
-						this.fieldCorrect(iN);
-					}
-					else {
-						this.fieldError(iN);
+						this.fieldError(iN.field._input);
 					}
 				}
 
-				if(u.qsa(".correct", iN.field).length != 3) {
+				// latitude input
+				if(iN.field.lat_input) {
+
+					loc_fields++;
+
+					min = -90;
+					max = 90;
+
+					if(
+						!isNaN(iN.field.lat_input.val()) && 
+						iN.field.lat_input.val() >= min && 
+						iN.field.lat_input.val() <= max
+					) {
+						this.fieldCorrect(iN.field.lat_input);
+					}
+					else {
+						this.fieldError(iN.field.lat_input);
+					}
+				}
+
+				// longitude input
+				if(iN.field.lon_input) {
+
+					loc_fields++;
+
+					min = -180;
+					max = 180;
+
+					if(
+						!isNaN(iN.field.lon_input.val()) && 
+						iN.field.lon_input.val() >= min && 
+						iN.field.lon_input.val() <= max
+					) {
+						this.fieldCorrect(iN.field.lon_input);
+					}
+					else {
+						this.fieldError(iN.field.lon_input);
+					}
+				}
+
+				// any errors after validation
+				if(u.qsa("input.error", iN.field).length) {
+
 					u.rc(iN.field, "correct");
 					u.ac(iN.field, "error");
+				}
+				// are all fields correct, then apply field correct state
+				else if(u.qsa("input.correct", iN.field).length == loc_fields) {
+
+					u.ac(iN.field, "correct");
+					u.rc(iN.field, "error");
 				}
 
 			}
@@ -3236,10 +3508,11 @@ Util.Form = u.f = new function() {
 				max = Number(u.cv(iN.field, "max"));
 				min = min ? min : 1;
 				max = max ? max : 10000000;
-
+				u.bug("uploaded:" + u.hc(iN, "uploaded"))
 				if(
-					iN.val().length >= min && 
-					iN.val().length <= max
+					u.hc(iN, "uploaded") ||
+					(iN.val().length >= min && 
+					iN.val().length <= max)
 				) {
 					this.fieldCorrect(iN);
 				}
@@ -3260,164 +3533,210 @@ Util.Form = u.f = new function() {
 
 	}
 
+}
 
 
-	// Implement FormData method for Metro project
+// Implement FormData method for Metro project
 
-	// get params from form
-	// optional parameters as object
-	// type - any defined type.
-	// - parameters - regular parameter string (default)
-	// - json - json object based on input names with endless nesting
-	// - optional local extension
-	// ignore_inputs - input classnames to identify inputs to ignore, multiple classes can be | seperated (string is used as regular expression)
-	this.getParams = function(form, settings) {
+// get params from form
+// optional parameters as object
+// type - any defined type.
+// - parameters - regular parameter string (default)
+// - json - json object based on input names with endless nesting
+// - optional local extension
+// ignore_inputs - input classnames to identify inputs to ignore, multiple classes can be | seperated (string is used as regular expression)
+u.f.getParams = function(form, _options) {
 
 
-		// default values
-		var send_as = "params";
-		var ignore_inputs = "ignoreinput";
+	// default values
+	var send_as = "params";
+	var ignore_inputs = "ignoreinput";
 
-		// additional info passed to function as JSON object
-		if(typeof(settings) == "object") {
-			var argument;
-			for(argument in settings) {
+	// additional info passed to function as JSON object
+	if(typeof(_options) == "object") {
+		var _argument;
+		for(_argument in _options) {
+			switch(_argument) {
 
-				switch(argument) {
-					case "ignore_inputs"	: ignore_inputs		= settings[argument]; break;
-					case "send_as"			: send_as			= settings[argument]; break;
-				}
-
+				case "ignore_inputs"    : ignore_inputs     = _options[_argument]; break;
+				case "send_as"          : send_as           = _options[_argument]; break;
 			}
+
+		}
+	}
+
+
+	// get inputs
+	var i, input, select, textarea, param, params;
+
+	// Object for found inputs/selects/textareas
+	if(send_as == "formdata" && typeof(window.FormData) == "function") {
+		params = new FormData();
+	}
+	else {
+		// browser doesn't support formdata
+		if(send_as == "formdata") {
+			send_as == "params";
 		}
 
-//		u.bug("send_as:" + send_as)
-
-		// get inputs
-		var i, input, select, textarea, param;
-
-		// Object for found inputs/selects/textareas
-		// if(window.FormData) {
-		// 	u.bug("formdata");
-		// 	var params = new FormData();
-		// }
-		// else {
-			var params = new Object();
-		// 	params.append = function(name, value, filename) {
-		// 		this[name] = value;
-		// 	}
-		// }
-
-
-		// add submit button to params if available
-		if(form._submit_button && form._submit_button.name) {
-			params[form._submit_button.name] = form._submit_button.value;
-//			params.append(form._submit_button.name, form._submit_button.value);
+		params = new Object();
+		// create dummy function (but keep optional filename for compatibility)
+		params.append = function(name, value, filename) {
+			this[name] = value;
 		}
+	}
 
-		var inputs = u.qsa("input", form);
-		var selects = u.qsa("select", form)
-		var textareas = u.qsa("textarea", form)
 
-		for(i = 0; input = inputs[i]; i++) {
-			// exclude specific inputs (defined by ignore_inputs)
-			if(!u.hc(input, ignore_inputs)) {
+	// add submit button to params if available
+	if(form._submit_button && form._submit_button.name) {
+		params.append(form._submit_button.name, form._submit_button.value);
+	}
 
-				// if checkbox/radio and node is checked
-				if((input.type == "checkbox" || input.type == "radio") && input.checked) {
-					if(!this.isDefault(input)) {
-						params[input.name] = input.value;
-					}
-//					params.append(input.name, input.value);
+
+	var inputs = u.qsa("input", form);
+	var selects = u.qsa("select", form)
+	var textareas = u.qsa("textarea", form)
+
+	// get all inputs
+	for(i = 0; input = inputs[i]; i++) {
+
+		// exclude specific inputs (defined by ignore_inputs)
+		if(!u.hc(input, ignore_inputs)) {
+
+			// if checkbox/radio and node is checked
+			if((input.type == "checkbox" || input.type == "radio") && input.checked) {
+
+				if(typeof(input.val) == "function") {
+//						u.bug("value:" + u.nodeId(input) + "=" + input.val())
+					params.append(input.name, input.val());
+//						params[input.name] = input.val();
 				}
-				// file input
-				else if(input.type == "file") {
-//					u.bug("file:" + input.files[0]);
-					if(!this.isDefault(input)) {
-						params[input.name] = input.value;
-					}
-//					params.append(input.name, input.files[0], input.value);
-				}
-
-				// if anything but buttons and radio/checkboxes
-				// - hidden, text, html5 input-types
-				else if(!input.type.match(/button|submit|reset|file|checkbox|radio/i)) {
-
-					if(!this.isDefault(input)) {
-						params[input.name] = input.value;
-					}
-					// empty
-					else {
-						params[input.name] = "";
-					}
-//					params.append(input.name, input.value);
-				}
-			}
-		}
-
-		for(i = 0; select = selects[i]; i++) {
-			// exclude specific inputs (defined by ignore_inputs)
-			if(!u.hc(select, ignore_inputs)) {
-				if(!this.isDefault(select)) {
-					params[select.name] = select.options[select.selectedIndex].value;
-				}
-//				params.append(select.name, select.options[select.selectedIndex].value);
-			}
-		}
-
-		for(i = 0; textarea = textareas[i]; i++) {
-			// exclude specific inputs (defined by ignore_inputs)
-			if(!u.hc(textarea, ignore_inputs)) {
-				if(!this.isDefault(textarea)) {
-					params[textarea.name] = textarea.value;
-				}
-				// empty
 				else {
-					params[textarea.name] = "";
+					params.append(input.name, input.value);
+					//params[input.name] = input.value;
 				}
-//				params.append(textarea.name, textarea.value);
+
+			}
+			// file input
+			else if(input.type == "file") {
+
+				var f, file, files;
+				
+				if(typeof(input.val) == "function") {
+					files = input.val();
+				}
+				else {
+					files = input.value;
+				}
+
+				if(files) {
+					// append files individually
+					for(f = 0; file = files[f]; f++) {
+	//						u.bug("value:" + u.nodeId(input) + "=" + file)
+	//						params.append(input.name.replace(/\[\]/, "")+"["+f+"]", file, file.name);
+
+						// PHP should be able to handle it like this
+						params.append(input.name, file, file.name);
+					}
+				}
+				else {
+					params.append(input.name, "");
+				}
+
+			}
+
+			// if anything but buttons and radio/checkboxes
+			// - hidden, text, html5 input-types
+			else if(!input.type.match(/button|submit|reset|file|checkbox|radio/i)) {
+
+				if(typeof(input.val) == "function") {
+//						u.bug("value:" + u.nodeId(input) + "=" + input.val())
+					params.append(input.name, input.val());
+				}
+				else {
+					params.append(input.name, input.value);
+				}
 			}
 		}
+	}
 
+	for(i = 0; select = selects[i]; i++) {
+		// exclude specific inputs (defined by ignore_inputs)
+		if(!u.hc(select, ignore_inputs)) {
 
-
-		// look for local extension types
-		if(send_as && typeof(this.customSend[send_as]) == "function") {
-			return this.customSend[send_as](params, form);
+			if(typeof(select.val) == "function") {
+//					u.bug("value:" + u.nodeId(select) + "=" + select.val())
+				params.append(select.name, select.val());
+			}
+			else {
+				params.append(select.name, select.options[select.selectedIndex].value);
+			}
 		}
-		// or use defaults
+	}
 
-		// return as json object
-		else if(send_as == "json") {
+	for(i = 0; textarea = textareas[i]; i++) {
+		// exclude specific inputs (defined by ignore_inputs)
+		if(!u.hc(textarea, ignore_inputs)) {
 
-			// convert to JSON object
-			return u.f.convertNamesToJsonObject(params);
+			if(typeof(textarea.val) == "function") {
+//					u.bug("value:" + u.nodeId(textarea) + "=" + textarea.val())
+				params.append(textarea.name, textarea.val());
+			}
+			else {
+				params.append(textarea.name, textarea.value);
+			}
 		}
+	}
 
-		// return as js object
-		else if(send_as == "object") {
 
-			return params;
-		}
+	// look for local extension types
+	if(send_as && typeof(this.customSend[send_as]) == "function") {
+		return this.customSend[send_as](params, form);
+	}
 
-		// return as parameter string
-		// send_as == "params" (or unknown send_as type)
-		else {
+	// or use defaults
+
+	// return as json object
+	else if(send_as == "json") {
+
+		// convert to JSON object
+		return u.f.convertNamesToJsonObject(params);
+	}
+
+	// return as or formdata
+	else if(send_as == "formdata") {
+
+		return params;
+	}
+
+	// return as js object
+	else if(send_as == "object") {
+
+		// remove append function before returning object
+		params.append = null;
+
+		return params;
+	}
+
+	// return as parameter string
+	// send_as == "params" (or unknown send_as type)
+	else {
 
 //			u.xInObject(params);
 
-			var string = "";
-			for(param in params) {
+		var string = "";
+		for(param in params) {
 //				u.bug("param:" + typeof(params[param]) + ", " + param)
-//				if(typeof(params[param]) != "function") {
-					string += (string ? "&" : "") + param + "=" + encodeURIComponent(params[param]);
-//				}
+			if(typeof(params[param]) != "function") {
+				string += (string ? "&" : "") + param + "=" + encodeURIComponent(params[param]);
 			}
-			return string;
 		}
+		return string;
 
 	}
+
 }
+
 
 
 // Convert param names to nested JSON object structure
@@ -3559,6 +3878,8 @@ u.f.recurseName = function(object, indexes, value) {
 
 	return object;
 }
+
+
 
 
 

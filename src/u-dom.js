@@ -202,9 +202,10 @@ Util.wrapContent = u.wc = function(node, node_type, attributes) {
 		return wrapper_node;
 	}
 	catch(exception) {
-		u.bug("Exception ("+exception+") in u.wc, called from: "+arguments.callee.caller);
-		u.bug("node:" + u.nodeId(node, 1));
-		u.xInObject(attributes);
+		u.exception("u.wc", arguments.callee.caller, exception, {"node":node, "node_type":node_type, "attributes":attributes})
+		// u.bug("Exception ("+exception+") in u.wc, called from: "+arguments.callee.caller);
+		// u.bug("node:" + u.nodeId(node, 1));
+		// u.xInObject(attributes);
 	}
 	return false;
 }
@@ -281,9 +282,6 @@ Util.classVar = u.cv = function(node, var_name) {
 	}
 	return false;
 }
-// TODO: DEPRECATED
-u.getIJ = u.cv;
-
 
 // set classname on element, replacing all others
 Util.setClass = u.sc = function(node, classname) {
