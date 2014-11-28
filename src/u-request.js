@@ -119,6 +119,7 @@ Util.request = u.request = function(node, url, _options) {
 				if(!params.constructor.toString().match(/FormData/i)) {
 					node[request_id].HTTPRequest.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 				}
+				// node[request_id].HTTPRequest.setRequestHeader("Content-Type","multipart/formdata");
 
 				// rails form proofing
 				var csfr_field = u.qs('meta[name="csrf-token"]');
