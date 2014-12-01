@@ -1317,8 +1317,12 @@ Util.Form = u.f = new function() {
 
 				// TODO: files can be ok in the Janitor implementation if image has already been uploaded?
 				// should also look for existing image in field
-//				u.bug("this.files.length:" + this.files.length)
-				if(this.files.length) {
+//				u.bug("this.value:" + this.value);
+				// u.bug("this.files:" + this.files);
+				// u.bug("this.files.length:" + this.files.length);
+				
+				// general support
+				if(this.value && this.files && this.files.length) {
 					var i, file, files = [];
 
 					for(i = 0; file = this.files[i]; i++) {
@@ -1326,6 +1330,11 @@ Util.Form = u.f = new function() {
 					}
 					return files;
 				}
+				// <= IE9 support
+				else if(this.value) {
+					return this.value;
+				}
+
 				else if(u.hc(this, "uploaded")){
 					return true;
 				}
