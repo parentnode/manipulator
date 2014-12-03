@@ -359,8 +359,8 @@ Util.videoPlayer = function(_options) {
 	player.correctSource = function(src) {
 
 //		alert(src)
-		// remove parameters
-		// TODO: make parameter replacement better - keep parameter
+		// remove parameters and add them after format change
+		var param = src.match(/\?[^$]+/) ? src.match(/(\?[^$]+)/)[1] : "";
 		src = src.replace(/\?[^$]+/, "");
 		src = src.replace(/\.m4v|\.mp4|\.webm|\.ogv|\.3gp|\.mov/, "");
 
@@ -377,23 +377,23 @@ Util.videoPlayer = function(_options) {
 		*/
 
 		if(this.flash) {
-			return src+".mp4";
+			return src+".mp4"+param;
 		}
 		else if(this.video.canPlayType("video/mp4")) {
-			return src+".mp4";
+			return src+".mp4"+param;
 		}
 		else if(this.video.canPlayType("video/ogg")) {
-			return src+".ogv";
+			return src+".ogv"+param;
 		}
 		//else if(this.video.canPlayType("video/webm")) {
 		//	return src+".webm";
 		//}
 		else if(this.video.canPlayType("video/3gpp")) {
-			return src+".3gp";
+			return src+".3gp"+param;
 		}
 		else {
 		//else if(this.video.canPlayType("video/quicktime")) {
-			return src+".mov";
+			return src+".mov"+param;
 		}
 
 	}

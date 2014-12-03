@@ -168,16 +168,20 @@ Util.audioPlayer = function(node) {
 
 	// find the correct source for the browser
 	player.correctSource = function(src) {
+
+
+		var param = src.match(/\?[^$]+/) ? src.match(/(\?[^$]+)/)[1] : "";
+		src = src.replace(/\?[^$]+/, "");
 		src = src.replace(/.mp3|.ogg|.wav/, "");
 
 		if(this.audio.canPlayType("audio/mpeg")) {
-			return src+".mp3";
+			return src+".mp3"+param;
 		}
 		else if(this.audio.canPlayType("audio/ogg")) {
-			return src+".ogg";
+			return src+".ogg"+param;
 		}
 		else {
-			return src+".wav";
+			return src+".wav"+param;
 		}
 	}
 
