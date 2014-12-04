@@ -3085,20 +3085,37 @@ Util.Form = u.f = new function() {
 
 
 				// divs containing file info (media, vimeo, youtube, file)
+				// FILE
+				else if(u.hc(node, "file")) {
+					field.addFileTag(node);
+				}
+
+
+				// TODO: implement media and external video
+
+				// Catch unsupported nodes and translate to available node
+
+				// dl, ul or ol (could be unsupported in given implementation)
+				else if(node.nodeName.toLowerCase().match(/dl|ul|ol/)) {
+
+					var children = u.cn(node);
+					for(j = 0; child = children[j]; j++) {
+						value = child.innerHTML.replace(/\n\r|\n|\r/g, "");
+						tag = field.addTextTag(field.text_allowed[0], value);
+						field.activateInlineFormatting(tag._input);
+					}
+				}
+
+				// regular nodes (could be unsupported in given implementation)
+				else if(node.nodeName.toLowerCase().match(/h1|h2|h3|h4|h5|code/)) {
+
+					value = node.innerHTML.replace(/\n\r|\n|\r/g, "");
+					tag = field.addTextTag(field.text_allowed[0], value);
+					field.activateInlineFormatting(tag._input);
+
+				}
 				else {
-
-					// FILE
-					if(u.hc(node, "file")) {
-						field.addFileTag(node);
-					}
-
-					// TODO: implement media and external video
-					// else if(u.hc(node, "youtube")) {
-					//
-					// }
-					else {
-						alert("HTML contains unautorized node:" + node.nodeName + "\nIt has been altered to conform with SEO and design.");
-					}
+					alert("HTML contains unautorized node:" + node.nodeName + "\nIt has been altered to conform with SEO and design.");
 				}
 
 			}
