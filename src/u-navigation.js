@@ -114,7 +114,7 @@ u.navigation = function(_options) {
 	if(!u.h.popstate) {
 
 		if(location.hash.length < 2) {
-	//		u.bug("set hash + init content")
+//			u.bug("set hash + init content")
 
 			// update hash
 			page.navigate(location.href, page);
@@ -126,17 +126,17 @@ u.navigation = function(_options) {
 		// if different hash and url, hash value starts with /
 		// load content based on hash
 		else if(u.h.getCleanHash(location.hash) != u.h.getCleanUrl(location.href) && location.hash.match(/^#\//)) {
-	//		u.bug("init navigate:" + u.h.getCleanHash(location.hash) + "!=" + u.h.getCleanUrl(location.href) + "; ")
+//			u.bug("init navigate:" + u.h.getCleanHash(location.hash) + "!=" + u.h.getCleanUrl(location.href) + "; ")
 
 			// update internal value, so navigation doesn't mess up
 			page._nav_path = u.h.getCleanUrl(location.href);
 			// manually invoke navigation to load correct page
-			page._navigate();
+			page._navigate(u.h.getCleanHash(location.hash), page);
 		}
 		// hash and url is aligned, or unusable value
 		// init existing content
 		else {
-	//		u.bug("init content")
+//			u.bug("init content")
 
 			// just go for it
 			u.init(page.cN);
