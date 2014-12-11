@@ -1,7 +1,7 @@
 Util.History = u.h = new function() {
 
 	this.popstate = ("onpopstate" in window);
-//	this.popstate = false;
+//	this.popstate = u.browser("firefox") ? false : true;
 
 	this.catchEvent = function(node, _options) {
 
@@ -96,7 +96,7 @@ Util.History = u.h = new function() {
 	// this function should remove any hash value from url
 	// receives location.href
 	this.getCleanUrl = function(string, levels) {
-//		u.bug("getCleanUrl:" + string + " = " + (string ? string.replace(location.protocol+"//"+document.domain, "").match(/[^#$]+/) : "#error#") + ", " + arguments.callee.caller);
+//		u.bug("getCleanUrl:" + string + " = " + (string ? string.replace(location.protocol+"//"+document.domain, "").match(/[^#$]+/) : "#error#"));
 
 		// remove hash and domain from string before
 		string = string.replace(location.protocol+"//"+document.domain, "").match(/[^#$]+/)[0];
@@ -140,5 +140,13 @@ Util.History = u.h = new function() {
 			}
 			return return_string;
 		}
+	}
+
+	// resolve current url, check for hash value and then plain url
+	this.resolveCurrentUrl = function() {
+
+		return !location.hash ? this.getCleanUrl(location.href) : this.getCleanHash(location.hash);
+//		return this.popstate && !location.hash ? this.getCleanUrl(location.href) : this.getCleanHash(location.hash);
+
 	}
 }
