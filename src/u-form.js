@@ -854,10 +854,10 @@ Util.Form = u.f = new function() {
 
 	// internal focus handler - attatched to inputs
 	this._focus = function(event) {
-//		u.bug("this._focus:" + u.nodeId(this))
+		u.bug("this._focus:" + u.nodeId(this) + ", " + typeof(this.focused) +","+ typeof(this.field._input.focused))
 
-		this.field.focused = true;
-		this.focused = true;
+		this.field.is_focused = true;
+		this.is_focused = true;
 
 		u.ac(this.field, "focus");
 		u.ac(this, "focus");
@@ -872,6 +872,7 @@ Util.Form = u.f = new function() {
 		// callbacks
 		// does input have callback
 		if(typeof(this.focused) == "function") {
+			u.bug("should call back")
 			this.focused();
 		}
 		// certain fields with multiple input will have callback declared on first input only
@@ -889,8 +890,8 @@ Util.Form = u.f = new function() {
 	this._blur = function(event) {
 //		u.bug("this._blur:" + u.nodeId(this))
 
-		this.field.focused = false;
-		this.focused = false;
+		this.field.is_focused = false;
+		this.is_focused = false;
 
 		u.rc(this.field, "focus");
 		u.rc(this, "focus");
@@ -1127,9 +1128,9 @@ Util.Form = u.f = new function() {
 	// update default state on input
 	this.updateDefaultState = function(iN) {
 
-//		u.bug("updateDefaultState for:" + u.nodeId(iN) + ", " + (iN.val() === "") + ", " + iN.focused)
+//		u.bug("updateDefaultState for:" + u.nodeId(iN) + ", " + (iN.val() === "") + ", " + iN.is_focused)
 		// is input focused
-		if(iN.focused || iN.val() !== "") {
+		if(iN.is_focused || iN.val() !== "") {
 
 			// leave default state
 			u.rc(iN, "default");
@@ -2382,7 +2383,7 @@ Util.Form = u.f = new function() {
 //			u.bug("field._focused_content");
 
 			// add focus state
-			this.field.focused = true;
+			this.field.is_focused = true;
 			u.ac(this.tag, "focus");
 			u.ac(this.field, "focus");
 
@@ -2411,7 +2412,7 @@ Util.Form = u.f = new function() {
 //			u.bug("_blurred_content:" + this.val());
 
 			// remove focus state
-			this.field.focused = false;
+			this.field.is_focused = false;
 			u.rc(this.tag, "focus");
 			u.rc(this.field, "focus");
 
