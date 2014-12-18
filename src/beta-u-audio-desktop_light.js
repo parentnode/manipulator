@@ -1,13 +1,19 @@
+// Fallback player for browsers without HTML5 support
+
 u.videoPlayerFallback = function(player) {
 
+	// Flash player requires flash 10
 	if(Util.flashDetection(">=10")) {
 
+		// create player ID for cummunication between flash and JS
 		if(!player.id) {
 			var id = u.randomString();
 			player.id = id;
 		}
 
+		// Player is flash
 		player.flash = true;
+
 
 		player.load = function(src) {
 //			u.bug("load:" + src);
@@ -114,7 +120,7 @@ u.videoPlayerFallback = function(player) {
 
 			this.ready = false;
 //			this.video = u.flash(this, "/media/flash/videoplayer.swf?id="+this.id, false, "100%", "100%");
-			this.video = u.flash(this, (u.flash_video_player ? u.flash_video_player : "/documentation/media/flash/videoplayer.swf") + "?id="+player.id, false, "100%", "100%");
+			this.video = u.flash(this, (u.flash_video_player ? u.flash_video_player : "/js/manipulator/v0.8/src/mediaplayer.swf") + "?id="+player.id, false, "100%", "100%");
 
 		}
 
