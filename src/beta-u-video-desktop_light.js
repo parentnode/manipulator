@@ -116,7 +116,8 @@ u.videoPlayerFallback = function(player) {
 
 			this.ready = false;
 //			this.video = u.flash(this, "/media/flash/videoplayer.swf?id="+this.id, false, "100%", "100%");
-			this.video = u.flash(this, (u.flash_video_player ? u.flash_video_player : "/media/flash/videoplayer.swf") + "?id="+player.id, false, "100%", "100%");
+			this.video = u.flash(this, (u.flash_video_player ? u.flash_video_player : "/js/manipulator/v0.8/src/mediaplayer.swf") + "?id="+player.id, false, "100%", "100%");
+//			this.video = u.flash(this, (u.flash_video_player ? u.flash_video_player : "/media/flash/videoplayer.swf") + "?id="+player.id, false, "100%", "100%");
 
 		}
 
