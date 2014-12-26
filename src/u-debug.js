@@ -7,32 +7,85 @@ Util.debugURL = function(url) {
 }
 // identify node
 Util.nodeId = function(node, include_path) {
-//	try {
-	if(!node) {
-		u.bug("Not a node:" + node + " - called from: "+arguments.callee.caller)
-		return "Unindentifiable node!";
-	}
+	try {
+	// if(!node) {
+	// 	u.bug("Not a node:" + node + " - called from: "+arguments.callee.caller)
+	// 	return "Unindentifiable node!";
+	// }
 
-	if(!include_path) {
-		return node.id ? node.nodeName+"#"+node.id : (node.className ? node.nodeName+"."+node.className : (node.name ? node.nodeName + "["+node.name+"]" : node.nodeName));
-	}
-	else {
-		if(node.parentNode && node.parentNode.nodeName != "HTML") {
-			return u.nodeId(node.parentNode, include_path) + "->" + u.nodeId(node);
+		if(!include_path) {
+			return node.id ? node.nodeName+"#"+node.id : (node.className ? node.nodeName+"."+node.className : (node.name ? node.nodeName + "["+node.name+"]" : node.nodeName));
 		}
 		else {
-			return u.nodeId(node);
+			if(node.parentNode && node.parentNode.nodeName != "HTML") {
+				return u.nodeId(node.parentNode, include_path) + "->" + u.nodeId(node);
+			}
+			else {
+				return u.nodeId(node);
+			}
 		}
 	}
-//	}
-	// catch(exception) {
-	// 	u.bug("Exception ("+exception+") in u.nodeId("+node+"), called from: "+arguments.callee.caller);
-	// }
+	catch(exception) {
+
+		u.exception("u.nodeId", arguments, exception);
+
+//		u.bug("Exception ("+exception+") in u.nodeId("+node+"), called from: "+arguments.callee.caller);
+	}
 	return "Unindentifiable node!";
 }
 
+
+
+Util.exception = function(name, arguments, exception) {
+
+	u.bug("Exception in: " + name + " (" + exception + ")");
+	u.bug("Invoked with arguments:");
+	u.xInObject(arguments);
+
+	u.bug("Called from:");
+
+	// does caller has name
+	if(arguments.callee.caller.name) {
+		u.bug("arguments.callee.caller.name:" + arguments.callee.caller.name)
+	}
+	// show a part of the caller function code
+	else {
+		u.bug("arguments.callee.caller:" + arguments.callee.caller.toString().substring(0, 250));
+	}
+
+
+// // 	u.bug("arguments.callee.caller.name:" + arguments.callee.caller.name);
+// // 	u.bug("arguments.callee.name:" + arguments.callee.name);
+// // 	u.bug("arguments.callee:" + arguments.callee);
+// // 	u.bug("arguments.callee.caller:" + arguments.callee.caller);
+// //
+// // //	arguments
+// // 	u.xInObject(arguments);
+// //
+// // 	u.bug("Exception ("+exception+") in "+_in);
+//
+// 	var x;
+// 	for(x in regarding) {
+// 		if(x == "node") {
+// 			u.bug("node:" + (typeof(node.nodeName) ? u.nodeId(regarding[x], 1) : "Unindentifiable node:" + regarding[x]));
+// 		}
+// 		else {
+// 			if(typeof(regarding[x]) == "object") {
+// 				u.bug(x+":");
+// 				u.xInObject(regarding[x]);
+// 			}
+// 			else {
+// 				u.bug(x+"="+regarding[x]);
+// 			}
+// 		}
+// 	}
+// 	u.bug("Called from: "+_from);
+
+}
+
+
 // exception explorer
-Util.exception = function(_in, _from, exception, regarding) {
+Util.exception2 = function(_in, _from, exception, regarding) {
 
 	u.bug("Exception ("+exception+") in "+_in);
 
@@ -93,8 +146,6 @@ Util.bug = function(message, corner, color) {
 
 			var debug_div = document.getElementById("debug_id_"+corner);
 			message = message ? message.replace(/\>/g, "&gt;").replace(/\</g, "&lt;").replace(/&lt;br&gt;/g, "<br>") : "Util.bug with no message?";
-//			alert("message:" + message + ", " + debug_div)
-//			u.ae(u.qs("#debug_id_"+corner), "div", ({"style":"color: " + color})).innerHTML = message ? message.replace(/>/g, "&gt;").replace(/</g, "&lt;").replace(/&lt;br&gt;/g, "<br>") : "Util.bug with no message?";
 			u.ae(debug_div, "div", {"style":"color: " + color, "html": message});
 		}
 		if(typeof(console) == "object") {
@@ -103,23 +154,38 @@ Util.bug = function(message, corner, color) {
 	}
 }
 
-Util.xInObject = function(object) {
+
+Util.xInObject = function(object, return_string) {
 	if(u.debugURL()) {
-		var x, s = "--- start object ---<br>\n";
+
+		var x, s = "--- start object ---\n";
 		for(x in object) {
+
 		//	u.bug(x + ":" + object[x] + ":" + typeof(object[x]));
-			if(object[x] && typeof(object[x]) == "object" && typeof(object[x].nodeName) == "string") {
-				s += x + "=" + object[x]+" -> " + u.nodeId(object[x], 1) + "<br>\n";
+			if(object[x] && typeof(object[x]) == "object" && typeof(object[x].nodeName) != "string") {
+				s += x + "=" + object[x]+" => \n";
+				s += u.xInObject(object[x], true);
+			}
+			else if(object[x] && typeof(object[x]) == "object" && typeof(object[x].nodeName) == "string") {
+				s += x + "=" + object[x]+" -> " + u.nodeId(object[x], 1) + "\n";
 			}
 			else if(object[x] && typeof(object[x]) == "function") {
-				s += x + "=function<br>\n";
+				s += x + "=function\n";
 			}
 			else {
-				s += x + "=" + object[x]+"<br>\n";
+				s += x + "=" + object[x]+"\n";
 			}
+
 		}
-		s += "--- end object ---"
-		u.bug(s);
+		s += "--- end object ---\n";
+
+		if(return_string) {
+			return s;
+		}
+		else {
+			u.bug(s);
+		}
+
 	}
 }
 
