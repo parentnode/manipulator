@@ -1,10 +1,19 @@
+// cross-browser querySelector
 Util.querySelector = u.qs = function(query, scope) {
 	scope = scope ? scope : document;
 	return scope.querySelector(query);
 }
+
+// cross-browser querySelectorAll
 Util.querySelectorAll = u.qsa = function(query, scope) {
-	scope = scope ? scope : document;
-	return scope.querySelectorAll(query);
+	try {
+		scope = scope ? scope : document;
+		return scope.querySelectorAll(query);
+	}
+	catch(exception) {
+		u.exception("u.qsa", arguments, exception);
+	}
+	return [];
 }
 
 // Get element (id/class/tag)
@@ -43,59 +52,162 @@ Util.getElements = u.ges = function(identifier, scope) {
 
 
 
-// get parent node of type
-Util.parentNode = u.pn = function(node, node_type) {
-	if(node_type) {
-		if(node.parentNode) {
-			var parent = node.parentNode;
-		}
-//		u.bug(e.parentNode.nodeName.toLowerCase());
-		while(parent.nodeName.toLowerCase() != node_type.toLowerCase()) {
-			if(parent.parentNode) {
-				parent = parent.parentNode;
-			}
-			else {
-				return false;
-			}
-		}
-		return parent;
-	}
-	else {
-		return node.parentNode;
-	}
-}
+// get parent node
+// excludes nodes matched by exclude=css selector
+// includes nodes matched by include=css selector
+Util.parentNode = u.pn = function(node, _options) {
 
-// Returns previous sibling, not counting text nodes as siblings and ignoring optional exclude=className/nodeName
-// TODO: extend with include option and make exclude and include list
-Util.previousSibling = u.ps = function(node, exclude) {
-	node = node.previousSibling;
-	while(node && (node.nodeType == 3 || node.nodeType == 8 || exclude && (u.hc(node, exclude) || node.nodeName.toLowerCase().match(exclude)))) {
-		node = node.previousSibling;
+	var exclude = "";
+	var include = "";
+
+	if(typeof(_options) == "object") {
+		var _argument;
+		for(_argument in _options) {
+
+			switch(_argument) {
+				case "include"      : include       = _options[_argument]; break;
+				case "exclude"      : exclude       = _options[_argument]; break;
+			}
+		}
 	}
+
+	// get include and exclude nodes if needed
+	var exclude_nodes = exclude ? u.qsa(exclude) : [];
+	var include_nodes = include ? u.qsa(include) : [];
+
+
+	// get previousSibling using standard JS
+	node = node.parentNode;
+
+	// compare and keep iterating if not valid match
+	// ignore comment and text nodes
+	while(node && (node.nodeType == 3 || node.nodeType == 8 || (exclude && (u.inNodeList(node, exclude_nodes))) || (include && (!u.inNodeList(node, include_nodes))))) {
+		node = node.parentNode;
+	}
+
 	return node;
 }
 
-// Returns next sibling, not counting text nodes as siblings and ignoring optional exclude=className/nodeName
-// TODO: extend with include option and make exclude and include list
-Util.nextSibling = u.ns = function(node, exclude) {
+
+// Returns previous sibling, not counting text+comment nodes as siblings 
+// excludes nodes matched by exclude=css selector
+// includes nodes matched by include=css selector
+Util.previousSibling = u.ps = function(node, _options) {
+//	u.bug("ps:" + u.nodeId(node));
+
+	var exclude = "";
+	var include = "";
+
+	// TODO: Consider option to start over from end, if no prev is found
+	// var loop = false;
+
+	if(typeof(_options) == "object") {
+		var _argument;
+		for(_argument in _options) {
+
+			switch(_argument) {
+				case "include"      : include       = _options[_argument]; break;
+				case "exclude"      : exclude       = _options[_argument]; break;
+
+//				case "loop"            : loop             = _options[_argument]; break;
+			}
+		}
+	}
+
+	// get include and exclude nodes if needed
+	var exclude_nodes = exclude ? u.qsa(exclude, node.parentNode) : [];
+	var include_nodes = include ? u.qsa(include, node.parentNode) : [];
+	
+	// get previousSibling using standard JS
+	node = node.previousSibling;
+
+	// compare and keep iterating if not valid match
+	// ignore comment and text nodes
+	while(node && (node.nodeType == 3 || node.nodeType == 8 || (exclude && (u.inNodeList(node, exclude_nodes))) || (include && (!u.inNodeList(node, include_nodes))))) {
+		node = node.previousSibling;
+	}
+
+	return node;
+}
+
+
+// Returns next sibling, not counting text+comment nodes as siblings 
+// excludes nodes matched by exclude=css selector
+// includes nodes matched by include=css selector
+Util.nextSibling = u.ns = function(node, _options) {
+//	u.bug("ns:" + u.nodeId(node));
+
+	var exclude = "";
+	var include = "";
+
+	// TODO: Consider option to start over, if no next is found
+	// var loop = false;
+
+	if(typeof(_options) == "object") {
+		var _argument;
+		for(_argument in _options) {
+
+			switch(_argument) {
+				case "include"      : include       = _options[_argument]; break;
+				case "exclude"      : exclude       = _options[_argument]; break;
+
+//				case "loop"            : loop             = _options[_argument]; break;
+			}
+		}
+	}
+
+	// get include and exclude nodes if needed
+	var exclude_nodes = exclude ? u.qsa(exclude, node.parentNode) : [];
+	var include_nodes = include ? u.qsa(include, node.parentNode) : [];
+
+	// get previousSibling using standard JS
 	node = node.nextSibling;
-	while(node && (node.nodeType == 3 || node.nodeType == 8 || exclude && (u.hc(node, exclude) || node.nodeName.toLowerCase().match(exclude)))) {
+
+	// compare and keep iterating if not valid match
+	// ignore comment and text nodes
+	while(node && (node.nodeType == 3 || node.nodeType == 8 || (exclude && (u.inNodeList(node, exclude_nodes))) || (include && (!u.inNodeList(node, include_nodes))))) {
 		node = node.nextSibling;
 	}
 	return node;
 }
 
-// TODO: extend with include option and make exclude and include list
-Util.childNodes = u.cn = function(node, exclude) {
+
+
+// Get childnodes array with 
+// excludes nodes matched by exclude=css selector
+// includes nodes matched by include=css selector
+Util.childNodes = u.cn = function(node, _options) {
+
+	var exclude = "";
+	var include = "";
+
+	if(typeof(_options) == "object") {
+		var _argument;
+		for(_argument in _options) {
+
+			switch(_argument) {
+				case "include"      : include       = _options[_argument]; break;
+				case "exclude"      : exclude       = _options[_argument]; break;
+			}
+		}
+	}
+
+	// get include and exclude nodes if needed
+	var exclude_nodes = exclude ? u.qsa(exclude, node) : [];
+	var include_nodes = include ? u.qsa(include, node) : [];
+
 	var i, child;
 	var children = new Array();
 	for(i = 0; child = node.childNodes[i]; i++) {
-		if(child && child.nodeType != 3 && child.nodeType != 8 && (!exclude || (!u.hc(child, exclude) && !child.nodeName.toLowerCase().match(exclude) ))) {
+		if(child && child.nodeType != 3 && child.nodeType != 8 && (!exclude || (!u.inNodeList(child, exclude_nodes))) && (!include || (u.inNodeList(child, include_nodes)))) {
 			children.push(child);
 		}
 	}
 	return children;
 }
+
+
+
 
 /**
 * append child to element e
@@ -126,9 +238,7 @@ Util.appendElement = u.ae = function(parent, node_type, attributes) {
 		return node;
 	}
 	catch(exception) {
-		u.bug("Exception ("+exception+") in u.ae, called from: "+arguments.callee.caller.name);
-		u.bug("node:" + u.nodeId(parent, 1));
-		u.xInObject(attributes);
+		u.exception("u.ae", arguments, exception);
 	}
 	return false;
 }
@@ -155,12 +265,11 @@ Util.insertElement = u.ie = function(parent, node_type, attributes) {
 		return node;
 	}
 	catch(exception) {
-		u.bug("Exception ("+exception+") in u.ie, called from: "+arguments.callee.caller);
-		u.bug("node:" + u.nodeId(parent, 1));
-		u.xInObject(attributes);
+		u.exception("u.ie", arguments, exception);
 	}
 	return false;
 }
+
 
 // insert element in wrap-element and return wrapper
 Util.wrapElement = u.we = function(node, node_type, attributes) {
@@ -176,9 +285,7 @@ Util.wrapElement = u.we = function(node, node_type, attributes) {
 		return wrapper_node;
 	}
 	catch(exception) {
-		u.bug("Exception ("+exception+") in u.we, called from: "+arguments.callee.caller);
-		u.bug("node:" + u.nodeId(node, 1));
-		u.xInObject(attributes);
+		u.exception("u.we", arguments, exception);
 	}
 	return false;
 }
@@ -202,24 +309,38 @@ Util.wrapContent = u.wc = function(node, node_type, attributes) {
 		return wrapper_node;
 	}
 	catch(exception) {
-		u.exception("u.wc", arguments.callee.caller, exception, {"node":node, "node_type":node_type, "attributes":attributes})
-		// u.bug("Exception ("+exception+") in u.wc, called from: "+arguments.callee.caller);
-		// u.bug("node:" + u.nodeId(node, 1));
-		// u.xInObject(attributes);
+		u.exception("u.wc", arguments, exception);
 	}
 	return false;
 }
 
-// get node textcontent shorthand (basically this is not needed for newer browsers, but required to align syntax for older browsers)
+// get node textcontent shorthand 
+// basically this is not needed for newer browsers, but required to align syntax for older browsers
 Util.textContent = u.text = function(node) {
 	return node.textContent;
 }
 
 
 // make element clickable with options
-Util.clickableElement = u.ce = function(node, options) {
+Util.clickableElement = u.ce = function(node, _options) {
+
+	node._use_link = "a";
+	node._click_type = "manual";
+
+	if(typeof(_options) == "object") {
+		var _argument;
+		for(_argument in _options) {
+
+			switch(_argument) {
+				case "use"			: node._use_link		= _options[_argument]; break;
+				case "type"			: node._click_type		= _options[_argument]; break;
+			}
+
+		}
+	}
+
 	// look for link
-	var a = (node.nodeName.toLowerCase() == "a" ? node : u.qs("a", node));
+	var a = (node.nodeName.toLowerCase() == "a" ? node : u.qs(node._use_link, node));
 	if(a) {
 		u.ac(node, "link");
 		// only set url, if a has href attribute
@@ -232,39 +353,27 @@ Util.clickableElement = u.ce = function(node, options) {
 		u.ac(node, "clickable");
 	}
 
-
 	if(typeof(u.e.click) == "function") {
 		u.e.click(node);
 
-		if(typeof(options) == "object") {
-			var argument;
-			for(argument in options) {
-
-				switch(argument) {
-					case "type"			: node._click_type		= options[argument]; break;
-					case "method"		: node._click_method	= options[argument]; break;
+		if(node._click_type == "link") {
+			node.clicked = function(event) {
+				if(event && (event.metaKey || event.ctrlKey)) {
+					window.open(this.url);
 				}
-
-			}
-
-			if(node._click_type == "link") {
-				node.clicked = function(event) {
-					if(event && (event.metaKey || event.ctrlKey)) {
-						window.open(this.url);
+				else {
+					// HASH navigation
+					if(typeof(page.navigate) == "function") {
+						page.navigate(this.url);
 					}
 					else {
-						// HASH navigation
-						if(typeof(page.navigate) == "function") {
-							page.navigate(this.url);
-						}
-						else {
-							location.href = this.url;
-						}
+						location.href = this.url;
 					}
 				}
 			}
 		}
 	}
+
 	return node;
 }
 
@@ -278,7 +387,7 @@ Util.classVar = u.cv = function(node, var_name) {
 		}
 	}
 	catch(exception) {
-		u.bug("Exception ("+exception+") in u.cv, called from: "+arguments.callee.caller);
+		u.exception("u.cv", arguments, exception);
 	}
 	return false;
 }
@@ -294,7 +403,7 @@ Util.setClass = u.sc = function(node, classname) {
 		return old_class;
 	}
 	catch(exception) {
-		u.bug("Exception ("+exception+") in u.setClass, called from: "+arguments.callee.caller);
+		u.exception("u.sc", arguments, exception);
 	}
 	// return false on error
 	return false;
@@ -310,7 +419,7 @@ Util.hasClass = u.hc = function(node, classname) {
 		}
 	}
 	catch(exception) {
-		u.bug("Exception ("+exception+") in u.hasClass("+u.nodeId(node)+", "+classname+"), called from: "+arguments.callee.caller);
+		u.exception("u.hc", arguments, exception);
 	}
 	// return false on error
 	return false;
@@ -332,7 +441,7 @@ Util.addClass = u.ac = function(node, classname, dom_update) {
 		}
 	}
 	catch(exception) {
-		u.bug("Exception ("+exception+") in u.addClass, called from: "+arguments.callee.caller);
+		u.exception("u.ac", arguments, exception);
 	}
 	return false;
 }
@@ -342,13 +451,14 @@ Util.removeClass = u.rc = function(node, classname, dom_update) {
 		if(classname) {
 			var regexp = new RegExp("(\\b)" + classname + "(\\s|$)", "g");
 			node.className = node.className.replace(regexp, " ").trim().replace(/[\s]{2}/g, " ");
+
 			// force dom update (performance killer, but will make rendering more detailed)
 			dom_update === false ? false : node.offsetTop;
 			return node.className;
 		}
 	}
 	catch(exception) {
-		u.bug("Exception ("+exception+") in u.removeClass, called from: "+arguments.callee.caller);
+		u.exception("u.rc", arguments, exception);
 	}
 	return false;
 }
@@ -376,7 +486,7 @@ Util.toggleClass = u.tc = function(node, classname, _classname, dom_update) {
 		return node.className;
 	}
 	catch(exception) {
-		u.bug("Exception ("+exception+") in u.toggleClass, called from: "+arguments.callee.caller);
+		u.exception("u.tc", arguments, exception);
 	}
 	return false;
 }
@@ -406,9 +516,12 @@ Util.applyStyles = u.ass = function(node, styles, dom_update) {
 
 
 // Get elements computed style value for css property
+// compensated for JS value syntax
 Util.getComputedStyle = u.gcs = function(node, property) {
 	// query DOM to force update
 	node.offsetHeight;
+	property = property.replace(/([A-Z]{1})/g, function(word){return word.replace(/([A-Z]{1})/, "-$1").toLowerCase()});
+
 	// return computed style if method is supported
 	if(document.defaultView && document.defaultView.getComputedStyle) {
 		return document.defaultView.getComputedStyle(node, null).getPropertyValue(property);
@@ -430,14 +543,28 @@ Util.hasFixedParent = u.hfp = function(node) {
 
 
 
+
 // FOR CONSIDERATION
+
+
+// select text in node
+// TODO: Extend with Fallback support
+Util.selectText = function(node) {
+
+	var selection = window.getSelection();
+	var range = document.createRange();
+	range.selectNodeContents(node);
+	selection.removeAllRanges();
+	selection.addRange(range);
+
+}
 
 // is node in NodeList
 Util.inNodeList = function(node, list) {
 
 	var i, list_node;
 	for(i = 0; list_node = list[i]; i++) {
-		if(list_node = node) {
+		if(list_node === node) {
 			return true;
 		}
 	}
@@ -446,6 +573,7 @@ Util.inNodeList = function(node, list) {
 }
 
 // is node within scope
+// TODO: compare speed with other methods
 Util.nodeWithin = u.nw = function(node, scope) {
 	var node_key = u.randomString(8);
 	var scope_key = u.randomString(8);
