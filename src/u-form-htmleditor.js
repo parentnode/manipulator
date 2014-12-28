@@ -301,7 +301,7 @@ u.f.textEditor = function(field) {
 			this.bn_add_ext_video.field = field;
 			u.ce(this.bn_add_ext_video);
 			this.bn_add_ext_video.clicked = function(event) {
-				this.field.addExternalVideoTag();
+				this.field.addExternalVideoTag(this.field.ext_video_allowed[0]);
 				u.rc(this.field.options, "show");
 			}
 		}
@@ -374,7 +374,7 @@ u.f.textEditor = function(field) {
 			}
 
 			// is tag external video
-			else if(u.hc(tag, this.ext_video_allowed.join("|"))) {
+			else if(u.hc(tag, this.ext_video_allowed.join("|")) && tag._video_id) {
 
 				// add div with video id
 				div = u.ae(this._viewer, "div", {"class":tag._type.val()+" video_id:"+tag._video_id});
@@ -448,7 +448,7 @@ u.f.textEditor = function(field) {
 			}
 
 			// external video node
-			else if(u.hc(tag, this.ext_video_allowed.join("|"))) {
+			else if(u.hc(tag, this.ext_video_allowed.join("|")) && tag._video_id) {
 
 				html += '<div class="'+tag._type.val()+' video_id:'+tag._video_id+'"></div>\n';
 			}
@@ -530,6 +530,9 @@ u.f.textEditor = function(field) {
 			if(u.hc(tag, "file")) {
 				this.deleteFile(tag);
 			}
+			else if(u.hc(tag, "media")) {
+				this.deleteMedia(tag);
+			}
 
 			// remove node
 			tag.parentNode.removeChild(tag);
@@ -572,8 +575,11 @@ u.f.textEditor = function(field) {
 
 				// try to find option with matching value
 				for(i = 0; option = this.childNodes[i]; i++) {
-
+//					u.bug("aoption:" + option)
 					if(u.text(option) == value) {
+
+//						u.bug("new option:" + option + ", " + u.text(option))
+//						u.bug("this.selected_option:" + this.selected_option)
 
 						// already have selected options
 						if(this.selected_option) {
@@ -584,10 +590,12 @@ u.f.textEditor = function(field) {
 						}
 
 						// set selected state on new option
+//						u.bug("option:" + option)
 						u.ac(option, "selected");
 						this.selected_option = option;
 
 						// update div tag class
+//						u.bug("this.tag:" + this.tag)
 						u.ac(this.tag, value);
 
 						return option;
@@ -689,8 +697,70 @@ u.f.textEditor = function(field) {
 
 
 
-	// TODO
-	field.addExternalVideoTag = function() {}
+
+	// EXTERNAL VIDEO TAG
+
+	// Add tag
+	field.addExternalVideoTag = function(type, node) {
+//		u.bug("addExternalVideoTag:" + node + ", type:" + type)
+		// create new tag
+		var tag = this.createTag(this.ext_video_allowed, type);
+
+
+		tag._input = u.ae(tag, "div", {"class":"text", "contentEditable":true});
+		tag._input.tag = tag;
+		tag._input.field = this;
+
+
+		// if we have video info
+		if(node) {
+
+			// get file info from node
+			tag._video_id = u.cv(node, "video_id");
+			tag._input.innerHTML = tag._video_id;
+
+		}
+
+		tag._input.val = function(value) {
+			if(value !== undefined) {
+				this.innerHTML = value;
+			}
+			return this.innerHTML;
+		}
+
+		// monitor changes and selections
+		// kills ENTER event
+		u.e.addEvent(tag._input, "keydown", tag.field._changing_content);
+
+		// content has been modified or selected (can happen with mouse or keys)
+		u.e.addEvent(tag._input, "keyup", this._changed_ext_video_content);
+		u.e.addEvent(tag._input, "mouseup", this._changed_ext_video_content);
+
+		// add focus and blur handlers
+		u.e.addEvent(tag._input, "focus", tag.field._focused_content);
+		u.e.addEvent(tag._input, "blur", tag.field._blurred_content);
+
+		// enable dragging of html-tags
+		u.sortable(this._editor, {"draggables":"tag", "targets":"editor"});
+
+		return tag;
+		
+	}
+
+	// attached to tag._input node for media-tags
+	field._changed_ext_video_content = function(event) {
+		
+		// browser injects <br> tag on delete - we remove it again
+		if(this.val() && !this.val().replace(/<br>/, "")) {
+			this.val("");
+		}
+
+		this.tag._video_id = this.val();
+
+		this.tag.field.update();
+
+	}
+
 
 
 
@@ -1816,7 +1886,7 @@ u.f.textEditor = function(field) {
 		}
 
 		// code node
-		else if(u.hc(tag, this.code_allowed.join("|"))) {
+		else if(u.hc(tag, "code")) {
 			tag._input.focus();
 		}
 
@@ -2108,6 +2178,9 @@ u.f.textEditor = function(field) {
 			// lost fragment of unspecified text
 			// wrap in p tag if content is more than whitespace or newline
 			if(node.nodeName == "#text") {
+
+//				u.bug("found fragment node")
+
 				if(node.nodeValue.trim()) {
 
 					// locate double linebreaks and split into several paragraphs 
@@ -2132,6 +2205,9 @@ u.f.textEditor = function(field) {
 			// valid text node (h1-h6, p)
 			else if(node.nodeName.toLowerCase().match(field.text_allowed.join("|"))) {
 
+
+//				u.bug("found text node")
+
 				// handle plain text node
 				value = node.innerHTML.replace(/\n\r|\n|\r/g, "<br>"); // .replace(/\<br[\/]?\>/g, "\n");
 
@@ -2141,7 +2217,9 @@ u.f.textEditor = function(field) {
 
 			}
 			// valid text node (code)
-			else if(node.nodeName.toLowerCase().match(field.code_allowed.join("|"))) {
+			else if(node.nodeName.toLowerCase() == "code") {
+
+//				u.bug("found code node:" + u.nodeId(node) + ", " + field.code_allowed.join("|"))
 
 				// // add new text node to editor
 				tag = field.addCodeTag(node.nodeName.toLowerCase(), node.innerHTML);
@@ -2152,6 +2230,7 @@ u.f.textEditor = function(field) {
 			// valid list node (ul, ol)
 			else if(node.nodeName.toLowerCase().match(field.list_allowed.join("|"))) {
 
+//				u.bug("found list node")
 
 				// handle list node
 				var lis = u.qsa("li", node);
@@ -2178,22 +2257,38 @@ u.f.textEditor = function(field) {
 
 
 			// divs containing file info (media, vimeo, youtube, file)
+
+			// External video - youtube and vimeo
+			else if(u.hc(node, "youtube|vimeo")) {
+
+//				u.bug("found external video node")
+
+				field.addExternalVideoTag(node.className.match(field.ext_video_allowed.join("|")), node);
+			}
+
 			// FILE
 			else if(u.hc(node, "file")) {
+
+//				u.bug("found file node")
+
 				field.addFileTag(node);
 			}
 			// media
 			else if(u.hc(node, "media")) {
+
+//				u.bug("found media node")
+
 				field.addMediaTag(node);
 			}
 
 
-			// TODO: implement external video
 
 			// Catch unsupported nodes and translate to available node
 
 			// dl, ul or ol (could be unsupported in given implementation)
 			else if(node.nodeName.toLowerCase().match(/dl|ul|ol/)) {
+
+//				u.bug("found denied list node")
 
 				var children = u.cn(node);
 				for(j = 0; child = children[j]; j++) {
@@ -2205,6 +2300,8 @@ u.f.textEditor = function(field) {
 
 			// regular nodes (could be unsupported in given implementation)
 			else if(node.nodeName.toLowerCase().match(/h1|h2|h3|h4|h5|code/)) {
+
+//				u.bug("found denied text node")
 
 				value = node.innerHTML.replace(/\n\r|\n|\r/g, "");
 				tag = field.addTextTag(field.text_allowed[0], value);
