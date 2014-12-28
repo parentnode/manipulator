@@ -317,7 +317,12 @@ Util.wrapContent = u.wc = function(node, node_type, attributes) {
 // get node textcontent shorthand 
 // basically this is not needed for newer browsers, but required to align syntax for older browsers
 Util.textContent = u.text = function(node) {
-	return node.textContent;
+	try {
+		return node.textContent;
+	}
+	catch(exception) {
+		u.exception("u.text", arguments, exception);
+	}
 }
 
 
