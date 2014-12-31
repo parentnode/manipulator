@@ -4,7 +4,7 @@
 // pass settings in options JSON object
 
 
-u.textscaler = function(node, settings) {
+u.textscaler = function(node, _settings) {
 //	u.bug("set text scaling")
 
 //	u.bug_console_only = true;
@@ -12,8 +12,8 @@ u.textscaler = function(node, settings) {
 
 
 	// additional info passed to function as JSON object
-	if(typeof(settings) != "object") {
-		settings = {
+	if(typeof(_settings) != "object") {
+		_settings = {
 			"*":{
 				"unit":"rem",
 				"min_size":1,
@@ -28,9 +28,10 @@ u.textscaler = function(node, settings) {
 	node.text_key = u.randomString(8);
 	u.ac(node, node.text_key);
 
-	// map setting on node
-	node.text_settings = JSON.parse(JSON.stringify(settings));
-//	node.text_settings = settings;
+	// map setting on node 
+	// but make sure to get copy of settings - not just reference passed object
+	node.text_settings = JSON.parse(JSON.stringify(_settings));
+
 
 	node.scaleText = function() {
 		var tag;
