@@ -1,15 +1,15 @@
-u.scrollTo = function(_options) {
+u.scrollTo = function(node, _options) {
 
-	var callback_scroll_to = "scrolledTo";
+	node.callback_scroll_to = "scrolledTo";
+	node.callback_scroll_cancelled = "scrolledToCancelled";
+
 	var offset_y = 0;
 	var offset_x = 0;
 
 	var scroll_to_x = 0;
 	var scroll_to_y = 0;
-	var node = 0;
+	var to_node = false;
 
-	// TODO: expand to work inside nodes as well
-	var scrollIn = window;
 
 
 	// additional info passed to function as JSON object
@@ -18,15 +18,16 @@ u.scrollTo = function(_options) {
 		for(_argument in _options) {
 			switch(_argument) {
 
-				case "callback"       : callback_scroll_to    = _options[_argument]; break;
-				case "offset_y"       : offset_y              = _options[_argument]; break;
-				case "offset_x"       : offset_x              = _options[_argument]; break;
+				case "callback"             : node.callback_scroll_to           = _options[_argument]; break;
+				case "callback_cancelled"   : node.callback_scroll_cancelled    = _options[_argument]; break;
+				case "offset_y"             : offset_y                           = _options[_argument]; break;
+				case "offset_x"             : offset_x                           = _options[_argument]; break;
 
-				case "node"           : node                  = _options[_argument]; break;
-				case "x"              : scroll_to_x           = _options[_argument]; break;
-				case "y"              : scroll_to_y           = _options[_argument]; break;
+				case "node"              : to_node                               = _options[_argument]; break;
+				case "x"                    : scroll_to_x                        = _options[_argument]; break;
+				case "y"                    : scroll_to_y                        = _options[_argument]; break;
 
-				case "scrollIn"       : scrollIn              = _options[_argument]; break;
+				case "scrollIn"             : scrollIn                           = _options[_argument]; break;
 
 			}
 		}
@@ -34,54 +35,54 @@ u.scrollTo = function(_options) {
 
 
 	// getting internal scroll to coord
-	if(node) {
-		scrollIn._to_x = u.absX(node);
-		scrollIn._to_y = u.absY(node);
+	if(to_node) {
+		node._to_x = u.absX(to_node);
+		node._to_y = u.absY(to_node);
 	}
 	else {
-		scrollIn._to_x = scroll_to_x;
-		scrollIn._to_y = scroll_to_y;
+		node._to_x = scroll_to_x;
+		node._to_y = scroll_to_y;
 	}
 
 
 	// compensate for offset
-	scrollIn._to_x = offset_x ? scrollIn._to_x - offset_x : scrollIn._to_x;
-	scrollIn._to_y = offset_y ? scrollIn._to_y - offset_y : scrollIn._to_y;
+	node._to_x = offset_x ? node._to_x - offset_x : node._to_x;
+	node._to_y = offset_y ? node._to_y - offset_y : node._to_y;
 
 
-	// u.bug("scrollIn._to_x:" + scrollIn._to_x)
-	// u.bug("scrollIn._to_y:" + scrollIn._to_y)
+	// u.bug("node._to_x:" + node._to_x)
+	// u.bug("node._to_y:" + node._to_y)
 
 
-	if(scrollIn._to_y > (scrollIn == window ? document.body.scrollHeight : scrollIn.scrollHeight)-u.browserH()) {
-		scrollIn._to_y = (scrollIn == window ? document.body.scrollHeight : scrollIn.scrollHeight)-u.browserH();
+	if(node._to_y > (node == window ? document.body.scrollHeight : node.scrollHeight)-u.browserH()) {
+		node._to_y = (node == window ? document.body.scrollHeight : node.scrollHeight)-u.browserH();
 	}
-	if(scrollIn._to_x > (scrollIn == window ? document.body.scrollWidth : scrollIn.scrollWidth)-u.browserW()) {
-		scrollIn._to_x = (scrollIn == window ? document.body.scrollWidth : scrollIn.scrollWidth)-u.browserW();
+	if(node._to_x > (node == window ? document.body.scrollWidth : node.scrollWidth)-u.browserW()) {
+		node._to_x = (node == window ? document.body.scrollWidth : node.scrollWidth)-u.browserW();
 	}
 
 
 	// correct for negative values - cannot do native scroll to negative value
-	scrollIn._to_x = scrollIn._to_x < 0 ? 0 : scrollIn._to_x;
-	scrollIn._to_y = scrollIn._to_y < 0 ? 0 : scrollIn._to_y;
+	node._to_x = node._to_x < 0 ? 0 : node._to_x;
+	node._to_y = node._to_y < 0 ? 0 : node._to_y;
 
 
 	// calculate scroll direction
-	scrollIn._x_scroll_direction = scrollIn._to_x - u.scrollX();
-	scrollIn._y_scroll_direction = scrollIn._to_y - u.scrollY();
+	node._x_scroll_direction = node._to_x - u.scrollX();
+	node._y_scroll_direction = node._to_y - u.scrollY();
 
 
 	// _scroll_to_y and _scroll_to_x is the values to scroll to in next event
-	// scrollIn._scroll_to_x = false;
-	// scrollIn._scroll_to_y = false;
+	// node._scroll_to_x = false;
+	// node._scroll_to_y = false;
 
-	scrollIn._scroll_to_x = u.scrollX();
-	scrollIn._scroll_to_y = u.scrollY();
+	node._scroll_to_x = u.scrollX();
+	node._scroll_to_y = u.scrollY();
 
 
 
 	// scroll event loopback
-	scrollIn.scrollToHandler = function(event) {
+	node.scrollToHandler = function(event) {
 //		u.bug("scrollToHandler:" + u.nodeId(this))
 
 		u.t.resetTimer(this.t_scroll);
@@ -89,10 +90,10 @@ u.scrollTo = function(_options) {
 	}
 
 	// add scroll event
-	u.e.addEvent(scrollIn, "scroll", scrollIn.scrollToHandler);
+	u.e.addEvent(node, "scroll", node.scrollToHandler);
 
 	// cancel scrolling (if user interaction interrupts animation)
-	scrollIn.cancelScrollTo = function() {
+	node.cancelScrollTo = function() {
 
 		u.t.resetTimer(this.t_scroll);
 		u.e.removeEvent(this, "scroll", this.scrollToHandler);
@@ -102,7 +103,7 @@ u.scrollTo = function(_options) {
 	}
 
 	// calculating scroll
-	scrollIn._scrollTo = function(start) {
+	node._scrollTo = function(start) {
 
 		// save current scroll postion for faster calculation
 		var s_x = u.scrollX();
@@ -179,14 +180,14 @@ u.scrollTo = function(_options) {
 			this.cancelScrollTo();
 
 			// callback
-			if(typeof(this.scrolledToCancelled) == "function") {
-				this.scrolledToCancelled();
+			if(typeof(this[this.callback_scroll_cancelled]) == "function") {
+				this[this.callback_scroll_cancelled]();
 			}
 		}	
 	}
 
 
 	// start scrolling
-	scrollIn._scrollTo();
+	node._scrollTo();
 
 }
