@@ -31,9 +31,16 @@ Util.Timer = u.t = new function() {
 //		u.bug("executeTimer:" + typeof(this._timers[id]._a) + ", " + this._timers[id]._n)
 
 		var node = this._timers[id]._n;
-		node._timer_action = this._timers[id]._a;
-		node._timer_action();
-		node._timer_action = null;
+		
+		if(typeof(this._timers[id]._a) == "function") {
+			node._timer_action = this._timers[id]._a;
+			node._timer_action();
+			node._timer_action = null;
+		}
+		else if(typeof(node[this._timers[id]._a]) == "function") {
+			node[this._timers[id]._a]();
+		}
+		
 
 		this._timers[id] = false;
 	}
@@ -60,9 +67,15 @@ Util.Timer = u.t = new function() {
 	this._executeInterval = function(id) {
 
 		var node = this._timers[id]._n;
-		node._interval_action = this._timers[id]._a;
-		node._interval_action();
-		node._timer_action = null;
+		if(typeof(this._timers[id]._a) == "function") {
+			node._interval_action = this._timers[id]._a;
+			node._interval_action();
+			node._interval_action = null;
+		}
+		else if(typeof(node[this._timers[id]._a]) == "function") {
+			node[this._timers[id]._a]();
+		}
+
 	}
 
 	// is timer/interval valid (still active)
