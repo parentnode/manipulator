@@ -8,10 +8,10 @@ Util.Animation = u.a = new function() {
 			var node = document.createElement("div");
 			try {
 				var test = "translate3d(10px, 10px, 10px)";
-				node.style[this.variant() + "Transform"] = test;
+				node.style[this.vendor("Transform")] = test;
 
-//				u.bug("3d test:" + test + "::" + node.style[this.variant() + "Transform"]);
-				if(node.style[this.variant() + "Transform"] == test) {
+//				u.bug("3d test:" + test + "::" + node.style[this.vendor("Transform")]);
+				if(node.style[this.vendor("Transform")] == test) {
 					this._support3d = true;
 				}
 				else {
@@ -27,38 +27,71 @@ Util.Animation = u.a = new function() {
 		return this._support3d;
 	}
 
+//	alert("rest")
 
-	// get variant, to avoid setting more than the required type
-	// TODO : extend variant with specific names - to compensate for transitionend messup
+	// get vendor, to avoid setting more than the required type
+	// exceptions to be aware of
+	this._vendor_exceptions = {
+		"mozTransform":"MozTransform","mozTransition":"MozTransition","mozTransitionEnd":"transitionend"
+	};
+	// method cache - when a vendor method has been requested once, 
+	// it will be stored, to avoid wasting time every time
+	this._vendor_methods = {};
 
-	this.variant = function() {
-//		u.bug("variant: "+ this.implementation)
+	// find correct method
+	// checks for exceptions and stores method in cache (_vendor_methods)
+ 	this.vendorMethod = function(method) {
+		var vender_method = this._vendor+method;
+		method = this._vendor ? method.replace(/^([a-z]{1})/, function(word){return word.toUpperCase()}) : method;
+
+		if(this._vendor_exceptions[this._vendor+method]) {
+			this._vendor_methods[vender_method] = this._vendor_exceptions[this._vendor+method];
+			return;
+		}
+ 		this._vendor_methods[vender_method] = this._vendor+method;
+ 		return;
+	}
+
+	// get vendor and optional method name
+	// returns name from cache (_vendor_methods)
+	// or checks method using vendorMethod
+	this.vendor = function(method) {
+//		u.bug("vendor: "+ this._vendor + ":" + method);
 
 		// only run detection once
-		if(this._variant === undefined) {
+		if(this._vendor === undefined) {
 //			u.bug("no implementation")
 			if(document.body.style.webkitTransform != undefined) {
-//				u.bug("variant: webkit")
-				this._variant = "webkit";
+//				u.bug("vendor: webkit")
+				this._vendor = "webkit";
 			}
 			else if(document.body.style.MozTransform != undefined) {
-//				u.bug("variant: moz")
-				this._variant = "Moz";
+//				u.bug("vendor: moz")
+				this._vendor = "moz";
 			}
 			else if(document.body.style.oTransform != undefined) {
-//				u.bug("variant: o")
-				this._variant = "o";
+//				u.bug("vendor: o")
+				this._vendor = "o";
 			}
 			else if(document.body.style.msTransform != undefined) {
-//				u.bug("variant: ms")
-				this._variant = "ms";
+//				u.bug("vendor: ms")
+				this._vendor = "ms";
 			}
 			else {
-//				u.bug("variant: unknown")
-				this._variant = "";
+//				u.bug("vendor: unknown")
+				this._vendor = "";
 			}
 		}
-		return this._variant;
+
+		if(!method) {
+			return this._vendor;
+		}
+
+		if(this._vendor_methods[this._vendor+method] === undefined) {
+			this.vendorMethod(method);
+		}
+
+		return this._vendor_methods[this._vendor+method];
 	}
 
 
@@ -67,7 +100,7 @@ Util.Animation = u.a = new function() {
 	* Apply CSS transition to node
 	*/
 	this.transition = function(node, transition) {
-		try {		
+		try {
 
 			// get duration
 			var duration = transition.match(/[0-9.]+[ms]+/g);
@@ -79,30 +112,16 @@ Util.Animation = u.a = new function() {
 				node.duration = false;
 
 				if(transition.match(/none/i)) {
-					// if(u.hc(node, "subjects")) {
-					// 	u.bug("EXPERIMENTAL subjects reset transition end:" + transition + ", " + u.nodeId(node), 2, "red")
-					// }
-					// TODO: experimental - auto reset of transitioned callback
 					node.transitioned = null;
 				}
 			}
 
-			node.style[this.variant() + "Transition"] = transition;
-
-			// automatically enable transitionend callback
-			// Moz implementation is off track :)
-			if(this.variant() == "Moz") {
-				u.e.addEvent(node, "transitionend", this._transitioned);
-			}
-			// standard 
-			else {
-				u.e.addEvent(node, this.variant() + "TransitionEnd", this._transitioned);
-			}
-
+			node.style[this.vendor("Transition")] = transition;
+			u.e.addEvent(node, this.vendor("transitionEnd"), this._transitioned);
 
 		}
 		catch(exception) {
-			u.bug("Exception ("+exception+") in u.a.transition(" + node + "), called from: "+arguments.callee.caller);
+			u.exception("u.a.transition", arguments, exception);
 		}
 		
 	}
@@ -114,15 +133,15 @@ Util.Animation = u.a = new function() {
 		}
 
 		// automatically remove transition
-		// EXPERIMENTAL
-		u.bug("remve transition")
 		u.a.transition(this, "none");
 	}
 
 
+
+
 	// EXPERIMENTAL: remove transform, because Firefox 23 makes render-error, when returning to 0 in translates
 	this.removeTransform = function(node) {
-		node.style[this.variant() + "Transform"] = "none";
+		node.style[this.vendor("Transform")] = "none";
 	}
 
 
@@ -132,18 +151,15 @@ Util.Animation = u.a = new function() {
 	this.translate = function(node, x, y) {
 		// use translate3d when supported as it is more often hardware accelerated
 		if(this.support3d()) {
-			node.style[this.variant() + "Transform"] = "translate3d("+x+"px, "+y+"px, 0)";
+			node.style[this.vendor("Transform")] = "translate3d("+x+"px, "+y+"px, 0)";
 		}
 		else {
-			node.style[this.variant() + "Transform"] = "translate("+x+"px, "+y+"px)";
+			node.style[this.vendor("Transform")] = "translate("+x+"px, "+y+"px)";
 		}
 
 		// new value holder
 		node._x = x;
 		node._y = y;
-
-		// DEPRECATED
-		// node.transition_timestamp = new Date().getTime();
 
 		// update dom
 		node.offsetHeight;
@@ -151,22 +167,16 @@ Util.Animation = u.a = new function() {
 
 
 	this.rotate = function(node, deg) {
-		node.style[this.variant() + "Transform"] = "rotate("+deg+"deg)";
+		node.style[this.vendor("Transform")] = "rotate("+deg+"deg)";
 		node._rotation = deg;
-
-		// DEPRECATED
-		// node.transition_timestamp = new Date().getTime();
 
 		// update dom
 		node.offsetHeight;
 	}
 
 	this.scale = function(node, scale) {
-		node.style[this.variant() + "Transform"] = "scale("+scale+")";
+		node.style[this.vendor("Transform")] = "scale("+scale+")";
 		node._scale = scale;
-
-		// DEPRECATED
-		// node.transition_timestamp = new Date().getTime();
 
 		// update dom
 		node.offsetHeight;
@@ -177,9 +187,6 @@ Util.Animation = u.a = new function() {
 		node.style.opacity = opacity;
 		node._opacity = opacity;
 
-		// DEPRECATED
-		// node.transition_timestamp = new Date().getTime();
-
 		// update dom
 		node.offsetHeight;
 	}
@@ -189,9 +196,6 @@ Util.Animation = u.a = new function() {
 		node.style.width = width;
 		node._width = width;
 
-		// DEPRECATED
-		// node.transition_timestamp = new Date().getTime();
-
 		// update dom
 		node.offsetHeight;
 	}
@@ -200,9 +204,6 @@ Util.Animation = u.a = new function() {
 		height = height.toString().match(/\%|auto|px/) ? height : (height + "px");
 		node.style.height = height;
 		node._height = height;
-
-		// DEPRECATED
-		// node.transition_timestamp = new Date().getTime();
 
 		// update dom
 		node.offsetHeight;
@@ -216,9 +217,6 @@ Util.Animation = u.a = new function() {
 		node._bg_x = x;
 		node._bg_y = y;
 
-		// DEPRECATED
-		//node.transition_timestamp = new Date().getTime();
-
 		// update dom
 		node.offsetHeight;
 	}
@@ -228,18 +226,17 @@ Util.Animation = u.a = new function() {
 		node.style.backgroundColor = color;
 		node._bg_color = color;
 
-		// DEPRECATED
-		// node.transition_timestamp = new Date().getTime();
-
 		// update dom
 		node.offsetHeight;
 	}
+
+
 
 	// Combined Transforms. Make it possible to run several animation effects at the same time (EX: rotate + scale + translate).
 
 	// Rotate & Scale
 	this.rotateScale = function(node, deg, scale) {
-		node.style[this.variant() + "Transform"] = "rotate("+deg+"deg) scale("+scale+")";
+		node.style[this.vendor("Transform")] = "rotate("+deg+"deg) scale("+scale+")";
 		node._rotation = deg;
 		node._scale = scale;
 
@@ -251,10 +248,10 @@ Util.Animation = u.a = new function() {
 	this.scaleRotateTranslate = function(node, scale, deg, x, y) {
 
 		if(this.support3d()) {
-			node.style[this.variant() + "Transform"] = "scale("+scale+") rotate("+deg+"deg) translate3d("+x+"px, "+y+"px, 0)";
+			node.style[this.vendor("Transform")] = "scale("+scale+") rotate("+deg+"deg) translate3d("+x+"px, "+y+"px, 0)";
 		}
 		else {
-			node.style[this.variant() + "Transform"] = "scale("+scale+") rotate("+deg+"deg) translate("+x+"px, "+y+"px)";
+			node.style[this.vendor("Transform")] = "scale("+scale+") rotate("+deg+"deg) translate("+x+"px, "+y+"px)";
 		}
 
 		// store value
@@ -265,6 +262,113 @@ Util.Animation = u.a = new function() {
 
 		// update dom
 		node.offsetHeight;
+	}
+
+
+
+	// ANIMATION FRAME
+
+	this._animationqueue = {};
+	this.requestAnimationFrame = function(node, callback, duration) {
+//		u.bug("requestAnimationFrame:" + callback + ", " + duration + ", " + u.nodeId(node) + ", " + u.a._requestAnimationId)
+
+		// add animation to stack
+		var start = new Date().getTime();
+		var id = u.randomString();
+
+		// create object with all information
+		u.a._animationqueue[id] = {};
+		u.a._animationqueue[id].id = id;
+		u.a._animationqueue[id].node = node;
+		u.a._animationqueue[id].callback = callback;
+		u.a._animationqueue[id].start = start;
+		u.a._animationqueue[id].duration = duration;
+
+		// add duration timer
+		u.t.setTimer(u.a, function() {u.a.finalAnimationFrame(id)}, duration);
+
+		// first addition, set up animationframe loop
+		if(!u.a._animationframe) {
+
+			// create function references 
+			window._requestAnimationFrame = eval(this.vendor("requestAnimationFrame"));
+			window._cancelAnimationFrame = eval(this.vendor("cancelAnimationFrame"));
+
+			// animationframe iterator
+			u.a._animationframe = function(timestamp) {
+
+//				u.bug("frame:" + timestamp);
+
+				var id, animation;
+				for(id in u.a._animationqueue) {
+
+					animation = u.a._animationqueue[id];
+
+					// progress callback
+					animation.node[animation.callback]((timestamp-animation.start) / animation.duration);
+				}
+
+				// continue animationFrame loop
+				if(Object.keys(u.a._animationqueue).length) {
+
+					u.a._requestAnimationId = window._requestAnimationFrame(u.a._animationframe);
+				}
+			}
+		}
+
+
+		// loop will be pause when no animations are active
+		// restart requestAnimationFrame loop if it is paused
+		if(!u.a._requestAnimationId) {
+
+//			u.bug("restart")
+			u.a._requestAnimationId = window._requestAnimationFrame(u.a._animationframe);
+//			u.bug("u.a._requestAnimationId:" + u.a._requestAnimationId)
+		}
+
+		return id;
+	}
+
+	this.finalAnimationFrame = function(id) {
+//		u.bug("finalAnimationFrame:" + ", " + id + ", " + u.a._requestAnimationId);
+
+		var animation = u.a._animationqueue[id];
+		animation.node[animation.callback](1);
+
+		if(typeof(animation.node.transitioned) == "function") {
+//			u.bug("callback:" + u.nodeId(animation.node));
+			animation.node.transitioned({});
+		}
+
+		// delete animation;
+		delete animation;
+		delete u.a._animationqueue[id];
+
+
+		// continue animationFrame loop
+		if(!Object.keys(u.a._animationqueue).length) {
+
+			this.cancelAnimationFrame(id);
+		}
+	}
+
+	this.cancelAnimationFrame = function(id) {
+//		u.bug("cancelAnimationFrame:" + ", " + id + ", " + u.a._requestAnimationId);
+
+
+		if(id && u.a._animationqueue[id]) {
+
+			// delete animation;
+			delete u.a._animationqueue[id];
+		}
+
+		if(u.a._requestAnimationId) {
+
+//				u.bug(this.vendor("cancelAnimationFrame"));
+			window._cancelAnimationFrame(u.a._requestAnimationId);
+
+			u.a._requestAnimationId = false;
+		}
 	}
 
 
