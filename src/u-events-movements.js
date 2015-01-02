@@ -144,7 +144,7 @@ Optional parameters
 
 // it is important to do as many calculation beforehand to make event handling as fast as possible
 // if you do too many calculations on each event dragging will be lagging and ... well crappy.
-u.e.drag = function(node, boundaries, settings) {
+u.e.drag = function(node, boundaries, _options) {
 
 //	u.bug("set click:"+e.nodeName)
 	node.e_drag = true;
@@ -171,24 +171,24 @@ u.e.drag = function(node, boundaries, settings) {
 
 
 	// additional info passed to function as JSON object
-	if(typeof(settings) == "object") {
-		var argument;
-		for(argument in settings) {
+	if(typeof(_options) == "object") {
+		var _argument;
+		for(_argument in _options) {
 
-			switch(argument) {
-				case "strict"			: node.drag_strict			= settings[argument]; break;
-//				case "projection"		: node.drag_projection		= settings[argument]; break;
-				case "elastica"			: node.drag_elastica		= Number(settings[argument]); break;
-				case "dropout"			: node.drag_dropout			= settings[argument]; break;
+			switch(_argument) {
+				case "strict"			: node.drag_strict			= _options[_argument]; break;
+//				case "projection"		: node.drag_projection		= _options[_argument]; break;
+				case "elastica"			: node.drag_elastica		= Number(_options[_argument]); break;
+				case "dropout"			: node.drag_dropout			= _options[_argument]; break;
 
-				case "show_bounds"		: node.show_bounds			= settings[argument]; break; // NEEDS HELP
+				case "show_bounds"		: node.show_bounds			= _options[_argument]; break; // NEEDS HELP
 
-				case "vertical_lock"	: node.vertical_lock		= settings[argument]; break;
-				case "horizontal_lock"	: node.horizontal_lock		= settings[argument]; break;
+				case "vertical_lock"	: node.vertical_lock		= _options[_argument]; break;
+				case "horizontal_lock"	: node.horizontal_lock		= _options[_argument]; break;
 
-				case "callback_picked"	: node.callback_picked		= settings[argument]; break;
-				case "callback_moved"	: node.callback_moved		= settings[argument]; break;
-				case "callback_dropped"	: node.callback_dropped		= settings[argument]; break;
+				case "callback_picked"	: node.callback_picked		= _options[_argument]; break;
+				case "callback_moved"	: node.callback_moved		= _options[_argument]; break;
+				case "callback_dropped"	: node.callback_dropped		= _options[_argument]; break;
 			}
 
 		}
@@ -753,10 +753,10 @@ Swipe
 * ? element.swipedDown
 * ? element.swipedLeft
 */
-u.e.swipe = function(node, boundaries, settings) {
+u.e.swipe = function(node, boundaries, _options) {
 	node.e_swipe = true;
 
-	u.e.drag(node, boundaries, settings);
+	u.e.drag(node, boundaries, _options);
 }
 
 
