@@ -5,14 +5,10 @@ Util.debugURL = function(url) {
 	}
 	return document.domain.match(/.local$/);
 }
+
 // identify node
 Util.nodeId = function(node, include_path) {
 	try {
-	// if(!node) {
-	// 	u.bug("Not a node:" + node + " - called from: "+arguments.callee.caller)
-	// 	return "Unindentifiable node!";
-	// }
-
 		if(!include_path) {
 			return node.id ? node.nodeName+"#"+node.id : (node.className ? node.nodeName+"."+node.className : (node.name ? node.nodeName + "["+node.name+"]" : node.nodeName));
 		}
@@ -26,10 +22,7 @@ Util.nodeId = function(node, include_path) {
 		}
 	}
 	catch(exception) {
-
 		u.exception("u.nodeId", arguments, exception);
-
-//		u.bug("Exception ("+exception+") in u.nodeId("+node+"), called from: "+arguments.callee.caller);
 	}
 	return "Unindentifiable node!";
 }
@@ -52,61 +45,8 @@ Util.exception = function(name, arguments, exception) {
 	else {
 		u.bug("arguments.callee.caller:" + arguments.callee.caller.toString().substring(0, 250));
 	}
-
-
-// // 	u.bug("arguments.callee.caller.name:" + arguments.callee.caller.name);
-// // 	u.bug("arguments.callee.name:" + arguments.callee.name);
-// // 	u.bug("arguments.callee:" + arguments.callee);
-// // 	u.bug("arguments.callee.caller:" + arguments.callee.caller);
-// //
-// // //	arguments
-// // 	u.xInObject(arguments);
-// //
-// // 	u.bug("Exception ("+exception+") in "+_in);
-//
-// 	var x;
-// 	for(x in regarding) {
-// 		if(x == "node") {
-// 			u.bug("node:" + (typeof(node.nodeName) ? u.nodeId(regarding[x], 1) : "Unindentifiable node:" + regarding[x]));
-// 		}
-// 		else {
-// 			if(typeof(regarding[x]) == "object") {
-// 				u.bug(x+":");
-// 				u.xInObject(regarding[x]);
-// 			}
-// 			else {
-// 				u.bug(x+"="+regarding[x]);
-// 			}
-// 		}
-// 	}
-// 	u.bug("Called from: "+_from);
-
 }
 
-
-// exception explorer
-Util.exception2 = function(_in, _from, exception, regarding) {
-
-	u.bug("Exception ("+exception+") in "+_in);
-
-	var x;
-	for(x in regarding) {
-		if(x == "node") {
-			u.bug("node:" + (typeof(node.nodeName) ? u.nodeId(regarding[x], 1) : "Unindentifiable node:" + regarding[x]));
-		}
-		else {
-			if(typeof(regarding[x]) == "object") {
-				u.bug(x+":");
-				u.xInObject(regarding[x]);
-			}
-			else {
-				u.bug(x+"="+regarding[x]);
-			}
-		}
-	}
-	u.bug("Called from: "+_from);
-
-}
 
 // write output to screen
 Util.bug = function(message, corner, color) {
