@@ -1,18 +1,18 @@
 // Save cookie
 // Session-cookie as default - set keep for extended validity
-Util.saveCookie = function(name, value, options) {
+Util.saveCookie = function(name, value, _options) {
 
 	expiry = false;
 	path = false;
 
 	// additional info passed to function as JSON object
-	if(typeof(options) == "object") {
-		var argument;
-		for(argument in options) {
+	if(typeof(_options) == "object") {
+		var _argument;
+		for(_argument in _options) {
 
-			switch(argument) {
-				case "expiry"	: expiry	= (typeof(options[argument]) == "string" ? options[argument] : "Mon, 04-Apr-2020 05:00:00 GMT"); break;
-				case "path"		: path		= options[argument]; break;
+			switch(_argument) {
+				case "expiry"	: expiry	= (typeof(_options[_argument]) == "string" ? _options[_argument] : "Mon, 04-Apr-2020 05:00:00 GMT"); break;
+				case "path"		: path		= _options[_argument]; break;
 			}
 
 		}
@@ -27,16 +27,16 @@ Util.getCookie = function(name) {
 	return (matches = document.cookie.match(encodeURIComponent(name) + "=([^;]+)")) ? decodeURIComponent(matches[1]) : false;
 }
 // Delete cookie
-Util.deleteCookie = function(name, options) {
+Util.deleteCookie = function(name, _options) {
 	path = false;
 
 	// additional info passed to function as JSON object
-	if(typeof(options) == "object") {
-		var argument;
-		for(argument in options) {
+	if(typeof(_options) == "object") {
+		var _argument;
+		for(_argument in _options) {
 
-			switch(argument) {
-				case "path"	: path	= options[argument]; break;
+			switch(_argument) {
+				case "path"	: path	= _options[_argument]; break;
 			}
 
 		}

@@ -21,7 +21,6 @@ Util.request = u.request = function(node, url, _options) {
 	node[request_id].request_headers = false;
 
 	node[request_id].callback_response = "response";
-
 	node[request_id].jsonp_callback = "callback";
 
 

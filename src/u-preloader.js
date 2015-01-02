@@ -1,15 +1,29 @@
 u.preloader = function(node, files, _options) {
 
-	var callback, callback_min_delay
+	u.bug("node:" + u.nodeId(node));
+
+
+	var callback_preloader_loaded = "loaded";
+	var callback_preloader_loading = "loading";
+	var callback_preloader_waiting = "waiting";
+
+
+
+	node._callback_min_delay = 0;
+
 
 	// additional info passed to function as JSON object
 	if(typeof(_options) == "object") {
-		var argument;
-		for(argument in _options) {
+		var _argument;
+		for(_argument in _options) {
 
-			switch(argument) {
-				case "callback"				: callback				= _options[argument]; break;
-				case "callback_min_delay"	: callback_min_delay	= _options[argument]; break;
+			switch(_argument) {
+				case "loaded"               : callback_preloader_loaded       = _options[_argument]; break;
+				case "loading"              : callback_preloader_loading      = _options[_argument]; break;
+				case "waiting"              : callback_preloader_waiting      = _options[_argument]; break;
+
+
+				case "callback_min_delay"   : node._callback_min_delay              = _options[_argument]; break;
 			}
 
 		}
@@ -38,7 +52,10 @@ u.preloader = function(node, files, _options) {
 
 		var entry, file;
 		var new_queue = u.ae(u._preloader_queue, "ul");
-		new_queue._callback = callback;
+		new_queue._callback_loaded = callback_preloader_loaded;
+		new_queue._callback_loading = callback_preloader_loading;
+		new_queue._callback_waiting = callback_preloader_waiting;
+
 		new_queue._node = node;
 		new_queue._files = files;
 		new_queue.nodes = new Array();
@@ -53,10 +70,12 @@ u.preloader = function(node, files, _options) {
 
 		// add waiting class on reuest node
 		u.ac(node, "waiting");
+
 		// callback to request node (in queue)
-		if(typeof(node.waiting) == "function") {
-			node.waiting();
+		if(typeof(node[new_queue._callback_waiting]) == "function") {
+			node[new_queue._callback_waiting](new_queue.nodes);
 		}
+
 	}
 
 	u._queueLoader();
@@ -82,11 +101,11 @@ u._queueLoader = function() {
 					// adjust classes on request node
 					u.rc(next._queue._node, "waiting");
 					u.ac(next._queue._node, "loading");
-					// callback - loading has begun
-					if(typeof(next._queue._node.loading) == "function") {
-						next._node._queue.loading();
-					}
 
+					// callback - loading has begun
+					if(typeof(next._queue._node[next._queue._callback_loading]) == "function") {
+						next._queue._node[next._queue._callback_loading](next._queue.nodes);
+					}
 				}
 				u._preloader_processes++;
 
@@ -120,15 +139,21 @@ u._queueLoader = function() {
 
 						// remove loading class from request node
 						u.rc(this._queue._node, "loading");
+
+
+						if(typeof(this._queue._node[this._queue._callback_loaded]) == "function") {
+							this._queue._node[this._queue._callback_loaded](this._queue.nodes);
+						}
+
 						// callback to specific callback function
-						if(typeof(this._queue._callback) == "function") {
-							this._queue._node._callback = this._queue._callback;
-							this._queue._node._callback(this._queue.nodes);
-						}
-						// or callback to default (loaded)
-						else if(typeof(this._queue._node.loaded) == "function") {
-							this._queue._node.loaded(this._queue.nodes);
-						}
+						// if(typeof(this._queue._callback) == "function") {
+						// 	this._queue._node._callback = this._queue._callback;
+						// 	this._queue._node._callback(this._queue.nodes);
+						// }
+						// // or callback to default (loaded)
+						// else if(typeof(this._queue._node.loaded) == "function") {
+						// 	this._queue._node.loaded(this._queue.nodes);
+						// }
 					}
 
 					u._queueLoader();

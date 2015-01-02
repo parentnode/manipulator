@@ -1,5 +1,5 @@
 // Create popup (default scrollbars enabled)
-Util.popup = function(url, settings) {
+Util.popup = function(url, _options) {
 
 	// default values
 	var width = "330";
@@ -9,15 +9,15 @@ Util.popup = function(url, settings) {
 
 
 	// additional info passed to function as JSON object
-	if(typeof(settings) == "object") {
-		var argument;
-		for(argument in settings) {
+	if(typeof(_options) == "object") {
+		var _argument;
+		for(_argument in _options) {
 
-			switch(argument) {
-				case "name"		: name		= settings[argument]; break;
-				case "width"	: width		= Number(settings[argument]); break;
-				case "height"	: height	= Number(settings[argument]); break;
-				case "extra"	: extra		= settings[argument]; break;
+			switch(_argument) {
+				case "name"		: name		= _options[_argument]; break;
+				case "width"	: width		= Number(_options[_argument]); break;
+				case "height"	: height	= Number(_options[_argument]); break;
+				case "extra"	: extra		= _options[_argument]; break;
 			}
 
 		}

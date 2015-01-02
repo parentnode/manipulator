@@ -61,7 +61,7 @@ Util.flashDetection = function(version) {
 }
 
 
-Util.flash = function(node, url, settings) {
+Util.flash = function(node, url, _options) {
 
 	// default values
 	var width = "100%";
@@ -76,20 +76,20 @@ Util.flash = function(node, url, settings) {
 
 
 	// additional info passed to function as JSON object
-	if(typeof(settings) == "object") {
-		var argument;
-		for(argument in settings) {
+	if(typeof(_options) == "object") {
+		var _argument;
+		for(_argument in _options) {
 
-			switch(argument) {
-				case "id"					: id				= settings[argument]; break;
-				case "width"				: width				= Number(settings[argument]); break;
-				case "height"				: height			= Number(settings[argument]); break;
-				case "background"			: background		= settings[argument]; break;
+			switch(_argument) {
+				case "id"					: id				= _options[_argument]; break;
+				case "width"				: width				= Number(_options[_argument]); break;
+				case "height"				: height			= Number(_options[_argument]); break;
+				case "background"			: background		= _options[_argument]; break;
 
-				case "allowScriptAccess"	: allowScriptAccess = settings[argument]; break;
-				case "menu"					: menu				= settings[argument]; break;
-				case "scale"				: scale				= settings[argument]; break;
-				case "wmode"				: wmode				= settings[argument]; break;
+				case "allowScriptAccess"	: allowScriptAccess = _options[_argument]; break;
+				case "menu"					: menu				= _options[_argument]; break;
+				case "scale"				: scale				= _options[_argument]; break;
+				case "wmode"				: wmode				= _options[_argument]; break;
 			}
 
 		}
