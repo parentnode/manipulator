@@ -32,7 +32,7 @@ Util.Animation = u.a = new function() {
 	// get vendor, to avoid setting more than the required type
 	// exceptions to be aware of
 	this._vendor_exceptions = {
-		"mozTransform":"MozTransform","mozTransition":"MozTransition","mozTransitionEnd":"transitionend"
+		"mozTransform":"MozTransform","mozTransition":"MozTransition","mozTransitionEnd":"transitionend","mozTransformOrigin":"MozTransformOrigin"
 	};
 	// method cache - when a vendor method has been requested once, 
 	// it will be stored, to avoid wasting time every time
@@ -142,6 +142,21 @@ Util.Animation = u.a = new function() {
 	// EXPERIMENTAL: remove transform, because Firefox 23 makes render-error, when returning to 0 in translates
 	this.removeTransform = function(node) {
 		node.style[this.vendor("Transform")] = "none";
+	}
+
+
+	// Set origin
+	this.origin = function(node, x, y) {
+
+		// set origin
+		node.style[this.vendor("TransformOrigin")] = x +"px "+ y +"px";
+
+		// store values
+		node._origin_x = x;
+		node._origin_y = y;
+
+		// update dom
+		node.offsetHeight;
 	}
 
 
