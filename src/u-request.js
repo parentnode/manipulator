@@ -1,12 +1,10 @@
-
-
 // Create xmlhttprequest object - separated to make it possible to implement fallback, primarily for IE
-Util.createRequestObject = u.createRequestObject = function() {
+Util.createRequestObject = function() {
 	return new XMLHttpRequest();
 }
 
 // Request object
-Util.request = u.request = function(node, url, _options) {
+Util.request = function(node, url, _options) {
 //	u.bug("request")
 
 	var request_id = u.randomString(6);
@@ -43,7 +41,7 @@ Util.request = u.request = function(node, url, _options) {
 		}
 	}
 
-//	u.bug("request:" + node.request_url + ", " + node.request_method + ", " + node.request_params + ", " + node.request_async + ", " + node.request_headers);
+//	u.bug("request:" + node[request_id].request_url + ", " + node[request_id].request_method + ", " + node[request_id].request_params + ", " + node[request_id].request_async + ", " + node[request_id].request_headers);
 
 	// regular HTTP request
 	if(node[request_id].request_method.match(/GET|POST|PUT|PATCH/i)) {
@@ -141,6 +139,7 @@ Util.request = u.request = function(node, url, _options) {
 		}
 		// catch security exceptions and other exeptions
 		catch(exception) {
+
 //			u.bug("Request exc:" + exception)
 			node[request_id].HTTPRequest.exception = exception;
 			u.validateResponse(node[request_id].HTTPRequest);
@@ -185,6 +184,7 @@ Util.request = u.request = function(node, url, _options) {
 	}
 
 	return request_id;
+
 }
 
 

@@ -32,7 +32,9 @@ Util.Events = u.e = new function() {
 //	alert("navigator.maxTouchPoints:" + navigator.maxTouchPoints)
 
 	// auto-choose default event type
-	this.event_pref = typeof(document.ontouchmove) == "undefined" || navigator.maxTouchPoints > 1 ? "mouse" : "touch";
+	this.event_pref = typeof(document.ontouchmove) == "undefined" || (navigator.maxTouchPoints > 1 && u.browser("explorer")) ? "mouse" : "touch";
+
+//	this.event_pref = "touch";
 
 	/**
 	* Kill event
@@ -100,7 +102,7 @@ Util.Events = u.e = new function() {
 	* @param action Action to execute on event
 	*/
 	this.addMoveEvent = function(node, action) {
-//		u.bug("addMoveEvent:" + e.nodeName)
+//		u.bug("addMoveEvent:" + u.nodeId(node) + ", " + (this.event_pref == "touch" ? "touchmove" : "mousemove"));
 		u.e.addEvent(node, (this.event_pref == "touch" ? "touchmove" : "mousemove"), action);
 	}
 	this.removeMoveEvent = function(node, action) {

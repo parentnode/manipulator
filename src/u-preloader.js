@@ -1,6 +1,7 @@
+
 u.preloader = function(node, files, _options) {
 
-	u.bug("node:" + u.nodeId(node));
+//	u.bug("node:" + u.nodeId(node));
 
 
 	var callback_preloader_loaded = "loaded";

@@ -61,19 +61,25 @@ Util.Animation = u.a = new function() {
 		// only run detection once
 		if(this._vendor === undefined) {
 //			u.bug("no implementation")
-			if(document.body.style.webkitTransform != undefined) {
+
+
+			if(document.documentElement.style.webkitTransform != undefined) {
+//			if(document.body.style.webkitTransform != undefined) {
 //				u.bug("vendor: webkit")
 				this._vendor = "webkit";
 			}
-			else if(document.body.style.MozTransform != undefined) {
+			else if(document.documentElement.style.MozTransform != undefined) {
+//			else if(document.body.style.MozTransform != undefined) {
 //				u.bug("vendor: moz")
 				this._vendor = "moz";
 			}
-			else if(document.body.style.oTransform != undefined) {
+			else if(document.documentElement.style.oTransform != undefined) {
+//			else if(document.body.style.oTransform != undefined) {
 //				u.bug("vendor: o")
 				this._vendor = "o";
 			}
-			else if(document.body.style.msTransform != undefined) {
+			else if(document.documentElement.style.msTransform != undefined) {
+//			else if(document.body.style.msTransform != undefined) {
 //				u.bug("vendor: ms")
 				this._vendor = "ms";
 			}

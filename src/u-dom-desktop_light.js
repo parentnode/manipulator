@@ -1,126 +1,176 @@
-// Get elements computed style value for css attribute
-Util.getComputedStyle = u.gcs = function(e, attribute) {
-	// query DOM to force update
-	e.offsetHeight;
+if(typeof(document.defaultView) == "undefined") {
 
-	if(attribute == "opacity" && e._opacity != undefined) {
-		return e._opacity;
-	}
+	// Get elements computed style value for css attribute
+	Util.getComputedStyle = u.gcs = function(e, attribute) {
+		// query DOM to force update
+		e.offsetHeight;
 
-//	u.bug("gcs:" + attribute)
-	// return computed style if method is supported
-	if(document.defaultView && document.defaultView.getComputedStyle) {
-		return document.defaultView.getComputedStyle(e, null).getPropertyValue(attribute);
-	}
-	// Internet Explorer 8 and less (unless reading opacity)
-	else if(document.body.currentStyle && attribute != "opacity") {
-		attribute = attribute.replace(/(-\w)/g, function(word){return word.replace(/-/, "").toUpperCase()});
-//		u.bug("IE:" + e.currentStyle[attribute])
-		return e.currentStyle[attribute];
-//		return e.currentStyle[attribute].replace("px", "");
-	}
-	// IE 8 and less opacity is set with filter crap
-	else if(document.body.currentStyle && attribute == "opacity" && e.currentStyle["filter"]) {
-		var match = e.currentStyle["filter"].match(/Opacity=([0-9]+)/);
-		if(match) {
-			return match[1]/100;
+		if(attribute == "opacity" && e._opacity != undefined) {
+			return e._opacity;
 		}
 
+	//	u.bug("gcs:" + attribute)
+		// return computed style if method is supported
+		// if(document.defaultView && document.defaultView.getComputedStyle) {
+		// 	return document.defaultView.getComputedStyle(e, null).getPropertyValue(attribute);
+		// }
+		// // Internet Explorer 8 and less (unless reading opacity)
+		// else
+			
+		if(document.body.currentStyle && attribute != "opacity") {
+			attribute = attribute.replace(/(-\w)/g, function(word){return word.replace(/-/, "").toUpperCase()});
+	//		u.bug("IE:" + e.currentStyle[attribute])
+			return e.currentStyle[attribute];
+	//		return e.currentStyle[attribute].replace("px", "");
+		}
+		// IE 8 and less opacity is set with filter crap
+		else if(document.body.currentStyle && attribute == "opacity" && e.currentStyle["filter"]) {
+			var match = e.currentStyle["filter"].match(/Opacity=([0-9]+)/);
+			if(match) {
+				return match[1]/100;
+			}
+
+		}
+
+
+		return false;
 	}
 
-
-	return false;
 }
 
 
-// IE 7 class bug - will not apply class unless set as node.className
-Util.appendElement = u.ae = function(parent, node_type, attributes) {
-	try {
-		// is node_type already DOM node
-		var node = (typeof(node_type) == "object") ? node_type : document.createElement(node_type);
-		node = parent.appendChild(node);
+// only punish older IEs
+if(document.all) {
 
-		if(attributes) {
-			var attribute;
-			for(attribute in attributes) {
-//				u.bug("append:" + attribute);
-				if(attribute == "html") {
-					node.innerHTML = attributes[attribute]
+
+	// IE 7 class bug - will not apply class unless set as node.className
+	Util.appendElement = u.ae = function(parent, node_type, attributes) {
+		try {
+			// is node_type already DOM node
+			var node = (typeof(node_type) == "object") ? node_type : document.createElement(node_type);
+			node = parent.appendChild(node);
+
+			if(attributes) {
+				var attribute;
+				for(attribute in attributes) {
+	//				u.bug("append:" + attribute);
+					if(attribute == "html") {
+						node.innerHTML = attributes[attribute]
+					}
+					else if(attribute != "class" && attribute != "type") {
+						node.setAttribute(attribute, attributes[attribute]);
+					}
 				}
-				else if(attribute != "class" && attribute != "type") {
-					node.setAttribute(attribute, attributes[attribute]);
+
+				// IE 7 specific extension
+				if(attributes["class"]) {
+					u.setClass(node, attributes["class"]);
+				}
+				// IE 7 specific extension
+				if(attributes["type"]) {
+					node.type = attributes["type"];
+				}
+
+			}
+
+	//		node.e = e;
+			return node;
+		}
+		catch(exception) {
+			u.exception("u.ae (desktop_light)", arguments, exception);
+			// u.bug("Exception ("+exception+") in u.ae, called from: "+arguments.callee.caller);
+			// u.bug("node:" + u.nodeId(parent, 1));
+	//		u.xInObject(attributes);
+		}
+
+	}
+
+
+	// IE 7 class bug - will not apply class unless set as node.className
+	Util.insertElement = u.ie = function(parent, node_type, attributes) {
+		try {
+			var node = (typeof(node_type) == "object") ? node_type : document.createElement(node_type);
+			node = parent.insertBefore(node, parent.firstChild);
+
+		//	u.bug("node:" + u.nodeId(node));
+
+		//	u.xInObject(attributes);
+
+			if(attributes) {
+				var attribute;
+				for(attribute in attributes) {
+		//			u.bug(attribute)
+					if(attribute == "html") {
+						node.innerHTML = attributes[attribute]
+					}
+					else if(attribute != "class" && attribute != "type") {
+						node.setAttribute(attribute, attributes[attribute]);
+					}
+				}
+
+				// IE 7 specific extension
+				if(attributes["class"]) {
+					u.setClass(node, attributes["class"]);
+				}
+				// IE 7 specific extension
+				if(attributes["type"]) {
+					node.type = attributes["type"];
+				}
+
+			}
+
+		//	node.e = e;
+			return node;
+		}
+		catch(exception) {
+			u.exception("u.ie (desktop_light)", arguments, exception);
+		}
+	}
+
+	// insert element in wrap-element and return wrapper
+	Util.wrapElement = u.we = function(node, node_type, attributes) {
+		try {
+			var wrapper_node = node.parentNode.insertBefore(document.createElement(node_type), node);
+			if(attributes) {
+				var attribute;
+				for(attribute in attributes) {
+					if(attribute != "class" && attribute != "type") {
+						wrapper_node.setAttribute(attribute, attributes[attribute]);
+					}
+				}
+				// IE 7 specific extension
+				if(attributes["class"]) {
+					u.setClass(wrapper_node, attributes["class"]);
+				}
+				// IE 7 specific extension
+				if(attributes["type"]) {
+					wrapper_node.type = attributes["type"];
 				}
 			}
-
-			// IE 7 specific extension
-			if(attributes["class"]) {
-				u.setClass(node, attributes["class"]);
-			}
-			// IE 7 specific extension
-			if(attributes["type"]) {
-				node.type = attributes["type"];
-			}
-
+			wrapper_node.appendChild(node);
+			return wrapper_node;
 		}
+		catch(exception) {
+			u.exception("u.we (desktop_light)", arguments, exception);
 
-//		node.e = e;
-		return node;
-	}
-	catch(exception) {
-		u.bug("Exception ("+exception+") in u.ae, called from: "+arguments.callee.caller);
-		u.bug("node:" + u.nodeId(parent, 1));
-//		u.xInObject(attributes);
-	}
-}
-
-
-// IE 7 class bug - will not apply class unless set as node.className
-Util.insertElement = u.ie = function(parent, node_type, attributes) {
-	var node = (typeof(node_type) == "object") ? node_type : document.createElement(node_type);
-	node = parent.insertBefore(node, parent.firstChild);
-
-//	u.bug("node:" + u.nodeId(node));
-
-//	u.xInObject(attributes);
-
-	if(attributes) {
-		var attribute;
-		for(attribute in attributes) {
-//			u.bug(attribute)
-			if(attribute == "html") {
-				node.innerHTML = attributes[attribute]
-			}
-			else if(attribute != "class" && attribute != "type") {
-				node.setAttribute(attribute, attributes[attribute]);
-			}
+			// u.bug("Exception ("+exception+") in u.we, called from: "+arguments.callee.caller);
+			// u.bug("node:" + u.nodeId(node, 1));
+			// u.xInObject(attributes);
 		}
-
-		// IE 7 specific extension
-		if(attributes["class"]) {
-			u.setClass(node, attributes["class"]);
-		}
-		// IE 7 specific extension
-		if(attributes["type"]) {
-			node.type = attributes["type"];
-		}
-
+		return false;
 	}
 
-//	node.e = e;
-	return node;
-}
-
-// insert element in wrap-element and return wrapper
-Util.wrapElement = u.we = function(node, node_type, attributes) {
-	try {
-		var wrapper_node = node.parentNode.insertBefore(document.createElement(node_type), node);
-		if(attributes) {
-			var attribute;
-			for(attribute in attributes) {
-				if(attribute != "class" && attribute != "type") {
+	// wrap content of node in wrap-element and return wrapper
+	Util.wrapContent = u.wc = function(node, node_type, attributes) {
+		try {
+			var wrapper_node = document.createElement(node_type);
+			if(attributes) {
+				var attribute;
+				for(attribute in attributes) {
 					wrapper_node.setAttribute(attribute, attributes[attribute]);
 				}
-			}
+			}	
+
 			// IE 7 specific extension
 			if(attributes["class"]) {
 				u.setClass(wrapper_node, attributes["class"]);
@@ -129,31 +179,39 @@ Util.wrapElement = u.we = function(node, node_type, attributes) {
 			if(attributes["type"]) {
 				wrapper_node.type = attributes["type"];
 			}
+
+			while(node.childNodes.length) {
+				wrapper_node.appendChild(node.childNodes[0]);
+			}
+
+			node.appendChild(wrapper_node);
+			return wrapper_node;
 		}
-		wrapper_node.appendChild(node);
-		return wrapper_node;
+		catch(exception) {
+			u.exception("u.wc (desktop_light)", arguments, exception);
+		}
+		return false;
 	}
-	catch(exception) {
-		u.bug("Exception ("+exception+") in u.we, called from: "+arguments.callee.caller);
-		u.bug("node:" + u.nodeId(node, 1));
-		u.xInObject(attributes);
-	}
-	return false;
+
 }
 
 // get node textcontent shorthand (basically this is not needed for newer browsers, but required to align syntax for older browsers)
 // function could be made as prototype, but IE 7+6 does not support Object.defineProperty
-Util.textContent = u.text = function(node) {
-	if(node.textContent) {
-		return node.textContent;
+if(typeof(document.textContent) == "undefined") {
+
+	Util.textContent = u.text = function(node) {
+		if(node.textContent) {
+			return node.textContent;
+		}
+		else if(node.innerText) {
+			return node.innerText;
+		}
+		else {
+			// manually remove all HTML from node.innerHTML
+			return node.innerHTML.replace(/\<[^\>]*\>/g, "");
+		}
 	}
-	else if(node.innerText) {
-		return node.innerText;
-	}
-	else {
-		// manually remove all HTML from node.innerHTML
-		return node.innerHTML.replace(/\<[^\>]*\>/g, "");
-	}
+
 }
 
 

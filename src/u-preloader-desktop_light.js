@@ -5,30 +5,43 @@
 *
 * @param e event return node
 */
-u.loadImage = function(node, src) {
-//	u.bug("u.i.load:" + src)
 
-	// create new image
-	var image = new Image();
-	image.node = node;
+if(document.all || (new Image().onerror) === undefined) {
 
-	u.addClass(node, "loading");
+	u.loadImage = function(node, src) {
 
-	// regular attachevent returns to window object without any kind of reference to image
-	// this is the only way to keep it selfcontained
-	image.onload = function() {
-//		u.bug("image onload event");
+//		u.bug("u.i.load:" + src)
 
-		var event = new Object();
-		event.target = this;
 
-		u.rc(this.node, "loading");
 
-		// notify base
-		if(typeof(this.node.loaded) == "function") {
-			this.node.loaded(event);
+		// for(x in navigator) {
+		// 	u.bug("navigator["+x+"] = " + navigator[x])
+		// }
+		// u.xInObject(navigator.netscape);
+
+		// create new image
+		var image = new Image();
+		image.node = node;
+
+		u.addClass(node, "loading");
+
+		// regular attachevent returns to window object without any kind of reference to image
+		// this is the only way to keep it selfcontained
+		image.onload = function() {
+	//		u.bug("image onload event");
+
+			var event = new Object();
+			event.target = this;
+
+			u.rc(this.node, "loading");
+
+			// notify base
+			if(typeof(this.node.loaded) == "function") {
+				this.node.loaded(event);
+			}
 		}
+
+		image.src = src;
 	}
 
-	image.src = src;
 }
