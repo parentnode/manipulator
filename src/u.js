@@ -1,8 +1,8 @@
 if(!u || !Util) {
 	var u, Util = u = new function() {};
-	u.version = 0.8;
+	u.version = 0.9;
 
-	// handle bug requests if debug lib is not included
+	// handle bug requests if debug module is not included
 	u.bug = u.nodeId = u.exception = function() {};
 //	u.nodeId = function() {};
 

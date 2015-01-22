@@ -1,4 +1,4 @@
-Copyright 2013, 2014 Martin Kaestel Nielsen
+Copyright 2013, 2014, 2015 Martin Kaestel Nielsen
 http://parentnode.dk
 
 Copyright 2013 jQuery Foundation and other contributors (Sizzle JS selector engine)

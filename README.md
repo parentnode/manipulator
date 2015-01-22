@@ -1,16 +1,21 @@
-Manipulator-0.7.6-progress
+Manipulator
+
 ===
-Complete JavaScript library - 100% optimized for Modulator and Conductor and 
 
-Documentation and details can be found at:
+## Currently in 0.9.5-alpha
 
-http://manipulator.parentnode.dk
+Last public release is 0.9
+Public releases are stable and thorougly tested.
 
 
-For more information, visit: 
+## About Manipulator
 
-http://modulator.parentnode.dk
+Manipulator is an extremely flexible, performance optimized JavaScript library and framework with a slightly neurotic focus on details. 
 
-http://conductor.parentnode.dk
+Documentation and details can be found at: http://manipulator.parentnode.dk
+
+
+For more information about the combined platform, visit: 
+http://parentnode.dk
 
 
