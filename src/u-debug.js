@@ -95,14 +95,31 @@ Util.bug = function(message, corner, color) {
 }
 
 
-Util.xInObject = function(object, return_string) {
+Util.xInObject = function(object, _options) {
 	if(u.debugURL()) {
+
+		var return_string = false;
+		var explore_objects = false;
+
+
+		// additional info passed to function as JSON object
+		if(typeof(_options) == "object") {
+			var _argument;
+			for(_argument in _options) {
+
+				switch(_argument) {
+					case "return"     : return_string               = _options[_argument]; break;
+					case "objects"    : explore_objects             = _options[_argument]; break;
+				}
+			}
+		}
+
 
 		var x, s = "--- start object ---\n";
 		for(x in object) {
 
 		//	u.bug(x + ":" + object[x] + ":" + typeof(object[x]));
-			if(object[x] && typeof(object[x]) == "object" && typeof(object[x].nodeName) != "string") {
+			if(explore_objects && object[x] && typeof(object[x]) == "object" && typeof(object[x].nodeName) != "string") {
 				s += x + "=" + object[x]+" => \n";
 				s += u.xInObject(object[x], true);
 			}
