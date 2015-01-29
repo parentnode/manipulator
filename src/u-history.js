@@ -45,9 +45,6 @@ Util.History = u.h = new function() {
 
 		var urlChanged = function(event) {
 
-			u.bug_force = true;
-			u.bug_console_only = false;
-
 			var url = u.h.getCleanUrl(location.href);
 //			u.bug("popstate changed:" + url + ", " + event.state)
 //			u.xInObject(event);
