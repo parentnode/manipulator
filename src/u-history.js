@@ -5,6 +5,7 @@ Util.History = u.h = new function() {
 
 	this.catchEvent = function(node, _options) {
 
+
 		node.callback_urlchange = "navigate";
 
 		// additional info passed to function as JSON object
@@ -44,11 +45,19 @@ Util.History = u.h = new function() {
 
 		var urlChanged = function(event) {
 
+			u.bug_force = true;
+			u.bug_console_only = false;
+
 			var url = u.h.getCleanUrl(location.href);
 //			u.bug("popstate changed:" + url + ", " + event.state)
+//			u.xInObject(event);
 
-			// broken webkit popstate onload (still issue in Safari, Chrome seems to be fixed)
-			if(event.state) {
+			// Broken Safari triggers popstate event on load
+			// 
+			// On first load on new browser window/tab (not on refresh), Chrome has no event.state for back-button
+			// Safari does not have event.path - so I detect the first flawed popstate event in Safari 
+			// by checking for event.state and event.path
+			if(event.state || (!event.state && event.path)) {
 
 				// notify of url change
 				if(typeof(u.h.node[u.h.node.callback_urlchange]) == "function") {
