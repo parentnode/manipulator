@@ -187,25 +187,27 @@ Util.Form = u.f = new function() {
 
 						// set correct height
 						field._input.setHeight = function() {
-				//			u.bug("field._input.setHeight:" + u.nodeId(this) + ", this.scrollHeight:" + this.scrollHeight + ", " + this.autoexpand_offset + ", " + this.scrollWidth + ", " + this.scrollTop);
+//							u.bug("field._input.setHeight:" + u.nodeId(this) + ", this.scrollHeight:" + this.scrollHeight + ", " + this.autoexpand_offset + ", " + this.scrollWidth + ", " + this.scrollTop);
 
 							var textarea_height = parseInt(u.gcs(this, "height"));
 
+//							u.bug("browser:" + u.browser())
+
 							if(this.val()) {
 								if(u.browser("webkit") || u.browser("firefox", ">=29")) {
-				//					u.bug("webkit model")
+//									u.bug("webkit model")
 									if(this.scrollHeight - this.autoexpand_offset > textarea_height) {
 										u.a.setHeight(this, this.scrollHeight);
 									}
 								}
 								else if(u.browser("opera") || u.browser("explorer")) {
-				//					u.bug("opera model")
+//									u.bug("opera model")
 									if(this.scrollHeight > textarea_height) {
 										u.a.setHeight(this, this.scrollHeight);
 									}
 								}
 								else {
-				//					u.bug("fallback model")
+//									u.bug("fallback model")
 									u.a.setHeight(this, this.scrollHeight);
 								}
 							}
