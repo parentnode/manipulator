@@ -15,9 +15,7 @@ Util.browser = function(model, version) {
 	}
 	else if(model.match(/\bfirefox\b|\bgecko\b/i)) {
 //		u.bug("##trying to match firefox")
-		if(window.navigator.mozIsLocallyAvailable) {
-			current_version = navigator.userAgent.match(/(Firefox\/)(\d+\.\d+)/i)[2];
-		}
+		current_version = navigator.userAgent.match(/(Firefox\/)(\d+\.\d+)/i)[2];
 	}
 	else if(model.match(/\bwebkit\b/i)) {
 //		u.bug("##trying to match webkit")
