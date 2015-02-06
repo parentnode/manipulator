@@ -15,7 +15,9 @@ Util.browser = function(model, version) {
 	}
 	else if(model.match(/\bfirefox\b|\bgecko\b/i)) {
 //		u.bug("##trying to match firefox")
-		current_version = navigator.userAgent.match(/(Firefox\/)(\d+\.\d+)/i)[2];
+		if(navigator.userAgent.match(/(Firefox\/)(\d+\.\d+)/i)) {
+			current_version = navigator.userAgent.match(/(Firefox\/)(\d+\.\d+)/i)[2];
+		}
 	}
 	else if(model.match(/\bwebkit\b/i)) {
 //		u.bug("##trying to match webkit")
@@ -99,10 +101,76 @@ Util.segment = function(segment) {
 }
 
 
-
 // TODO - detect OS
+// NEEDS Testing
 Util.system = function(os, version) {
+
+	var current_version = false;
+
+	if(os.match(/\bwindows\b/i)) {
+		// u.bug("##trying to match IE:" + document.all + ":" + window.ActiveXObject)
+		// u.bug(navigator.userAgent.match(/Trident\/[\d+]\.\d[^$]+rv:(\d+.\d)/i))
+
+//		alert("::" + navigator.userAgent.match(/(Windows NT )(\d+.\d)/i))
+		if(navigator.userAgent.match(/(Windows NT )(\d+.\d)/i)) {
+			current_version = navigator.userAgent.match(/(Windows NT )(\d+.\d)/i)[2];
+		}
 	
+	}
+	else if(os.match(/\bios\b/i)) {
+
+		if(navigator.userAgent.match(/(OS )(\d+[._]{1}\d)( like Mac OS X)/i)) {
+			current_version = navigator.userAgent.match(/(OS )(\d+[._]{1}\d)( like Mac OS X)/i)[2].replace("_", ".");
+		}
+
+		// CPU OS 8_0 l
+		//  iPhone OS 8_0 like Mac OS X
+		// CPU OS 8_0 like Mac OS X
+		// CPU iPhone OS 4_2 like Mac OS X
+	}
+	else if(os.match(/\bandroid\b/i)) {
+
+		if(navigator.userAgent.match(/(Android )(\d+.\d)/i)) {
+			current_version = navigator.userAgent.match(/(Android )(\d+.\d)/i)[2];
+		}
+	}
+	else if(os.match(/\bmac\b/i)) {
+
+		if(navigator.userAgent.match(/(Macintosh; Intel Mac OS X )(\d+[._]{1}\d)/i)) {
+			current_version = navigator.userAgent.match(/(Macintosh; Intel Mac OS X )(\d+[._]{1}\d)/i)[2].replace("_", ".");
+		}
+	}
+	else if(os.match(/\blinux\b/i)) {
+
+		if(navigator.userAgent.match(/linux|x11/i)) {
+			current_version = true;
+		}
+	}
+
+
+
+	// did we find a current_version?
+	if(current_version) {
+	
+		// no version requirement
+		if(!version) {
+			return current_version;
+		}
+		else {
+			// specific version
+			if(!isNaN(version)) {
+				return current_version == version;
+			}
+			// version scope
+			else {
+				return eval(current_version + version);
+			}
+		}
+
+	}
+	else {
+		return false;
+	}
 }
 
 // check support of CSS property
