@@ -27,14 +27,21 @@ dblclick/doubletap - dblclicked/doubletapped
 */
 Util.Events = u.e = new function() {
 
-	// alert("document.ontouchmove:" + document.ontouchmove)
-	// alert("document.onmousedown:" + document.onmousedown)
-//	alert("navigator.maxTouchPoints:" + navigator.maxTouchPoints)
+	// TODO: Wrap event_pref in function to be able to use library functions in event detection
+	// now we can't use u.system because function is not declared before execution
 
+//	alert("navigator.maxTouchPoints:" + navigator.maxTouchPoints + ", document.ontouchmove:" + document.ontouchmove + "," + 
 	// auto-choose default event type
-	this.event_pref = typeof(document.ontouchmove) == "undefined" || (navigator.maxTouchPoints > 1 && u.browser("explorer")) ? "mouse" : "touch";
+
+//	this.event_pref = typeof(document.ontouchmove) == "undefined" || (navigator.maxTouchPoints > 1) ? "mouse" : "touch";
+
+	// Windows with touch screen has dual input and now event bubble between types
+	// at this point we cannot support touch and mouse on windows platform
+	this.event_pref = typeof(document.ontouchmove) == "undefined" || (navigator.maxTouchPoints > 1 && navigator.userAgent.match(/Windows/i)) ? "mouse" : "touch";
 
 //	this.event_pref = "touch";
+
+//	alert("this.event_pref:" + this.event_pref)
 
 	/**
 	* Kill event
