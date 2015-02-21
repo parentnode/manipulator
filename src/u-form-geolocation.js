@@ -190,7 +190,7 @@ Util.Form.geoLocation = function(field) {
 			window._mapsiframe = u.ae(document.body, "iframe", {"id":"geolocationmap"});
 			window._mapsiframe.field = this;
 
-			window._mapsiframe.doc = window._mapsiframe.contentDocument? window._mapsiframe.contentDocument: window._mapsiframe.contentWindow.document;
+			window._mapsiframe.doc = window._mapsiframe.contentDocument ? window._mapsiframe.contentDocument : window._mapsiframe.contentWindow.document;
 			window._mapsiframe.doc.open();
 			window._mapsiframe.doc.write(html);
 			window._mapsiframe.doc.close();
@@ -297,7 +297,7 @@ Util.Form.geoLocation = function(field) {
 	field.bn_geolocation.clicked = function() {
 
 		// animation while waiting for location
-		u.a.transition(this, "all 0.5s ease-in-out");
+//		u.a.transition(this, "all 0.5s ease-in-out");
 		this.transitioned = function() {
 			var new_scale;
 			if(this._scale == 1.4) {

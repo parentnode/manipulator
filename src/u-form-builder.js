@@ -114,14 +114,15 @@ u.f.addAction = function(node, _options) {
 	var p_ul = node.nodeName.toLowerCase() == "ul" ? node : u.pn(node, {"include":"ul"});
 	// check if ul is actions ul
 	// if not, it should be created automatically
-	if(!u.hc(p_ul, "actions")) {
+	if(!p_ul || !u.hc(p_ul, "actions")) {
 		p_ul = u.ae(node, "ul", {"class":"actions"});
 	}
 
 	// check if action is injected into ul.actions li
 	var p_li = node.nodeName.toLowerCase() == "li" ? node : u.pn(node, {"include":"li"});
+
 	// li should be directly in parent ul.actions
-	if(p_ul != p_li.parentNode) {
+	if(!p_li || p_ul != p_li.parentNode) {
 		p_li = u.ae(p_ul, "li", {"class":action_name});
 	}
 	else {

@@ -506,7 +506,10 @@ Util.Form = u.f = new function() {
 		for(i = 0; action = actions[i]; i++) {
 
 			// make sure even a.buttons knows form
-			action.form = form;
+			// IE 8 cannot redeclare form on form-elements
+			if(!action.form) {
+				action.form = form;
+			}
 
 			// activate button, adding focus and blur
 			this.activateButton(action);
@@ -1031,6 +1034,8 @@ Util.Form = u.f = new function() {
 			var f_b_t = parseInt(u.gcs(field, "border-top-width"));
 			var f_b_b = parseInt(u.gcs(field, "border-bottom-width"));
 			var f_h_h = field._help.offsetHeight;
+
+//			alert(f_h + ", " + f_p_t + ", " + f_p_b + ", " + f_b_t + ", " + f_b_b + ", " + f_h_h);
 
 			if(u.hc(field, "html")) {
 

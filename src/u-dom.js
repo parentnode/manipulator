@@ -367,8 +367,10 @@ Util.clickableElement = u.ce = function(node, _options) {
 					window.open(this.url);
 				}
 				else {
-					// HASH navigation
-					if(typeof(page.navigate) == "function") {
+					// HASH/POPSTATE navigation
+					// FX 5 and others cannot find page ??
+					// TODO: needs additional testing!
+					if(typeof(page) != "undefined" && typeof(page.navigate) == "function") {
 						page.navigate(this.url);
 					}
 					else {

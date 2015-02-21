@@ -25,9 +25,9 @@ if(!document.documentElement || document.documentElement.style[u.a.vendor("Trans
 		}
 
 		// safeguard - avoid double transitions if browser supports CSS transitions
-		if(u.support(this.variant("Transition"))) {
+		if(u.support(u.a.vendor("Transition"))) {
 			// set transition to "none" directly, and keep duration value
-			node.style[this.variant("Transition")] = "none";
+			node.style[u.a.vendor("Transition")] = "none";
 		}
 	}
 

@@ -70,7 +70,7 @@ if(u.a.vendor() == "ms") {
 	//			u.bug("transition move:" + u.nodeId(this, 1) + ": new_x:" + new_x + ": new_y:" + new_y);
 
 				// hardcoded msTransform
-				this.style[this.vendor("Transform")] = "translate("+ new_x + "px, " + new_y +"px)";
+				this.style[u.a.vendor("Transform")] = "translate("+ new_x + "px, " + new_y +"px)";
 
 				// update dom
 				this.offsetHeight;
@@ -83,7 +83,7 @@ if(u.a.vendor() == "ms") {
 				// last step - adjust any miscalculations and callback
 				else {
 
-					this.style[this.vendor("Transform")] = "translate("+ this._x + "px, " + this._y +"px)";
+					this.style[u.a.vendor("Transform")] = "translate("+ this._x + "px, " + this._y +"px)";
 
 					if(typeof(this.transitioned) == "function") {
 						this.transitioned(event);
@@ -156,7 +156,7 @@ if(u.a.vendor() == "ms") {
 				// last step - adjust any miscalculations and callback
 				else {
 
-					this.style[this.vendor("Transform")] = "rotate("+ this._rotation + "deg)";
+					this.style[u.a.vendor("Transform")] = "rotate("+ this._rotation + "deg)";
 
 					if(typeof(this.transitioned) == "function") {
 						this.transitioned(event);
@@ -214,7 +214,7 @@ if(u.a.vendor() == "ms") {
 	//			u.bug("transition scale:" + u.nodeId(this, 1) + ": scale:" + new_scale);
 
 				// hardcoded msTransform
-				this.style[this.vendor("Transform")] = "scale("+ new_scale +")";
+				this.style[u.a.vendor("Transform")] = "scale("+ new_scale +")";
 
 				// update dom
 				this.offsetHeight;
@@ -227,7 +227,7 @@ if(u.a.vendor() == "ms") {
 				// last step - adjust any miscalculations and callback
 				else {
 
-					this.style[this.vendor("Transform")] = "scale("+ this._scale +")";
+					this.style[u.a.vendor("Transform")] = "scale("+ this._scale +")";
 
 					if(typeof(this.transitioned) == "function") {
 						this.transitioned(event);

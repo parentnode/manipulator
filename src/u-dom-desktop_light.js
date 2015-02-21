@@ -19,7 +19,14 @@ if(typeof(document.defaultView) == "undefined") {
 			
 		if(document.body.currentStyle && attribute != "opacity") {
 			attribute = attribute.replace(/(-\w)/g, function(word){return word.replace(/-/, "").toUpperCase()});
+//			alert("IE:" + attribute + ", " + e.currentStyle[attribute])
 	//		u.bug("IE:" + e.currentStyle[attribute])
+
+			// IE 8 and less returns "medium" for border values
+			if(e.currentStyle[attribute] == "medium") {
+				return 0;
+			}
+
 			return e.currentStyle[attribute];
 	//		return e.currentStyle[attribute].replace("px", "");
 		}

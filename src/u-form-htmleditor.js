@@ -54,7 +54,8 @@ Util.Form.customValidate["html"] = function(iN) {
 // inject HTML editor
 u.f.textEditor = function(field) {
 
-	u.bug("init custom editor")
+//	u.bug("init custom editor")
+
 	// show help?
 	var hint_has_been_shown = u.getCookie("html-editor-hint-v1", {"path":"/"});
 	if(!hint_has_been_shown) {
@@ -134,6 +135,7 @@ u.f.textEditor = function(field) {
 		u.bug("allowed_tags not specified")
 		return;
 	}
+//	u.bug("field.allowed_tags:" + field.allowed_tags);
 
 
 	// filter allowed tags before building editor
@@ -279,7 +281,7 @@ u.f.textEditor = function(field) {
 
 
 		// Add media tag option (if allowed)
-		if(this.media_allowed.length && this.item_id && this.media_add_action && this.media_delete_action) {
+		if(this.media_allowed.length && this.item_id && this.media_add_action && this.media_delete_action && !u.browser("IE", "<=9")) {
 
 			this.bn_add_media = u.ae(this.options, "li", {"class":"list", "html":"Media ("+this.media_allowed.join(", ")+")"});
 			this.bn_add_media.field = field;
@@ -308,7 +310,7 @@ u.f.textEditor = function(field) {
 
 
 		// Add file tag option (if allowed)
-		if(this.file_allowed.length && this.item_id && this.file_add_action && this.file_delete_action) {
+		if(this.file_allowed.length && this.item_id && this.file_add_action && this.file_delete_action && !u.browser("IE", "<=9")) {
 
 			this.bn_add_file = u.ae(this.options, "li", {"class":"file", "html":"Downloadable file"});
 			this.bn_add_file.field = field;
