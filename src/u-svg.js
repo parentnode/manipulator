@@ -40,8 +40,8 @@ Util.svg = function(svg_object) {
 
 
 	// Look for svg in cache
-	if(svg_object.id && u._svg_cache[svg_object.id]) {
-		svg = u._svg_cache[svg_object.id].cloneNode(true);
+	if(svg_object.name && u._svg_cache && u._svg_cache[svg_object.name]) {
+		svg = u._svg_cache[svg_object.name].cloneNode(true);
 	}
 
 	// svg was not found in cache
@@ -50,6 +50,13 @@ Util.svg = function(svg_object) {
 
 
 		// width and height settings
+		if(svg_object.title) {
+			svg.setAttributeNS(null, "title", svg_object.title);
+		}
+		if(svg_object.class) {
+			svg.setAttributeNS(null, "class", svg_object.class);
+		}
+
 		if(svg_object.width) {
 			svg.setAttributeNS(null, "width", svg_object.width);
 		}
@@ -78,8 +85,11 @@ Util.svg = function(svg_object) {
 
 
 		// store svg in cache if it has an id
-		if(svg_object.id) {
-			u._svg_cache[svg_object.id] = svg.cloneNode(true);
+		if(svg_object.name) {
+			if(!u._svg_cache) {
+				u._svg_cache = {};
+			}
+			u._svg_cache[svg_object.name] = svg.cloneNode(true);
 		}
 	}
 
