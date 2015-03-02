@@ -1232,6 +1232,11 @@ u.f.textEditor = function(field) {
 			u.e.kill(event);
 		}
 
+		// register backwards tabbing for setting cursor position in end of text
+		if(event.keyCode == 9 && event.shiftKey) {
+			this.field.backwards_tab = true;
+		}
+
 	}
 
 	// attached to tag._input node for text-tags and list-tags
@@ -1515,6 +1520,11 @@ u.f.textEditor = function(field) {
 			u.e.kill(event);
 		}
 
+		// register backwards tabbing for setting cursor position in end of text
+		if(event.keyCode == 9 && event.shiftKey) {
+			this.field.backwards_tab = true;
+		}
+
 	}
 
 
@@ -1730,9 +1740,10 @@ u.f.textEditor = function(field) {
 		// position hint in case there is an error
 		u.f.positionHint(this.field);
 
-		// if tabbing to gain focus, move cursor to end
-		// TODO: does not always detect tabbing correctly - maybe look at key?
-		if(event.rangeOffset == 1) {
+		// if tabbing to gain focus after backwards_tab, move cursor to end
+		if(this.field.backwards_tab) {
+			this.field.backwards_tab = false;
+
 			var range = document.createRange();
 			range.selectNodeContents(this);
 			range.collapse(false);
@@ -1776,31 +1787,49 @@ u.f.textEditor = function(field) {
 
 		// only do anything if paste content is not empty
 		if(paste_content !== "") {
+
+			// remove current selection if it exists
+			// because pasting on top of selection should replace selection
+			var selection = window.getSelection();
+			if(!selection.isCollapsed) {
+				selection.deleteFromDocument();
+			}
+
+
+//			alert("pasted:" + paste_content + "#:" + paste_content.trim() + "#")
+
 			// add break tags for newlines
-			var paste_parts = paste_content.split(/\n\r|\n|\r/g);
+			// split string by newlines
+			var paste_parts = paste_content.trim().split(/\n\r|\n|\r/g);
+//			alert(paste_parts.join(","))
 			var text_nodes = [];
 			for(i = 0; text = paste_parts[i]; i++) {
 				text_nodes.push(document.createTextNode(text));
-				text_nodes.push(document.createElement("br"));
+
+				// only insert br-tag if there is more than one paste-part and not after the last one
+				if(paste_parts.length && i < paste_parts.length-1) {
+					text_nodes.push(document.createElement("br"));
+				}
 			}
 
-			var text_node = document.createTextNode(paste_content);
+			// loop through nodes in opposite order
+			// webkit collapses space after selection if I don't 
 			for(i = text_nodes.length-1; node = text_nodes[i]; i--) {
-				window.getSelection().getRangeAt(0).insertNode(node);
+
+				// get current range
+				var range = selection.getRangeAt(0);
+				// insert new node
+				range.insertNode(node);
+
+				// add range to to selection
+				selection.addRange(range);
+
 			}
 
-			// position cursor at end
-			var range = document.createRange();
-			range.selectNodeContents(this);
-			range.collapse(false);
+			// now collapse selection to end, to have cursor after selection
+			selection.collapseToEnd();
 
-			var selection = window.getSelection();
-			selection.removeAllRanges();
-			selection.addRange(range);
 		}
-
-		// u.bug("pasted content:" + event.clipboardData.getData("text/plain"));
-		// u.bug("pasted content:" + event.clipboardData.getData("text/html"));
 	}
 
 
@@ -2208,10 +2237,10 @@ u.f.textEditor = function(field) {
 			else if(node.nodeName.toLowerCase().match(field.text_allowed.join("|"))) {
 
 
-//				u.bug("found text node")
+				u.bug("found text node:" + node.innerHTML + ":" + node.innerHTML.trim() + ":" + node.innerHTML.trim().replace(/(<br>|<br \/>)$/, "") + ":" + node.innerHTML.trim().replace(/(<br>|<br \/>)$/, "").replace(/\n\r|\n|\r/g, "<br>"))
 
 				// handle plain text node
-				value = node.innerHTML.replace(/\n\r|\n|\r/g, "<br>"); // .replace(/\<br[\/]?\>/g, "\n");
+				value = node.innerHTML.trim().replace(/(<br>|<br \/>)$/, "").replace(/\n\r|\n|\r/g, "<br>"); // .replace(/\<br[\/]?\>/g, "\n");
 
 				// add new text node to editor
 				tag = field.addTextTag(node.nodeName.toLowerCase(), value);
@@ -2236,8 +2265,8 @@ u.f.textEditor = function(field) {
 
 				// handle list node
 				var lis = u.qsa("li", node);
-				value = lis[0].innerHTML.replace(/\n\r|\n|\r/g, "<br>");
-
+//				value = lis[0].innerHTML.replace(/\n\r|\n|\r/g, "<br>");
+				value = lis[0].innerHTML.trim().replace(/(<br>|<br \/>)$/, "").replace(/\n\r|\n|\r/g, "<br>");
 
 				// add new list node, and first li to editor
 				tag = field.addListTag(node.nodeName.toLowerCase(), value);
@@ -2250,7 +2279,8 @@ u.f.textEditor = function(field) {
 				// loop through remaining li-element and add them, one by one
 				if(lis.length > 1) {
 					for(j = 1; li = lis[j]; j++) {
-						value = li.innerHTML.replace(/\n\r|\n|\r/g, "<br>");
+//						value = li.innerHTML.replace(/\n\r|\n|\r/g, "<br>");
+						value = li.innerHTML.trim().replace(/(<br>|<br \/>)$/, "").replace(/\n\r|\n|\r/g, "<br>");
 						li = field.addListItem(tag, value);
 						field.activateInlineFormatting(li._input);
 					}
@@ -2329,6 +2359,8 @@ u.f.textEditor = function(field) {
 
 	}
 
+
+	// TODO: put a note here about why I don't update the textarea right away - because I don't remember
 
 
 	// enable dragging of html-tags
