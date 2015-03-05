@@ -76,7 +76,7 @@ Util.parentNode = u.pn = function(node, _options) {
 	var include_nodes = include ? u.qsa(include) : [];
 
 
-	// get previousSibling using standard JS
+	// get parentNode using standard JS
 	node = node.parentNode;
 
 	// compare and keep iterating if not valid match
