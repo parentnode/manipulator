@@ -96,7 +96,7 @@ u.fontsReady = function(node, fonts, _options) {
 			}
 
 			// clean up
-//			this.parentNode.removeChild(this);
+			this.parentNode.removeChild(this);
 		}
 		// continue checking
 		else {
