@@ -1601,7 +1601,7 @@ u.f.textEditor = function(field) {
 
 			// node in deletable state?
 			if(this.is_deletable) {
-//					u.bug("go ahead delete me")
+//				u.bug("go ahead delete me")
 
 				u.e.kill(event);
 
@@ -1609,7 +1609,7 @@ u.f.textEditor = function(field) {
 
 				// check for previous element before removing anything
 				var prev = this.field.findPreviousInput(this);
-
+//				u.bug("prev input:" + u.nodeId(prev))
 
 				// list element
 				if(u.hc(this.tag, this.field.list_allowed.join("|"))) {
@@ -1618,11 +1618,13 @@ u.f.textEditor = function(field) {
 					var all_lis = u.qsa("div.li", this.tag);
 
 					// never delete last tag - only delete li if there are more li's or tags
-					if(prev) {
+					if(prev || all_tags.length > 1) {
 //					if(all_tags.length > 1 || all_lis.length > 1) {
 
 						// remove li
+						this.li._input.blur();
 						this.tag.removeChild(this.li);
+
 
 						// if we just removed last li in list, now remove list
 						if(!u.qsa("div.li", this.tag).length) {
@@ -1637,7 +1639,7 @@ u.f.textEditor = function(field) {
 				else {
 
 					// never delete last tag
-					if(prev) {
+					if(prev || all_tags.length > 1) {
 					//if(all_tags.length > 1) {
 						this.tag.parentNode.removeChild(this.tag);
 
@@ -1651,6 +1653,16 @@ u.f.textEditor = function(field) {
 				// set focus on prev element
 				if(prev) {
 					prev.focus();
+				}
+				else {
+					if(u.hc(this.tag, this.field.list_allowed.join("|"))) {
+						var all_lis = u.qsa("div.li", this.tag);
+						all_lis[0]._input.focus();
+					}
+					else {
+						var all_tags = u.qsa("div.tag", this.field);
+						all_tags[0]._input.focus();
+					}
 				}
 
 			}
@@ -1905,7 +1917,7 @@ u.f.textEditor = function(field) {
 		}
 
 		// return input or false
-		return prev ? prev._input : false;
+		return prev && prev._input != iN ? prev._input : false;
 	}
 
 	// return focus to correct field input
@@ -2237,7 +2249,7 @@ u.f.textEditor = function(field) {
 			else if(node.nodeName.toLowerCase().match(field.text_allowed.join("|"))) {
 
 
-				u.bug("found text node:" + node.innerHTML + ":" + node.innerHTML.trim() + ":" + node.innerHTML.trim().replace(/(<br>|<br \/>)$/, "") + ":" + node.innerHTML.trim().replace(/(<br>|<br \/>)$/, "").replace(/\n\r|\n|\r/g, "<br>"))
+//				u.bug("found text node:" + node.innerHTML + ":" + node.innerHTML.trim() + ":" + node.innerHTML.trim().replace(/(<br>|<br \/>)$/, "") + ":" + node.innerHTML.trim().replace(/(<br>|<br \/>)$/, "").replace(/\n\r|\n|\r/g, "<br>"))
 
 				// handle plain text node
 				value = node.innerHTML.trim().replace(/(<br>|<br \/>)$/, "").replace(/\n\r|\n|\r/g, "<br>"); // .replace(/\<br[\/]?\>/g, "\n");
