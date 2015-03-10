@@ -58,12 +58,14 @@ Util.Keyboard = u.k = new function() {
 
 		// get key value
 		var key = String.fromCharCode(event.keyCode);
+
 		// special case for ESC key
 		if(event.keyCode == 27) {
 			key = "ESC";
 		}
 
-//		u.bug("catchKey:" + key + ":"+event.keyCode+":" + this.shortcuts.length)
+//		u.bug("catchKey:" + key + ":"+event.keyCode + ", " + this.shortcuts[key]);
+//		u.e.kill(event);
 //		u.xInObject(this.shortcuts);
 
 

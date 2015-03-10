@@ -305,6 +305,7 @@ Util.Animation = u.a = new function() {
 		u.a._animationqueue[id].start = start;
 		u.a._animationqueue[id].duration = duration;
 
+		// TODO: timers are not very precise - is this a good idea+
 		// add duration timer
 		u.t.setTimer(u.a, function() {u.a.finalAnimationFrame(id)}, duration);
 
