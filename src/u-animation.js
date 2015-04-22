@@ -106,6 +106,8 @@ Util.Animation = u.a = new function() {
 	* Apply CSS transition to node
 	*/
 	this.transition = function(node, transition) {
+//		u.bug("add transition:" + u.nodeId(node) + ", " + transition);
+
 		try {
 
 			// get duration
@@ -113,17 +115,20 @@ Util.Animation = u.a = new function() {
 			if(duration) {
 		//		u.bug(duration[0]);
 				node.duration = duration[0].match("ms") ? parseFloat(duration[0]) : (parseFloat(duration[0]) * 1000);
+
+				// only set transitionEnd listener if transition has duration
+				u.e.addEvent(node, this.vendor("transitionEnd"), this._transitioned);
 			}
 			else {
 				node.duration = false;
 
+				// delete transitioned callback when "none" transition is set (cleanup)
 				if(transition.match(/none/i)) {
 					node.transitioned = null;
 				}
 			}
 
 			node.style[this.vendor("Transition")] = transition;
-			u.e.addEvent(node, this.vendor("transitionEnd"), this._transitioned);
 
 		}
 		catch(exception) {
@@ -134,6 +139,10 @@ Util.Animation = u.a = new function() {
 
 	// transition end handler
 	this._transitioned = function(event) {
+
+		// remove event listener - it's job is done
+		u.e.removeEvent(this, u.a.vendor("transitionEnd"), u.a._transitioned);
+
 		if(event.target == this && typeof(this.transitioned) == "function") {
 			this.transitioned(event);
 		}
