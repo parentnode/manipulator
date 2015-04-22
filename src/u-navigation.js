@@ -13,32 +13,38 @@ u.navigation = function(_options) {
 
 //	u.bug("set up navigation")
 
-	// this.callback_navigate = "navigate";
-	// 
-	// // additional info passed to function as JSON object
-	// if(typeof(_options) == "object") {
-	// 	var argument;
-	// 	for(argument in _options) {
-	// 
-	// 		switch(argument) {
-	// 			case "callback"	: this.callback_navigate		= _options[argument]; break;
-	// 		}
-	// 
-	// 	}
-	// }
+
+	// define default values
+	var callback_navigate = "navigate";
+	var navigation_node = page;
+
+
+	// additional info passed to function as JSON object
+	if(typeof(_options) == "object") {
+		var argument;
+		for(argument in _options) {
+
+			switch(argument) {
+				case "callback"       : callback_navigate      = _options[argument]; break;
+				case "node"           : navigation_node        = _options[argument]; break;
+			}
+
+		}
+	}
+
 
 	// default starting path
-	page._nav_path = page._nav_path ? page._nav_path : u.h.getCleanUrl(location.href, 1);
-	page._nav_history = page._nav_history ? page._nav_history : [];
+	navigation_node._nav_path = navigation_node._nav_path ? navigation_node._nav_path : u.h.getCleanUrl(location.href, 1);
+	navigation_node._nav_history = navigation_node._nav_history ? navigation_node._nav_history : [];
 
 
 	// internal hash change distribution - content or scene level
-	page._navigate = function(url) {
-//		u.bug("page._navigate:" + url)
+	navigation_node._navigate = function(url) {
+//		u.bug("navigation_node._navigate:" + url)
 
 		url = u.h.getCleanUrl(url);
 
-		page._nav_history.unshift(url);
+		navigation_node._nav_history.unshift(url);
 
 		// stats
 		// TODO: this.hash_node add to stats
@@ -82,8 +88,8 @@ u.navigation = function(_options) {
 	}
 
 	// update hash and set hash back node if any
-	page.navigate = function(url, node) {
-//		u.bug("page.navigate:" + url + ", " + (node ? u.nodeId(node) : "no node"))
+	navigation_node.navigate = function(url, node) {
+//		u.bug("navigation_node.navigate:" + url + ", " + (node ? u.nodeId(node) : "no node"))
 
 		// remember history node (for tracking purposes)
 		this.history_node = node ? node : false;
@@ -91,7 +97,7 @@ u.navigation = function(_options) {
 		// popstate handling
 		if(u.h.popstate) {
 			history.pushState({}, url, url);
-			page._navigate(url);
+			navigation_node._navigate(url);
 		}
 		// hash handling
 		else {
@@ -117,11 +123,11 @@ u.navigation = function(_options) {
 //			u.bug("set hash + init content")
 
 			// update hash
-			page.navigate(location.href, page);
+			navigation_node.navigate(location.href, page);
 			// update internal value, so navigation doesn't mess up
-			page._nav_path = u.h.getCleanUrl(location.href);
+			navigation_node._nav_path = u.h.getCleanUrl(location.href);
 			// init content
-			u.init(page.cN);
+			u.init(navigation_node.cN);
 		}
 		// if different hash and url, hash value starts with /
 		// load content based on hash
@@ -129,9 +135,9 @@ u.navigation = function(_options) {
 //			u.bug("init navigate:" + u.h.getCleanHash(location.hash) + "!=" + u.h.getCleanUrl(location.href) + "; ")
 
 			// update internal value, so navigation doesn't mess up
-			page._nav_path = u.h.getCleanUrl(location.href);
+			navigation_node._nav_path = u.h.getCleanUrl(location.href);
 			// manually invoke navigation to load correct page
-			page._navigate(u.h.getCleanHash(location.hash), page);
+			navigation_node._navigate(u.h.getCleanHash(location.hash), page);
 		}
 		// hash and url is aligned, or unusable value
 		// init existing content
@@ -139,7 +145,7 @@ u.navigation = function(_options) {
 //			u.bug("init content")
 
 			// just go for it
-			u.init(page.cN);
+			u.init(navigation_node.cN);
 		}
 
 	}
@@ -151,34 +157,34 @@ u.navigation = function(_options) {
 		if(u.h.getCleanHash(location.hash) != u.h.getCleanUrl(location.href) && location.hash.match(/^#\//)) {
 
 			// update internal value, so navigation doesn't mess up
-			page._nav_path = u.h.getCleanHash(location.hash);
+			navigation_node._nav_path = u.h.getCleanHash(location.hash);
 
 			// update hash
-			page.navigate(u.h.getCleanHash(location.hash), page);
+			navigation_node.navigate(u.h.getCleanHash(location.hash), page);
 
 		}
 		// everything is ready for go
 		else {
 
 			// just go for it
-			u.init(page.cN);
+			u.init(navigation_node.cN);
 		}
 	}
 
 
-	page._initHistory = function() {
+	navigation_node._initHistory = function() {
 //		u.bug("enable HASH navigation")
 
 		u.h.catchEvent(page, {"callback":"_navigate"});
 	}
 
 	// set hash event handler with small delay to avoid redirecting when actually just trying to update HASH
-	u.t.setTimer(page, page._initHistory, 100);
+	u.t.setTimer(page, navigation_node._initHistory, 100);
 
 
 	// TODO: enable crossbrowser history
 
-	page.historyBack = function() {
+	navigation_node.historyBack = function() {
 		if(this._nav_history.length > 1) {
 			this._nav_history.shift();
 			return this._nav_history.shift();
