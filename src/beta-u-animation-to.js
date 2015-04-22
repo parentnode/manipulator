@@ -23,7 +23,6 @@
 
 
 	u.a.to = function(node, transition, attributes) {
-		
 
 		// get duration
 		var duration = transition.match(/[0-9.]+[ms]+/g);
@@ -66,7 +65,7 @@
 					}
 					
 				}
-				else if(attribute.match(/x1|y1|x2|y2|r|cx|cy/)) {
+				else if(attribute.match(/x1|y1|x2|y2|r|cx|cy|stroke-width/)) {
 
 					var new_value = (this._start[attribute] + ((this._end[attribute] - this._start[attribute]) * progress)) +  this._unit[attribute]
 //					u.bug("update:" + attribute + ":" + new_value);
