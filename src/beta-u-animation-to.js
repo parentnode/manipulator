@@ -14,10 +14,54 @@
 	// css transitions take over
 
 
+	u.a.parseSVGPath = function(value) {
+
+		// values required for each type
+		var pairs = {"m":2, "l":2, "a":7, "c":6, "s":4, "q":4, "z":0};
+
+		// add structure to string for parsability
+		value = value.replace(/-/g, " -");
+		value = value.replace(/,/g, " ");
+		value = value.replace(/(m|l|a|c|s|q|M|L|A|C|S|Q)/g, " $1 ");
+		value = value.replace(/  /g, " ");
+
+		// check values
+		sets = value.match(/(m|l|a|c|s|q|M|L|A|C|S|Q)([0-9 \-\.]+)/g);
+
+		for(x in sets) {
+			parts = sets[x].trim().split(" ");
+
+			sets[x] = parts;
+
+			if(parts && pairs[parts[0].toLowerCase()] == parts.length-1) {
+//				u.bug("valid set:" + parts);
+			}
+			else {
+//				u.bug("invalid set - could be 'dual' set with only one identifier")
+			}
+
+
+		}
+
+
+		// u.bug("values:" + sets);
+		// u.bug("value:" + value);
+		return sets;
+	
+	}
+
+
 	u.a.getInitialValue = function(node, attribute) {
 
 		var value = (node.getAttribute(attribute) ? node.getAttribute(attribute) : u.gcs(node, attribute)).replace(node._unit[attribute], "")
-		return Number(value.replace(/auto/, 0));
+		if(attribute.match(/^(d)$/)) {
+			return value;
+//			value.split("m|l|a|c|s|M|L|A|C|S");
+
+		}
+		else {
+			return Number(value.replace(/auto/, 0));
+		}
 	}
 
 
@@ -31,6 +75,7 @@
 			node.duration = duration[0].match("ms") ? parseFloat(duration[0]) : (parseFloat(duration[0]) * 1000);
 		}
 
+		var value, d;
 
 		// TODO: get delay
 
@@ -41,11 +86,35 @@
 
 		for(attribute in attributes) {
 
-			node._unit[attribute] = attributes[attribute].toString().match(/\%|px/);
 
-			node._start[attribute] = Number(this.getInitialValue(node, attribute));
-			 //(node.getAttribute(attribute) ? node.getAttribute(attribute) : u.gcs(node, attribute)).replace(node._unit[attribute], "");
-			node._end[attribute] = attributes[attribute].toString().replace(node._unit[attribute], "");
+			// path definitions are 
+			if(attribute.match(/^(d)$/)) {
+
+				node._start[attribute] = this.parseSVGPath(this.getInitialValue(node, attribute));
+				node._end[attribute] = this.parseSVGPath(attributes[attribute]);
+
+//				u.bug("start:" + node._start[attribute].join("#"))
+//				u.bug("end:" + node._end[attribute])
+
+				// d_parts = this.getInitialValue(node, attribute);
+				//
+				// u.bug("d_parts:" + d_parts)
+				//
+				//
+				// node._start[attribute] = d_parts.split("m|l|a|c|s|M|L|A|C|S");
+				//
+				// u.bug("node._start:" + node._start[attribute])
+
+			}
+			// plain number svg shapes
+			else {
+
+				node._unit[attribute] = attributes[attribute].toString().match(/\%|px/);
+				node._start[attribute] = this.getInitialValue(node, attribute);
+				 //(node.getAttribute(attribute) ? node.getAttribute(attribute) : u.gcs(node, attribute)).replace(node._unit[attribute], "");
+				node._end[attribute] = attributes[attribute].toString().replace(node._unit[attribute], "");
+
+			}
 
 //			u.bug("attributes["+attribute+"] = "+attributes[attribute] + "::"+ node._start[attribute] + " -> " + node._end[attribute]);
 
@@ -55,17 +124,22 @@
 		node.transitionTo = function(progress) {
 
 			for(attribute in attributes) {
-				if(attribute.match(/translate|rotate|scale/)) {
+
+				// transform value
+				if(attribute.match(/^(translate|rotate|scale)$/)) {
 
 					if(attribute == "translate") {
+
 						u.a.translate(this, Math.round((this._end_x - this._start_x) * progress), Math.round((this._end_y - this._start_y) * progress))
 					}
 					else if(attribute == "rotate") {
 
 					}
-					
+
 				}
-				else if(attribute.match(/x1|y1|x2|y2|r|cx|cy|stroke-width/)) {
+
+				// plain svg value
+				else if(attribute.match(/^(x1|y1|x2|y2|r|cx|cy|stroke-width)$/)) {
 
 					var new_value = (this._start[attribute] + ((this._end[attribute] - this._start[attribute]) * progress)) +  this._unit[attribute]
 //					u.bug("update:" + attribute + ":" + new_value);
@@ -73,6 +147,33 @@
 					this.setAttribute(attribute, new_value);
 
 				}
+
+				// path d attribute
+				else if(attribute.match(/^(d)$/)) {
+//					u.bug("path")
+//					var d_parts = this._start[attribute].split("m|l|a|c|s|M|L|A|C|S");
+//					u.bug("d_parts:" + d_parts)
+					var new_value = "";
+					for(x in this._start[attribute]) {
+
+						for(y in this._start[attribute][x]) {
+//							u.bug("pf:" + this._start[attribute][x][y] + " :: " + parseFloat(this._start[attribute][x][y]) + ", " + typeof(this._start[attribute][x][y]))
+
+							if(parseFloat(this._start[attribute][x][y]) == this._start[attribute][x][y]) {
+								new_value += (Number(this._start[attribute][x][y]) + ((Number(this._end[attribute][x][y]) - Number(this._start[attribute][x][y])) * progress)) + " ";
+							}
+							else {
+								new_value += this._end[attribute][x][y] + " ";
+							}
+						}
+					}
+					// var new_value = (this._start[attribute] + ((this._end[attribute] - this._start[attribute]) * progress)) +  this._unit[attribute]
+//
+//					u.bug("set new:" + new_value);
+					this.setAttribute(attribute, new_value);
+
+				}
+				// regular attribute
 				else {
 
 					//u.bug("update:" + this._end[attribute] + "-" + this._start[attribute] + " * " + progress + " " + this._unit[attribute])
