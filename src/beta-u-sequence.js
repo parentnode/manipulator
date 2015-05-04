@@ -386,6 +386,7 @@ u.sequencePlayer = function(node, options) {
 		// after preloading, continue setup
 		this._setup = function() {
 
+			u.bug("images loaded")
 			// stack images to make playback as light as possible
 			for(i = 0; i <= this.sequence._end; i++) {
 
@@ -417,7 +418,7 @@ u.sequencePlayer = function(node, options) {
 
 
 		// preload image sequence
-		u.preloader(this, this._images, {"callback":this._setup});
+		u.preloader(this, this._images, {"loaded":"_setup"});
 
 	}
 
