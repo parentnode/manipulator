@@ -105,8 +105,8 @@ Util.Animation = u.a = new function() {
 	/**
 	* Apply CSS transition to node
 	*/
-	this.transition = function(node, transition) {
-//		u.bug("add transition:" + u.nodeId(node) + ", " + transition);
+	this.transition = function(node, transition, callback) {
+//		u.bug("add transition:" + u.nodeId(node) + ", " + transition + ", " + callback);
 
 		try {
 
@@ -116,16 +116,57 @@ Util.Animation = u.a = new function() {
 		//		u.bug(duration[0]);
 				node.duration = duration[0].match("ms") ? parseFloat(duration[0]) : (parseFloat(duration[0]) * 1000);
 
-				// only set transitionEnd listener if transition has duration
-				u.e.addEvent(node, this.vendor("transitionEnd"), this._transitioned);
+				// custom transition callback
+				if(callback) {
+//					u.bug("custom transition callback:" + callback + ", " + u.nodeId(node))
+
+					var transitioned;
+					transitioned = (function(event) {
+
+//						u.bug("custom transitioned:" + callback  + ", " + u.nodeId(event.target) + ", " + u.nodeId(this) + ", " + typeof(callback) + ", " + typeof(this[callback]))
+						u.e.removeEvent(event.target, u.a.vendor("transitionEnd"), transitioned);
+
+						if(event.target == this) {
+
+							u.a.transition(this, "none");
+
+							if(typeof(callback) == "function") {
+								var key = u.randomString(4);
+								node[key] = callback;
+								node[key].callback(event);
+								node[key] = null;
+								callback = null;
+							}
+							else if(typeof(this[callback]) == "function") {
+//								u.bug("callback to: " + callback + ", " + this[callback])
+								this[callback](event);
+								this[callback] = null;
+							}
+
+
+						}
+						else {
+//							u.e.kill(event);
+						}
+					});
+
+					u.e.addEvent(node, this.vendor("transitionEnd"), transitioned);
+				}
+				else {
+//					u.bug("standard transition callback:" + u.nodeId(node))
+
+					// only set transitionEnd listener if transition has duration
+					u.e.addEvent(node, this.vendor("transitionEnd"), this._transitioned);
+				}
+
 			}
 			else {
 				node.duration = false;
 
 				// delete transitioned callback when "none" transition is set (cleanup)
-				if(transition.match(/none/i)) {
-					node.transitioned = null;
-				}
+				// if(transition.match(/none/i)) {
+				// 	node.transitioned = null;
+				// }
 			}
 
 			node.style[this.vendor("Transition")] = transition;
@@ -138,17 +179,25 @@ Util.Animation = u.a = new function() {
 	}
 
 	// transition end handler
+	// not for chained transitions - will reset node.transitioned and remove transition
 	this._transitioned = function(event) {
 
+//		u.bug("default transitioned:" + u.nodeId(this))
+//		u.bug("transitioned: " + u.nodeId(event.target) + ", " + u.nodeId(this) + ", " + typeof(this.transitioned))
+
 		// remove event listener - it's job is done
-		u.e.removeEvent(this, u.a.vendor("transitionEnd"), u.a._transitioned);
+		u.e.removeEvent(event.target, u.a.vendor("transitionEnd"), u.a._transitioned);
 
 		if(event.target == this && typeof(this.transitioned) == "function") {
+
 			this.transitioned(event);
+
+			this.transitioned = null;
+
 		}
 
-		// automatically remove transition
-		u.a.transition(this, "none");
+		u.a.transition(event.target, "none");
+
 	}
 
 
