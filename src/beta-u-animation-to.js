@@ -14,6 +14,39 @@
 	// css transitions take over
 
 
+	u.a.parseSVGPolygon = function(value) {
+
+//		u.bug("parseSVGPolygon:" + value)
+		// values required for each type
+		var pairs = value.trim().split(" ");
+		var sets = [];
+		for(x in pairs) {
+			parts = pairs[x].trim().split(",");
+
+			for(part in parts) {
+				parts[part] = Number(parts[part]);
+			}
+			sets[x] = parts;
+
+// 			if(parts && pairs[parts[0].toLowerCase()] == parts.length-1) {
+// //				u.bug("valid set:" + parts);
+// 			}
+// 			else {
+// //				u.bug("invalid set - could be 'dual' set with only one identifier")
+// 			}
+
+
+		}
+
+
+//		 u.bug("sets:" + sets.join("#"));
+		// u.bug("value:" + value);
+		return sets;
+	
+	}
+
+
+
 	u.a.parseSVGPath = function(value) {
 
 		// values required for each type
@@ -54,7 +87,8 @@
 	u.a.getInitialValue = function(node, attribute) {
 
 		var value = (node.getAttribute(attribute) ? node.getAttribute(attribute) : u.gcs(node, attribute)).replace(node._unit[attribute], "")
-		if(attribute.match(/^(d)$/)) {
+		if(attribute.match(/^(d|points)$/)) {
+//			u.bug("getInitialValue:" +value)
 			return value;
 //			value.split("m|l|a|c|s|M|L|A|C|S");
 
@@ -67,18 +101,26 @@
 
 
 	u.a.to = function(node, transition, attributes) {
+//		u.bug("to:" + u.nodeId(node) + ", " + transition + ", " + attributes);
 
 		// get duration
-		var duration = transition.match(/[0-9.]+[ms]+/g);
-		if(duration) {
+//		var transition_parts = transition.match(/([a-zA-Z]+) ([0-9.]+[ms]+) ([a-zA-Z\-]+) ([0-9.]+[ms]+)/g);
+		var transition_parts = transition.split(" ");
+//		u.bug(transition_parts)
+		if(transition_parts.length >= 3) {
 	//		u.bug(duration[0]);
-			node.duration = duration[0].match("ms") ? parseFloat(duration[0]) : (parseFloat(duration[0]) * 1000);
+			node._target = transition_parts[0];
+			node.duration = transition_parts[1].match("ms") ? parseFloat(transition_parts[1]) : (parseFloat(transition_parts[1]) * 1000);
+			node._ease = transition_parts[2];
+
+			if(transition_parts.length == 4) {
+				node.delay = transition_parts[3].match("ms") ? parseFloat(transition_parts[3]) : (parseFloat(transition_parts[3]) * 1000);
+			}
 		}
 
 		var value, d;
 
-		// TODO: get delay
-
+//		u.bug("node._ease:" + node._ease);
 
 		node._start = {};
 		node._end = {};
@@ -106,6 +148,19 @@
 				// u.bug("node._start:" + node._start[attribute])
 
 			}
+
+			// polygons
+			else if(attribute.match(/^(points)$/)) {
+
+//				u.bug("to points:" + u.nodeId(node) + ", " + attributes[attribute])
+
+				node._start[attribute] = this.parseSVGPolygon(this.getInitialValue(node, attribute));
+				node._end[attribute] = this.parseSVGPolygon(attributes[attribute]);
+
+//				u.bug("start:" + node._start[attribute].join("#"))
+
+			}
+
 			// plain number svg shapes
 			else {
 
@@ -121,7 +176,15 @@
 		}
 //		u.bug("duration:" + node.duration);
 
+//		u.bug(u.easings);
+//		u.bug(node._ease + ", " + u.easings[node._ease]);
+		node.easing = u.easings[node._ease];
+//		u.bug(node.easing);
+
 		node.transitionTo = function(progress) {
+
+			var easing = node.easing(progress);
+//			u.bug("easing:" + easing + ", " + progress)
 
 			for(attribute in attributes) {
 
@@ -130,7 +193,7 @@
 
 					if(attribute == "translate") {
 
-						u.a.translate(this, Math.round((this._end_x - this._start_x) * progress), Math.round((this._end_y - this._start_y) * progress))
+						u.a.translate(this, Math.round((this._end_x - this._start_x) * easing), Math.round((this._end_y - this._start_y) * easing))
 					}
 					else if(attribute == "rotate") {
 
@@ -141,7 +204,7 @@
 				// plain svg value
 				else if(attribute.match(/^(x1|y1|x2|y2|r|cx|cy|stroke-width)$/)) {
 
-					var new_value = (this._start[attribute] + ((this._end[attribute] - this._start[attribute]) * progress)) +  this._unit[attribute]
+					var new_value = (this._start[attribute] + ((this._end[attribute] - this._start[attribute]) * easing)) +  this._unit[attribute]
 //					u.bug("update:" + attribute + ":" + new_value);
 
 					this.setAttribute(attribute, new_value);
@@ -160,24 +223,42 @@
 //							u.bug("pf:" + this._start[attribute][x][y] + " :: " + parseFloat(this._start[attribute][x][y]) + ", " + typeof(this._start[attribute][x][y]))
 
 							if(parseFloat(this._start[attribute][x][y]) == this._start[attribute][x][y]) {
-								new_value += (Number(this._start[attribute][x][y]) + ((Number(this._end[attribute][x][y]) - Number(this._start[attribute][x][y])) * progress)) + " ";
+								new_value += (Number(this._start[attribute][x][y]) + ((Number(this._end[attribute][x][y]) - Number(this._start[attribute][x][y])) * easing)) + " ";
 							}
 							else {
 								new_value += this._end[attribute][x][y] + " ";
 							}
 						}
 					}
-					// var new_value = (this._start[attribute] + ((this._end[attribute] - this._start[attribute]) * progress)) +  this._unit[attribute]
+					// var new_value = (this._start[attribute] + ((this._end[attribute] - this._start[attribute]) * easing)) +  this._unit[attribute]
 //
 //					u.bug("set new:" + new_value);
 					this.setAttribute(attribute, new_value);
 
 				}
+
+				// polygon point attribute
+				else if(attribute.match(/^(points)$/)) {
+//					u.bug("path")
+//					var d_parts = this._start[attribute].split("m|l|a|c|s|M|L|A|C|S");
+//					u.bug("d_parts:" + d_parts)
+					var new_value = "";
+					for(x in this._start[attribute]) {
+						new_value += (this._start[attribute][x][0] + ((this._end[attribute][x][0] - this._start[attribute][x][0]) * easing)) + ",";
+						new_value += (this._start[attribute][x][1] + ((this._end[attribute][x][1] - this._start[attribute][x][1]) * easing)) + " ";
+					}
+					// var new_value = (this._start[attribute] + ((this._end[attribute] - this._start[attribute]) * easing)) +  this._unit[attribute]
+//
+//					u.bug("set new:" + new_value);
+					this.setAttribute(attribute, new_value);
+
+				}
+
 				// regular attribute
 				else {
 
-					//u.bug("update:" + this._end[attribute] + "-" + this._start[attribute] + " * " + progress + " " + this._unit[attribute])
-					var new_value = (this._start[attribute] + ((this._end[attribute] - this._start[attribute]) * progress)) +  this._unit[attribute]
+					//u.bug("update:" + this._end[attribute] + "-" + this._start[attribute] + " * " + easing + " " + this._unit[attribute])
+					var new_value = (this._start[attribute] + ((this._end[attribute] - this._start[attribute]) * easing)) +  this._unit[attribute]
 
 
 //					u.bug("update:" + attribute + ":" + new_value);
@@ -195,10 +276,10 @@
 		}
 
 
-//			u.bug(u.nodeId(this) + ":progress:" + progress + " ("+(this._end_x - this._start_x) * progress+","+(this._end_y - this._start_y) * progress+")")
+//			u.bug(u.nodeId(this) + ":easing:" + easing + " ("+(this._end_x - this._start_x) * easing+","+(this._end_y - this._start_y) * easing+")")
 		
 
-
+//		u.bug(node.duration);
 		u.a.requestAnimationFrame(node, "transitionTo", node.duration);
 
 	}
