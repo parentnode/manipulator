@@ -193,6 +193,21 @@ Util.videoPlayer = function(_options) {
 			}
 		}
 
+		// set volume
+		player.volume = function(value) {
+			u.bug("set volume:" + value)
+			this.video.volume = value;
+		}
+
+		// toggle sound on/off
+		player.toggleVolume = function() {
+			if(this.video.volume) {
+				this.video.volume = 0;
+			}
+			else {
+				this.video.volume = 1;
+			}
+		}
 
 		// destroy old player and set up new player from scratch
 		player.setup = function() {
@@ -479,7 +494,7 @@ Util.videoPlayer = function(_options) {
 
 				// hide controls
 				this.hideControls = function() {
-//					u.bug("hide controls")
+					u.bug("hide controls")
 
 					if(!this._keep) {
 						// reset timer to avoid double actions
@@ -492,7 +507,7 @@ Util.videoPlayer = function(_options) {
 
 				// show controls
 				this.showControls = function() {
-//					u.bug("show controls")
+					u.bug("show controls")
 
 					// reset timer to keep visible
 					if(this.t_controls) {
@@ -610,6 +625,7 @@ Util.videoPlayer = function(_options) {
 				}
 				
 			}
+			// hide if exists
 			else if(this.controls.search) {
 				u.as(this.controls.search_ff, "display", "none");
 				u.as(this.controls.search_rw, "display", "none");
@@ -621,9 +637,34 @@ Util.videoPlayer = function(_options) {
 			else if(this.controls.zoom) {}
 
 
-			// TODO: volume
-			if(this._controls_volume && !this.controls.volume) {}
-			else if(this.controls.volume) {}
+			// volume control
+			if(this._controls_volume) {
+				
+				// if button does not already exist
+				if(!this.controls.volume) {
+			
+					// set up volume control
+					this.controls.volume = u.ae(this.controls, "a", {"class":"volume"});
+					// remember default display state (block, inline-block, inline)
+					this.controls.volume._default_display = u.gcs(this.controls.volume, "display");
+					this.controls.volume.player = this;
+
+					u.e.click(this.controls.volume);
+					this.controls.volume.clicked = function(event) {
+				//		u.bug("volume")
+						this.player.toggleVolume();
+					}
+				}
+				// it already exists, make it visible
+				else {
+					u.as(this.controls.volume, "display", this.controls.volume._default_display);
+				}
+
+			}
+			// hide if exists
+			else if(this.controls.volume) {
+				u.as(this.controls.volume, "display", "none");
+			}
 
 
 			// enable controls on mousemove
