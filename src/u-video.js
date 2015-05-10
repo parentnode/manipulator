@@ -197,15 +197,24 @@ Util.videoPlayer = function(_options) {
 		player.volume = function(value) {
 //			u.bug("set volume:" + value)
 			this.video.volume = value;
+
+			if(value === 0) {
+				u.ac(this, "muted");
+			}
+			else {
+				u.rc(this, "muted");
+			}
 		}
 
 		// toggle sound on/off
 		player.toggleVolume = function() {
 			if(this.video.volume) {
 				this.video.volume = 0;
+				u.ac(this, "muted");
 			}
 			else {
 				this.video.volume = 1;
+				u.rc(this, "muted");
 			}
 		}
 
@@ -651,7 +660,7 @@ Util.videoPlayer = function(_options) {
 
 					u.e.click(this.controls.volume);
 					this.controls.volume.clicked = function(event) {
-				//		u.bug("volume")
+						u.bug("volume toggle")
 						this.player.toggleVolume();
 					}
 				}
