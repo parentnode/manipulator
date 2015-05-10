@@ -30,13 +30,14 @@ u.googlemaps = new function() {
 		var map_key = u.randomString(8);
 		
 		(window[map_key] = function() {
-			if(typeof(map.APIloaded) == "function") {
-				map.APIloaded();
-			}
 
 //			u.bug("center:" + center[0] + "," + map._center_longitude + "," + map._maps_zoom)
 			var mapOptions = {center: new google.maps.LatLng(center[0], center[1]), zoom: map._maps_zoom, scrollwheel: map._maps_scrollwheel, streetViewControl: map._maps_streetview, zoomControlOptions: {position: google.maps.ControlPosition.LEFT_TOP}};
 			map.g_map = new google.maps.Map(map, mapOptions);
+
+			if(typeof(map.APIloaded) == "function") {
+				map.APIloaded();
+			}
 
 			google.maps.event.addListener(map.g_map, 'tilesloaded', function() {
 				if(typeof(map.loaded) == "function") {
@@ -51,10 +52,24 @@ u.googlemaps = new function() {
 	}
 
 	// set marker
-	this.addMarker = function(map, coords) {
+	this.addMarker = function(map, coords, _options) {
 //		u.bug("addMarker:" + coords + ", " + map)
 
-		var marker = new google.maps.Marker({position: new google.maps.LatLng(coords[0], coords[1]), animation:google.maps.Animation.DROP});
+		var _info = false;
+
+		if(typeof(_options) == "object") {
+			var _argument;
+			for(_argument in _options) {
+
+				switch(_argument) {
+					case "info"           : _info               = _options[_argument]; break;
+				}
+
+			}
+		}
+
+
+		var marker = new google.maps.Marker({position: new google.maps.LatLng(coords[0], coords[1]), animation:google.maps.Animation.DROP, InfoWindow: {content:"hest"}});
 		marker.setMap(map);
 
 		marker.g_map = map;
@@ -62,6 +77,16 @@ u.googlemaps = new function() {
 		google.maps.event.addListener(marker, 'click', function() {
 			if(typeof(this.clicked) == "function") {
 				this.clicked();
+			}
+		});
+		google.maps.event.addListener(marker, 'mouseover', function() {
+			if(typeof(this.entered) == "function") {
+				this.entered();
+			}
+		});
+		google.maps.event.addListener(marker, 'mouseout', function() {
+			if(typeof(this.exited) == "function") {
+				this.exited();
 			}
 		});
 
@@ -122,6 +147,19 @@ u.googlemaps = new function() {
 		}
 		//)();
 		
+	}
+
+	this.infoWindow = function(map) {
+		map.g_infowindow = new google.maps.InfoWindow();		
+	}
+
+	this.showInfoWindow = function(map, marker, content) {
+		map.g_infowindow.setContent(content);
+		map.g_infowindow.open(map, marker);
+	}
+
+	this.hideInfoWindow = function(map) {
+		map.g_infowindow.close();
 	}
 
 
