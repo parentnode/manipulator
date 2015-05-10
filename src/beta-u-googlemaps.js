@@ -1,6 +1,8 @@
 u.googlemaps = new function() {
 
 
+	this.api_loaded = false;
+
 	// center and map required
 	this.map = function(map, center, _options) {
 
@@ -47,7 +49,14 @@ u.googlemaps = new function() {
 
 		});
 
-		u.ae(document.head, "script", {"src":"https://maps.googleapis.com/maps/api/js?callback="+map_key});
+		// load api?
+		if(!this.api_loaded) {
+			u.ae(document.head, "script", {"src":"https://maps.googleapis.com/maps/api/js?callback="+map_key+(u.gapi_key ? "&key="+u.gapi_key : "")});
+			this.api_loaded = true;
+		}
+		else {
+			window[map_key]();
+		}
 
 	}
 
@@ -145,12 +154,10 @@ u.googlemaps = new function() {
 		else {
 			marker.setMap(null);
 		}
-		//)();
-		
 	}
 
 	this.infoWindow = function(map) {
-		map.g_infowindow = new google.maps.InfoWindow();		
+		map.g_infowindow = new google.maps.InfoWindow({"maxWidth":250});
 	}
 
 	this.showInfoWindow = function(map, marker, content) {
