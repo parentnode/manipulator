@@ -195,7 +195,7 @@ Util.videoPlayer = function(_options) {
 
 		// set volume
 		player.volume = function(value) {
-			u.bug("set volume:" + value)
+//			u.bug("set volume:" + value)
 			this.video.volume = value;
 		}
 
