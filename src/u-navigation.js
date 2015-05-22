@@ -11,9 +11,6 @@
 
 u.navigation = function(_options) {
 
-//	u.bug("set up navigation")
-
-
 	// define default values
 	var callback_navigate = "navigate";
 	var navigation_node = page;

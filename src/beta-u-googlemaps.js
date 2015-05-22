@@ -158,15 +158,30 @@ u.googlemaps = new function() {
 
 	this.infoWindow = function(map) {
 		map.g_infowindow = new google.maps.InfoWindow({"maxWidth":250});
+
+		google.maps.event.addListener(map.g_infowindow, 'closeclick', function() {
+			if(this._marker && typeof(this._marker.closed) == "function") {
+				this._marker.closed();
+				this._marker = false;
+			}
+		});
 	}
 
 	this.showInfoWindow = function(map, marker, content) {
 		map.g_infowindow.setContent(content);
 		map.g_infowindow.open(map, marker);
+		map.g_infowindow._marker = marker;
 	}
 
 	this.hideInfoWindow = function(map) {
 		map.g_infowindow.close();
+
+		if(map.g_infowindow._marker && typeof(map.g_infowindow._marker.closed) == "function") {
+			map.g_infowindow._marker.closed();
+			map.g_infowindow._marker = false;
+		}
+
+		map.g_infowindow._marker = false;
 	}
 
 
