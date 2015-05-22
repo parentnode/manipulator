@@ -338,6 +338,15 @@ u.f.textEditor = function(field) {
 		this.updateViewer();
 		this.updateContent();
 
+		// callback to form updated
+		if(this._input.form && typeof(this._input.form.updated) == "function") {
+			this._input.form.updated(this._input);
+		}
+
+		// callback to form changed
+		if(this._input.form && typeof(this._input.form.changed) == "function") {
+			this._input.form.changed(this._input);
+		}
 	}
 
 	// update HTML viewer div
