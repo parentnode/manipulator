@@ -4,6 +4,10 @@ u.easings = new function() {
 		return Math.pow((progress*this.duration) / this.duration, 3);
 	}
 
+	this["linear"] = function(progress) {
+		return progress;
+	}
+
 	this["ease-out"] = function(progress) {
 		return 1 - Math.pow(1 - ((progress*this.duration) / this.duration), 3);
 	}
