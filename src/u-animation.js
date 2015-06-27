@@ -32,7 +32,7 @@ Util.Animation = u.a = new function() {
 	// get vendor, to avoid setting more than the required type
 	// exceptions to be aware of
 	this._vendor_exceptions = {
-		"mozTransform":"MozTransform","mozTransition":"MozTransition","mozTransitionEnd":"transitionend","mozTransformOrigin":"MozTransformOrigin","mozPerspectiveOrigin":"MozPerspectiveOrigin","mozTransformStyle":"MozTransformStyle","mozPerspective":"MozPerspective","mozBackfaceVisibility":"MozBackfaceVisibility"
+		"mozTransform":"MozTransform","mozTransition":"MozTransition","mozTransitionEnd":"transitionend","msTransitionEnd":"transitionend","mozTransformOrigin":"MozTransformOrigin","mozPerspectiveOrigin":"MozPerspectiveOrigin","mozTransformStyle":"MozTransformStyle","mozPerspective":"MozPerspective","mozBackfaceVisibility":"MozBackfaceVisibility"
 	};
 	// method cache - when a vendor method has been requested once, 
 	// it will be stored, to avoid wasting time every time
@@ -97,6 +97,7 @@ Util.Animation = u.a = new function() {
 			this.vendorMethod(method);
 		}
 
+//		u.bug(this._vendor_methods[this._vendor+method] + ", method:" + method)
 		return this._vendor_methods[this._vendor+method];
 	}
 
