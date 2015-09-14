@@ -26,6 +26,8 @@ TODO: Calculate processtime based on element size
 u.e.resetDragEvents = function(node) {
 //	u.bug("reset drag events:" + u.nodeId(node));
 
+	node._moves_pick = 0;
+
 	this.removeEvent(node, "mousemove", this._pick);
 	this.removeEvent(node, "touchmove", this._pick);
 
@@ -37,7 +39,9 @@ u.e.resetDragEvents = function(node) {
 
 //	this.removeEvent(node, "mouseout", this._snapback);
 //	this.removeEvent(node, "mouseout", this._drop);
-	this.removeEvent(node, "mouseout", this._drop_mouse);
+//	this.removeEvent(node, "mouseout", this._drop_mouse);
+	this.removeEvent(node, "mouseout", this._drop_out);
+	this.removeEvent(node, "mouseover", this._drop_over);
 
 
 
@@ -65,6 +69,7 @@ u.e.resetDragEvents = function(node) {
 // strict = true to look for complete overlap
 // TODO: rewrite
 u.e.overlap = function(node, boundaries, strict) {
+
 
 	// if target is array of coordinates
 	if(boundaries.constructor.toString().match("Array")) {
@@ -148,6 +153,9 @@ u.e.drag = function(node, boundaries, _options) {
 
 //	u.bug("set click:"+e.nodeName)
 	node.e_drag = true;
+
+	node._moves_pick = 0;
+
 
 	// check for empty node
 	if(node.childNodes.length < 2 && node.innerHTML.trim() == "") {
@@ -373,47 +381,94 @@ y: 3 -> -2 = 5 (3 - -2)
 	   (init_speed_x < init_speed_y && this.only_vertical) ||
 	   (!this.only_vertical && !this.only_horizontal)) {
 
-		// reset inital events to avoid unintended bubbling if pick direction makes sense
-		u.e.resetNestedEvents(this);
+//		u.bug("valid pick:" + u.nodeId(this))
 
-		// kill event to prevent dragging deeper element
-		// could possibly be forced into callback to allow for double drag (but don't see point at current time)
-	    u.e.kill(event);
+		if(this._moves_pick > 1) {
+			
+//			u.bug("actual pick:" + u.nodeId(this))
+
+			// reset inital events to avoid unintended bubbling if pick direction makes sense
+			u.e.resetNestedEvents(this);
+
+			// kill event to prevent dragging deeper element
+			// could possibly be forced into callback to allow for double drag (but don't see point at current time)
+		    u.e.kill(event);
 
 
-		// set initial move timestamp - used to calculate speed
-//		this.move_timestamp = new Date().getTime();
-		this.move_timestamp = event.timeStamp;
-		this.move_last_x = this._x;
-		this.move_last_y = this._y;
+			// set initial move timestamp - used to calculate speed
+	//		this.move_timestamp = new Date().getTime();
+			this.move_timestamp = event.timeStamp;
+			this.move_last_x = this._x;
+			this.move_last_y = this._y;
 
-		// relative to screen - compensate scroll-offset for fixed elements 
-		if(u.hasFixedParent(this)) {
-			this.start_input_x = u.eventX(event) - this._x - u.scrollX(); 
-			this.start_input_y = u.eventY(event) - this._y - u.scrollY();
+			// relative to screen - compensate scroll-offset for fixed elements 
+			if(u.hasFixedParent(this)) {
+				this.start_input_x = u.eventX(event) - this._x - u.scrollX(); 
+				this.start_input_y = u.eventY(event) - this._y - u.scrollY();
+			}
+			else {
+				this.start_input_x = u.eventX(event) - this._x; 
+				this.start_input_y = u.eventY(event) - this._y;
+			}
+
+
+			// reset current speed
+			this.current_xps = 0;
+			this.current_yps = 0;
+
+
+			// remove transitions if any
+			u.a.transition(this, "none");
+
+
+			// reset events and setting drag events
+			u.e.addMoveEvent(this, u.e._drag);
+			u.e.addEndEvent(this, u.e._drop);
+
+			// notify of pick
+			if(typeof(this[this.callback_picked]) == "function") {
+				this[this.callback_picked](event);
+			}
+
+			// Undesired effect when sliding the presentation, could be enabled for small elements in large scopes using mouse
+			if(this.drag_dropout && event.type.match(/mouse/)) {
+	//			u.bug("set mouseout event cancel:" + u.nodeId(this))
+	//			u.e.addEvent(this, "mouseout", u.e._drop_mouse);
+
+				// u.e._drop_over = function(event) {
+				// 	u.t.resetTimer(this.t_drop_out);
+				// 	u.bug("_drop_over:" + u.nodeId(this) + ", " + u.nodeId(event.target))
+				// }
+				// this.__out = function(event) {
+				//
+				// 	u.bug("_drop_out:" + u.nodeId(this) + ", " + u.nodeId(event.target))
+				//
+				// 	// if(event.target == this) {
+				// 	// 	this._drop = u.e._drop;
+				// 	// 	this._drop(event);
+				// 	// }
+				// 	// else {
+				// //		event = {"type":"mouseout", "target":this};
+				// 		this.t_drop_out = u.t.setTimer(this, u.e._drop_out_is_real, 100, event);
+				// //	}
+				// 	//
+				// }
+				// this.__out = function(event) {
+				//
+				// 	u.bug("_drop_out_is_real:" + u.nodeId(this) + ", " + u.nodeId(event.target));
+				//
+				// 	this._drop = u.e._drop;
+				// 	this._drop({"type":"mouseout", "target":this});
+				//
+				// }
+	//			u.e.hover(this, {"out":"drop_out"});
+				u.e.addOverEvent(this, u.e._drop_over);
+				u.e.addOutEvent(this, u.e._drop_out);
+			}
+
 		}
 		else {
-			this.start_input_x = u.eventX(event) - this._x; 
-			this.start_input_y = u.eventY(event) - this._y;
-		}
-
-
-		// reset current speed
-		this.current_xps = 0;
-		this.current_yps = 0;
-
-
-		// remove transitions if any
-		u.a.transition(this, "none");
-
-
-		// reset events and setting drag events
-		u.e.addMoveEvent(this, u.e._drag);
-		u.e.addEndEvent(this, u.e._drop);
-
-		// notify of pick
-		if(typeof(this[this.callback_picked]) == "function") {
-			this[this.callback_picked](event);
+			this._moves_pick++;
 		}
 
 	}
@@ -421,9 +476,10 @@ y: 3 -> -2 = 5 (3 - -2)
 
 
 	// Undesired effect when sliding the presentation, could be enabled for small elements in large scopes using mouse
-	if(this.drag_dropout && u.e.event_pref == "mouse") {
-		u.e.addEvent(this, "mouseout", u.e._drop_mouse);
-	}
+	// if(this.drag_dropout && u.e.event_pref == "mouse") {
+	// 	u.bug("set mouseout event cancel:" + u.nodeId(this))
+	// 	u.e.addEvent(this, "mouseout", u.e._drop_mouse);
+	// }
 
 }
 
@@ -480,27 +536,81 @@ u.e._drag = function(event) {
 //	u.bug("locked:" + this.locked);
 
 	if(this.e_swipe) {
-		// calc swipes event for locked elements
-		if(this.current_xps && (Math.abs(this.current_xps) > Math.abs(this.current_yps) || this.only_horizontal)) {
+//		u.bug("swiping:" + this.locked + ", " + this.only_horizontal + ", " + this.only_vertical + ", " + Math.abs(this.current_xps) + ":" + Math.abs(this.current_yps));
+
+		if(this.only_horizontal) {
+
+//			u.bug("only_horizontal")
 			if(this.current_xps < 0) {
 				this.swiped = "left";
-//				u.bug("swiped left")
+//				u.bug("id swiped left")
 			}
 			else {
 				this.swiped = "right";
-//				u.bug("swiped right")
+//				u.bug("id swiped right")
 			}
+
 		}
-		else if(this.current_yps && (Math.abs(this.current_xps) < Math.abs(this.current_yps) || this.only_vertical)) {
+		else if(this.only_vertical) {
+
 			if(this.current_yps < 0) {
 				this.swiped = "up";
-//				u.bug("swiped up")
+//				u.bug("id swiped up")
 			}
 			else {
 				this.swiped = "down";
-//				u.bug("swiped down")
+//				u.bug("id swiped down")
+			}
+
+		}
+		else {
+
+			if(Math.abs(this.current_xps) > Math.abs(this.current_yps)) {
+				if(this.current_xps < 0) {
+					this.swiped = "left";
+//					u.bug("id swiped left")
+				}
+				else {
+					this.swiped = "right";
+//					u.bug("id swiped right")
+				}
+			}
+			else if(Math.abs(this.current_xps) < Math.abs(this.current_yps)) {
+				if(this.current_yps < 0) {
+					this.swiped = "up";
+//					u.bug("id swiped up")
+				}
+				else {
+					this.swiped = "down";
+//					u.bug("id swiped down")
+				}
 			}
 		}
+// 		// calc swipes event for locked elements
+// 		if((Math.abs(this.current_xps) > Math.abs(this.current_yps) || this.only_horizontal)) {
+// //		if(this.current_xps && (Math.abs(this.current_xps) > Math.abs(this.current_yps) || this.only_horizontal)) {
+// 			u.bug("only_horizontal")
+// 			if(this.current_xps < 0) {
+// 				this.swiped = "left";
+// 				u.bug("id swiped left")
+// 			}
+// 			else {
+// 				this.swiped = "right";
+// 				u.bug("id swiped right")
+// 			}
+// 		}
+// 		else if((Math.abs(this.current_xps) < Math.abs(this.current_yps) || this.only_vertical)) {
+// //		else if(this.current_yps && (Math.abs(this.current_xps) < Math.abs(this.current_yps) || this.only_vertical)) {
+// 			u.bug("only_vertical")
+// 			if(this.current_yps < 0) {
+// 				this.swiped = "up";
+// 				u.bug("id swiped up")
+// 			}
+// 			else {
+// 				this.swiped = "down";
+// 				u.bug("id swiped down")
+// 			}
+// 		}
 	}
 
 
@@ -630,7 +740,7 @@ u.e._drag = function(event) {
 * Calls return function element.dropped to notify of event
 */
 u.e._drop = function(event) {
-//	u.bug("_drop:" + ":" + u.nodeId(this) + event.type + ":" + this.swiped);
+//	u.bug("_drop:" + ":" + u.nodeId(this) + ", " + event.type + ":" + this.swiped);
 
 	// reset events to prepare for new drag
 	u.e.resetEvents(this);
@@ -638,7 +748,7 @@ u.e._drop = function(event) {
 
 	// return swipe events to handlers
 	if(this.e_swipe && this.swiped) {
-//		u.bug("swiped:"+this.swiped);
+		u.bug("_drop swiped:"+this.swiped);
 
 		if(this.swiped == "left" && typeof(this.swipedLeft) == "function") {
 			this.swipedLeft(event);
@@ -729,13 +839,20 @@ u.e._drop = function(event) {
 
 }
 
-u.e._drop_mouse = function(event) {
-	if(event.target == this) {
-		this._drop = u.e._drop;
-		this._drop(event);
-//		u.e._drop(event);
-	}
+
+
+u.e._drop_over = function(event) {
+// 	u.bug("_drop_over:" + u.nodeId(this) + ", " + u.nodeId(event.target))
+
+	u.t.resetTimer(this.t_drop_out);
 }
+u.e._drop_out = function(event) {
+//	u.bug("_drop_out:" + u.nodeId(this) + ", " + u.nodeId(event.target))
+
+	this.t_drop_out = u.t.setTimer(this, u.e._drop, 100, event);
+
+}
+
 
 
 /**
