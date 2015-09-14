@@ -323,6 +323,7 @@ Util.textContent = u.text = function(node) {
 	catch(exception) {
 		u.exception("u.text", arguments, exception);
 	}
+	return "";
 }
 
 
