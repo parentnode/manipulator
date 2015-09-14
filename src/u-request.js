@@ -52,12 +52,13 @@ Util.request = function(node, url, _options) {
 
 		// listen for async request state change
 		if(node[request_id].request_async) {
-			node[request_id].HTTPRequest.onreadystatechange = function() {
+			node[request_id].HTTPRequest.statechanged = function() {
 				if(this.readyState == 4) {
 					// process async response
 					u.validateResponse(this);
 				}
 			}
+			u.e.addEvent(node[request_id].HTTPRequest, "readystatechange", node[request_id].HTTPRequest.statechanged);
 		}
 
 		// perform request
@@ -370,12 +371,14 @@ Util.validateResponse = function(response){
 	else {
 
 		// callback to ResponseError handler
-		if(typeof(response.node.ResponseError) == "function") {
-			response.node.ResponseError(response);
-		}
 		if(typeof(response.node.responseError) == "function") {
 			response.node.responseError(response);
 		}
+		// no responseError is declared - forward error to normal response handler
+		else if(typeof(response.node[response.node[response.request_id].callback_response]) == "function") {
+			response.node[response.node[response.request_id].callback_response](response, response.request_id);
+		}
+
 	}
 
 }

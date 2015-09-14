@@ -17,12 +17,25 @@ if(typeof(window.XMLHttpRequest) == "undefined" || function(){try {new XMLHttpRe
 			xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
 
 		}
+		else {
+			return {
+				"open":function() {}, 
+				"setRequestHeader":function() {}, 
+				"send":function(){
+					this.response({"status":"404", "responseText":"No Ajax support"});
+				}
+			};
+
+		}
+			
+		
 //		u.xInObject(xmlhttp);
 
 		if(xmlhttp) {
 
+			var wrapper = u.ae(document.body, "div", {"style":"display: none;"});
 
-			var wrapper = new Object();
+//			var wrapper = new Object();
 			wrapper.xmlhttp = xmlhttp;
 
 			// perform 
@@ -33,9 +46,13 @@ if(typeof(window.XMLHttpRequest) == "undefined" || function(){try {new XMLHttpRe
 					wrapper.responseText = wrapper.xmlhttp.responseText;
 					wrapper.status = wrapper.xmlhttp.status;
 					wrapper.readyState = 4;
-					if(typeof(wrapper.onreadystatechange) == "function") {
-						wrapper.onreadystatechange();
+					if(typeof(wrapper.statechanged) == "function") {
+						wrapper.statechanged();
+						wrapper.parentNode.removeChild(wrapper);
 					}
+					// else if(typeof(wrapper.onreadystatechange) == "function") {
+					// 	wrapper.onreadystatechange();
+					// }
 				}
 			}
 
