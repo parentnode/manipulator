@@ -6,11 +6,13 @@ Util.Timer = u.t = new function() {
 
 
 	// Add new timer to object
-	this.setTimer = function(node, action, timeout) {
+	this.setTimer = function(node, action, timeout, param) {
 //		u.bug("setTimer:"+u.nodeId(node)+", "+typeof(action) +", "+timeout)
 
 		var id = this._timers.length;
-		this._timers[id] = {"_a":action, "_n":node, "_t":setTimeout("u.t._executeTimer("+id+")", timeout)};
+		param = param ? param : {"target":node, "type":"timeout"};
+
+		this._timers[id] = {"_a":action, "_n":node, "_p":param, "_t":setTimeout("u.t._executeTimer("+id+")", timeout)};
 
 		return id;
 	}
@@ -34,11 +36,11 @@ Util.Timer = u.t = new function() {
 		
 		if(typeof(this._timers[id]._a) == "function") {
 			node._timer_action = this._timers[id]._a;
-			node._timer_action();
+			node._timer_action(this._timers[id]._p);
 			node._timer_action = null;
 		}
 		else if(typeof(node[this._timers[id]._a]) == "function") {
-			node[this._timers[id]._a]();
+			node[this._timers[id]._a](this._timers[id]._p);
 		}
 		
 
@@ -46,10 +48,11 @@ Util.Timer = u.t = new function() {
 	}
 
 	// Add new timer to object
-	this.setInterval = function(node, action, interval) {
+	this.setInterval = function(node, action, interval, param) {
 
 		var id = this._timers.length;
-		this._timers[id] = {"_a":action, "_n":node, "_i":setInterval("u.t._executeInterval("+id+")", interval)};
+		param = param ? param : {"target":node, "type":"timeout"};
+		this._timers[id] = {"_a":action, "_n":node, "_p":param, "_i":setInterval("u.t._executeInterval("+id+")", interval)};
 
 		return id;
 	}
@@ -69,11 +72,11 @@ Util.Timer = u.t = new function() {
 		var node = this._timers[id]._n;
 		if(typeof(this._timers[id]._a) == "function") {
 			node._interval_action = this._timers[id]._a;
-			node._interval_action();
+			node._interval_action(this._timers[id]._p);
 			node._interval_action = null;
 		}
 		else if(typeof(node[this._timers[id]._a]) == "function") {
-			node[this._timers[id]._a]();
+			node[this._timers[id]._a](this._timers[id]._p);
 		}
 
 	}
