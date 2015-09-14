@@ -44,6 +44,7 @@ u.f.addField = function(node, _options) {
 	var field_name = "js_name";
 	var field_value = "";
 	var field_class = "";
+	var field_maxlength = "";
 
 	// additional info passed to function as JSON object
 	if(typeof(_options) == "object") {
@@ -56,6 +57,7 @@ u.f.addField = function(node, _options) {
 				case "name"			: field_name			= _options[_argument]; break;
 				case "value"		: field_value			= _options[_argument]; break;
 				case "class"		: field_class			= _options[_argument]; break;
+				case "max"			: field_maxlength		= _options[_argument]; break;
 			}
 		}
 	}
@@ -67,7 +69,7 @@ u.f.addField = function(node, _options) {
 	// TODO: add all field types
 	if(field_type == "string") {
 		var label = u.ae(field, "label", {"for":input_id, "html":field_label});
-		var input = u.ae(field, "input", {"id":input_id, "value":field_value, "name":field_name, "type":"text"});
+		var input = u.ae(field, "input", {"id":input_id, "value":field_value, "name":field_name, "type":"text", "maxlength":field_maxlength});
 	}
 	else if(field_type == "email" || field_type == "number" || field_type == "tel") {
 		var label = u.ae(field, "label", {"for":input_id, "html":field_label});
