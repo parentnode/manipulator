@@ -29,3 +29,18 @@ if(!Array.prototype.indexOf) {
 		return -1;
 	}
 }
+
+
+if(!Object.keys) {
+	Object.keys = function(object) {
+		var keys = [];
+		var x;
+		for(x in object) {
+			if(object.hasOwnProperty(x)) {
+				keys.push(x);
+			}
+		}
+
+		return keys;
+	};
+}
