@@ -21,7 +21,7 @@ Util.Form.customInit["location"] = function(form, field) {
 		form.fields[input.name] = input;
 
 		// get input label
-		input._label = u.qs("label[for="+input.id+"]", field);
+		input._label = u.qs("label[for='"+input.id+"']", field);
 
 
 		// get/set value function

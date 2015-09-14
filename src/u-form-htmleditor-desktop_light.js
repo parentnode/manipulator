@@ -13,7 +13,7 @@ Util.Form.customInit["html"] = function(form, field) {
 	form.fields[field._input.name] = field._input;
 
 	// get input label
-	field._input._label = u.qs("label[for="+field._input.id+"]", field);
+	field._input._label = u.qs("label[for='"+field._input.id+"']", field);
 
 	// get/set value function
 	field._input.val = u.f._value;

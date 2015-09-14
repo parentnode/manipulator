@@ -61,6 +61,7 @@ Util.Form = u.f = new function() {
 		// all named fields and buttons can be accessed through this objects
 		form.fields = {};
 		form.actions = {};
+		form.errors = {};
 
 
 		// Label styles - defines special handling of label values
@@ -85,15 +86,15 @@ Util.Form = u.f = new function() {
 			field._error = u.qs(".error", field);
 
 
+			// Add required indicator (for showing icons)
+			field._indicator = u.ae(field, "div", {"class":"indicator"});
+
+
 			// Implementing support for non-manipulator system HTML output
 			// This allows for Manipulator form to run on HTML output which cannot be fine-tuned serverside
 			if(typeof(u.f.fixFieldHTML) == "function") {
 				u.f.fixFieldHTML(field);
 			}
-
-
-			// Add required indicator (for showing icons)
-			field._indicator = u.ae(field, "div", {"class":"indicator"});
 
 
 			// setup field status
@@ -104,7 +105,8 @@ Util.Form = u.f = new function() {
 			// allows to overwrite any field type or built custom field types
 			var custom_init;
 			for(custom_init in this.customInit) {
-				if(field.className.match(custom_init)) {
+				if(u.hc(field, custom_init)) { //}.className.match(new RegExp("\b"+custom_init+"\b"))) {
+//				if(field.className.match(custom_init)) {
 					this.customInit[custom_init](form, field);
 					field._initialized = true;
 				}
@@ -125,7 +127,7 @@ Util.Form = u.f = new function() {
 					form.fields[field._input.name] = field._input;
 
 					// get input label
-					field._input._label = u.qs("label[for="+field._input.id+"]", field);
+					field._input._label = u.qs("label[for='"+field._input.id+"']", field);
 
 					// get/set value function
 					field._input.val = this._value;
@@ -154,7 +156,7 @@ Util.Form = u.f = new function() {
 					form.fields[field._input.name] = field._input;
 
 					// get input label
-					field._input._label = u.qs("label[for="+field._input.id+"]", field);
+					field._input._label = u.qs("label[for='"+field._input.id+"']", field);
 
 					// get/set value function
 					field._input.val = this._value;
@@ -242,7 +244,7 @@ Util.Form = u.f = new function() {
 					form.fields[field._input.name] = field._input;
 
 					// get input label
-					field._input._label = u.qs("label[for="+field._input.id+"]", field);
+					field._input._label = u.qs("label[for='"+field._input.id+"']", field);
 
 					// get/set value function
 					field._input.val = this._value_select;
@@ -266,7 +268,7 @@ Util.Form = u.f = new function() {
 					field._input.field = field;
 
 					// get input label
-					field._input._label = u.qs("label[for="+field._input.id+"]", field);
+					field._input._label = u.qs("label[for='"+field._input.id+"']", field);
 
 					// add input to fields array
 					form.fields[field._input.name] = field._input;
@@ -329,7 +331,7 @@ Util.Form = u.f = new function() {
 						input.field = field;
 
 						// get input label
-						input._label = u.qs("label[for="+input.id+"]", field);
+						input._label = u.qs("label[for='"+input.id+"']", field);
 
 						// get/set value function
 						input.val = this._value_radiobutton;
@@ -378,7 +380,7 @@ Util.Form = u.f = new function() {
 					form.fields[field._input.name] = field._input;
 
 					// get input label
-					field._input._label = u.qs("label[for="+field._input.id+"]", field);
+					field._input._label = u.qs("label[for='"+field._input.id+"']", field);
 
 					// change and update event
 					u.e.addEvent(field._input, "change", this._updated);
@@ -426,7 +428,7 @@ Util.Form = u.f = new function() {
 					form.fields[field._input.name] = field._input;
 
 					// get input label
-					field._input._label = u.qs("label[for="+field._input.id+"]", field);
+					field._input._label = u.qs("label[for='"+field._input.id+"']", field);
 
 					// get/set value function
 					field._input.val = this._value;
@@ -457,7 +459,7 @@ Util.Form = u.f = new function() {
 					form.fields[field._input.name] = field._input;
 
 					// get input label
-					field._input._label = u.qs("label[for="+field._input.id+"]", field);
+					field._input._label = u.qs("label[for='"+field._input.id+"']", field);
 
 					// get/set value function
 					field._input.val = this._value;
@@ -549,7 +551,8 @@ Util.Form = u.f = new function() {
 		}
 
 		// if error is found after validation
-		if(u.qs(".field.error", this)) {
+		if(Object.keys(this.errors).length) {
+//		if(u.qs(".field.error", this)) {
 			if(typeof(this.validationFailed) == "function") {
 				this.validationFailed();
 			}
@@ -1241,9 +1244,16 @@ Util.Form = u.f = new function() {
 			// if help element is available
 			this.positionHint(iN.field);
 
+			iN.form.errors[iN.name] = true;
+
 			// input validation failed
 			if(typeof(iN.validationFailed) == "function") {
 				iN.validationFailed();
+			}
+
+			if(typeof(iN.form.validationFailed) == "function") {
+//				u.bug("fieldError validation failed")
+				iN.form.validationFailed(iN.form.errors);
 			}
 
 		}
@@ -1267,6 +1277,13 @@ Util.Form = u.f = new function() {
 			u.rc(iN.field, "correct");
 			u.rc(iN, "error");
 			u.rc(iN.field, "error");
+		}
+
+		delete iN.form.errors[iN.name];
+		if(!Object.keys(iN.form.errors).length) {
+			if(typeof(iN.form.validationPassed) == "function") {
+				iN.form.validationPassed();
+			}
 		}
 	}
 
