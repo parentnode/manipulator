@@ -1,12 +1,16 @@
 // IE specific event forwarder
 // IE sends all event to the window object - these functions make sure the events return to element in a w3c style
-if(document.all) {
+
+if(document.all && document.addEventListener == undefined) {
+
+//	alert("fallback events")
 
 	// create window control array to store event, element and action information
 	window.attachedEvents = {};
 
 	// create window event handler to handle event forwarding
 	window.eventHandler = function(eid) {
+//		alert("event occured")
 		var element, i;
 //		u.xInObject(window.event);
 
@@ -58,6 +62,7 @@ if(document.all) {
 
 	// set event preferences to strictly mouse
 	u.e.event_pref = "mouse";
+	u.e.event_support = "mouse";
 
 	// kill the event in the IE way
 	u.e.kill = function(event) {
@@ -79,9 +84,17 @@ if(document.all) {
 	*/
 	u.e.addEvent = function(node, type, action) {
 
-//		u.bug("add event:" + u.nodeId(e) + ":" + type + ":" + action.toString().substring(0, 30))
+//		u.bug("add event:" + u.nodeId(node) + ":" + type + ":" + action.toString().substring(0, 30) + ", " + typeof(node) + ", " + node.getElementById)
+//		u.xInObject(node);
 
-		if(node != window) {
+		// adding eventlistener for objects (like the XMLHttpRequest)
+		if(typeof(node) == "object" && typeof(node.childNodes) == "undefined") {
+			// simply hardcode events - it works further back browser wise
+			node["on"+ type] = action;
+			return;
+		}
+
+		else if(node != window) {
 			// check for existing event id (eid)
 			var eid = u.cv(node, "eid");
 
@@ -127,8 +140,13 @@ if(document.all) {
 	u.e.removeEvent = function(node, type, action) {
 //		u.bug("remove event:" + u.nodeId(node) + ":" + type)
 
+		if(typeof(node) == "object" && typeof(node.childNodes) == "undefined") {
+			// simply hardcode events - it works further back browser wise
+			node["on"+ type] = null;
+			return;
+		}
 		// different approach needed for window element
-		if(node != window) {
+		else if(node != window) {
 			// check for existing event id (eid)
 			var eid = u.cv(node, "eid");
 		}
