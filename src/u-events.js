@@ -595,17 +595,14 @@ Util.Events = u.e = new function() {
 		u.e.addStartEvent(node, this._inputStart);
 	}
 	this._dblclicked = function(event) {
-//		u.bug("_dblclicked:" + u.nodeId(this))
+//		u.bug("_dblclicked:" + u.nodeId(this) + ", " + event.type)
 		// if valid click timer, treat as dblclick
 		if(u.t.valid(this.t_clicked) && event) {
-
 
 			// track event
 			u.stats.event(this, "dblclicked");
 
-
 			// remove up/end event
-//			u.e.resetEvents(this);
 			u.e.resetNestedEvents(this);
 
 			// notify base
@@ -617,17 +614,20 @@ Util.Events = u.e = new function() {
 
 		// no dbl-click event
 		else if(!this.e_dblclick) {
+
 			// rerouting event
 			this._clicked = u.e._clicked;
 			this._clicked(event);
 		}
 		// if no event, click timeout response
-		else if(!event) {
+		else if(event.type == "timeout") {
+
 			this._clicked = u.e._clicked;
 			this._clicked(this.event_var);
 		}
 		// no valid timer, first click
 		else {
+
 			// set click timer, waiting for second click
 			u.e.resetNestedEvents(this);
 			this.t_clicked = u.t.setTimer(this, u.e._dblclicked, 400);
