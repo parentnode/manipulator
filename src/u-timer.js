@@ -32,19 +32,24 @@ Util.Timer = u.t = new function() {
 	this._executeTimer = function(id) {
 //		u.bug("executeTimer:" + typeof(this._timers[id]._a) + ", " + this._timers[id]._n)
 
-		var node = this._timers[id]._n;
+		var timer = this._timers[id];
+
+		// clear timer (so callback will not be confused about existing timer)
+		this._timers[id] = false;
+
+		var node = timer._n;
 		
-		if(typeof(this._timers[id]._a) == "function") {
-			node._timer_action = this._timers[id]._a;
-			node._timer_action(this._timers[id]._p);
+		// function reference
+		if(typeof(timer._a) == "function") {
+			node._timer_action = timer._a;
+			node._timer_action(timer._p);
 			node._timer_action = null;
 		}
-		else if(typeof(node[this._timers[id]._a]) == "function") {
-			node[this._timers[id]._a](this._timers[id]._p);
+		// function name
+		else if(typeof(node[timer._a]) == "function") {
+			node[timer._a](timer._p);
 		}
-		
 
-		this._timers[id] = false;
 	}
 
 	// Add new timer to object
@@ -83,6 +88,7 @@ Util.Timer = u.t = new function() {
 
 	// is timer/interval valid (still active)
 	this.valid = function(id) {
+//		u.bug("check timer:" + this._timers[id])
 		return this._timers[id] ? true : false;
 	}
 
