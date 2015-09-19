@@ -1285,6 +1285,11 @@ Util.Form = u.f = new function() {
 				iN.form.validationPassed();
 			}
 		}
+		else {
+			if(typeof(iN.form.validationFailed) == "function") {
+				iN.form.validationFailed(iN.form.errors);
+			}
+		}
 	}
 
 
