@@ -51,61 +51,144 @@ u.e.addOnloadEvent = function(action) {
 // probably just use on event listener and make it call all appropriate callbacks on registrered nodes
 u.e.addWindowResizeEvent = function(node, action) {
 	var id = u.randomString();
-	u.ac(node, id);
-	eval('window["_Onresize_' + id + '"] = function() {var node = u.qs(".'+id+'"); node._Onresize_'+id+' = '+action+'; node._Onresize_'+id+'();}');
 
-	u.e.addEvent(window, "resize", window["_Onresize_" + id]);
+	window["_Onresize_node_"+ id] = node;
+	// callback passed as function reference
+	if(typeof(action) == "function") {
+		eval('window["_Onresize_callback_' + id + '"] = function(event) {window["_Onresize_node_'+ id + '"]._Onresize_callback_'+id+' = '+action+'; window["_Onresize_node_'+ id + '"]._Onresize_callback_'+id+'(event);};');
+	} 
+	// callback passed as function name value
+	else {
+		eval('window["_Onresize_callback_' + id + '"] = function(event) {if(typeof(window["_Onresize_node_'+ id + '"]["'+action+'"]) == "function") {window["_Onresize_node_'+id+'"]["'+action+'"](event);}};');
+	}
+	u.e.addEvent(window, "resize", window["_Onresize_callback_" + id]);
 	return id;
 }
 u.e.removeWindowResizeEvent = function(node, id) {
-	u.rc(node, id);
-	u.e.removeEvent(window, "resize", window["_Onresize_" + id]);
+
+	// remove event listener
+	u.e.removeEvent(window, "resize", window["_Onresize_callback_"+id]);
+
+	// remove callback references
+	window["_Onresize_node_"+id]["_Onresize_callback_"+id] = null;
+	window["_Onresize_node_"+id] = null;
+	window["_Onresize_callback_"+id] = null;
 }
 
-// create window scroll event listener with callback to node.action
+// create window scroll event listener with callback to node
 // returns hidden mapping id, to enable event removal
 u.e.addWindowScrollEvent = function(node, action) {
 	var id = u.randomString();
-	u.ac(node, id);
-	eval('window["_Onscroll_' + id + '"] = function() {var node = u.qs(".'+id+'"); node._Onscroll_'+id+' = '+action+'; node._Onscroll_'+id+'();}');
 
-	u.e.addEvent(window, "scroll", window["_Onscroll_" + id]);
+	window["_Onscroll_node_"+ id] = node;
+	// callback passed as function reference
+	if(typeof(action) == "function") {
+		eval('window["_Onscroll_callback_' + id + '"] = function(event) {window["_Onscroll_node_'+ id + '"]._Onscroll_callback_'+id+' = '+action+'; window["_Onscroll_node_'+ id + '"]._Onscroll_callback_'+id+'(event);};');
+	} 
+	// callback passed as function name value
+	else {
+		eval('window["_Onscroll_callback_' + id + '"] = function(event) {if(typeof(window["_Onscroll_node_'+ id + '"]["'+action+'"]) == "function") {window["_Onscroll_node_'+id+'"]["'+action+'"](event);}};');
+	}
+	u.e.addEvent(window, "scroll", window["_Onscroll_callback_" + id]);
 	return id;
 }
 // Remove window scroll event from node based on hidden id
 u.e.removeWindowScrollEvent = function(node, id) {
-	u.rc(node, id);
-	u.e.removeEvent(window, "scroll", window["_Onscroll_" + id]);
+
+	// remove event listener
+	u.e.removeEvent(window, "scroll", window["_Onscroll_callback_"+id]);
+
+	// remove callback references
+	window["_Onscroll_node_"+id]["_Onscroll_callback_"+id] = null;
+	window["_Onscroll_node_"+id] = null;
+	window["_Onscroll_callback_"+id] = null;
 }
 
+
+// Move event on window with rerouting of event
+u.e.addWindowStartEvent = function(node, action) {
+	var id = u.randomString();
+
+	window["_Onstart_node_"+ id] = node;
+	// callback passed as function reference
+	if(typeof(action) == "function") {
+		eval('window["_Onstart_callback_' + id + '"] = function(event) {window["_Onstart_node_'+ id + '"]._Onstart_callback_'+id+' = '+action+'; window["_Onstart_node_'+ id + '"]._Onstart_callback_'+id+'(event);};');
+	} 
+	// callback passed as function name value
+	else {
+		eval('window["_Onstart_callback_' + id + '"] = function(event) {if(typeof(window["_Onstart_node_'+ id + '"]["'+action+'"]) == "function") {window["_Onstart_node_'+id+'"]["'+action+'"](event);}};');
+	}
+	u.e.addStartEvent(window, window["_Onstart_callback_" + id]);
+	return id;
+}
+u.e.removeWindowStartEvent = function(node, id) {
+
+	// remove event listener
+	u.e.removeStartEvent(window, window["_Onstart_callback_"+id]);
+
+	// remove callback references
+	window["_Onstart_node_"+id]["_Onstart_callback_"+id] = null;
+	window["_Onstart_node_"+id] = null;
+	window["_Onstart_callback_"+id] = null;
+}
 
 
 // Move event on window with rerouting of event
 u.e.addWindowMoveEvent = function(node, action) {
 	var id = u.randomString();
-	u.ac(node, id);
-	eval('window["_Onmove_' + id + '"] = function(event) {var node = u.qs(".'+id+'"); node._Onmove_'+id+' = '+action+'; node._Onmove_'+id+'(event);}');
 
-	u.e.addMoveEvent(window, window["_Onmove_" + id]);
+	window["_Onmove_node_"+ id] = node;
+	// callback passed as function reference
+	if(typeof(action) == "function") {
+		eval('window["_Onmove_callback_' + id + '"] = function(event) {window["_Onmove_node_'+ id + '"]._Onmove_callback_'+id+' = '+action+'; window["_Onmove_node_'+ id + '"]._Onmove_callback_'+id+'(event);};');
+	} 
+	// callback passed as function name value
+	else {
+		eval('window["_Onmove_callback_' + id + '"] = function(event) {if(typeof(window["_Onmove_node_'+ id + '"]["'+action+'"]) == "function") {window["_Onmove_node_'+id+'"]["'+action+'"](event);}};');
+	}
+
+	// add event listener
+	u.e.addMoveEvent(window, window["_Onmove_callback_" + id]);
 	return id;
 }
 u.e.removeWindowMoveEvent = function(node, id) {
-	u.rc(node, id);
-	u.e.removeMoveEvent(window, window["_Onmove_" + id]);
+
+	// remove event listener
+	u.e.removeMoveEvent(window, window["_Onmove_callback_" + id]);
+
+	// remove callback references
+	window["_Onmove_node_"+ id]["_Onmove_callback_"+id] = null;
+	window["_Onmove_node_"+ id] = null;
+	window["_Onmove_callback_"+ id] = null;
 }
 
 
 // End event on window with rerouting of event
 u.e.addWindowEndEvent = function(node, action) {
 	var id = u.randomString();
-	u.ac(node, id);
-	eval('window["_Onend_' + id + '"] = function(event) {var node = u.qs(".'+id+'"); node._Onend_'+id+' = '+action+'; node._Onend_'+id+'(event);}');
 
-	u.e.addEndEvent(window, window["_Onend_" + id]);
+	window["_Onend_node_"+ id] = node;
+	// callback passed as function reference
+	if(typeof(action) == "function") {
+		eval('window["_Onend_callback_' + id + '"] = function(event) {window["_Onend_node_'+ id + '"]._Onend_callback_'+id+' = '+action+'; window["_Onend_node_'+ id + '"]._Onend_callback_'+id+'(event);};');
+	} 
+	// callback passed as function name value
+	else {
+		eval('window["_Onend_callback_' + id + '"] = function(event) {if(typeof(window["_Onend_node_'+ id + '"]["'+action+'"]) == "function") {window["_Onend_node_'+id+'"]["'+action+'"](event);}};');
+	}
+
+	// add event listener
+	u.e.addEndEvent(window, window["_Onend_callback_" + id]);
 	return id;
 }
 u.e.removeWindowEndEvent = function(node, id) {
-	u.rc(node, id);
-	u.e.removeEndEvent(window, window["_Onend_" + id]);
+
+	// remove event listener
+	u.e.removeEndEvent(window, window["_Onend_callback_" + id]);
+
+	// remove callback references
+	window["_Onend_node_"+ id]["_Onend_callback_"+id] = null;
+	window["_Onend_node_"+ id] = null;
+	window["_Onend_callback_"+ id] = null;
 }
 
