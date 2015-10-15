@@ -540,7 +540,7 @@ Util.Form = u.f = new function() {
 
 		// do pre validation of all fields
 		for(name in this.fields) {
-			if(this.fields[name].field) {
+			if(this.fields[name] && this.fields[name].field && typeof(this.fields[name].val) == "function") {
 //				u.bug("field:" + name);
 				// change used state for input
 				this.fields[name].used = true;
