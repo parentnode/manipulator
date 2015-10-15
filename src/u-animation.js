@@ -32,7 +32,16 @@ Util.Animation = u.a = new function() {
 	// get vendor, to avoid setting more than the required type
 	// exceptions to be aware of
 	this._vendor_exceptions = {
-		"mozTransform":"MozTransform","mozTransition":"MozTransition","mozTransitionEnd":"transitionend","msTransitionEnd":"transitionend","mozTransformOrigin":"MozTransformOrigin","mozPerspectiveOrigin":"MozPerspectiveOrigin","mozTransformStyle":"MozTransformStyle","mozPerspective":"MozPerspective","mozBackfaceVisibility":"MozBackfaceVisibility"
+		"mozTransform":"MozTransform",
+		"mozTransition":"MozTransition",
+		"mozTransitionEnd":"transitionend",
+		"msTransitionEnd":"transitionend",
+		"mozTransformOrigin":"MozTransformOrigin",
+		"mozPerspectiveOrigin":"MozPerspectiveOrigin",
+		"mozTransformStyle":"MozTransformStyle",
+		"mozPerspective":"MozPerspective",
+		"mozBackfaceVisibility":"MozBackfaceVisibility",
+		"msCancelAnimationFrame":"cancelAnimationFrame"
 	};
 	// method cache - when a vendor method has been requested once, 
 	// it will be stored, to avoid wasting time every time
@@ -61,7 +70,6 @@ Util.Animation = u.a = new function() {
 		// only run detection once
 		if(this._vendor === undefined) {
 //			u.bug("no implementation")
-
 
 			if(document.documentElement.style.webkitTransform != undefined) {
 //			if(document.body.style.webkitTransform != undefined) {
