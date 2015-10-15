@@ -508,7 +508,7 @@ Util.Events = u.e = new function() {
 	}
 
 	this._move = function(event) {
-		u.bug("_move:" + u.nodeId(this))
+//		u.bug("_move:" + u.nodeId(this))
 		// new event
 
 		if(typeof(this.moved) == "function") {
