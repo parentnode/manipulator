@@ -1,3 +1,5 @@
+// TODO: extend to preload more types
+
 
 u.preloader = function(node, files, _options) {
 
