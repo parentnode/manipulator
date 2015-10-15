@@ -73,6 +73,7 @@ u.e.overlap = function(node, boundaries, strict) {
 
 	// if target is array of coordinates
 	if(boundaries.constructor.toString().match("Array")) {
+//		u.bug("boundaries are array")
 		var boundaries_start_x = Number(boundaries[0]);
 		var boundaries_start_y = Number(boundaries[1]);
 		var boundaries_end_x = Number(boundaries[2]);
@@ -80,11 +81,15 @@ u.e.overlap = function(node, boundaries, strict) {
 	}
 	// target is element
 	else if(boundaries.constructor.toString().match("HTML")) {
+//		u.bug("boundaries are node")
 		var boundaries_start_x = u.absX(boundaries) - u.absX(node);
 		var boundaries_start_y =  u.absY(boundaries) - u.absY(node);
 		var boundaries_end_x = Number(boundaries_start_x + boundaries.offsetWidth);
 		var boundaries_end_y = Number(boundaries_start_y + boundaries.offsetHeight);
 	}
+	// else {
+	// 	u.bug("no boundaries:" + boundaries)
+	// }
 
 	// element proporties
 	var node_start_x = Number(node._x);
@@ -92,8 +97,8 @@ u.e.overlap = function(node, boundaries, strict) {
 	var node_end_x = Number(node_start_x + node.offsetWidth);
 	var node_end_y = Number(node_start_y + node.offsetHeight);
 
-//	u.bug("esx: "+element_start_x+":esy: "+element_start_y+":eex: "+element_end_x+":eey: "+element_end_y);
-//	u.bug("tsx: "+target_start_x+":tsy: "+target_start_y+":tex: "+target_end_x+":tey: "+target_end_y);
+//	u.bug("nsx: "+node_start_x+":nsy: "+node_start_y+":nex: "+node_end_x+":ney: "+node_end_y);
+//	u.bug("bsx: "+boundaries_start_x+":bsy: "+boundaries_start_y+":bex: "+boundaries_end_x+":bey: "+boundaries_end_y);
 
 	// strict - check boundaries
 	// all boundaries are kept
@@ -392,8 +397,15 @@ y: 3 -> -2 = 5 (3 - -2)
 
 			// kill event to prevent dragging deeper element
 			// could possibly be forced into callback to allow for double drag (but don't see point at current time)
-		    u.e.kill(event);
+			u.e.kill(event);
 
+			// detect fixed parent state
+			if(u.hasFixedParent(this)) {
+				this.has_fixed_parent = true;
+			}
+			else {
+				this.has_fixed_parent = false;
+			}
 
 			// set initial move timestamp - used to calculate speed
 	//		this.move_timestamp = new Date().getTime();
@@ -432,7 +444,7 @@ y: 3 -> -2 = 5 (3 - -2)
 
 			// Undesired effect when sliding the presentation, could be enabled for small elements in large scopes using mouse
 			if(this.drag_dropout && event.type.match(/mouse/)) {
-	//			u.bug("set mouseout event cancel:" + u.nodeId(this))
+//				u.bug("set mouseout event cancel:" + u.nodeId(this))
 	//			u.e.addEvent(this, "mouseout", u.e._drop_mouse);
 
 				// u.e._drop_over = function(event) {
@@ -462,7 +474,11 @@ y: 3 -> -2 = 5 (3 - -2)
 				//
 				// }
 	//			u.e.hover(this, {"out":"drop_out"});
-				u.e.addOverEvent(this, u.e._drop_over);
+
+				// map _drag funktion to node to enable drop_out handling
+				this._dropOutDrag = u.e._drag;
+
+//				u.e.addOverEvent(this, u.e._drop_over);
 				u.e.addOutEvent(this, u.e._drop_out);
 			}
 
@@ -488,10 +504,11 @@ y: 3 -> -2 = 5 (3 - -2)
 * Calls return function element.moved to notify of event
 */
 u.e._drag = function(event) {
-//	u.bug("_drag:" + u.nodeId(this));
+//	u.bug("_drag:" + u.nodeId(this) + ", " + event.timeStamp + ", " + Date.now());
 
 	// Get current input coordinates relative to starting point
-	if(u.hasFixedParent(this)) {
+//	if(u.hasFixedParent(this)) {
+	if(this.has_fixed_parent) {
 		this.current_x = u.eventX(event) - this.start_input_x - u.scrollX();
 		this.current_y = u.eventY(event) - this.start_input_y - u.scrollY();
 	}
@@ -839,17 +856,21 @@ u.e._drop = function(event) {
 
 }
 
-
-
-u.e._drop_over = function(event) {
-// 	u.bug("_drop_over:" + u.nodeId(this) + ", " + u.nodeId(event.target))
-
-	u.t.resetTimer(this.t_drop_out);
-}
+// handle drop outs (when dragging is faster than rendering)
+// enhanced drop out function attempting to catch up to mouse on mouseout
+// start a document move listener loop to pass mouse coords back to _drag - until mouseover is invoked again, which
+// means element has caught up with mouse (or mouseup occurs on document)
 u.e._drop_out = function(event) {
-//	u.bug("_drop_out:" + u.nodeId(this) + ", " + u.nodeId(event.target))
+//	u.bug("_drop_out:" + u.nodeId(this) + ", " + u.nodeId(event.target) + ", " + event.timeStamp + ", " + this.move_timestamp)
 
-	this.t_drop_out = u.t.setTimer(this, u.e._drop, 100, event);
+	this._drop_out_id = u.randomString();
+//		u.ac(node, id);
+	document["_DroppedOutNode" + this._drop_out_id] = this;
+	eval('document["_DroppedOut' + this._drop_out_id + '"] = function(event) {document["_DroppedOutNode' + this._drop_out_id + '"]._dropOutDrag(event);}');
+	eval('document["_DroppedOutExpire' + this._drop_out_id + '"] = function(event) {u.e.removeEvent(document, "mousemove", document["_DroppedOut' + this._drop_out_id + '"]);u.e.removeEvent(document, "mouseup", document["_DroppedOutExpire' + this._drop_out_id + '"]);u.e.removeEvent(document["_DroppedOutNode' + this._drop_out_id + '"], "mouseover", document["_DroppedOutExpire' + this._drop_out_id + '"]);}');
+	u.e.addEvent(document, "mousemove", document["_DroppedOut" + this._drop_out_id]);
+	u.e.addEvent(document, "mouseup", document["_DroppedOutExpire" + this._drop_out_id]);
+	u.e.addEvent(this, "mouseover", document["_DroppedOutExpire" + this._drop_out_id]);
 
 }
 
