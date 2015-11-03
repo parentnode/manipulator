@@ -26,7 +26,7 @@ Util.actualHeight = u.actualH = function(node) {
 
 // Get the X coordinate of an event - AKA mouse X coordinate
 Util.eventX = function(event){
-	if(event.targetTouches) {
+	if(event.targetTouches && event.targetTouches.length) {
 		return event.targetTouches[0].pageX;
 	}
 	else if(event.pageX != undefined) {
@@ -43,7 +43,7 @@ Util.eventX = function(event){
 
 // Get the Y coordinate of an event - AKA mouse Y coordinate
 Util.eventY = function(event){
-	if(event.targetTouches) {
+	if(event.targetTouches && event.targetTouches.length) {
 		return event.targetTouches[0].pageY;
 	}
 	else if(event.pageY != undefined) {
