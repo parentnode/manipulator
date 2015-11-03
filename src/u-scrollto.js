@@ -102,6 +102,17 @@ u.scrollTo = function(node, _options) {
 		this._scrollTo = null;
 	}
 
+	// IEMobile is not completely precise in scrolling, so to make it work we have to allow a little offset
+	node.IEScrollFix = function(s_x, s_y) {
+		if(!u.browser("ie")) {
+			return false;
+		}
+		else if((s_y == this._scroll_to_y && (s_x == this._scroll_to_x+1 || s_x == this._scroll_to_x-1)) ||	(s_x == this._scroll_to_x && (s_y == this._scroll_to_y+1 || s_y == this._scroll_to_y-1))) {
+			return true;
+		}
+
+	}
+
 	// calculating scroll
 	node._scrollTo = function(start) {
 
@@ -114,7 +125,8 @@ u.scrollTo = function(node, _options) {
 		// if scroll value is as expected 
 		// (no user interaction, thus current scroll is result of last scroll loop or initial state)
 		// then calculate new scrolling values
-		if(s_y == this._scroll_to_y && s_x == this._scroll_to_x) {
+		// allow more relaxed comparison for IEMobile
+		if((s_y == this._scroll_to_y && s_x == this._scroll_to_x) || this.IEScrollFix(s_x, s_y)) {
 
 			// scrolling right
 			if(this._x_scroll_direction > 0 && this._to_x > s_x) {
