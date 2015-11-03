@@ -2,8 +2,8 @@
 // Session-cookie as default - set keep for extended validity
 Util.saveCookie = function(name, value, _options) {
 
-	expiry = false;
-	path = false;
+	var expires = true;
+	var path = false;
 
 	// additional info passed to function as JSON object
 	if(typeof(_options) == "object") {
@@ -11,14 +11,33 @@ Util.saveCookie = function(name, value, _options) {
 		for(_argument in _options) {
 
 			switch(_argument) {
-				case "expiry"	: expiry	= (typeof(_options[_argument]) == "string" ? _options[_argument] : "Mon, 04-Apr-2020 05:00:00 GMT"); break;
+				case "expires"	: expires	= _options[_argument]; break;
 				case "path"		: path		= _options[_argument]; break;
 			}
 
 		}
 	}
 
-	document.cookie = encodeURIComponent(name) + "=" + encodeURIComponent(value) +";" + (path ? "path="+path+";" : "") + (expiry ? "expires="+expiry+";" : "")
+	// create correct expire value
+	if(expires === false) {
+		expires = ";expires=Mon, 04-Apr-2020 05:00:00 GMT";
+	}
+	else if(typeof(expires) === "string") {
+		expires = ";expires="+expires;
+	}
+	else {
+		expires = "";
+	}
+
+	// create correct path value
+	if(typeof(path) === "string") {
+		path = ";path="+path;
+	}
+	else {
+		path = "";
+	}
+
+	document.cookie = encodeURIComponent(name) + "=" + encodeURIComponent(value) + path + expires;
 }
 
 // Get cookie
@@ -26,9 +45,11 @@ Util.getCookie = function(name) {
 	var matches;
 	return (matches = document.cookie.match(encodeURIComponent(name) + "=([^;]+)")) ? decodeURIComponent(matches[1]) : false;
 }
+
 // Delete cookie
 Util.deleteCookie = function(name, _options) {
-	path = false;
+
+	var path = false;
 
 	// additional info passed to function as JSON object
 	if(typeof(_options) == "object") {
@@ -42,8 +63,17 @@ Util.deleteCookie = function(name, _options) {
 		}
 	}
 
-	document.cookie = encodeURIComponent(name) + "=;" + (path ? "path="+path+";" : "") + "expires=Thu, 01-Jan-70 00:00:01 GMT";
+	// create correct path value
+	if(typeof(path) === "string") {
+		path = ";path="+path;
+	}
+	else {
+		path = "";
+	}
+
+	document.cookie = encodeURIComponent(name) + "=" + path + ";expires=Thu, 01-Jan-70 00:00:01 GMT";
 }
+
 
 
 // Node cookies
@@ -102,13 +132,29 @@ Util.cookieReference = function(node) {
 		ref = node.nodeName + "#" + node.id;
 	}
 	else {
+		// find best identifier
+		var node_identifier = "";
+		if(node.name) {
+			node_identifier = node.nodeName + "["+node.name+"]";
+		}
+		else if(node.className) {
+			node_identifier = node.nodeName + "." + node.className;
+		}
+		else {
+			node_identifier = node.nodeName;
+		}
+
+		// find parentNode with id
 		var id_node = node;
 		while(!id_node.id) {
 			id_node = id_node.parentNode;
 		}
 
 		if(id_node.id) {
-			ref = id_node.nodeName + "#"+id_node.id + " " + (node.name ? (node.nodeName + "["+node.name+"]") : (node.className ? (node.nodeName+"."+node.className) : node.nodeName));
+			ref = id_node.nodeName + "#" + id_node.id + " " + node_identifier;
+		}
+		else {
+			ref = node_identifier;
 		}
 	}
 
