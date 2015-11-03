@@ -29,21 +29,21 @@ Util.nodeId = function(node, include_path) {
 
 
 
-Util.exception = function(name, arguments, exception) {
+Util.exception = function(name, _arguments, _exception) {
 
-	u.bug("Exception in: " + name + " (" + exception + ")");
+	u.bug("Exception in: " + name + " (" + _exception + ")");
 	u.bug("Invoked with arguments:");
-	u.xInObject(arguments);
+	u.xInObject(_arguments);
 
 	u.bug("Called from:");
 
 	// does caller has name
-	if(arguments.callee.caller.name) {
-		u.bug("arguments.callee.caller.name:" + arguments.callee.caller.name)
+	if(_arguments.callee.caller.name) {
+		u.bug("arguments.callee.caller.name:" + _arguments.callee.caller.name)
 	}
 	// show a part of the caller function code
 	else {
-		u.bug("arguments.callee.caller:" + arguments.callee.caller.toString().substring(0, 250));
+		u.bug("arguments.callee.caller:" + _arguments.callee.caller.toString().substring(0, 250));
 	}
 }
 
