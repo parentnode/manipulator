@@ -477,6 +477,7 @@ y: 3 -> -2 = 5 (3 - -2)
 
 				// map _drag funktion to node to enable drop_out handling
 				this._dropOutDrag = u.e._drag;
+				this._dropOutDrop = u.e._drop;
 
 //				u.e.addOverEvent(this, u.e._drop_over);
 				u.e.addOutEvent(this, u.e._drop_out);
@@ -765,7 +766,7 @@ u.e._drop = function(event) {
 
 	// return swipe events to handlers
 	if(this.e_swipe && this.swiped) {
-		u.bug("_drop swiped:"+this.swiped);
+//		u.bug("_drop swiped:"+this.swiped);
 
 		if(this.swiped == "left" && typeof(this.swipedLeft) == "function") {
 			this.swipedLeft(event);
@@ -866,11 +867,12 @@ u.e._drop_out = function(event) {
 	this._drop_out_id = u.randomString();
 //		u.ac(node, id);
 	document["_DroppedOutNode" + this._drop_out_id] = this;
-	eval('document["_DroppedOut' + this._drop_out_id + '"] = function(event) {document["_DroppedOutNode' + this._drop_out_id + '"]._dropOutDrag(event);}');
-	eval('document["_DroppedOutExpire' + this._drop_out_id + '"] = function(event) {u.e.removeEvent(document, "mousemove", document["_DroppedOut' + this._drop_out_id + '"]);u.e.removeEvent(document, "mouseup", document["_DroppedOutExpire' + this._drop_out_id + '"]);u.e.removeEvent(document["_DroppedOutNode' + this._drop_out_id + '"], "mouseover", document["_DroppedOutExpire' + this._drop_out_id + '"]);}');
-	u.e.addEvent(document, "mousemove", document["_DroppedOut" + this._drop_out_id]);
-	u.e.addEvent(document, "mouseup", document["_DroppedOutExpire" + this._drop_out_id]);
-	u.e.addEvent(this, "mouseover", document["_DroppedOutExpire" + this._drop_out_id]);
+	eval('document["_DroppedOutMove' + this._drop_out_id + '"] = function(event) {document["_DroppedOutNode' + this._drop_out_id + '"]._dropOutDrag(event);}');
+	eval('document["_DroppedOutOver' + this._drop_out_id + '"] = function(event) {u.e.removeEvent(document, "mousemove", document["_DroppedOutMove' + this._drop_out_id + '"]);u.e.removeEvent(document, "mouseup", document["_DroppedOutEnd' + this._drop_out_id + '"]);u.e.removeEvent(document["_DroppedOutNode' + this._drop_out_id + '"], "mouseover", document["_DroppedOutOver' + this._drop_out_id + '"]);}');
+	eval('document["_DroppedOutEnd' + this._drop_out_id + '"] = function(event) {u.e.removeEvent(document, "mousemove", document["_DroppedOutMove' + this._drop_out_id + '"]);u.e.removeEvent(document, "mouseup", document["_DroppedOutEnd' + this._drop_out_id + '"]);u.e.removeEvent(document["_DroppedOutNode' + this._drop_out_id + '"], "mouseover", document["_DroppedOutOver' + this._drop_out_id + '"]);document["_DroppedOutNode' + this._drop_out_id + '"]._dropOutDrop(event);}');
+	u.e.addEvent(document, "mousemove", document["_DroppedOutMove" + this._drop_out_id]);
+	u.e.addEvent(this, "mouseover", document["_DroppedOutOver" + this._drop_out_id]);
+	u.e.addEvent(document, "mouseup", document["_DroppedOutEnd" + this._drop_out_id]);
 
 }
 
