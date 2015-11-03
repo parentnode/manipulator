@@ -266,9 +266,9 @@ Util.support = function(property) {
 // }
 
 // OS definition utilities
-Util.windows = function() {
-	return (navigator.userAgent.indexOf("Windows") >= 0) ? true : false;
-}
-Util.osx = function() {
-	return (navigator.userAgent.indexOf("OS X") >= 0) ? true : false;
-}
+// Util.windows = function() {
+// 	return (navigator.userAgent.indexOf("Windows") >= 0) ? true : false;
+// }
+// Util.osx = function() {
+// 	return (navigator.userAgent.indexOf("OS X") >= 0) ? true : false;
+// }
