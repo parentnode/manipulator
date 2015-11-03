@@ -486,9 +486,12 @@ Util.Events = u.e = new function() {
 	this._cancelClick = function(event) {
 //		u.bug("_cancelClick:" + u.nodeId(this))
 
+		// use complete move since inputStart to determine whether to cancel click
+		var offset_x = u.eventX(event) - this.start_event_x;
+		var offset_y = u.eventY(event) - this.start_event_y;
 
 		// should click be cancelled
-		if(event.type.match(/mouseout/) || this._moves_cancel > 1 || (event.type.match(/move/) && (Math.abs(this.current_xps) > 30 || Math.abs(this.current_yps) > 30))) {
+		if(event.type.match(/mouseout/) || this._moves_cancel > 1 || (event.type.match(/move/) && (Math.abs(offset_x) > 15 || Math.abs(offset_y) > 15))) {
 
 			u.e.resetClickEvents(this);
 
