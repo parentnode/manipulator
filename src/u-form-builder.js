@@ -31,8 +31,21 @@ u.f.addForm = function(node, _options) {
 }
 
 // Add fieldset
-u.f.addFieldset = function(node) {
-	return u.ae(node, "fieldset");
+u.f.addFieldset = function(node, _options) {
+	var fieldset_class = "";
+
+	// additional info passed to function as JSON object
+	if(typeof(_options) == "object") {
+		var _argument;
+		for(_argument in _options) {
+
+			switch(_argument) {
+				case "class"			: fieldset_class			= _options[_argument]; break;
+			}
+		}
+	}
+
+	return u.ae(node, "fieldset", {"class":fieldset_class});
 }
 
 // Add field
@@ -122,7 +135,15 @@ u.f.addAction = function(node, _options) {
 	// check if ul is actions ul
 	// if not, it should be created automatically
 	if(!p_ul || !u.hc(p_ul, "actions")) {
-		p_ul = u.ae(node, "ul", {"class":"actions"});
+
+		// action is appended directly to form?
+		if(node.nodeName.toLowerCase() == "form") {
+			// look for existing actions
+			p_ul = u.qs("ul.actions", node);
+		}
+
+		// create new actions if none is found
+		p_ul = p_ul ? p_ul : u.ae(node, "ul", {"class":"actions"});
 	}
 
 	// check if action is injected into ul.actions li
