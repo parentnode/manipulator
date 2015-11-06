@@ -45,7 +45,15 @@ if(typeof(window.XMLHttpRequest) == "undefined" || function(){try {new XMLHttpRe
 				if(wrapper.xmlhttp.readyState == 4) {
 					wrapper.responseText = wrapper.xmlhttp.responseText;
 					wrapper.status = wrapper.xmlhttp.status;
-					wrapper.readyState = 4;
+
+					// IE 6 cannot update readyState value on element
+					try {
+						wrapper.readyState = 4;
+					}
+					catch(exception) {
+						wrapper.IEreadyState = true;
+					}
+
 					if(typeof(wrapper.statechanged) == "function") {
 						wrapper.statechanged();
 						wrapper.parentNode.removeChild(wrapper);

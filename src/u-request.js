@@ -53,7 +53,7 @@ Util.request = function(node, url, _options) {
 		// listen for async request state change
 		if(node[request_id].request_async) {
 			node[request_id].HTTPRequest.statechanged = function() {
-				if(this.readyState == 4) {
+				if(this.readyState == 4 || this.IEreadyState) {
 					// process async response
 					u.validateResponse(this);
 				}
