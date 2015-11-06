@@ -15,13 +15,13 @@ Util.browser = function(model, version) {
 	}
 	else if(model.match(/\bfirefox\b|\bgecko\b/i)) {
 //		u.bug("##trying to match firefox")
-		if(navigator.userAgent.match(/(Firefox\/)(\d+\.\d+)/i)) {
+		if(navigator.userAgent.match(/(Firefox\/)(\d+\.\d+)/i) && !u.system("ie")) {
 			current_version = navigator.userAgent.match(/(Firefox\/)(\d+\.\d+)/i)[2];
 		}
 	}
 	else if(model.match(/\bwebkit\b/i)) {
-//		u.bug("##trying to match webkit")
-		if(document.body.style.webkitTransform != undefined) {
+//		u.bug("##trying to match webkit:" + document.body.style.webkitTransform)
+		if(document.body.style.webkitTransform != undefined && !u.system("ie")) {
 			current_version = navigator.userAgent.match(/(AppleWebKit\/)(\d+.\d)/i)[2];
 		}
 	}
@@ -33,7 +33,7 @@ Util.browser = function(model, version) {
 	}
 	else if(model.match(/\bsafari\b/i)) {
 //		u.bug("##trying to match safari")
-		if(!window.chrome && document.body.style.webkitTransform != undefined) {
+		if(!window.chrome && document.body.style.webkitTransform != undefined && !u.system("ie")) {
 			current_version = navigator.userAgent.match(/(Version\/)(\d+)(.\d)/i)[2];
 		}
 	}
@@ -119,12 +119,13 @@ Util.system = function(os, version) {
 	}
 	else if(os.match(/\bios\b/i)) {
 
-		if(navigator.userAgent.match(/(OS )(\d+[._]{1}\d)( like Mac OS X)/i)) {
-			current_version = navigator.userAgent.match(/(OS )(\d+[._]{1}\d)( like Mac OS X)/i)[2].replace("_", ".");
+		if(navigator.userAgent.match(/(OS )(\d+[._]{1}\d+[._\d]*)( like Mac OS X)/i)) {
+			current_version = navigator.userAgent.match(/(OS )(\d+[._]{1}\d+[._\d]*)( like Mac OS X)/i)[2].replace(/_/g, ".");
 		}
 
 		// CPU OS 8_0 l
 		//  iPhone OS 8_0 like Mac OS X
+		//  iPhone OS 9_0_1 like Mac OS X
 		// CPU OS 8_0 like Mac OS X
 		// CPU iPhone OS 4_2 like Mac OS X
 	}
@@ -142,7 +143,7 @@ Util.system = function(os, version) {
 	}
 	else if(os.match(/\blinux\b/i)) {
 
-		if(navigator.userAgent.match(/linux|x11/i)) {
+		if(navigator.userAgent.match(/linux|x11/i) && !navigator.userAgent.match(/android/i)) {
 			current_version = true;
 		}
 	}
