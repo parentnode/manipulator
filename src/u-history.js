@@ -1,12 +1,48 @@
 Util.History = u.h = new function() {
 
 	this.popstate = ("onpopstate" in window);
-//	this.popstate = u.browser("firefox") ? false : true;
+//	this.popstate = false;
 
-	this.catchEvent = function(node, _options) {
+	this.callbacks = [];
+	this.is_listening = false;
 
 
-		node.callback_urlchange = "navigate";
+	// create central navigate function
+	// update hash/url
+	this.navigate = function(url, node) {
+//		u.bug("u.h.navigate:" + url + ", " + (node ? u.nodeId(node) : "no node"))
+
+
+		// popstate handling
+		if(this.popstate) {
+			history.pushState({}, url, url);
+			this.callback(url);
+		}
+		// hash handling
+		else {
+			location.hash = u.h.getCleanUrl(url);
+		}
+
+	}
+
+	// make callbacks to registered listeners
+	this.callback = function(url) {
+//		u.bug("callbacks invoked:" + url + " (" + this.callbacks.length + ")")
+
+		var i, recipient;
+		for(i = 0; recipient = this.callbacks[i]; i++) {
+			if(typeof(recipient.node[recipient.callback]) == "function") {
+//				u.bug("callback: " + u.nodeId(recipient.node) + ", " + recipient.callback);
+				recipient.node[recipient.callback](url);
+			}
+		}
+	}
+
+	// remove listener
+	this.removeEvent = function(node, _options) {
+
+		// default callback 
+		var callback_urlchange = "navigate";
 
 		// additional info passed to function as JSON object
 		if(typeof(_options) == "object") {
@@ -14,84 +50,135 @@ Util.History = u.h = new function() {
 			for(argument in _options) {
 
 				switch(argument) {
-					case "callback"		: node.callback_urlchange		= _options[argument]; break;
+					case "callback"		: callback_urlchange		= _options[argument]; break;
+				}
+
+			}
+		}
+
+		// find matching callback and remove it
+		var i, recipient;
+		for(i = 0; recipient = this.callbacks[i]; i++) {
+			if(recipient.node == node && recipient.callback == callback_urlchange) {
+				this.callbacks.splice(i, 1);
+				break;
+			}
+		}
+
+	}
+
+	// add event listener for urlchange/hashchange
+	this.addEvent = function(node, _options) {
+
+		// default callback 
+		var callback_urlchange = "navigate";
+
+		// additional info passed to function as JSON object
+		if(typeof(_options) == "object") {
+			var argument;
+			for(argument in _options) {
+
+				switch(argument) {
+					case "callback"		: callback_urlchange		= _options[argument]; break;
 				}
 
 			}
 		}
 
 
-		this.node = node;
+		// only start listning for events once
+		if(!this.is_listening) {
+			this.is_listening = true;
 
+//			u.bug("start to listen for changes")
 
-		// invoke capture function
-		var hashChanged = function(event) {
+			// popstate support
+			if(this.popstate) {
 
-			// no url or invalid path
-			// update hash, triggering new _navigate request
-			if(!location.hash || !location.hash.match(/^#\//)) {
-				location.hash = "#/"
-				return;
+				u.e.addEvent(window, "popstate", this._urlChanged);
 			}
-
-			var url = u.h.getCleanHash(location.hash);
-//			u.bug("hash changed:" + url)
-
-			// notify of url change
-			if(typeof(u.h.node[u.h.node.callback_urlchange]) == "function") {
-				u.h.node[u.h.node.callback_urlchange](url);
+			// hash change support
+			else if("onhashchange" in window && !u.browser("explorer", "<=7")) {
+				u.e.addEvent(window, "hashchange", this._hashChanged);
 			}
-		}
-
-		var urlChanged = function(event) {
-
-			var url = u.h.getCleanUrl(location.href);
-//			u.bug("popstate changed:" + url + ", " + event.state)
-//			u.xInObject(event);
-
-			// Broken Safari triggers popstate event on load
-			// 
-			// On first load on new browser window/tab (not on refresh), Chrome has no event.state for back-button
-			// Safari does not have event.path - so I detect the first flawed popstate event in Safari 
-			// by checking for event.state and event.path
-			if(event.state || (!event.state && event.path)) {
-
-				// notify of url change
-				if(typeof(u.h.node[u.h.node.callback_urlchange]) == "function") {
-					u.h.node[u.h.node.callback_urlchange](url);
-				}
-
-			}
-			// replace non-state, to enable back linking in Safari
+			// old school timerbased
 			else {
-				history.replaceState({}, url, url);
+				u.h._current_hash = window.location.hash;
+				window.onhashchange = this._hashChanged;
+				setInterval(
+					function() {
+						if(window.location.hash !== u.h._current_hash) {
+							u.h._current_hash = window.location.hash;
+							window.onhashchange();
+						}
+					}, 200
+				);
 			}
+
 		}
 
+//		u.bug("add urlchange callback: " + u.nodeId(node) + ", callback:" + callback_urlchange)
 
-		// popstate support
-		if(this.popstate) {
-			window.onpopstate = urlChanged;
+		// add node and callback to callback stack
+		this.callbacks.push({"node":node, "callback":callback_urlchange});
+
+
+	}
+
+
+	// popstate event handler
+	this._urlChanged = function(event) {
+
+		var url = u.h.getCleanUrl(location.href);
+		// u.bug("popstate changed:" + url + ", " + event.state)
+		// u.xInObject(event);
+		// u.xInObject(event.state);
+
+		// Broken Safari triggers popstate event on load
+		// 
+		// On first load on new browser window/tab (not on refresh), Chrome has no event.state for back-button
+		// Safari does not have event.path - so I detect the first flawed popstate event in Safari 
+		// by checking for event.state and event.path
+		if(event.state || (!event.state && event.path)) {
+
+			// invoke callbacks to stack
+			u.h.callback(url);
 		}
-		// hash change support
-		else if("onhashchange" in window && !u.browser("explorer", "<=7")) {
-			window.onhashchange = hashChanged;
-		}
-		// old school timerbased
+		// replace non-state, to enable back linking in Safari
 		else {
-			u.current_hash = window.location.hash;
-			window.onhashchange = hashChanged;
-			setInterval(
-				function() {
-//					u.bug("check hash")
-					if(window.location.hash !== u.current_hash) {
-						u.current_hash = window.location.hash;
-						window.onhashchange();
-					}
-				}, 200
-			);
+			history.replaceState({}, url, url);
 		}
 	}
+
+
+	// hashchange event handler
+	this._hashChanged = function(event) {
+
+		// no url or invalid path
+		// update hash, triggering new _navigate request
+		if(!location.hash || !location.hash.match(/^#\//)) {
+			location.hash = "#/"
+			return;
+		}
+
+		var url = u.h.getCleanHash(location.hash);
+//		u.bug("hash changed:" + url)
+
+		// invoke callbacks to stack
+		u.h.callback(url);
+	}
+
+
+
+
+	// temporary history experiment
+	// TODO: implement some history storage
+	this.trail = [];
+
+	this.addToTrail = function(url, node) {
+		this.trail.push({"url":url, "node":node});
+	}
+
 
 
 
@@ -148,6 +235,8 @@ Util.History = u.h = new function() {
 		}
 	}
 
+
+	// Unknown purpose?
 	// resolve current url, check for hash value and then plain url
 	this.resolveCurrentUrl = function() {
 

@@ -359,9 +359,9 @@ Util.clickableElement = u.ce = function(node, _options) {
 		u.ac(node, "clickable");
 	}
 
-	if(typeof(u.e.click) == "function") {
-		u.e.click(node);
+	if(typeof(u.e) != "undefined" && typeof(u.e.click) == "function") {
 
+		u.e.click(node);
 		if(node._click_type == "link") {
 			node.clicked = function(event) {
 				if(event && (event.metaKey || event.ctrlKey)) {
@@ -371,8 +371,8 @@ Util.clickableElement = u.ce = function(node, _options) {
 					// HASH/POPSTATE navigation
 					// FX 5 and others cannot find page ??
 					// TODO: needs additional testing!
-					if(typeof(page) != "undefined" && typeof(page.navigate) == "function") {
-						page.navigate(this.url);
+					if(typeof(u.h) != "undefined" && u.h.is_listening) {
+						u.h.navigate(this.url, this);
 					}
 					else {
 						location.href = this.url;
