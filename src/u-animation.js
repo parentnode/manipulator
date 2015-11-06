@@ -197,6 +197,10 @@ Util.Animation = u.a = new function() {
 		// remove event listener - it's job is done
 		u.e.removeEvent(event.target, u.a.vendor("transitionEnd"), u.a._transitioned);
 
+		// transition should be removed here to be cleared before callback
+		u.a.transition(event.target, "none");
+
+		// only do callback to correct targets
 		if(event.target == this && typeof(this.transitioned) == "function") {
 
 			this.transitioned(event);
@@ -204,8 +208,6 @@ Util.Animation = u.a = new function() {
 			this.transitioned = null;
 
 		}
-
-		u.a.transition(event.target, "none");
 
 	}
 
