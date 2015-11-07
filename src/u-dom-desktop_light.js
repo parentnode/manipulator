@@ -47,7 +47,7 @@ if(typeof(document.defaultView) == "undefined") {
 
 
 // only punish older IEs
-if(document.all) {
+if(document.all && document.addEventListener == undefined) {
 
 
 	// IE 7 class bug - will not apply class unless set as node.className
@@ -55,7 +55,6 @@ if(document.all) {
 		try {
 			// is node_type already DOM node
 			var node = (typeof(node_type) == "object") ? node_type : document.createElement(node_type);
-			node = parent.appendChild(node);
 
 			if(attributes) {
 				var attribute;
@@ -64,20 +63,31 @@ if(document.all) {
 					if(attribute == "html") {
 						node.innerHTML = attributes[attribute]
 					}
-					else if(attribute != "class" && attribute != "type") {
+					else if(attribute != "class" && attribute != "type" && attribute != "value") {
 						node.setAttribute(attribute, attributes[attribute]);
 					}
 				}
 
-				// IE 7 specific extension
+				// IE specific extension
 				if(attributes["class"]) {
 					u.setClass(node, attributes["class"]);
 				}
-				// IE 7 specific extension
+				// IE specific extension
 				if(attributes["type"]) {
-					node.type = attributes["type"];
+					// use type=text instead of HTML5 types
+					node.type = attributes["type"].replace(/email|date|datetime|number|tel/, "text");
 				}
 
+			}
+			// have to modify the node before appending it to the DOM
+			node = parent.appendChild(node);
+
+			if(attributes) {
+				// IE specific extension
+				// Value must be set after appending to dom
+				if(attributes["value"]) {
+					node.value = attributes["value"];
+				}
 			}
 
 	//		node.e = e;
@@ -97,7 +107,6 @@ if(document.all) {
 	Util.insertElement = u.ie = function(parent, node_type, attributes) {
 		try {
 			var node = (typeof(node_type) == "object") ? node_type : document.createElement(node_type);
-			node = parent.insertBefore(node, parent.firstChild);
 
 		//	u.bug("node:" + u.nodeId(node));
 
@@ -110,7 +119,7 @@ if(document.all) {
 					if(attribute == "html") {
 						node.innerHTML = attributes[attribute]
 					}
-					else if(attribute != "class" && attribute != "type") {
+					else if(attribute != "class" && attribute != "type" && attribute != "value") {
 						node.setAttribute(attribute, attributes[attribute]);
 					}
 				}
@@ -121,12 +130,23 @@ if(document.all) {
 				}
 				// IE 7 specific extension
 				if(attributes["type"]) {
-					node.type = attributes["type"];
+					// use type=text instead of HTML5 types
+					node.type = attributes["type"].replace(/email|date|datetime|number|tel/, "text");
 				}
 
 			}
 
-		//	node.e = e;
+			// have to modify the node before inserting it in the DOM
+			node = parent.insertBefore(node, parent.firstChild);
+
+			if(attributes) {
+				// IE specific extension
+				// Value must be set after appending to dom
+				if(attributes["value"]) {
+					node.value = attributes["value"];
+				}
+			}
+
 			return node;
 		}
 		catch(exception) {
@@ -141,17 +161,13 @@ if(document.all) {
 			if(attributes) {
 				var attribute;
 				for(attribute in attributes) {
-					if(attribute != "class" && attribute != "type") {
+					if(attribute != "class") {
 						wrapper_node.setAttribute(attribute, attributes[attribute]);
 					}
 				}
 				// IE 7 specific extension
 				if(attributes["class"]) {
 					u.setClass(wrapper_node, attributes["class"]);
-				}
-				// IE 7 specific extension
-				if(attributes["type"]) {
-					wrapper_node.type = attributes["type"];
 				}
 			}
 			wrapper_node.appendChild(node);
@@ -174,17 +190,15 @@ if(document.all) {
 			if(attributes) {
 				var attribute;
 				for(attribute in attributes) {
-					wrapper_node.setAttribute(attribute, attributes[attribute]);
+					if(attribute != "class") {
+						wrapper_node.setAttribute(attribute, attributes[attribute]);
+					}
 				}
 			}	
 
 			// IE 7 specific extension
 			if(attributes["class"]) {
 				u.setClass(wrapper_node, attributes["class"]);
-			}
-			// IE 7 specific extension
-			if(attributes["type"]) {
-				wrapper_node.type = attributes["type"];
 			}
 
 			while(node.childNodes.length) {
