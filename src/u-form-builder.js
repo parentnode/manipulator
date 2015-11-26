@@ -89,7 +89,7 @@ u.f.addField = function(node, _options) {
 		var input = u.ae(field, "input", {"id":input_id, "value":field_value, "name":field_name, "type":field_type});
 	}
 	else if(field_type == "checkbox") {
-		var input = u.ae(field, "input", {"id":input_id, "value":"true", "name":field_name, "type":field_type});
+		var input = u.ae(field, "input", {"id":input_id, "value":(field_value ? field_value : "true"), "name":field_name, "type":field_type});
 		var label = u.ae(field, "label", {"for":input_id, "html":field_label});
 	}
 	else if(field_type == "text") {
