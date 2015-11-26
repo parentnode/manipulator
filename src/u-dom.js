@@ -217,11 +217,11 @@ Util.childNodes = u.cn = function(node, _options) {
 * @param Optional ClassName or attribute object
 * return HTML node
 */
-Util.appendElement = u.ae = function(parent, node_type, attributes) {
+Util.appendElement = u.ae = function(_parent, node_type, attributes) {
 	try {
 		// is node_type already DOM node
 		var node = (typeof(node_type) == "object") ? node_type : document.createElement(node_type);
-		node = parent.appendChild(node);
+		node = _parent.appendChild(node);
 
 		// add attributes
 		if(attributes) {
@@ -246,10 +246,10 @@ Util.appendElement = u.ae = function(parent, node_type, attributes) {
 /**
 * Insert element
 */
-Util.insertElement = u.ie = function(parent, node_type, attributes) {
+Util.insertElement = u.ie = function(_parent, node_type, attributes) {
 	try {
 		var node = (typeof(node_type) == "object") ? node_type : document.createElement(node_type);
-		node = parent.insertBefore(node, parent.firstChild);
+		node = _parent.insertBefore(node, _parent.firstChild);
 		// add attributes
 		if(attributes) {
 			var attribute;
@@ -353,6 +353,8 @@ Util.clickableElement = u.ce = function(node, _options) {
 		if(a.getAttribute("href") !== null) {
 			node.url = a.href;
 			a.removeAttribute("href");
+
+			node._a = a;
 		}
 	}
 	else {
@@ -528,7 +530,11 @@ Util.applyStyles = u.ass = function(node, styles, dom_update) {
 Util.getComputedStyle = u.gcs = function(node, property) {
 	// query DOM to force update
 	node.offsetHeight;
-	property = property.replace(/([A-Z]{1})/g, function(word){return word.replace(/([A-Z]{1})/, "-$1").toLowerCase()});
+
+//	property = property.replace(/([A-Z]{1})/g, function(word){return word.replace(/([A-Z]{1})/, "-$1").toLowerCase()});
+
+	// also convert vendor prefix
+	property = property.replace(/([A-Z]{1})/g, function(word){return word.replace(/([A-Z]{1})/, "-$1").toLowerCase()}).replace(/^(webkit|ms|moz)/g, "-$1");
 
 	// return computed style if method is supported
 	if(document.defaultView && document.defaultView.getComputedStyle) {

@@ -50,8 +50,8 @@ if(typeof(document.defaultView) == "undefined") {
 if(document.all && document.addEventListener == undefined) {
 
 
-	// IE 7 class bug - will not apply class unless set as node.className
-	Util.appendElement = u.ae = function(parent, node_type, attributes) {
+	// IE attribute bug - will not apply class unless set as node.className
+	Util.appendElement = u.ae = function(_parent, node_type, attributes) {
 		try {
 			// is node_type already DOM node
 			var node = (typeof(node_type) == "object") ? node_type : document.createElement(node_type);
@@ -60,10 +60,7 @@ if(document.all && document.addEventListener == undefined) {
 				var attribute;
 				for(attribute in attributes) {
 	//				u.bug("append:" + attribute);
-					if(attribute == "html") {
-						node.innerHTML = attributes[attribute]
-					}
-					else if(attribute != "class" && attribute != "type" && attribute != "value") {
+					if(!attribute.match(/^(class|type|value|html)$/)) {
 						node.setAttribute(attribute, attributes[attribute]);
 					}
 				}
@@ -80,7 +77,7 @@ if(document.all && document.addEventListener == undefined) {
 
 			}
 			// have to modify the node before appending it to the DOM
-			node = parent.appendChild(node);
+			node = _parent.appendChild(node);
 
 			if(attributes) {
 				// IE specific extension
@@ -88,38 +85,51 @@ if(document.all && document.addEventListener == undefined) {
 				if(attributes["value"]) {
 					node.value = attributes["value"];
 				}
+				if(attributes["html"]) {
+					node.innerHTML = attributes["html"];
+
+
+					// OLD IEs appends location.href to src and href if starting with "{"
+					if(attributes["html"].match(/(src|href)\=\"\{/i)) {
+
+						// manually update src attribute to correct value
+						var nodes, matches, n, i;
+						matches = u.getMatches(attributes["html"], new RegExp("src\=\"([^\"]+)\"", "ig") );
+						nodes = u.qsa("[src]", node);
+						for(i = 0; n = nodes[i]; i++) {
+							n.src = matches[i];
+						}
+
+						// manually update href attribute to correct value
+						matches = u.getMatches(attributes["html"], new RegExp("href\=\"([^\"]+)\"", "ig") );
+						nodes = u.qsa("[href]", node);
+						for(i = 0; n = nodes[i]; i++) {
+							n.href = matches[i];
+						}
+					}
+				}
 			}
 
-	//		node.e = e;
 			return node;
 		}
 		catch(exception) {
 			u.exception("u.ae (desktop_light)", arguments, exception);
-			// u.bug("Exception ("+exception+") in u.ae, called from: "+arguments.callee.caller);
-			// u.bug("node:" + u.nodeId(parent, 1));
-	//		u.xInObject(attributes);
 		}
 
 	}
 
 
-	// IE 7 class bug - will not apply class unless set as node.className
-	Util.insertElement = u.ie = function(parent, node_type, attributes) {
+
+	// IE attribute bug - will not apply class unless set as node.className
+	Util.insertElement = u.ie = function(_parent, node_type, attributes) {
 		try {
 			var node = (typeof(node_type) == "object") ? node_type : document.createElement(node_type);
-
-		//	u.bug("node:" + u.nodeId(node));
-
-		//	u.xInObject(attributes);
 
 			if(attributes) {
 				var attribute;
 				for(attribute in attributes) {
 		//			u.bug(attribute)
-					if(attribute == "html") {
-						node.innerHTML = attributes[attribute]
-					}
-					else if(attribute != "class" && attribute != "type" && attribute != "value") {
+					if(!attribute.match(/^(class|type|value|html)$/)) {
 						node.setAttribute(attribute, attributes[attribute]);
 					}
 				}
@@ -137,13 +147,35 @@ if(document.all && document.addEventListener == undefined) {
 			}
 
 			// have to modify the node before inserting it in the DOM
-			node = parent.insertBefore(node, parent.firstChild);
+			node = _parent.insertBefore(node, _parent.firstChild);
 
 			if(attributes) {
 				// IE specific extension
 				// Value must be set after appending to dom
 				if(attributes["value"]) {
 					node.value = attributes["value"];
+				}
+				if(attributes["html"]) {
+					node.innerHTML = attributes["html"];
+
+					// OLD IEs appends location.href to src and href if starting with "{"
+					if(attributes["html"].match(/(src|href)\=\"\{/i)) {
+
+						// manually update src attribute to correct value
+						var nodes, matches, n, i;
+						matches = u.getMatches(attributes["html"], new RegExp("src\=\"([^\"]+)\"", "ig") );
+						nodes = u.qsa("[src]", node);
+						for(i = 0; n = nodes[i]; i++) {
+							n.src = matches[i];
+						}
+
+						// manually update href attribute to correct value
+						matches = u.getMatches(attributes["html"], new RegExp("href\=\"([^\"]+)\"", "ig") );
+						nodes = u.qsa("[href]", node);
+						for(i = 0; n = nodes[i]; i++) {
+							n.href = matches[i];
+						}
+					}
 				}
 			}
 
@@ -153,6 +185,7 @@ if(document.all && document.addEventListener == undefined) {
 			u.exception("u.ie (desktop_light)", arguments, exception);
 		}
 	}
+
 
 	// insert element in wrap-element and return wrapper
 	Util.wrapElement = u.we = function(node, node_type, attributes) {
@@ -175,10 +208,6 @@ if(document.all && document.addEventListener == undefined) {
 		}
 		catch(exception) {
 			u.exception("u.we (desktop_light)", arguments, exception);
-
-			// u.bug("Exception ("+exception+") in u.we, called from: "+arguments.callee.caller);
-			// u.bug("node:" + u.nodeId(node, 1));
-			// u.xInObject(attributes);
 		}
 		return false;
 	}
