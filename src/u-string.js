@@ -70,3 +70,15 @@ Util.stringOr = u.eitherOr = function(value, replacement) {
 		return replacement ? replacement : "";
 	}	
 }
+
+// get grouped matches globally
+// So far used to fix IE7 issue when appending nodes with src or href beginning with "{"
+// TODO: implement as standard function
+Util.getMatches = function(string, regex) {
+	var match, matches = [];
+	while(match = regex.exec(string)) {
+		matches.push(match[1]);
+	}
+	return matches;
+}
+
