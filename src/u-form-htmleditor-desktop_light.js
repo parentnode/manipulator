@@ -4,13 +4,14 @@
 
 
 // initializer
-Util.Form.customInit["html"] = function(form, field) {
+Util.Form.customInit["html"] = function(_form, field) {
 
 	field._input = u.qs("textarea", field);
+	field._input._form = _form;
 	field._input.field = field;
 
 	// add input to fields array
-	form.fields[field._input.name] = field._input;
+	_form.fields[field._input.name] = field._input;
 
 	// get input label
 	field._input._label = u.qs("label[for='"+field._input.id+"']", field);

@@ -4,7 +4,7 @@
 
 
 // initializer
-Util.Form.customInit["location"] = function(form, field) {
+Util.Form.customInit["location"] = function(_form, field) {
 
 	// location, latitude and longitude
 
@@ -16,9 +16,10 @@ Util.Form.customInit["location"] = function(form, field) {
 
 	for(j = 0; input = field._inputs[j]; j++) {
 		input.field = field;
+		input._form = _form;
 
 		// add input to fields array
-		form.fields[input.name] = input;
+		_form.fields[input.name] = input;
 
 		// get input label
 		input._label = u.qs("label[for='"+input.id+"']", field);

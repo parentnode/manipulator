@@ -4,13 +4,14 @@
 
 
 // initializer
-Util.Form.customInit["html"] = function(form, field) {
+Util.Form.customInit["html"] = function(_form, field) {
 
 	field._input = u.qs("textarea", field);
+	field._input._form = _form;
 	field._input.field = field;
 
 	// add input to fields array
-	form.fields[field._input.name] = field._input;
+	_form.fields[field._input.name] = field._input;
 
 	// get input label
 	field._input._label = u.qs("label[for='"+field._input.id+"']", field);
@@ -177,9 +178,9 @@ u.f.textEditor = function(field) {
 
 	// find item id
 	// could be in form action (last fragment of url)
-	// could be extended to look in other places
+	// TODO: should be extended to look in other places
 	field.item_id;
-	var item_id_match = field._input.form.action.match(/\/([0-9]+)(\/|$)/);
+	var item_id_match = field._input._form.action.match(/\/([0-9]+)(\/|$)/);
 	if(item_id_match) {
 		field.item_id = item_id_match[1];
 	}
@@ -339,13 +340,13 @@ u.f.textEditor = function(field) {
 		this.updateContent();
 
 		// callback to form updated
-		if(this._input.form && typeof(this._input.form.updated) == "function") {
-			this._input.form.updated(this._input);
+		if(this._input._form && typeof(this._input._form.updated) == "function") {
+			this._input._form.updated(this._input);
 		}
 
 		// callback to form changed
-		if(this._input.form && typeof(this._input.form.changed) == "function") {
-			this._input.form.changed(this._input);
+		if(this._input._form && typeof(this._input._form.changed) == "function") {
+			this._input._form.changed(this._input);
 		}
 	}
 
@@ -555,7 +556,7 @@ u.f.textEditor = function(field) {
 			this.update();
 
 			// save - new state (delete is permanent)
-			this._input.form.submit();
+			this._input._form.submit();
 
 		}
 
@@ -874,7 +875,7 @@ u.f.textEditor = function(field) {
 		var form_data = new FormData();
 
 		// append relevant data
-		form_data.append("csrf-token", this._input.form.fields["csrf-token"].val());
+		form_data.append("csrf-token", this._input._form.fields["csrf-token"].val());
 
 		// request response handler
 		tag.response = function(response) {
@@ -903,7 +904,7 @@ u.f.textEditor = function(field) {
 
 		// append relevant data
 		form_data.append(this.name, this.files[0], this.value);
-		form_data.append("csrf-token", this.form.fields["csrf-token"].val());
+		form_data.append("csrf-token", this._form.fields["csrf-token"].val());
 
 		// response handler
 		this.response = function(response) {
@@ -960,7 +961,7 @@ u.f.textEditor = function(field) {
 				this.tag.field.update();
 
 				// save after upload is complete
-				this.tag.field._input.form.submit();
+				this.tag.field._input._form.submit();
 			}
 		}
 		u.request(this, this.field.media_add_action+"/"+this.field.item_id, {"method":"post", "params":form_data});
@@ -1076,7 +1077,7 @@ u.f.textEditor = function(field) {
 		var form_data = new FormData();
 
 		// append relevant data
-		form_data.append("csrf-token", this._input.form.fields["csrf-token"].val());
+		form_data.append("csrf-token", this._input._form.fields["csrf-token"].val());
 
 		// request response handler
 		tag.response = function(response) {
@@ -1105,7 +1106,7 @@ u.f.textEditor = function(field) {
 
 		// append relevant data
 		form_data.append(this.name, this.files[0], this.value);
-		form_data.append("csrf-token", this.form.fields["csrf-token"].val());
+		form_data.append("csrf-token", this._form.fields["csrf-token"].val());
 
 		// response handler
 		this.response = function(response) {
@@ -1154,7 +1155,7 @@ u.f.textEditor = function(field) {
 				this.tag.field.update();
 
 				// save after upload is complete
-				this.tag.field._input.form.submit();
+				this.tag.field._input._form.submit();
 			}
 		}
 		u.request(this, this.field.file_add_action+"/"+this.field.item_id, {"method":"post", "params":form_data});
@@ -1756,7 +1757,7 @@ u.f.textEditor = function(field) {
 		u.ac(this.field, "focus");
 
 		// make sure field goes all the way in front - hint/error must be seen
-		u.as(this.field, "zIndex", this.field._input.form._focus_z_index);
+		u.as(this.field, "zIndex", this.field._input._form._focus_z_index);
 
 		// position hint in case there is an error
 		u.f.positionHint(this.field);

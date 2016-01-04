@@ -13,22 +13,46 @@ Util.Form = u.f = new function() {
 	// - adds realtime validation, by settng correct/error classname
 	// - sets focus classname on field focus
 	// - adds callback
-	this.init = function(form, _options) {
-//		u.bug("init form:" + u.nodeId(form));
+	this.init = function(_form, _options) {
+//		u.bug("init form:" + u.nodeId(_form));
 
 		var i, j, field, action, input, hidden_field;
+
+
+		// check for type of "form"
+		// on some systems there is ONE universal form - this allows for pseudo forms, represented by a div
+		if(_form.nodeName.toLowerCase() != "form") {
+
+			// look for form 
+			_form.native_form = u.pn(_form, {"include":"form"});
+
+			// a "form" must have parent form
+			if(!_form.native_form) {
+				u.bug("there is no form in this document??");
+				return;
+			}
+
+		}
+
+		// form is actual form
+		else {
+
+			// make sure native_form can be used
+			_form.native_form = _form;
+		}
 
 
 		// Default values
 
 		// field focus z-index
-		form._focus_z_index = 50;
+		_form._focus_z_index = 50;
+		_form._hover_z_index = 49;
 
 		// validate fields continuously and when submitting
-		form._validation = true;
+		_form._validation = true;
 
 		// u.bug list form.fields and form.actions
-		form._debug_init = false;
+		_form._debug_init = false;
 
 		// additional info passed to function as JSON object
 		if(typeof(_options) == "object") {
@@ -36,42 +60,48 @@ Util.Form = u.f = new function() {
 			for(_argument in _options) {
 				switch(_argument) {
 
-					case "validation"       : form._validation      = _options[_argument]; break;
-					case "focus_z"          : form._focus_z_index   = _options[_argument]; break;
+					case "validation"       : _form._validation      = _options[_argument]; break;
+					case "focus_z"          : _form._focus_z_index   = _options[_argument]; break;
 
-					case "debug"            : form._debug_init      = _options[_argument]; break;
+					case "debug"            : _form._debug_init      = _options[_argument]; break;
 				}
 			}
 		}
 
 		// disable regular form submit
-		form.onsubmit = function(event) {return false;}
+		_form.native_form.onsubmit = function(event) {
+			// if submit event comes from _form element, do not submit
+			// but allow submit for other elements (in cases of global form usage like sharepoint/.net)
+			if(event.target._form) {
+				return false;
+			}
+		}
 
 		// do not use HTML5 validation
 		// we'll do all validation internally
-		form.setAttribute("novalidate", "novalidate");
+		_form.native_form.setAttribute("novalidate", "novalidate");
 
 		// set submit reference to internal submit handler
 		// but keep reference to DOM submot
-		form.DOMsubmit = form.submit;
-		form.submit = this._submit;
+		_form.DOMsubmit = _form.native_form.submit;
+		_form.submit = this._submit;
 
 
 		// objects for fields and actions
 		// all named fields and buttons can be accessed through this objects
-		form.fields = {};
-		form.actions = {};
-		form.errors = {};
+		_form.fields = {};
+		_form.actions = {};
+		_form.errors = {};
 
 
 		// Label styles - defines special handling of label values
 		// specified via form classname as labelstyle:inject
 		// Currently implemented: none or inject
-		form.labelstyle = u.cv(form, "labelstyle");
+		_form.labelstyle = u.cv(_form, "labelstyle");
 
 
 		// get all fields
-		var fields = u.qsa(".field", form);
+		var fields = u.qsa(".field", _form);
 		for(i = 0; field = fields[i]; i++) {
 //			u.bug("field found:" + u.nodeId(field))
 
@@ -105,9 +135,8 @@ Util.Form = u.f = new function() {
 			// allows to overwrite any field type or built custom field types
 			var custom_init;
 			for(custom_init in this.customInit) {
-				if(u.hc(field, custom_init)) { //}.className.match(new RegExp("\b"+custom_init+"\b"))) {
-//				if(field.className.match(custom_init)) {
-					this.customInit[custom_init](form, field);
+				if(u.hc(field, custom_init)) {
+					this.customInit[custom_init](_form, field);
 					field._initialized = true;
 				}
 			}
@@ -121,10 +150,11 @@ Util.Form = u.f = new function() {
 				if(u.hc(field, "string|email|tel|number|integer|password|date|datetime")) {
 
 					field._input = u.qs("input", field);
+					field._input._form = _form;
 					field._input.field = field;
 
 					// add input to fields array
-					form.fields[field._input.name] = field._input;
+					_form.fields[field._input.name] = field._input;
 
 					// get input label
 					field._input._label = u.qs("label[for='"+field._input.id+"']", field);
@@ -150,10 +180,11 @@ Util.Form = u.f = new function() {
 				else if(u.hc(field, "text")) {
 
 					field._input = u.qs("textarea", field);
+					field._input._form = _form;
 					field._input.field = field;
 
 					// add input to fields array
-					form.fields[field._input.name] = field._input;
+					_form.fields[field._input.name] = field._input;
 
 					// get input label
 					field._input._label = u.qs("label[for='"+field._input.id+"']", field);
@@ -238,10 +269,11 @@ Util.Form = u.f = new function() {
 				else if(u.hc(field, "select")) {
 
 					field._input = u.qs("select", field);
+					field._input._form = _form;
 					field._input.field = field;
 
 					// add input to fields array
-					form.fields[field._input.name] = field._input;
+					_form.fields[field._input.name] = field._input;
 
 					// get input label
 					field._input._label = u.qs("label[for='"+field._input.id+"']", field);
@@ -265,13 +297,14 @@ Util.Form = u.f = new function() {
 				else if(u.hc(field, "checkbox|boolean")) {
 
 					field._input = u.qs("input[type=checkbox]", field);
+					field._input._form = _form;
 					field._input.field = field;
 
 					// get input label
 					field._input._label = u.qs("label[for='"+field._input.id+"']", field);
 
 					// add input to fields array
-					form.fields[field._input.name] = field._input;
+					_form.fields[field._input.name] = field._input;
 
 					// get/set value function
 					field._input.val = this._value_checkbox;
@@ -324,11 +357,12 @@ Util.Form = u.f = new function() {
 					field._input = field._inputs[0];
 
 					// add first input to fields array (radios all have same name)
-					form.fields[field._input.name] = field._input;
+					_form.fields[field._input.name] = field._input;
 
 					// initalize individual radio buttons
 					for(j = 0; input = field._inputs[j]; j++) {
 						input.field = field;
+						input._form = _form;
 
 						// get input label
 						input._label = u.qs("label[for='"+input.id+"']", field);
@@ -374,10 +408,11 @@ Util.Form = u.f = new function() {
 				else if(u.hc(field, "files")) {
 
 					field._input = u.qs("input", field);
+					field._input._form = _form;
 					field._input.field = field;
 
 					// add input to fields array
-					form.fields[field._input.name] = field._input;
+					_form.fields[field._input.name] = field._input;
 
 					// get input label
 					field._input._label = u.qs("label[for='"+field._input.id+"']", field);
@@ -422,10 +457,11 @@ Util.Form = u.f = new function() {
 				else if(u.hc(field, "tags")) {
 
 					field._input = u.qs("input", field);
+					field._input._form = _form;
 					field._input.field = field;
 
 					// add input to fields array
-					form.fields[field._input.name] = field._input;
+					_form.fields[field._input.name] = field._input;
 
 					// get input label
 					field._input._label = u.qs("label[for='"+field._input.id+"']", field);
@@ -453,10 +489,11 @@ Util.Form = u.f = new function() {
 				else if(u.hc(field, "prices")) {
 
 					field._input = u.qs("input", field);
+					field._input._form = _form;
 					field._input.field = field;
 
 					// add input to fields array
-					form.fields[field._input.name] = field._input;
+					_form.fields[field._input.name] = field._input;
 
 					// get input label
 					field._input._label = u.qs("label[for='"+field._input.id+"']", field);
@@ -490,12 +527,12 @@ Util.Form = u.f = new function() {
 
 
 		// reference hidden fields to allow accessing them through form fields array
-		var hidden_fields = u.qsa("input[type=hidden]", form);
+		var hidden_fields = u.qsa("input[type=hidden]", _form);
 		for(i = 0; hidden_field = hidden_fields[i]; i++) {
 
 			// do not overwrite fields index with hidden field
-			if(!form.fields[hidden_field.name]) {
-				form.fields[hidden_field.name] = hidden_field;
+			if(!_form.fields[hidden_field.name]) {
+				_form.fields[hidden_field.name] = hidden_field;
 
 				// add get/set value funtion
 				hidden_field.val = this._value;
@@ -504,14 +541,14 @@ Util.Form = u.f = new function() {
 
 
 		// get all actions
-		var actions = u.qsa(".actions li input[type=button],.actions li input[type=submit],.actions li a.button", form);
+		var actions = u.qsa(".actions li input[type=button],.actions li input[type=submit],.actions li a.button", _form);
 		for(i = 0; action = actions[i]; i++) {
 
 			// make sure even a.buttons knows form
 			// IE 8 cannot redeclare form on form-elements
-			if(!action.form) {
-				action.form = form;
-			}
+//			if(!action.form) {
+				action._form = _form;
+//			}
 
 			// activate button, adding focus and blur
 			this.activateButton(action);
@@ -520,11 +557,11 @@ Util.Form = u.f = new function() {
 
 
 		// u.bug list of fields and actions
-		if(form._debug_init) {
-			u.bug(u.nodeId(form) + ", fields:");
-			u.xInObject(form.fields);
-			u.bug(u.nodeId(form) + ", actions:");
-			u.xInObject(form.actions);
+		if(_form._debug_init) {
+			u.bug(u.nodeId(_form) + ", fields:");
+			u.xInObject(_form.fields);
+			u.bug(u.nodeId(_form) + ", actions:");
+			u.xInObject(_form.actions);
 		}
 
 	}
@@ -608,7 +645,7 @@ Util.Form = u.f = new function() {
 		if(value !== undefined) {
 
 			// find option with matching value
-			for(i = 0; option = this.form[this.name][i]; i++) {
+			for(i = 0; option = this.field._inputs[i]; i++) {
 
 				// finding it not unlikely that radio value could be strings "true"/"false"
 				// compensate for forgetting the string aspect of true/false
@@ -622,7 +659,7 @@ Util.Form = u.f = new function() {
 		}
 		// find checked option
 		else {
-			for(i = 0; option = this.form[this.name][i]; i++) {
+			for(i = 0; option = this.field._inputs[i]; i++) {
 				if(option.checked) {
 					return option.value;
 				}
@@ -765,12 +802,12 @@ Util.Form = u.f = new function() {
 				this.blur();
 
 				// store submit info
-				this.form.submitInput = this;
+				this._form.submitInput = this;
 				// delete any previous submit info
-				this.form.submitButton = false;
+				this._form.submitButton = false;
 
 				// internal submit
-				this.form.submit(event, this);
+				this._form.submit(event, this);
 			}
 		}
 
@@ -789,12 +826,12 @@ Util.Form = u.f = new function() {
 //				u.bug("[ENTER] pressed:" + u.nodeId(this));
 
 				// store submit info
-				this.form.submit_input = false;
+				this._form.submit_input = false;
 				// delete any previous submit info
-				this.form.submit_button = this;
+				this._form.submit_button = this;
 
 				// internal submit
-				this.form.submit(event);
+				this._form.submit(event);
 			}
 		}
 
@@ -827,8 +864,8 @@ Util.Form = u.f = new function() {
 		}
 
 		// does form have callback declared
-		if(typeof(this.form.changed) == "function") {
-			this.form.changed(this);
+		if(typeof(this._form.changed) == "function") {
+			this._form.changed(this);
 		}
 	}
 	// internal - input is updated (onkeyup event) - attached to input
@@ -858,8 +895,8 @@ Util.Form = u.f = new function() {
 			}
 
 			// does form have callback declared
-			if(typeof(this.form.updated) == "function") {
-				this.form.updated(this);
+			if(typeof(this._form.updated) == "function") {
+				this._form.updated(this);
 			}
 		}
 
@@ -888,7 +925,7 @@ Util.Form = u.f = new function() {
 		u.ac(this, "hover");
 
 		// in case of overlapping hint/errors, make sure this one is on top
-		u.as(this.field, "zIndex", this.field._input.form._focus_z_index);
+		u.as(this.field, "zIndex", this.field._input._form._hover_z_index);
 
 		// is help element available, then position it appropriately to input
 		u.f.positionHint(this.field);
@@ -918,7 +955,7 @@ Util.Form = u.f = new function() {
 		u.ac(this, "focus");
 
 		// make sure field goes all the way in front - hint/error must be seen
-		u.as(this.field, "zIndex", this.form._focus_z_index);
+		u.as(this.field, "zIndex", this._form._focus_z_index);
 
 		// is help element available, then position it appropriately to input
 		u.f.positionHint(this.field);
@@ -937,8 +974,8 @@ Util.Form = u.f = new function() {
 		}
 
 		// does form have callback declared
-		if(typeof(this.form.focused) == "function") {
-			this.form.focused(this);
+		if(typeof(this._form.focused) == "function") {
+			this._form.focused(this);
 		}
 	}
 	// internal blur handler - attatched to inputs
@@ -974,8 +1011,8 @@ Util.Form = u.f = new function() {
 		}
 
 		// does form have callback declared
-		if(typeof(this.form.blurred) == "function") {
-			this.form.blurred(this);
+		if(typeof(this._form.blurred) == "function") {
+			this._form.blurred(this);
 		}
 	}
 
@@ -990,8 +1027,8 @@ Util.Form = u.f = new function() {
 		}
 
 		// does form have callback
-		if(typeof(this.form.focused) == "function") {
-			this.form.focused(this);
+		if(typeof(this._form.focused) == "function") {
+			this._form.focused(this);
 		}
 	}
 	// internal blur handler - attatched to buttons
@@ -1006,8 +1043,8 @@ Util.Form = u.f = new function() {
 		}
 
 		// does form have callback
-		if(typeof(this.form.blurred) == "function") {
-			this.form.blurred(this);
+		if(typeof(this._form.blurred) == "function") {
+			this._form.blurred(this);
 		}
 	}
 
@@ -1078,7 +1115,7 @@ Util.Form = u.f = new function() {
 		// Labelstyle is defined?
 		// currently only one input style
 		// inject in input
-		if(iN.form.labelstyle == "inject") {
+		if(iN._form.labelstyle == "inject") {
 
 			// some inputs cannot have labels injected
 			// textarea has no type
@@ -1147,12 +1184,12 @@ Util.Form = u.f = new function() {
 				if(this.type && this.type.match(/submit/i)) {
 
 					// store submit button info
-					this.form._submit_button = this;
+					this._form._submit_button = this;
 					// remove any previous submit info
-					this.form._submit_input = false;
+					this._form._submit_input = false;
 
 					// internal submit
-					this.form.submit(event, this);
+					this._form.submit(event, this);
 				}
 
 				// TODO: what is default action when not a submit button??
@@ -1169,7 +1206,7 @@ Util.Form = u.f = new function() {
 		// add to actions index if button has a name
 		var action_name = action.name ? action.name : action.parentNode.className;
 		if(action_name) {
-			action.form.actions[action_name] = action;
+			action._form.actions[action_name] = action;
 		}
 
 
@@ -1244,16 +1281,16 @@ Util.Form = u.f = new function() {
 			// if help element is available
 			this.positionHint(iN.field);
 
-			iN.form.errors[iN.name] = true;
+			iN._form.errors[iN.name] = true;
 
 			// input validation failed
 			if(typeof(iN.validationFailed) == "function") {
 				iN.validationFailed();
 			}
 
-			if(typeof(iN.form.validationFailed) == "function") {
+			if(typeof(iN._form.validationFailed) == "function") {
 //				u.bug("fieldError validation failed")
-				iN.form.validationFailed(iN.form.errors);
+				iN._form.validationFailed(iN._form.errors);
 			}
 
 		}
@@ -1279,15 +1316,15 @@ Util.Form = u.f = new function() {
 			u.rc(iN.field, "error");
 		}
 
-		delete iN.form.errors[iN.name];
-		if(!Object.keys(iN.form.errors).length) {
-			if(typeof(iN.form.validationPassed) == "function") {
-				iN.form.validationPassed();
+		delete iN._form.errors[iN.name];
+		if(!Object.keys(iN._form.errors).length) {
+			if(typeof(iN._form.validationPassed) == "function") {
+				iN._form.validationPassed();
 			}
 		}
 		else {
-			if(typeof(iN.form.validationFailed) == "function") {
-				iN.form.validationFailed(iN.form.errors);
+			if(typeof(iN._form.validationFailed) == "function") {
+				iN._form.validationFailed(iN._form.errors);
 			}
 		}
 	}
@@ -1314,7 +1351,7 @@ Util.Form = u.f = new function() {
 
 
 		// validation is disabled
-		if(!iN.form._validation) {
+		if(!iN._form._validation) {
 			return true;
 		}
 
@@ -1628,7 +1665,7 @@ Util.Form = u.f = new function() {
 // - json - json object based on input names with endless nesting
 // - optional local extension
 // ignore_inputs - input classnames to identify inputs to ignore, multiple classes can be | seperated (string is used as regular expression)
-u.f.getParams = function(form, _options) {
+u.f.getParams = function(_form, _options) {
 
 
 	// default values
@@ -1672,14 +1709,14 @@ u.f.getParams = function(form, _options) {
 	}
 
 	// add submit button to params if available
-	if(form._submit_button && form._submit_button.name) {
-		params.append(form._submit_button.name, form._submit_button.value);
+	if(_form._submit_button && _form._submit_button.name) {
+		params.append(_form._submit_button.name, _form._submit_button.value);
 	}
 
 
-	var inputs = u.qsa("input", form);
-	var selects = u.qsa("select", form)
-	var textareas = u.qsa("textarea", form)
+	var inputs = u.qsa("input", _form);
+	var selects = u.qsa("select", _form)
+	var textareas = u.qsa("textarea", _form)
 
 	// get all inputs
 	for(i = 0; input = inputs[i]; i++) {
@@ -1775,7 +1812,7 @@ u.f.getParams = function(form, _options) {
 
 	// look for local extension types
 	if(send_as && typeof(this.customSend[send_as]) == "function") {
-		return this.customSend[send_as](params, form);
+		return this.customSend[send_as](params, _form);
 	}
 
 	// or use defaults
@@ -1797,7 +1834,7 @@ u.f.getParams = function(form, _options) {
 	else if(send_as == "object") {
 
 		// remove append function before returning object
-		params.append = null;
+		delete params.append;
 
 		return params;
 	}
