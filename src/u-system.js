@@ -211,7 +211,7 @@ Util.vendorProperty = function(property) {
 	if(!Util.vendor_properties[property]) {
 
 		// set property to avoid any repetition
-		Util.vendor_properties[property] = property;
+		Util.vendor_properties[property] = property.replace(/(-\w)/g, function(word){return word.replace(/-/, "").toUpperCase()});
 
 		// check if value is valid and make appropriate adjustments
 		if(document.documentElement) {
@@ -245,49 +245,55 @@ Util.vendorPrefix = function(type) {
 
 		Util.vendor_prefix = "";
 
-		var styles = window.getComputedStyle(document.documentElement, "");
+		// do not attempt to find vendor prefix in older browsers
+		if(document.documentElement && typeof(window.getComputedStyle) == "function") {
 
-		// fastes way
-		if(styles.length) {
-			var i, style, match;
+			// get all style properties
+			var styles = window.getComputedStyle(document.documentElement, "");
 
-			// loop through styles to find any known prefix
-			for(i = 0; style = styles[i]; i++) {
+			// fastes way
+			if(styles.length) {
+				var i, style, match;
 
-				match = style.match(/^-(moz|webkit|ms)-/);
-				if(match) {
-					Util.vendor_prefix = match[1];
+				// loop through styles to find any known prefix
+				for(i = 0; style = styles[i]; i++) {
 
-					// correct Moz word case exception
-					if(Util.vendor_prefix == "moz") {
-						Util.vendor_prefix = "Moz";
+					match = style.match(/^-(moz|webkit|ms)-/);
+					if(match) {
+						Util.vendor_prefix = match[1];
+
+						// correct Moz word case exception
+						if(Util.vendor_prefix == "moz") {
+							Util.vendor_prefix = "Moz";
+						}
+
+						break;
 					}
+				}
+			}
+			// fallback for older browsers not returning available css-properties in array
+			else {
+				var x, match;
 
-					break;
+				// loop through styles to find any known prefix
+				for(x in styles) {
+					// Opera is hard to find, because other properties start with O
+					match = x.match(/^(Moz|webkit|ms|OLink)/);
+
+					if(match) {
+						Util.vendor_prefix = match[1];
+
+						// Fix the Opera mess
+						if(Util.vendor_prefix === "OLink") {
+							Util.vendor_prefix = "O";
+						}
+
+						break;
+					}
 				}
 			}
 		}
-		// fallback for older browsers not returning available css-properties in array
-		else {
-			var x, match;
 
-			// loop through styles to find any known prefix
-			for(x in styles) {
-				// Opera is hard to find, because other properties start with O
-				match = x.match(/^(Moz|webkit|ms|OLink)/);
-
-				if(match) {
-					Util.vendor_prefix = match[1];
-
-					// Fix the Opera mess
-					if(Util.vendor_prefix === "OLink") {
-						Util.vendor_prefix = "O";
-					}
-
-					break;
-				}
-			}
-		}
 
 	}
 
