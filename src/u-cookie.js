@@ -77,9 +77,9 @@ Util.deleteCookie = function(name, _options) {
 
 
 // Node cookies
-Util.saveNodeCookie = function(node, name, value) {
+Util.saveNodeCookie = function(node, name, value, _options) {
 
-	var ref = u.cookieReference(node);
+	var ref = u.cookieReference(node, _options);
 	var mem = JSON.parse(u.getCookie("man_mem"));
 	if(!mem) {
 		mem = {};
@@ -93,9 +93,9 @@ Util.saveNodeCookie = function(node, name, value) {
 }
 
 
-Util.getNodeCookie = function(node, name) {
+Util.getNodeCookie = function(node, name, _options) {
 
-	var ref = u.cookieReference(node);
+	var ref = u.cookieReference(node, _options);
 	var mem = JSON.parse(u.getCookie("man_mem"));
 	if(mem && mem[ref]) {
 		if(name) {
@@ -108,9 +108,9 @@ Util.getNodeCookie = function(node, name) {
 	return false;
 }
 
-Util.deleteNodeCookie = function(node, name) {
+Util.deleteNodeCookie = function(node, name, _options) {
 
-	var ref = u.cookieReference(node);
+	var ref = u.cookieReference(node, _options);
 	var mem = JSON.parse(u.getCookie("man_mem"));
 	if(mem && mem[ref]) {
 		if(name) {
@@ -125,8 +125,25 @@ Util.deleteNodeCookie = function(node, name) {
 }
 
 // create cookie reference for node - to map a certain value to a node (like open/closed/selected state or search value)
-Util.cookieReference = function(node) {
+Util.cookieReference = function(node, _options) {
 	var ref;
+
+	var ignore_classnames = false;
+	var ignore_classvars = false;
+
+	// additional info passed to function as JSON object
+	if(typeof(_options) == "object") {
+		var _argument;
+		for(_argument in _options) {
+
+			switch(_argument) {
+				case "ignore_classnames"	: ignore_classnames	= _options[_argument]; break;
+				case "ignore_classvars" 	: ignore_classvars	= _options[_argument]; break;
+			}
+
+		}
+	}
+
 
 	if(node.id) {
 		ref = node.nodeName + "#" + node.id;
@@ -134,14 +151,34 @@ Util.cookieReference = function(node) {
 	else {
 		// find best identifier
 		var node_identifier = "";
+
+		// element.name is best identifier
 		if(node.name) {
 			node_identifier = node.nodeName + "["+node.name+"]";
 		}
+
+		// className is best identifier
 		else if(node.className) {
-			node_identifier = node.nodeName + "." + node.className;
+			var classname = node.className;
+
+			// ignore listed classnames
+			if(ignore_classnames) {
+				var regex = new RegExp("(^| )("+ignore_classnames.split(",").join("|")+")($| )", "g");
+				classname = classname.replace(regex, " ").replace(/[ ]{2,4}/, " ");
+			}
+
+			// ignore classVars
+			if(ignore_classvars) {
+				classname = classname.replace(/(^| )[a-zA-Z_]+\:[\?\=\w\/\\#~\:\.\,\+\&\%\@\!\-]+(^| )/g, " ").replace(/[ ]{2,4}/g, " ");
+			}
+
+			// replace spaces with dots
+			node_identifier = node.nodeName+"."+classname.trim().replace(/ /g, ".");
+
 		}
+		// nodeName is best identifier
 		else {
-			node_identifier = node.nodeName;
+			node_identifier = node.nodeName
 		}
 
 		// find parentNode with id
@@ -157,6 +194,6 @@ Util.cookieReference = function(node) {
 			ref = node_identifier;
 		}
 	}
-
+//	u.bug("ref:" + ref)
 	return ref;
 }
