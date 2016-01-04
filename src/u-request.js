@@ -58,7 +58,9 @@ Util.request = function(node, url, _options) {
 					u.validateResponse(this);
 				}
 			}
-			u.e.addEvent(node[request_id].HTTPRequest, "readystatechange", node[request_id].HTTPRequest.statechanged);
+			if(typeof(node[request_id].HTTPRequest.addEventListener) == "function") {
+				u.e.addEvent(node[request_id].HTTPRequest, "readystatechange", node[request_id].HTTPRequest.statechanged);
+			}
 		}
 
 		// perform request
