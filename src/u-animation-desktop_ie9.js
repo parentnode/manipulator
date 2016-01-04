@@ -1,39 +1,71 @@
 // Fallback specific animation handler
 // tries to mimic transitions by using timeouts and uses most advanced method available
-if(u.a.vendor() == "ms") {
-	
+// targets only IE9
+//if(u.a.vendor() == "ms") {
 
-	u.a.transition = function(node, transition) {
+if(/*@cc_on!@*/false && document.documentMode == 9) {
+
+
+	u.a.transition = function(node, transition, callback) {
+//		u.bug("transition:" + transition + ", " + callback)
+
+
+		node._transition_callback = "transitioned";
+
 		var duration = transition.match(/[0-9.]+[ms]+/g);
 		if(duration) {
 			node.duration = duration[0].match("ms") ? parseFloat(duration[0]) : (parseFloat(duration[0]) * 1000);
+
+			// custom transition callback
+			if(callback) {
+//				u.bug("custom transition callback:" + callback + ", " + u.nodeId(node))
+
+				if(typeof(callback) == "function") {
+
+					node.transitioned = callback;
+
+				}
+				else {
+					node._transition_callback = callback;
+				}
+
+
+			}
+
 		}
 		else {
 			node.duration = false;
 
-			if(transition.match(/none/i)) {
-				// if(u.hc(node, "subjects")) {
-				// 	u.bug("EXPERIMENTAL subjects reset transition end:" + transition + ", " + u.nodeId(node), 2, "red")
-				// }
-				// TODO: experimental - auto reset of transitioned callback
-				node.transitioned = null;
-			}
-
-			// TODO: reset running animations?
-			// u.t.resetTimer(e.t_transition);
-		}
-
-		// safeguard - avoid double transitions if browser supports CSS transitions
-		if(u.support(this.vendor("Transition"))) {
-			// set transition to "none" directly, and keep duration value
-			node.style[this.vendor("Transition")] = "none";
 		}
 	}
 
 
+	u.a._transitioned = function(event) {
+
+		// u.bug("callback1:" + this._transition_callback + ", " + u.nodeId(event.target) + ", " + u.nodeId(this) + ", " + typeof(this[this._transition_callback]))
+		// if(typeof(this[this._transition_callback]) == "object") {
+		// 	u.xInObject(this[this._transition_callback]);
+		// }
+		if(event.target == this && typeof(this[this._transition_callback]) == "function") {
+			
+//			u.bug("callback2:" + this._transition_callback)
+
+			this.___transitioned = this[this._transition_callback];
+			this[this._transition_callback] = null;
+
+			this.___transitioned(event);
+
+//			this[this._transition_callback](event);
+
+		}
+	}
+
+
+
+
 	// IE9 fallback, using translate with timeouts
 	u.a.translate = function(node, x, y) {
-	//	u.bug("translate desktop_ie:" + u.nodeId(node) + ":" + x + "x" + y);
+//		u.bug("translate desktop_ie9:" + u.nodeId(node) + ":" + x + "x" + y);
 
 		// updates for animation in ms (1000/25 = 40fps)
 		var update_frequency = 25;
@@ -69,8 +101,7 @@ if(u.a.vendor() == "ms") {
 				var new_y = (Number(this.y_start) + Number(this.translate_progress * this.y_change));
 	//			u.bug("transition move:" + u.nodeId(this, 1) + ": new_x:" + new_x + ": new_y:" + new_y);
 
-				// hardcoded msTransform
-				this.style[u.a.vendor("Transform")] = "translate("+ new_x + "px, " + new_y +"px)";
+				u.as(this, "transform", "translate("+new_x+"px, "+new_y+"px)");
 
 				// update dom
 				this.offsetHeight;
@@ -83,11 +114,11 @@ if(u.a.vendor() == "ms") {
 				// last step - adjust any miscalculations and callback
 				else {
 
-					this.style[u.a.vendor("Transform")] = "translate("+ this._x + "px, " + this._y +"px)";
+					u.as(this, "transform", "translate("+this._x+"px, "+this._y+"px)");
 
-					if(typeof(this.transitioned) == "function") {
-						this.transitioned(event);
-					}
+					this.___transitioned = u.a._transitioned;
+					this.___transitioned(event);
+
 				}
 			}
 
@@ -98,7 +129,7 @@ if(u.a.vendor() == "ms") {
 		else {
 	//		u.bug("direct move")
 
-			node.style[this.vendor("Transform")] = "translate("+ x + "px, " + y +"px)";
+			u.as(node, "transform", "translate("+x+"px, "+y+"px)");
 		}
 
 		// remember value for cross method compability
@@ -142,8 +173,7 @@ if(u.a.vendor() == "ms") {
 				var new_deg = (Number(this.rotate_start) + Number(this.rotate_progress * this.rotate_change));
 	//			u.bug("transition rotate:" + u.nodeId(this, 1) + ": deg:" + new_deg);
 
-				// hardcoded msTransform
-				this.style["msTransform"] = "rotate("+ new_deg + "deg)";
+				u.as(this, "transform", "rotate("+ new_deg + "deg)");
 
 				// update dom
 				this.offsetHeight;
@@ -156,11 +186,11 @@ if(u.a.vendor() == "ms") {
 				// last step - adjust any miscalculations and callback
 				else {
 
-					this.style[u.a.vendor("Transform")] = "rotate("+ this._rotation + "deg)";
+					u.as(this, "transform", "rotate("+ this._rotation + "deg)");
 
-					if(typeof(this.transitioned) == "function") {
-						this.transitioned(event);
-					}
+
+					this.___transitioned = u.a._transitioned;
+					this.___transitioned(event);
 				}
 			}
 
@@ -171,7 +201,7 @@ if(u.a.vendor() == "ms") {
 		else {
 	//		u.bug("direct rotate")
 
-			node.style[this.vendor("Transform")] = "rotate("+ deg + "deg)";
+			u.as(node, "transform", "rotate("+ deg + "deg)");
 		}
 
 		// remember value for cross method compability
@@ -213,8 +243,7 @@ if(u.a.vendor() == "ms") {
 				var new_scale = (Number(this.scale_start) + Number(this.scale_progress * this.scale_change));
 	//			u.bug("transition scale:" + u.nodeId(this, 1) + ": scale:" + new_scale);
 
-				// hardcoded msTransform
-				this.style[u.a.vendor("Transform")] = "scale("+ new_scale +")";
+				u.as(this, "transform", "scale("+ new_scale +")");
 
 				// update dom
 				this.offsetHeight;
@@ -227,11 +256,10 @@ if(u.a.vendor() == "ms") {
 				// last step - adjust any miscalculations and callback
 				else {
 
-					this.style[u.a.vendor("Transform")] = "scale("+ this._scale +")";
+					u.as(this, "transform", "scale("+ this._scale +")");
 
-					if(typeof(this.transitioned) == "function") {
-						this.transitioned(event);
-					}
+					this.___transitioned = u.a._transitioned;
+					this.___transitioned(event);
 				}
 			}
 
@@ -242,7 +270,7 @@ if(u.a.vendor() == "ms") {
 		else {
 	//		u.bug("direct scale")
 
-			node.style[this.vendor("Transform")] = "scale("+ scale +")";
+			u.as(node, "transform", "scale("+ scale +")");
 		}
 
 		// remember value for cross method compability
@@ -253,21 +281,37 @@ if(u.a.vendor() == "ms") {
 	}
 
 
-	// IE9 fallback, using opacity with timeouts
-	u.a.setOpacity = function(node, opacity) {
+	// fallback, using opacity with timeouts if possible.
+	u.a.setOpacity = u.a.opacity = function(node, opacity) {
 
-		// updates for animation in ms (1000/25 = 40fps)
-		var update_frequency = 25;
+		// updates for animation in ms (1000/100 = 10fps)
+		var update_frequency = 100;
 
 		// set internal value
-		node._opacity = node._opacity ? node._opacity : u.gcs(node, "opacity");
+		node._opacity = node._opacity != undefined ? node._opacity : u.gcs(node, "opacity");
 
 
 		// TODO: reset running animations?
 
 
+		// IE in desktop_light IE8 XP, IE7, IE6 fails combination of filters and png/font-face - use visibility as opacity replacement
+		if(!u.support("opacity")) {
+
+			// hide if opacity is 0
+			if(opacity == 0) {
+				u.as(node, "visibility", "hidden");
+			}
+			else {
+				u.as(node, "visibility", "visible");
+			}
+
+			// callback if duration is set (and opacity differs)
+			if(node.duration && node._opacity !== opacity) {
+				u.t.setTimer(node, function() {if(typeof(this[this._transition_callback]) == "function") {this[this._transition_callback]();}}, node.duration);
+			}
+		}
 		// only run if opacity is different from current value
-		if(node.duration && node._opacity != opacity) {
+		else if(node.duration && node._opacity != opacity) {
 	//		u.bug("opacity with duration:" + u.nodeId(node) + ": dur:" + node.duration + ": opacity:" + opacity);
 
 			// calculate transition
@@ -300,9 +344,11 @@ if(u.a.vendor() == "ms") {
 
 					this.style.opacity = this._opacity;
 
-					if(typeof(this.transitioned) == "function") {
-						this.transitioned(event);
-					}
+					this.___transitioned = u.a._transitioned;
+					this.___transitioned(event);
+					// if(typeof(this[this._transition_callback]) == "function") {
+					// 	this[this._transition_callback](event);
+					// }
 				}
 
 			}
@@ -314,11 +360,9 @@ if(u.a.vendor() == "ms") {
 		// no duration - just move, and no transition callback (bacause CSS transitions has no callback when no duration is given)
 		else {
 	//		u.bug("direct opacity")
-		
-			node.style.opacity = opacity;
+			u.as(node, "opacity", opacity);
 		}
 
-		// remember value for cross method compability
 		node._opacity = opacity;
 
 		// update dom
@@ -326,8 +370,11 @@ if(u.a.vendor() == "ms") {
 	}
 
 
-	// IE9 fallback, using regular CSS width with timeouts
-	u.a.setWidth = function(node, width) {
+
+
+
+	// fallback, using regular CSS width with timeouts
+	u.a.setWidth = u.a.width = function(node, width) {
 
 		// updates for animation in ms (1000/25 = 40fps)
 		var update_frequency = 25;
@@ -357,8 +404,12 @@ if(u.a.vendor() == "ms") {
 				var new_width = (Number(this.width_start) + Number(this.width_progress * this.width_change));
 	//			u.bug("transition width:" + u.nodeId(this, 1) + ": width:" + new_width);
 
-				// CSS
-				u.as(this, "width", new_width+"px");
+				// correct miscalculation in IE
+				// not able to verify problem
+				// if(new_width >= 0) {
+					// CSS
+					u.as(this, "width", new_width+"px");
+				// }
 
 				// update dom
 				this.offsetHeight;
@@ -373,9 +424,9 @@ if(u.a.vendor() == "ms") {
 
 					u.as(this, "width", this._width);
 
-					if(typeof(this.transitioned) == "function") {
-						this.transitioned(event);
-					}
+					this.___transitioned = u.a._transitioned;
+					this.___transitioned(event);
+
 				}
 			}
 
@@ -399,8 +450,8 @@ if(u.a.vendor() == "ms") {
 	}
 
 
-	// IE9 fallback, using regular CSS height with timeouts
-	u.a.setHeight = function(node, height) {
+	// fallback, using regular CSS height with timeouts
+	u.a.setHeight = u.a.height = function(node, height) {
 
 		// updates for animation in ms (1000/25 = 40fps)
 		var update_frequency = 25;
@@ -430,7 +481,6 @@ if(u.a.vendor() == "ms") {
 				var new_height = (Number(this.height_start) + Number(this.height_progress * this.height_change));
 	//			u.bug("transition height:" + u.nodeId(this, 1) + ": height:" + new_height);
 
-				// CSS
 				u.as(this, "height", new_height+"px");
 
 				// update dom
@@ -446,9 +496,8 @@ if(u.a.vendor() == "ms") {
 
 					u.as(this, "height", this._height);
 
-					if(typeof(this.transitioned) == "function") {
-						this.transitioned(event);
-					}
+					this.___transitioned = u.a._transitioned;
+					this.___transitioned(event);
 				}
 			}
 
@@ -472,8 +521,8 @@ if(u.a.vendor() == "ms") {
 	}
 
 
-	// IE9 fallback, using regular CSS background-position with timeouts
-	u.a.setBgPos = function(node, x, y) {
+	// fallback, using regular CSS background-position with timeouts
+	u.a.setBgPos = u.a.bgPos = function(node, x, y) {
 
 		// updates for animation in ms (1000/25 = 40fps)
 		var update_frequency = 25;
@@ -486,8 +535,23 @@ if(u.a.vendor() == "ms") {
 		// right = 100%
 		// center = 50%
 
-		var current_bg_x = u.gcs(node, "background-position-x");
-		var current_bg_y = u.gcs(node, "background-position-y");
+		// u.bug("pos:" + u.gcs(node, "background-position"))
+		// u.bug("pos:" + u.gcs(node, "background-position-x"))
+		// u.bug("pos:" + u.gcs(node, "background-position-y"))
+	
+		if(!node._bg_x || !node._bg_y) {
+
+			if(u.gcs(node, "background-position")) {
+				var current_bg = u.gcs(node, "background-position").split(" ");
+				var current_bg_x = current_bg[0];
+				var current_bg_y = current_bg[1];
+			}
+			else {
+				var current_bg_x = u.gcs(node, "background-position-x");
+				var current_bg_y = u.gcs(node, "background-position-y");
+			}
+
+		}
 
 		// set internal values - if current value is not in px, animation cannot be calculated, so pretend no change has happened
 		node._bg_x = node._bg_x ? node._bg_x : current_bg_x.match("px") ? current_bg_x.replace("px", "") : x;
@@ -569,13 +633,10 @@ if(u.a.vendor() == "ms") {
 				// last step - adjust any miscalculations and callback
 				else {
 
-					var new_bg_x = x.toString().match(/\%|top|left|right|center|bottom/) ? this._bg_x : (this._bg_x + "px");
-					var new_bg_y = y.toString().match(/\%|top|left|right|center|bottom/) ? this._bg_y : (this._bg_y + "px");
-					u.as(this, "backgroundPosition", new_bg_x + " " + new_bg_y);
+					u.as(this, "backgroundPosition", this._bg_x + " " + this._bg_y);
 
-					if(typeof(this.transitioned) == "function") {
-						this.transitioned(event);
-					}
+					this.___transitioned = u.a._transitioned;
+					this.___transitioned(event);
 				}
 			}
 
@@ -601,10 +662,8 @@ if(u.a.vendor() == "ms") {
 	}
 
 
-
-
-	// IE9 fallback bgColor - manual calculation with timeouts (identical to desktop_light version)
-	u.a.setBgColor = function(node, color) {
+	// fallback bgColor - manual calculation with timeouts
+	u.a.setBgColor = u.a.bgColor = function(node, color) {
 
 		// updates for animation in ms (1000/25 = 40fps)
 		var update_frequency = 100;
@@ -730,9 +789,12 @@ if(u.a.vendor() == "ms") {
 
 					u.as(this, "backgroundColor", this._bg_color);
 
-					if(typeof(this.transitioned) == "function") {
-						this.transitioned(event);
+					if(typeof(this[this._transition_callback]) == "function") {
+						this[this._transition_callback](event);
 					}
+					// if(typeof(this.transitioned) == "function") {
+					// 	this.transitioned(event);
+					// }
 				}
 			}
 
@@ -753,32 +815,7 @@ if(u.a.vendor() == "ms") {
 		node.offsetHeight;
 	}
 
-
-	// Rotate & Scale
-	u.a.rotateScale = function(node, deg, scale) {
-		node.style[u.a.vendor("Transform") + "Transform"] = "rotate("+deg+"deg) scale("+scale+")";
-		node._rotation = deg;
-		node._scale = scale;
-
-		// update dom
-		node.offsetHeight;
-	}
-
-	// Scale, Rotate, Translate
-	u.a.scaleRotateTranslate = function(node, scale, deg, x, y) {
-
-		node.style[u.a.vendor("Transform")] = "scale("+scale+") rotate("+deg+"deg) translate("+x+"px, "+y+"px)";
-
-		// store value
-		node._rotation = deg;
-		node._scale = scale;
-		node._x = x;
-		node._y = y;
-
-		// update dom
-		node.offsetHeight;
-	}
-
 }
+
 
 

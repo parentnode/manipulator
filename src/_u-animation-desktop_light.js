@@ -2,170 +2,71 @@
 // tries to mimic transitions by using timeouts
 
 // use these methods if transform and transition is not supported or vendor is ms
-if(!document.documentElement || document.documentElement.style[u.a.vendor("Transform")] !== "" || document.documentElement.style[u.a.vendor("Transform")] !== "" || u.a.vendor("Transition") == "ms") {
 
-	u.a.transition = function(node, transition) {
+// TODO: should be merged with IE9 version (for one version only)
+
+if(!u.support("transition")) {
+//	alert("ie9")
+	 //document.documentElement || !(document.documentElement.style["transition"] || document.documentElement.style["webKitTransition"] || document.documentElement.style["MozTransition"] ||  || document.documentElement.style["OTransition"] || document.documentElement.style["msTransition"])) {
+
+	u.a.transition = function(node, transition, callback) {
+//		u.bug("transition:" + transition + ", " + callback)
+
+
+		node._transition_callback = "transitioned";
+
 		var duration = transition.match(/[0-9.]+[ms]+/g);
 		if(duration) {
 			node.duration = duration[0].match("ms") ? parseFloat(duration[0]) : (parseFloat(duration[0]) * 1000);
+
+			// custom transition callback
+			if(callback) {
+//				u.bug("custom transition callback:" + callback + ", " + u.nodeId(node))
+
+				if(typeof(callback) == "function") {
+
+					node.transitioned = callback;
+
+				}
+				else {
+					node._transition_callback = callback;
+				}
+
+
+			}
+
 		}
 		else {
 			node.duration = false;
 
-			if(transition.match(/none/i)) {
-				// if(u.hc(node, "subjects")) {
-				// 	u.bug("EXPERIMENTAL subjects reset transition end:" + transition + ", " + u.nodeId(node), 2, "red")
-				// }
-				// TODO: experimental - auto reset of transitioned callback
-				node.transitioned = null;
-			}
-
-			// TODO: reset running animations?
-
-		}
-
-		// safeguard - avoid double transitions if browser supports CSS transitions
-		if(u.support(u.a.vendor("Transition"))) {
-			// set transition to "none" directly, and keep duration value
-			node.style[u.a.vendor("Transition")] = "none";
 		}
 	}
 
 
-	// fallback, using absolute positioning with timeouts
-	u.a.translate = function(node, x, y) {
-	//	u.bug("translate desktop_light:" + u.nodeId(node) + ":" + x + "x" + y);
+	u.a._transitioned = function(event) {
 
-		// updates for animation in ms (1000/100 = 10fps)
-		var update_frequency = 100;
+		// u.bug("callback1:" + this._transition_callback + ", " + u.nodeId(event.target) + ", " + u.nodeId(this) + ", " + typeof(this[this._transition_callback]))
+		// if(typeof(this[this._transition_callback]) == "object") {
+		// 	u.xInObject(this[this._transition_callback]);
+		// }
+		if(event.target == this && typeof(this[this._transition_callback]) == "function") {
+			
+//			u.bug("callback2:" + this._transition_callback)
 
-		// set internal coordinate value
-		node._x = node._x ? node._x : 0;
-		node._y = node._y ? node._y : 0;
+			this.___transitioned = this[this._transition_callback];
+			this[this._transition_callback] = null;
 
+			this.___transitioned(event);
 
-		// TODO: reset running animations?
+//			this[this._transition_callback](event);
 
-
-		// calculate absolute position offset on first run
-		if(node.translate_offset_x == undefined) {
-
-			// first get element offset to first relative parent
-			var abs_left = u.gcs(node, "left");
-			var abs_top = u.gcs(node, "top");
-
-			if(abs_left.match(/px/)) {
-				node.translate_offset_x = parseInt(abs_left);
-			}
-			else {
-				node.translate_offset_x = u.relX(node);
-			}
-			if(abs_top.match(/px/)) {
-				node.translate_offset_y = parseInt(abs_top);
-			}
-			else {
-				node.translate_offset_y = u.relY(node);
-			}
-
-
-			// set new absolute coordinates
-			u.as(node, "left", node.translate_offset_x+"px");
-			u.as(node, "top", node.translate_offset_y+"px");
-
-			// set position absolute
-			u.as(node, "position", "absolute");
 		}
-
-
-		// only run if coords are different from current values
-		if(node.duration && (node._x != x || node._y != y)) {
-	//		u.bug("translate with duration:" + u.nodeId(node) + ": dur:" + node.duration + ": x:" + x + ": y:" + y);
-
-			// calculate transition
-			node.x_start = node._x;
-			node.y_start = node._y;
-			node.translate_transitions = node.duration/update_frequency;
-			node.translate_progress = 0;
-			node.x_change = (x - node.x_start) / node.translate_transitions;
-			node.y_change = (y - node.y_start) / node.translate_transitions;
-
-	//		u.bug("x_change:" + e.x_change);
-	//		u.bug("y_change:" + e.y_change);
-
-
-			node.translate_transitionTo = function(event) {
-				++this.translate_progress;
-
-				var new_x = (Number(this.x_start) + Number(this.translate_progress * this.x_change) + this.translate_offset_x);
-				var new_y = (Number(this.y_start) + Number(this.translate_progress * this.y_change) + this.translate_offset_y);
-	//			u.bug("transition move:" + u.nodeId(this, 1) + ": new_x:" + new_x + ": new_y:" + new_y);
-
-				u.as(node, "left", new_x + "px");
-				u.as(node, "top", new_y + "px");
-
-				// update dom
-				this.offsetHeight;
-
-				// more transitions to go?
-				if(this.translate_progress < this.translate_transitions) {
-
-					this.t_translate_transition = u.t.setTimer(this, this.translate_transitionTo, update_frequency);
-				}
-				// last step - adjust any miscalculations and callback
-				else {
-
-					u.as(this, "left", (this.translate_offset_x + this._x)+"px");
-					u.as(this, "top", (this.translate_offset_y + this._y)+"px");
-
-					if(typeof(this.transitioned) == "function") {
-						this.transitioned(event);
-					}
-				}
-			}
-
-			// start transition
-			node.translate_transitionTo();
-		}
-		// no duration - just move, and no transition callback (bacause CSS transitions has no callback when no duration is given)
-		else {
-	//		u.bug("direct move")
-
-			u.as(node, "left", (node.translate_offset_x + x)+"px");
-			u.as(node, "top", (node.translate_offset_y + y)+"px");
-		}
-
-	
-		// remember value for cross method compability
-		node._x = x;
-		node._y = y;
-
-		// update dom
-		node.offsetHeight;
 	}
 
-	// fallback, only set callback, to ensure loops don't break
-	u.a.rotate = function(node, deg) {
-
-		if(node.duration && node._rotation !== deg) {
-			u.t.setTimer(node, function() {if(typeof(this.transitioned) == "function") {this.transitioned();}}, node.duration);
-		}
-		node._rotation = deg;
-
-	}
-
-
-	// fallback, only set callback, to ensure loops don't break
-	u.a.scale = function(node, scale) {
-
-		if(node.duration && node._scale !== scale) {
-			u.t.setTimer(node, function() {if(typeof(this.transitioned) == "function") {this.transitioned();}}, node.duration);
-		}
-		node._scale = scale;
-	}
 
 
 	// fallback, using opacity with timeouts if possible.
-	u.a.setOpacity = function(node, opacity) {
+	u.a.setOpacity = u.a.opacity = function(node, opacity) {
 
 		// updates for animation in ms (1000/100 = 10fps)
 		var update_frequency = 100;
@@ -188,9 +89,9 @@ if(!document.documentElement || document.documentElement.style[u.a.vendor("Trans
 				u.as(node, "visibility", "visible");
 			}
 
-			// callback if duration is set
+			// callback if duration is set (and opacity differs)
 			if(node.duration && node._opacity !== opacity) {
-				u.t.setTimer(node, function() {if(typeof(this.transitioned) == "function") {this.transitioned();}}, node.duration);
+				u.t.setTimer(node, function() {if(typeof(this[this._transition_callback]) == "function") {this[this._transition_callback]();}}, node.duration);
 			}
 		}
 		// only run if opacity is different from current value
@@ -227,9 +128,11 @@ if(!document.documentElement || document.documentElement.style[u.a.vendor("Trans
 
 					this.style.opacity = this._opacity;
 
-					if(typeof(this.transitioned) == "function") {
-						this.transitioned(event);
-					}
+					this.___transitioned = u.a._transitioned;
+					this.___transitioned(event);
+					// if(typeof(this[this._transition_callback]) == "function") {
+					// 	this[this._transition_callback](event);
+					// }
 				}
 
 			}
@@ -241,7 +144,7 @@ if(!document.documentElement || document.documentElement.style[u.a.vendor("Trans
 		// no duration - just move, and no transition callback (bacause CSS transitions has no callback when no duration is given)
 		else {
 	//		u.bug("direct opacity")
-			node.style.opacity = opacity;
+			u.as(node, "opacity", opacity);
 		}
 
 		node._opacity = opacity;
@@ -255,7 +158,7 @@ if(!document.documentElement || document.documentElement.style[u.a.vendor("Trans
 
 
 	// fallback, using regular CSS width with timeouts
-	u.a.setWidth = function(node, width) {
+	u.a.setWidth = u.a.width = function(node, width) {
 
 		// updates for animation in ms (1000/25 = 40fps)
 		var update_frequency = 25;
@@ -305,9 +208,9 @@ if(!document.documentElement || document.documentElement.style[u.a.vendor("Trans
 
 					u.as(this, "width", this._width);
 
-					if(typeof(this.transitioned) == "function") {
-						this.transitioned(event);
-					}
+					this.___transitioned = u.a._transitioned;
+					this.___transitioned(event);
+
 				}
 			}
 
@@ -332,7 +235,7 @@ if(!document.documentElement || document.documentElement.style[u.a.vendor("Trans
 
 
 	// fallback, using regular CSS height with timeouts
-	u.a.setHeight = function(node, height) {
+	u.a.setHeight = u.a.height = function(node, height) {
 
 		// updates for animation in ms (1000/25 = 40fps)
 		var update_frequency = 25;
@@ -362,12 +265,7 @@ if(!document.documentElement || document.documentElement.style[u.a.vendor("Trans
 				var new_height = (Number(this.height_start) + Number(this.height_progress * this.height_change));
 	//			u.bug("transition height:" + u.nodeId(this, 1) + ": height:" + new_height);
 
-				// correct miscalculation in IE
-				// not able to verify problem
-				// if(new_height >= 0) {
-					// CSS
-					u.as(this, "height", new_height+"px");
-				//}
+				u.as(this, "height", new_height+"px");
 
 				// update dom
 				this.offsetHeight;
@@ -382,9 +280,8 @@ if(!document.documentElement || document.documentElement.style[u.a.vendor("Trans
 
 					u.as(this, "height", this._height);
 
-					if(typeof(this.transitioned) == "function") {
-						this.transitioned(event);
-					}
+					this.___transitioned = u.a._transitioned;
+					this.___transitioned(event);
 				}
 			}
 
@@ -409,7 +306,7 @@ if(!document.documentElement || document.documentElement.style[u.a.vendor("Trans
 
 
 	// fallback, using regular CSS background-position with timeouts
-	u.a.setBgPos = function(node, x, y) {
+	u.a.setBgPos = u.a.bgPos = function(node, x, y) {
 
 		// updates for animation in ms (1000/25 = 40fps)
 		var update_frequency = 25;
@@ -522,9 +419,8 @@ if(!document.documentElement || document.documentElement.style[u.a.vendor("Trans
 
 					u.as(this, "backgroundPosition", this._bg_x + " " + this._bg_y);
 
-					if(typeof(this.transitioned) == "function") {
-						this.transitioned(event);
-					}
+					this.___transitioned = u.a._transitioned;
+					this.___transitioned(event);
 				}
 			}
 
@@ -551,7 +447,7 @@ if(!document.documentElement || document.documentElement.style[u.a.vendor("Trans
 
 
 	// fallback bgColor - manual calculation with timeouts
-	u.a.setBgColor = function(node, color) {
+	u.a.setBgColor = u.a.bgColor = function(node, color) {
 
 		// updates for animation in ms (1000/25 = 40fps)
 		var update_frequency = 100;
@@ -677,9 +573,12 @@ if(!document.documentElement || document.documentElement.style[u.a.vendor("Trans
 
 					u.as(this, "backgroundColor", this._bg_color);
 
-					if(typeof(this.transitioned) == "function") {
-						this.transitioned(event);
+					if(typeof(this[this._transition_callback]) == "function") {
+						this[this._transition_callback](event);
 					}
+					// if(typeof(this.transitioned) == "function") {
+					// 	this.transitioned(event);
+					// }
 				}
 			}
 
@@ -702,3 +601,139 @@ if(!document.documentElement || document.documentElement.style[u.a.vendor("Trans
 
 }
 
+
+if(!u.support("transform")) {
+
+	// fallback, using absolute positioning with timeouts
+	u.a.translate = function(node, x, y) {
+	//	u.bug("translate desktop_light:" + u.nodeId(node) + ":" + x + "x" + y);
+
+		// updates for animation in ms (1000/100 = 10fps)
+		var update_frequency = 100;
+
+		// set internal coordinate value
+		node._x = node._x ? node._x : 0;
+		node._y = node._y ? node._y : 0;
+
+
+		// TODO: reset running animations?
+
+
+		// calculate absolute position offset on first run
+		if(node.translate_offset_x == undefined) {
+
+			// first get element offset to first relative parent
+			var abs_left = u.gcs(node, "left");
+			var abs_top = u.gcs(node, "top");
+
+			if(abs_left.match(/px/)) {
+				node.translate_offset_x = parseInt(abs_left);
+			}
+			else {
+				node.translate_offset_x = u.relX(node);
+			}
+			if(abs_top.match(/px/)) {
+				node.translate_offset_y = parseInt(abs_top);
+			}
+			else {
+				node.translate_offset_y = u.relY(node);
+			}
+
+
+			// set new absolute coordinates
+			u.as(node, "left", node.translate_offset_x+"px");
+			u.as(node, "top", node.translate_offset_y+"px");
+
+			// set position absolute
+			u.as(node, "position", "absolute");
+		}
+
+
+		// only run if coords are different from current values
+		if(node.duration && (node._x != x || node._y != y)) {
+	//		u.bug("translate with duration:" + u.nodeId(node) + ": dur:" + node.duration + ": x:" + x + ": y:" + y);
+
+			// calculate transition
+			node.x_start = node._x;
+			node.y_start = node._y;
+			node.translate_transitions = node.duration/update_frequency;
+			node.translate_progress = 0;
+			node.x_change = (x - node.x_start) / node.translate_transitions;
+			node.y_change = (y - node.y_start) / node.translate_transitions;
+
+	//		u.bug("x_change:" + e.x_change);
+	//		u.bug("y_change:" + e.y_change);
+
+
+			node.translate_transitionTo = function(event) {
+				++this.translate_progress;
+
+				var new_x = (Number(this.x_start) + Number(this.translate_progress * this.x_change) + this.translate_offset_x);
+				var new_y = (Number(this.y_start) + Number(this.translate_progress * this.y_change) + this.translate_offset_y);
+	//			u.bug("transition move:" + u.nodeId(this, 1) + ": new_x:" + new_x + ": new_y:" + new_y);
+
+				u.as(node, "left", new_x + "px");
+				u.as(node, "top", new_y + "px");
+
+				// update dom
+				this.offsetHeight;
+
+				// more transitions to go?
+				if(this.translate_progress < this.translate_transitions) {
+
+					this.t_translate_transition = u.t.setTimer(this, this.translate_transitionTo, update_frequency);
+				}
+				// last step - adjust any miscalculations and callback
+				else {
+
+					u.as(this, "left", (this.translate_offset_x + this._x)+"px");
+					u.as(this, "top", (this.translate_offset_y + this._y)+"px");
+
+					this.___transitioned = u.a._transitioned;
+					this.___transitioned(event);
+
+				}
+			}
+
+			// start transition
+			node.translate_transitionTo();
+		}
+		// no duration - just move, and no transition callback (bacause CSS transitions has no callback when no duration is given)
+		else {
+	//		u.bug("direct move")
+
+			u.as(node, "left", (node.translate_offset_x + x)+"px");
+			u.as(node, "top", (node.translate_offset_y + y)+"px");
+		}
+
+	
+		// remember value for cross method compability
+		node._x = x;
+		node._y = y;
+
+		// update dom
+		node.offsetHeight;
+	}
+
+
+	// fallback, only set callback, to ensure loops don't break
+	u.a.rotate = function(node, deg) {
+
+		if(node.duration && node._rotation !== deg) {
+			u.t.setTimer(node, function() {if(typeof(this.transitioned) == "function") {this.transitioned();}}, node.duration);
+		}
+		node._rotation = deg;
+
+	}
+
+
+	// fallback, only set callback, to ensure loops don't break
+	u.a.scale = function(node, scale) {
+
+		if(node.duration && node._scale !== scale) {
+			u.t.setTimer(node, function() {if(typeof(this.transitioned) == "function") {this.transitioned();}}, node.duration);
+		}
+		node._scale = scale;
+	}
+
+}

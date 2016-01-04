@@ -5,13 +5,11 @@ Util.Animation = u.a = new function() {
 	this.support3d = function() {
 		// only run detection once
 		if(this._support3d === undefined) {
-			var node = document.createElement("div");
-			try {
-				var test = "translate3d(10px, 10px, 10px)";
-				node.style[this.vendor("Transform")] = test;
+			var node = u.ae(document.body, "div");
 
-//				u.bug("3d test:" + test + "::" + node.style[this.vendor("Transform")]);
-				if(node.style[this.vendor("Transform")] == test) {
+			try {
+				u.as(node, "transform", "translate3d(10px, 10px, 10px)");
+				if(u.gcs(node, "transform").match(/matrix3d\(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 10, 10, 10, 1\)/)) {
 					this._support3d = true;
 				}
 				else {
@@ -22,92 +20,109 @@ Util.Animation = u.a = new function() {
 //				u.bug("exception:" + exception)
 				this._support3d = false;
 			}
+
+			document.body.removeChild(node);
 		}
 //		u.bug("3d test result:" + this._support3d);
 		return this._support3d;
 	}
 
+
+
+
+	// TODO:
+	// idea:
+	// make framework create correct function names, upon request
+	// IE. first time transform is called, check for existence of window.transform 
+	// (or document.documentElement.style.transform)
+	// if it doesn't exist, create it and return function name
+	//
+	// conclusion: not a good idea - needs to be created as DOM prototype and this will not be optimal
+
+	// idea:
+	// 
+
 //	alert("rest")
-
-	// get vendor, to avoid setting more than the required type
-	// exceptions to be aware of
-	this._vendor_exceptions = {
-		"mozTransform":"MozTransform",
-		"mozTransition":"MozTransition",
-		"mozTransitionEnd":"transitionend",
-		"msTransitionEnd":"transitionend",
-		"mozTransformOrigin":"MozTransformOrigin",
-		"mozPerspectiveOrigin":"MozPerspectiveOrigin",
-		"mozTransformStyle":"MozTransformStyle",
-		"mozPerspective":"MozPerspective",
-		"mozBackfaceVisibility":"MozBackfaceVisibility",
-		"msCancelAnimationFrame":"cancelAnimationFrame"
-	};
-	// method cache - when a vendor method has been requested once, 
-	// it will be stored, to avoid wasting time every time
-	this._vendor_methods = {};
-
-	// find correct method
-	// checks for exceptions and stores method in cache (_vendor_methods)
- 	this.vendorMethod = function(method) {
-		var vender_method = this._vendor+method;
-		method = this._vendor ? method.replace(/^([a-z]{1})/, function(word){return word.toUpperCase()}) : method;
-
-		if(this._vendor_exceptions[this._vendor+method]) {
-			this._vendor_methods[vender_method] = this._vendor_exceptions[this._vendor+method];
-			return;
-		}
- 		this._vendor_methods[vender_method] = this._vendor+method;
- 		return;
-	}
-
-	// get vendor and optional method name
-	// returns name from cache (_vendor_methods)
-	// or checks method using vendorMethod
-	this.vendor = function(method) {
-//		u.bug("vendor: "+ this._vendor + ":" + method);
-
-		// only run detection once
-		if(this._vendor === undefined) {
-//			u.bug("no implementation")
-
-			if(document.documentElement.style.webkitTransform != undefined) {
-//			if(document.body.style.webkitTransform != undefined) {
-//				u.bug("vendor: webkit")
-				this._vendor = "webkit";
-			}
-			else if(document.documentElement.style.MozTransform != undefined) {
-//			else if(document.body.style.MozTransform != undefined) {
-//				u.bug("vendor: moz")
-				this._vendor = "moz";
-			}
-			else if(document.documentElement.style.oTransform != undefined) {
-//			else if(document.body.style.oTransform != undefined) {
-//				u.bug("vendor: o")
-				this._vendor = "o";
-			}
-			else if(document.documentElement.style.msTransform != undefined) {
-//			else if(document.body.style.msTransform != undefined) {
-//				u.bug("vendor: ms")
-				this._vendor = "ms";
-			}
-			else {
-//				u.bug("vendor: unknown")
-				this._vendor = "";
-			}
-		}
-
-		if(!method) {
-			return this._vendor;
-		}
-
-		if(this._vendor_methods[this._vendor+method] === undefined) {
-			this.vendorMethod(method);
-		}
-
-//		u.bug(this._vendor_methods[this._vendor+method] + ", method:" + method)
-		return this._vendor_methods[this._vendor+method];
-	}
+//
+// 	// get vendor, to avoid setting more than the required type
+// 	// exceptions to be aware of
+// 	this._vendor_exceptions = {
+// 		"mozTransform":"MozTransform",
+// 		"mozTransition":"MozTransition",
+// 		"mozTransitionEnd":"transitionend",
+// 		"msTransitionEnd":"transitionend",
+// 		"mozTransformOrigin":"MozTransformOrigin",
+// 		"mozPerspectiveOrigin":"MozPerspectiveOrigin",
+// 		"mozTransformStyle":"MozTransformStyle",
+// 		"mozPerspective":"MozPerspective",
+// 		"mozBackfaceVisibility":"MozBackfaceVisibility",
+// 		"msCancelAnimationFrame":"cancelAnimationFrame"
+// 	};
+// 	// method cache - when a vendor method has been requested once,
+// 	// it will be stored, to avoid wasting time every time
+// 	this._vendor_methods = {};
+//
+// 	// find correct method
+// 	// checks for exceptions and stores method in cache (_vendor_methods)
+//  	this.vendorMethod = function(method) {
+// 		var vender_method = this._vendor+method;
+// 		method = this._vendor ? method.replace(/^([a-z]{1})/, function(word){return word.toUpperCase()}) : method;
+//
+// 		if(this._vendor_exceptions[this._vendor+method]) {
+// 			this._vendor_methods[vender_method] = this._vendor_exceptions[this._vendor+method];
+// 			return;
+// 		}
+//  		this._vendor_methods[vender_method] = this._vendor+method;
+//  		return;
+// 	}
+//
+// 	// get vendor and optional method name
+// 	// returns name from cache (_vendor_methods)
+// 	// or checks method using vendorMethod
+// 	this.vendor = function(method) {
+// //		u.bug("vendor: "+ this._vendor + ":" + method);
+//
+// 		// only run detection once
+// 		if(this._vendor === undefined) {
+// //			u.bug("no implementation")
+//
+// 			if(document.documentElement.style.webkitTransform != undefined) {
+// //			if(document.body.style.webkitTransform != undefined) {
+// //				u.bug("vendor: webkit")
+// 				this._vendor = "webkit";
+// 			}
+// 			else if(document.documentElement.style.MozTransform != undefined) {
+// //			else if(document.body.style.MozTransform != undefined) {
+// //				u.bug("vendor: moz")
+// 				this._vendor = "moz";
+// 			}
+// 			else if(document.documentElement.style.oTransform != undefined) {
+// //			else if(document.body.style.oTransform != undefined) {
+// //				u.bug("vendor: o")
+// 				this._vendor = "o";
+// 			}
+// 			else if(document.documentElement.style.msTransform != undefined) {
+// //			else if(document.body.style.msTransform != undefined) {
+// //				u.bug("vendor: ms")
+// 				this._vendor = "ms";
+// 			}
+// 			else {
+// //				u.bug("vendor: unknown")
+// 				this._vendor = "";
+// 			}
+// 		}
+//
+// 		if(!method) {
+// 			return this._vendor;
+// 		}
+//
+// 		if(this._vendor_methods[this._vendor+method] === undefined) {
+// 			this.vendorMethod(method);
+// 		}
+//
+// //		u.bug(this._vendor_methods[this._vendor+method] + ", method:" + method)
+// 		return this._vendor_methods[this._vendor+method];
+// 	}
 
 
 
@@ -133,7 +148,7 @@ Util.Animation = u.a = new function() {
 					transitioned = (function(event) {
 
 //						u.bug("custom transitioned:" + callback  + ", " + u.nodeId(event.target) + ", " + u.nodeId(this) + ", " + typeof(callback) + ", " + typeof(this[callback]))
-						u.e.removeEvent(event.target, u.a.vendor("transitionEnd"), transitioned);
+						u.e.removeEvent(event.target, u.a.transitionEndEventName(), transitioned);
 
 						if(event.target == this) {
 
@@ -159,13 +174,13 @@ Util.Animation = u.a = new function() {
 						}
 					});
 
-					u.e.addEvent(node, this.vendor("transitionEnd"), transitioned);
+					u.e.addEvent(node, u.a.transitionEndEventName(), transitioned);
 				}
 				else {
 //					u.bug("standard transition callback:" + u.nodeId(node))
 
 					// only set transitionEnd listener if transition has duration
-					u.e.addEvent(node, this.vendor("transitionEnd"), this._transitioned);
+					u.e.addEvent(node, u.a.transitionEndEventName(), this._transitioned);
 				}
 
 			}
@@ -178,13 +193,43 @@ Util.Animation = u.a = new function() {
 				// }
 			}
 
-			node.style[this.vendor("Transition")] = transition;
+			u.as(node, "transition", transition);
+//			node.style[this.vendor("Transition")] = transition;
 
 		}
 		catch(exception) {
 			u.exception("u.a.transition", arguments, exception);
 		}
 		
+	}
+
+	// helper function to determine transitionend event name
+	// Opera and Chrome introduced prefixed event name in early versions
+	this.transitionEndEventName = function() {
+
+		if(!this._transition_end_event_name) {
+
+			// default name
+			this._transition_end_event_name = "transitionend";
+
+			var transitions = {
+				"transition": "transitionend",
+				"MozTransition": "transitionend",
+				"msTransition": "transitionend",
+				"webkitTransition": "webkitTransitionEnd",
+				"OTransition": "otransitionend"
+			};
+
+			var x, div = document.createElement("div");
+			for(x in transitions){
+				if(typeof(div.style[x]) !== "undefined") {
+					this._transition_end_event_name = transitions[x];
+					break;
+				}
+			}
+		}
+
+		return this._transition_end_event_name;
 	}
 
 	// transition end handler
@@ -195,7 +240,7 @@ Util.Animation = u.a = new function() {
 //		u.bug("transitioned: " + u.nodeId(event.target) + ", " + u.nodeId(this) + ", " + typeof(this.transitioned))
 
 		// remove event listener - it's job is done
-		u.e.removeEvent(event.target, u.a.vendor("transitionEnd"), u.a._transitioned);
+		u.e.removeEvent(event.target, u.a.transitionEndEventName(), u.a._transitioned);
 
 		// transition should be removed here to be cleared before callback
 		u.a.transition(event.target, "none");
@@ -216,35 +261,37 @@ Util.Animation = u.a = new function() {
 
 	// EXPERIMENTAL: remove transform, because Firefox 23 makes render-error, when returning to 0 in translates
 	this.removeTransform = function(node) {
-		node.style[this.vendor("Transform")] = "none";
+		u.as(node, "transform", "none");
+
 	}
 
 
-	// Set origin
-	this.origin = function(node, x, y) {
-
-		// set origin
-		node.style[this.vendor("TransformOrigin")] = x +"px "+ y +"px";
-
-		// store values
-		node._origin_x = x;
-		node._origin_y = y;
-
-		// update dom
-		node.offsetHeight;
-	}
+	// // Set origin
+	// this.origin = function(node, x, y) {
+	//
+	// 	// set origin
+	// 	u.as(node, "transformOrigin", x +"px "+ y +"px");
+	//
+	// 	// store values
+	// 	node._origin_x = x;
+	// 	node._origin_y = y;
+	//
+	// 	// update dom
+	// 	node.offsetHeight;
+	// }
 
 
 	/**
 	* Simple translate cross-browser
 	*/
 	this.translate = function(node, x, y) {
+
 		// use translate3d when supported as it is more often hardware accelerated
 		if(this.support3d()) {
-			node.style[this.vendor("Transform")] = "translate3d("+x+"px, "+y+"px, 0)";
+			u.as(node, "transform", "translate3d("+x+"px, "+y+"px, 0)");
 		}
 		else {
-			node.style[this.vendor("Transform")] = "translate("+x+"px, "+y+"px)";
+			u.as(node, "transform", "translate("+x+"px, "+y+"px)");
 		}
 
 		// new value holder
@@ -252,47 +299,55 @@ Util.Animation = u.a = new function() {
 		node._y = y;
 
 		// update dom
-		node.offsetHeight;
+//		node.offsetHeight;
 	}
 
 
 	this.rotate = function(node, deg) {
-		node.style[this.vendor("Transform")] = "rotate("+deg+"deg)";
+		u.as(node, "transform", "rotate("+deg+"deg)");
+//		node.style[this.vendor("Transform")] = "rotate("+deg+"deg)";
+
 		node._rotation = deg;
 
 		// update dom
-		node.offsetHeight;
+//		node.offsetHeight;
 	}
 
 	this.scale = function(node, scale) {
-		node.style[this.vendor("Transform")] = "scale("+scale+")";
+		u.as(node, "transform", "scale("+scale+")");
+//		node.style[this.vendor("Transform")] = "scale("+scale+")";
+
 		node._scale = scale;
 
 		// update dom
-		node.offsetHeight;
+//		node.offsetHeight;
 	}
 
 
-	this.setOpacity = function(node, opacity) {
-		node.style.opacity = opacity;
+	this.setOpacity = this.opacity = function(node, opacity) {
+		u.as(node, "opacity", opacity);
+//		node.style.opacity = opacity;
+
 		node._opacity = opacity;
 
 		// update dom
-		node.offsetHeight;
+//		node.offsetHeight;
 	}
 
-	this.setWidth = function(node, width) {
+	this.setWidth = this.width = function(node, width) {
 		width = width.toString().match(/\%|auto|px/) ? width : (width + "px");
 		node.style.width = width;
+
 		node._width = width;
 
 		// update dom
 		node.offsetHeight;
 	}
 
-	this.setHeight = function(node, height) {
+	this.setHeight = this.height = function(node, height) {
 		height = height.toString().match(/\%|auto|px/) ? height : (height + "px");
 		node.style.height = height;
+
 		node._height = height;
 
 		// update dom
@@ -300,10 +355,11 @@ Util.Animation = u.a = new function() {
 	}
 
 
-	this.setBgPos = function(node, x, y) {
+	this.setBgPos = this.bgPos = function(node, x, y) {
 		x = x.toString().match(/\%|auto|px|center|top|left|bottom|right/) ? x : (x + "px");
 		y = y.toString().match(/\%|auto|px|center|top|left|bottom|right/) ? y : (y + "px");
 		node.style.backgroundPosition = x + " " + y;
+
 		node._bg_x = x;
 		node._bg_y = y;
 
@@ -312,8 +368,9 @@ Util.Animation = u.a = new function() {
 	}
 
 
-	this.setBgColor = function(node, color) {
+	this.setBgColor = this.bgColor = function(node, color) {
 		node.style.backgroundColor = color;
+
 		node._bg_color = color;
 
 		// update dom
@@ -323,36 +380,40 @@ Util.Animation = u.a = new function() {
 
 
 	// Combined Transforms. Make it possible to run several animation effects at the same time (EX: rotate + scale + translate).
-
-	// Rotate & Scale
-	this.rotateScale = function(node, deg, scale) {
-		node.style[this.vendor("Transform")] = "rotate("+deg+"deg) scale("+scale+")";
-		node._rotation = deg;
-		node._scale = scale;
-
-		// update dom
-		node.offsetHeight;
-	}
-	
-	// Scale, Rotate, Translate
-	this.scaleRotateTranslate = function(node, scale, deg, x, y) {
-
-		if(this.support3d()) {
-			node.style[this.vendor("Transform")] = "scale("+scale+") rotate("+deg+"deg) translate3d("+x+"px, "+y+"px, 0)";
-		}
-		else {
-			node.style[this.vendor("Transform")] = "scale("+scale+") rotate("+deg+"deg) translate("+x+"px, "+y+"px)";
-		}
-
-		// store value
-		node._rotation = deg;
-		node._scale = scale;
-		node._x = x;
-		node._y = y;
-
-		// update dom
-		node.offsetHeight;
-	}
+	// DEPRECATED: this can easily be done using u.as now
+	//
+	// // Rotate & Scale
+	// this.rotateScale = function(node, deg, scale) {
+	//
+	// 	u.as(node, "transform", "rotate("+deg+"deg) scale("+scale+")");
+	//
+	// 	node.style[this.vendor("Transform")] = "rotate("+deg+"deg) scale("+scale+")";
+	// 	node._rotation = deg;
+	// 	node._scale = scale;
+	//
+	// 	// update dom
+	// 	node.offsetHeight;
+	// }
+	//
+	// // Scale, Rotate, Translate
+	// this.scaleRotateTranslate = function(node, scale, deg, x, y) {
+	//
+	// 	if(this.support3d()) {
+	// 		node.style[this.vendor("Transform")] = "scale("+scale+") rotate("+deg+"deg) translate3d("+x+"px, "+y+"px, 0)";
+	// 	}
+	// 	else {
+	// 		node.style[this.vendor("Transform")] = "scale("+scale+") rotate("+deg+"deg) translate("+x+"px, "+y+"px)";
+	// 	}
+	//
+	// 	// store value
+	// 	node._rotation = deg;
+	// 	node._scale = scale;
+	// 	node._x = x;
+	// 	node._y = y;
+	//
+	// 	// update dom
+	// 	node.offsetHeight;
+	// }
 
 
 
@@ -382,8 +443,8 @@ Util.Animation = u.a = new function() {
 		if(!u.a._animationframe) {
 
 			// create function references 
-			window._requestAnimationFrame = eval(this.vendor("requestAnimationFrame"));
-			window._cancelAnimationFrame = eval(this.vendor("cancelAnimationFrame"));
+			window._requestAnimationFrame = eval(u.vendorProperty("requestAnimationFrame"));
+			window._cancelAnimationFrame = eval(u.vendorProperty("cancelAnimationFrame"));
 
 			// animationframe iterator
 			u.a._animationframe = function(timestamp) {
@@ -432,7 +493,7 @@ Util.Animation = u.a = new function() {
 		}
 
 		// delete animation;
-		delete animation;
+		// delete animation;
 		delete u.a._animationqueue[id];
 
 
