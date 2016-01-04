@@ -2,39 +2,46 @@ Util.browser = function(model, version) {
 
 	var current_version = false;
 
-	if(model.match(/\bexplorer\b|\bie\b/i)) {
+	if(model.match(/\bedge\b/i)) {
+
+		if(navigator.userAgent.match(/Windows[^$]+Gecko[^$]+Edge\/(\d+.\d)/i)) {
+			current_version = navigator.userAgent.match(/Edge\/(\d+.\d)/i)[1];
+		}
+	}
+
+	else if(model.match(/\bexplorer\b|\bie\b/i)) {
 		// u.bug("##trying to match IE:" + document.all + ":" + window.ActiveXObject)
 		// u.bug(navigator.userAgent.match(/Trident\/[\d+]\.\d[^$]+rv:(\d+.\d)/i))
 
-		if(window.ActiveXObject && navigator.userAgent.match(/(MSIE )(\d+.\d)/i)) {
-			current_version = navigator.userAgent.match(/(MSIE )(\d+.\d)/i)[2];
+		if(window.ActiveXObject && navigator.userAgent.match(/MSIE (\d+.\d)/i)) {
+			current_version = navigator.userAgent.match(/MSIE (\d+.\d)/i)[1];
 		}
 		else if(navigator.userAgent.match(/Trident\/[\d+]\.\d[^$]+rv:(\d+.\d)/i)) {
 			current_version = navigator.userAgent.match(/Trident\/[\d+]\.\d[^$]+rv:(\d+.\d)/i)[1];
 		}
 	}
-	else if(model.match(/\bfirefox\b|\bgecko\b/i)) {
+	else if(model.match(/\bfirefox\b|\bgecko\b/i) && !u.browser("ie,edge")) {
 //		u.bug("##trying to match firefox")
-		if(navigator.userAgent.match(/(Firefox\/)(\d+\.\d+)/i) && !u.system("ie")) {
-			current_version = navigator.userAgent.match(/(Firefox\/)(\d+\.\d+)/i)[2];
+		if(navigator.userAgent.match(/Firefox\/(\d+\.\d+)/i)) {
+			current_version = navigator.userAgent.match(/Firefox\/(\d+\.\d+)/i)[1];
 		}
 	}
 	else if(model.match(/\bwebkit\b/i)) {
 //		u.bug("##trying to match webkit:" + document.body.style.webkitTransform)
-		if(document.body.style.webkitTransform != undefined && !u.system("ie")) {
-			current_version = navigator.userAgent.match(/(AppleWebKit\/)(\d+.\d)/i)[2];
+		if(navigator.userAgent.match(/WebKit/i) && !u.browser("ie,edge")) {
+			current_version = navigator.userAgent.match(/AppleWebKit\/(\d+.\d)/i)[1];
 		}
 	}
 	else if(model.match(/\bchrome\b/i)) {
 //		u.bug("##trying to match chrome")
-		if(window.chrome && document.body.style.webkitTransform != undefined) {
-			current_version = navigator.userAgent.match(/(Chrome\/)(\d+)(.\d)/i)[2];
+		if(window.chrome && !u.browser("ie,edge")) {
+			current_version = navigator.userAgent.match(/Chrome\/(\d+)(.\d)/i)[1];
 		}
 	}
 	else if(model.match(/\bsafari\b/i)) {
 //		u.bug("##trying to match safari")
-		if(!window.chrome && document.body.style.webkitTransform != undefined && !u.system("ie")) {
-			current_version = navigator.userAgent.match(/(Version\/)(\d+)(.\d)/i)[2];
+		if(!window.chrome && document.body.style.webkitTransform != undefined && !u.browser("ie,edge")) {
+			current_version = navigator.userAgent.match(/Version\/(\d+)(.\d)/i)[1];
 		}
 	}
 	else if(model.match(/\bopera\b/i)) {
@@ -42,11 +49,11 @@ Util.browser = function(model, version) {
 //		alert("window.opera:" + window.opera)
 		if(window.opera) {
 			if(navigator.userAgent.match(/Version\//)) {
-				current_version = navigator.userAgent.match(/(Version\/)(\d+)(.\d)/i)[2];
+				current_version = navigator.userAgent.match(/Version\/(\d+)(.\d)/i)[1];
 			}
 			// version 9 and less has oldschool useragent
 			else {
-				current_version = navigator.userAgent.match(/(Opera[\/ ]{1})(\d+)(.\d)/i)[2];
+				current_version = navigator.userAgent.match(/Opera[\/ ]{1}(\d+)(.\d)/i)[1];
 			}
 		}
 	}
@@ -175,101 +182,114 @@ Util.system = function(os, version) {
 }
 
 // check support of CSS property
+// automatically check for prefix support as well
 Util.support = function(property) {
 	if(document.documentElement) {
-		property = property.replace(/(-\w)/g, function(word){return word.replace(/-/, "").toUpperCase()});
-		return property in document.documentElement.style;
+
+		var style_property = u.lcfirst(property.replace(/^(-(moz|webkit|ms|o)-|(Moz|webkit|Webkit|ms|O))/, "").replace(/(-\w)/g, function(word){return word.replace(/-/, "").toUpperCase()}));
+
+		if(style_property in document.documentElement.style) {
+			return true;
+		}
+		// look for vendor version
+		else if(u.vendorPrefix() && (u.vendorPrefix()+u.ucfirst(style_property)) in document.documentElement.style) {
+			return true;
+		}
 	}
 	return false;
 }
 
 
+// find and save vender properties for browser
+// when a property is used the first time it checks whether it is supported or if it needs prefix,
+// then is stores the proper property name to avoid checking the same property twice
+Util.vendor_properties = {};
+Util.vendorProperty = function(property) {
 
-// DEPRECATED
-// Browser definition utilities
-// Util.explorer = function(version, scope) {
-// 	if(document.all) {
-// 		var undefined;
-// 		var current_version = navigator.userAgent.match(/(MSIE )(\d+.\d)/i)[2];
-// 		if(scope && !eval(current_version + scope + version)){
-// 			return false;
-// 		}
-// 		else if(!scope && version && current_version != version) {
-// 			return false;
-// 		}
-// 		else {
-// 			return current_version;
-// 		}
-// 	}
-// 	else {
-// 		return false;
-// 	}
-// }
-// // 522 -> 3+
-// Util.safari = function(version, scope) {
-// 	if(navigator.userAgent.indexOf("Safari") >= 0) {
-// 		var undefined;
-// 		var current_version = navigator.userAgent.match(/(Safari\/)(\d+)(.\d)/i)[2];
-// 		if(scope && !eval(current_version + scope + version)){
-// 			return false;
-// 		}
-// 		else if(!scope && version && current_version != version) {
-// 			return false;
-// 		}
-// 		else {
-// 			return current_version;
-// 		}
-// 	}
-// 	else {
-// 		return false;
-// 	}
-// }
-// Util.webkit = function(version, scope) {
-// 	if(navigator.userAgent.indexOf("AppleWebKit") >= 0) {
-// 		var undefined;
-// 		var current_version = navigator.userAgent.match(/(AppleWebKit\/)(\d+.\d)/i)[2];
-// 		if(scope && !eval(current_version + scope + version)){
-// 			return false;
-// 		}
-// 		else if(!scope && version && current_version != version) {
-// 			return false;
-// 		}
-// 		else {
-// 			return current_version;
-// 		}
-// 	}
-// 	else {
-// 		return false;
-// 	}
-// }
-// 
-// Util.firefox = function(version, scope) {
-// 	var browser = navigator.userAgent.match(/(Firefox\/)(\d+\.\d+)/i);
-// 	if(browser) {
-// 		var current_version = browser[2];
-// 		if(scope && !eval(current_version + scope + version)){
-// 			return false;
-// 		}
-// 		else if(!scope && version && current_version != version) {
-// 			return false;
-// 		}
-// 		else {
-// 			return current_version;
-// 		}
-// 	}
-// 	else {
-// 		return false;
-// 	}
-// }
-// 
-// Util.opera = function() {
-// 	return (navigator.userAgent.indexOf("Opera") >= 0) ? true : false;
-// }
+	// only look for property once 
+	// (but do look for each property as vendor prefixes only applies to individual properties)
+	if(!Util.vendor_properties[property]) {
 
-// OS definition utilities
-// Util.windows = function() {
-// 	return (navigator.userAgent.indexOf("Windows") >= 0) ? true : false;
-// }
-// Util.osx = function() {
-// 	return (navigator.userAgent.indexOf("OS X") >= 0) ? true : false;
-// }
+		// set property to avoid any repetition
+		Util.vendor_properties[property] = property;
+
+		// check if value is valid and make appropriate adjustments
+		if(document.documentElement) {
+
+			// correct css property names
+			var style_property = u.lcfirst(property.replace(/^(-(moz|webkit|ms|o)-|(Moz|webkit|Webkit|ms|O))/, "").replace(/(-\w)/g, function(word){return word.replace(/-/, "").toUpperCase()}));
+
+			// look for standard 
+			if(style_property in document.documentElement.style) {
+				Util.vendor_properties[property] = style_property;
+			}
+			// look for vendor version
+			else if(u.vendorPrefix() && (u.vendorPrefix()+u.ucfirst(style_property)) in document.documentElement.style) {
+				Util.vendor_properties[property] = u.vendorPrefix()+u.ucfirst(style_property);
+			}
+
+		}
+
+	}
+
+	return Util.vendor_properties[property];
+}
+
+// find and store vendor prefix
+// looks through available document styles to find any prefix (one prefixed function is always expected to be there)
+Util.vendor_prefix = false;
+Util.vendorPrefix = function(type) {
+
+
+	if(Util.vendor_prefix === false) {
+
+		Util.vendor_prefix = "";
+
+		var styles = window.getComputedStyle(document.documentElement, "");
+
+		// fastes way
+		if(styles.length) {
+			var i, style, match;
+
+			// loop through styles to find any known prefix
+			for(i = 0; style = styles[i]; i++) {
+
+				match = style.match(/^-(moz|webkit|ms)-/);
+				if(match) {
+					Util.vendor_prefix = match[1];
+
+					// correct Moz word case exception
+					if(Util.vendor_prefix == "moz") {
+						Util.vendor_prefix = "Moz";
+					}
+
+					break;
+				}
+			}
+		}
+		// fallback for older browsers not returning available css-properties in array
+		else {
+			var x, match;
+
+			// loop through styles to find any known prefix
+			for(x in styles) {
+				// Opera is hard to find, because other properties start with O
+				match = x.match(/^(Moz|webkit|ms|OLink)/);
+
+				if(match) {
+					Util.vendor_prefix = match[1];
+
+					// Fix the Opera mess
+					if(Util.vendor_prefix === "OLink") {
+						Util.vendor_prefix = "O";
+					}
+
+					break;
+				}
+			}
+		}
+
+	}
+
+	return Util.vendor_prefix;
+}
