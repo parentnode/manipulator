@@ -82,3 +82,10 @@ Util.getMatches = function(string, regex) {
 	return matches;
 }
 
+// TODO: New additions
+Util.ucfirst = function(string) {
+	return string.replace(/^(.){1}/, function($1) {return $1.toUpperCase()});
+}
+Util.lcfirst = function(string) {
+	return string.replace(/^(.){1}/, function($1) {return $1.toLowerCase()});
+}
