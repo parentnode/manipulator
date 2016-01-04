@@ -1,4 +1,5 @@
 // JS FORM BUILDING 
+u.f.customBuild = {};
 
 
 // Add new form element 
@@ -52,12 +53,27 @@ u.f.addFieldset = function(node, _options) {
 u.f.addField = function(node, _options) {
 	
 	// default values
-	var field_type = "string";
-	var field_label = "Value";
 	var field_name = "js_name";
+	var field_label = "Label";
+	var field_type = "string";
 	var field_value = "";
+	var field_options = [];
+
 	var field_class = "";
-	var field_maxlength = "";
+	var field_id = "";
+
+	var field_max = false;
+	var field_min = false;
+
+	var field_disabled = false;
+	var field_readonly = false;
+
+	var field_required = false;
+	var field_pattern = false;
+
+	var field_error_message = "There is an error in your input";
+	var field_hint_message = "";
+
 
 	// additional info passed to function as JSON object
 	if(typeof(_options) == "object") {
@@ -65,47 +81,249 @@ u.f.addField = function(node, _options) {
 		for(_argument in _options) {
 
 			switch(_argument) {
-				case "type"			: field_type			= _options[_argument]; break;
-				case "label"		: field_label			= _options[_argument]; break;
-				case "name"			: field_name			= _options[_argument]; break;
-				case "value"		: field_value			= _options[_argument]; break;
-				case "class"		: field_class			= _options[_argument]; break;
-				case "max"			: field_maxlength		= _options[_argument]; break;
+				case "name"					: field_name			= _options[_argument]; break;
+				case "label"				: field_label			= _options[_argument]; break;
+				case "type"					: field_type			= _options[_argument]; break;
+				case "value"				: field_value			= _options[_argument]; break;
+				case "options"				: field_options			= _options[_argument]; break;
+
+				case "class"				: field_class			= _options[_argument]; break;
+				case "id"					: field_id				= _options[_argument]; break;
+
+				case "max"					: field_max				= _options[_argument]; break;
+				case "min"					: field_min				= _options[_argument]; break;
+
+				case "disabled"				: field_disabled		= _options[_argument]; break;
+				case "readonly"				: field_readonly		= _options[_argument]; break;
+
+				case "required"				: field_required		= _options[_argument]; break;
+				case "pattern"				: field_pattern			= _options[_argument]; break;
+
+				case "error_message"		: field_error_message	= _options[_argument]; break;
+				case "hint_message"			: field_hint_message	= _options[_argument]; break;
 			}
 		}
 	}
 
-	var input_id = "input_"+field_type+"_"+field_name;
+
+
+
+
+	// loop through custom building methods
+	var custom_build;
+	if(field_type in u.f.customBuild) {
+		return u.f.customBuild[field_type](node, _options);
+	}
+
+
+	// make appropriate id for input (if none is specified)
+	field_id = field_id ? field_id : "input_"+field_type+"_"+field_name;
+
+
+	// compensate for certain values being indicated via field_class (is commonly used)
+	field_disabled = !field_disabled ? (field_class.match(/(^| )disabled( |$)/) ? "disabled" : false) : "disabled";
+	field_readonly = !field_readonly ? (field_class.match(/(^| )readonly( |$)/) ? "readonly" : false) : "readonly";
+	field_required = !field_required ? (field_class.match(/(^| )required( |$)/) ? true : false) : true;
+
+//	u.bug("field_disabled:" + field_disabled + ", field_readonly:" + field_readonly + ", field_required:" + field_required)
+
+	// compile full classname value (check for existing values)
+	field_class += field_disabled ? (!field_class.match(/(^| )disabled( |$)/) ? " disabled" : "") : "";
+	field_class += field_readonly ? (!field_class.match(/(^| )readonly( |$)/) ? " readonly" : "") : "";
+	field_class += field_required ? (!field_class.match(/(^| )required( |$)/) ? " required" : "") : "";
+
+	field_class += field_min ? (!field_class.match(/(^| )min:[0-9]+( |$)/) ? " min:"+field_min : "") : "";
+	field_class += field_max ? (!field_class.match(/(^| )max:[0-9]+( |$)/) ? " max:"+field_max : "") : "";
+
+
+	// create field
 	var field = u.ae(node, "div", {"class":"field "+field_type+" "+field_class});
+	var attributes = {};
 
 
-	// TODO: add all field types
+	// TEXT (STRING)
 	if(field_type == "string") {
-		var label = u.ae(field, "label", {"for":input_id, "html":field_label});
-		var input = u.ae(field, "input", {"id":input_id, "value":field_value, "name":field_name, "type":"text", "maxlength":field_maxlength});
-	}
-	else if(field_type == "email" || field_type == "number" || field_type == "tel") {
-		var label = u.ae(field, "label", {"for":input_id, "html":field_label});
-		var input = u.ae(field, "input", {"id":input_id, "value":field_value, "name":field_name, "type":field_type});
-	}
-	else if(field_type == "checkbox") {
-		var input = u.ae(field, "input", {"id":input_id, "value":(field_value ? field_value : "true"), "name":field_name, "type":field_type});
-		var label = u.ae(field, "label", {"for":input_id, "html":field_label});
-	}
-	else if(field_type == "text") {
-		var label = u.ae(field, "label", {"for":input_id, "html":field_label});
-		var input = u.ae(field, "textarea", {"id":input_id, "html":field_value, "name":field_name});
+		field_max = field_max ? field_max : 255;
+
+		attributes = {
+			"type":"text", 
+			"id":field_id, 
+			"value":field_value, 
+			"name":field_name, 
+			"maxlength":field_max, 
+			"minlength":field_min,
+			"pattern":field_pattern,
+			"readonly":field_readonly,
+			"disabled":field_disabled
+		};
+
+		u.ae(field, "label", {"for":field_id, "html":field_label});
+		u.ae(field, "input", u.f.verifyAttributes(attributes));
 	}
 
-	else if(field_type == "select") {
-		u.bug("Select not implemented yet")
+	// EMAIL, TEL, PASSWORD
+	else if(field_type == "email" || field_type == "tel" || field_type == "password") {
+		field_max = field_max ? field_max : 255;
+
+		attributes = {
+			"type":field_type, 
+			"id":field_id, 
+			"value":field_value, 
+			"name":field_name, 
+			"maxlength":field_max, 
+			"minlength":field_min,
+			"pattern":field_pattern,
+			"readonly":field_readonly,
+			"disabled":field_disabled
+		};
+
+		u.ae(field, "label", {"for":field_id, "html":field_label});
+		u.ae(field, "input", u.f.verifyAttributes(attributes));
 	}
+
+	// NUMBER, INTEGER, DATE, DATETIME
+	else if(field_type == "number" || field_type == "integer" || field_type == "date" || field_type == "datetime") {
+
+		attributes = {
+			"type":field_type, 
+			"id":field_id, 
+			"value":field_value, 
+			"name":field_name, 
+			"max":field_max, 
+			"min":field_min,
+			"pattern":field_pattern,
+			"readonly":field_readonly,
+			"disabled":field_disabled
+		};
+
+		u.ae(field, "label", {"for":field_id, "html":field_label});
+		u.ae(field, "input", u.f.verifyAttributes(attributes));
+	}
+
+	// CHECKBOX
+	else if(field_type == "checkbox") {
+
+		attributes = {
+			"type":field_type, 
+			"id":field_id, 
+			"value":field_value ? field_value : "true", 
+			"name":field_name, 
+			"disabled":field_disabled
+		};
+
+		u.ae(field, "input", u.f.verifyAttributes(attributes));
+		u.ae(field, "label", {"for":field_id, "html":field_label});
+	}
+
+	// TEXTAREA (TEXT)
+	else if(field_type == "text") {
+
+		attributes = {
+			"id":field_id, 
+			"html":field_value, 
+			"name":field_name, 
+			"maxlength":field_max, 
+			"minlength":field_min,
+			"pattern":field_pattern,
+			"readonly":field_readonly,
+			"disabled":field_disabled
+		};
+
+		u.ae(field, "label", {"for":field_id, "html":field_label});
+		u.ae(field, "textarea", u.f.verifyAttributes(attributes));
+	}
+
+	// SELECT
+	else if(field_type == "select") {
+
+		attributes = {
+			"id":field_id, 
+			"name":field_name, 
+			"disabled":field_disabled
+		};
+
+		u.ae(field, "label", {"for":field_id, "html":field_label});
+
+		var select = u.ae(field, "select", u.f.verifyAttributes(attributes));
+		// add options
+		if(field_options) {
+			var i, option;
+			for(i = 0; option = field_options[i]; i++) {
+				
+				if(option.value == field_value) {
+					u.ae(select, "option", {"value":option.value, "html":option.text, "selected":"selected"});
+				}
+				else {
+					u.ae(select, "option", {"value":option.value, "html":option.text});
+				}
+			}
+		}
+	}
+
+	// RADIOBUTTONS
+	else if(field_type == "radiobuttons") {
+
+
+		u.ae(field, "label", {"html":field_label});
+
+		if(field_options) {
+			var i, option;
+			for(i = 0; option = field_options[i]; i++) {
+
+				var div = u.ae(field, "div", {"class":"item"});
+				
+				if(option.value == field_value) {
+					u.ae(div, "input", {"value":option.value, "id":field_id+"-"+i, "type":"radio", "name":field_name, "checked":"checked"});
+					u.ae(div, "label", {"for":field_id+"-"+i, "html":option.text});
+				}
+				else {
+					u.ae(div, "input", {"value":option.value, "id":field_id+"-"+i, "type":"radio", "name":field_name});
+					u.ae(div, "label", {"for":field_id+"-"+i, "html":option.text});
+				}
+			}
+		}
+
+	}
+
+	// FILES
+	else if(field_type == "files") {
+
+		u.ae(field, "label", {"for":field_id, "html":field_label});
+		u.ae(field, "input", {"id":field_id, "name":field_name, "type":"file"});
+	}
+
+
 	else {
-		u.bug("input type not implemented yet")
+		u.bug("input type not implemented")
+	}
+
+
+	// add hint and error message
+	if(field_hint_message || field_error_message) {
+		var help = u.ae(field, "div", {"class":"help"});
+		if(field_hint_message) {
+			u.ae(field, "div", {"class":"hint", "html":field_hint_message});
+			u.ae(field, "div", {"class":"error", "html":field_error_message});
+		}
 	}
 
 	return field;
 }
+
+// checking attributes for valid values, removing empty ones to not create faulty attributes
+u.f.verifyAttributes = function(attributes) {
+
+	for(attribute in attributes) {
+		if(attributes[attribute] === undefined || attributes[attribute] === false || attributes[attribute] === null) {
+//			u.bug("invalid attribute:" + attribute + "("+attributes[attribute]+")")
+			delete attributes[attribute];
+		}
+	}
+	
+	return attributes;
+	
+}
+
 
 u.f.addAction = function(node, _options) {
 
