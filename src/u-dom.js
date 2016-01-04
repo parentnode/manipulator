@@ -504,20 +504,23 @@ Util.toggleClass = u.tc = function(node, classname, _classname, dom_update) {
 
 // apply style
 // set style value and query DOM to force update
+// Uses u.venderProperty to uses prefix if needed
 Util.applyStyle = u.as = function(node, property, value, dom_update) {
-	node.style[property] = value;
+
+	node.style[u.vendorProperty(property)] = value;
 
 	dom_update === false ? false : node.offsetTop;
 }
 
 // apply styles
 // set style values and query DOM to force update
+// Uses u.venderProperty to uses prefix if needed
 Util.applyStyles = u.ass = function(node, styles, dom_update) {
 
 	if(styles) {
 		var style;
 		for(style in styles) {
-			node.style[style] = styles[style];
+			node.style[u.vendorProperty(style)] = styles[style];
 		}
 	}
 
@@ -528,17 +531,22 @@ Util.applyStyles = u.ass = function(node, styles, dom_update) {
 // Get elements computed style value for css property
 // compensated for JS value syntax
 Util.getComputedStyle = u.gcs = function(node, property) {
+
 	// query DOM to force update
 	node.offsetHeight;
 
 //	property = property.replace(/([A-Z]{1})/g, function(word){return word.replace(/([A-Z]{1})/, "-$1").toLowerCase()});
 
 	// also convert vendor prefix
-	property = property.replace(/([A-Z]{1})/g, function(word){return word.replace(/([A-Z]{1})/, "-$1").toLowerCase()}).replace(/^(webkit|ms|moz)/g, "-$1");
+//	property = property.replace(/([A-Z]{1})/g, function(word){return word.replace(/([A-Z]{1})/, "-$1").toLowerCase()}).replace(/^(webkit|ms|moz)/g, "-$1");
 
+//	u.bug("gcs property1:" + property)
+	property = (u.vendorProperty(property).replace(/([A-Z]{1})/g, "-$1")).toLowerCase().replace(/^(webkit|ms)/, "-$1");
+
+//	u.bug("gcs property2:" + property)
 	// return computed style if method is supported
-	if(document.defaultView && document.defaultView.getComputedStyle) {
-		return document.defaultView.getComputedStyle(node, null).getPropertyValue(property);
+	if(window.getComputedStyle) {
+		return window.getComputedStyle(node, null).getPropertyValue(property);
 	}
 	return false;
 }
