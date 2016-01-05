@@ -60,7 +60,7 @@ if(document.all && document.addEventListener == undefined) {
 				var attribute;
 				for(attribute in attributes) {
 	//				u.bug("append:" + attribute);
-					if(!attribute.match(/^(class|type|value|html)$/)) {
+					if(!attribute.match(/^(class|type|value|html|checked)$/)) {
 						node.setAttribute(attribute, attributes[attribute]);
 					}
 				}
@@ -84,6 +84,9 @@ if(document.all && document.addEventListener == undefined) {
 				// Value must be set after appending to dom
 				if(attributes["value"]) {
 					node.value = attributes["value"];
+				}
+				if(attributes["checked"]) {
+					node.checked = attributes["checked"];
 				}
 				if(attributes["html"]) {
 					node.innerHTML = attributes["html"];
@@ -154,6 +157,9 @@ if(document.all && document.addEventListener == undefined) {
 				// Value must be set after appending to dom
 				if(attributes["value"]) {
 					node.value = attributes["value"];
+				}
+				if(attributes["checked"]) {
+					node.checked = attributes["checked"];
 				}
 				if(attributes["html"]) {
 					node.innerHTML = attributes["html"];
@@ -250,7 +256,7 @@ if(document.all && document.addEventListener == undefined) {
 if(typeof(document.textContent) == "undefined") {
 
 	Util.textContent = u.text = function(node) {
-		if(node.textContent) {
+		if(node.textContent !== undefined) {
 			return node.textContent;
 		}
 		else if(node.innerText) {
