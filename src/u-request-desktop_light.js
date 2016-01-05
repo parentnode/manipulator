@@ -76,7 +76,21 @@ if(typeof(window.XMLHttpRequest) == "undefined" || function(){return (typeof(win
 
 				// avoid heavy caching by activex component
 				url += (url.match(/\?/) ? "&" : "?") + "refresh_activex=" + u.randomString();
-				this.xmlhttp.open(method, url, async);
+				// Old IE will not return error unless we catch it and do it manuallt
+				try {
+					this.xmlhttp.open(method, url, async);
+				}
+				catch(exception) {
+
+					if(typeof(wrapper.statechanged) == "function") {
+						this.status = 400;
+						this.IEreadyState = true;
+
+						this.statechanged();
+						this.parentNode.removeChild(wrapper);
+					}
+
+				}
 			}
 
 			wrapper.send = function(params) {
