@@ -29,103 +29,6 @@ Util.Animation = u.a = new function() {
 
 
 
-
-	// TODO:
-	// idea:
-	// make framework create correct function names, upon request
-	// IE. first time transform is called, check for existence of window.transform 
-	// (or document.documentElement.style.transform)
-	// if it doesn't exist, create it and return function name
-	//
-	// conclusion: not a good idea - needs to be created as DOM prototype and this will not be optimal
-
-	// idea:
-	// 
-
-//	alert("rest")
-//
-// 	// get vendor, to avoid setting more than the required type
-// 	// exceptions to be aware of
-// 	this._vendor_exceptions = {
-// 		"mozTransform":"MozTransform",
-// 		"mozTransition":"MozTransition",
-// 		"mozTransitionEnd":"transitionend",
-// 		"msTransitionEnd":"transitionend",
-// 		"mozTransformOrigin":"MozTransformOrigin",
-// 		"mozPerspectiveOrigin":"MozPerspectiveOrigin",
-// 		"mozTransformStyle":"MozTransformStyle",
-// 		"mozPerspective":"MozPerspective",
-// 		"mozBackfaceVisibility":"MozBackfaceVisibility",
-// 		"msCancelAnimationFrame":"cancelAnimationFrame"
-// 	};
-// 	// method cache - when a vendor method has been requested once,
-// 	// it will be stored, to avoid wasting time every time
-// 	this._vendor_methods = {};
-//
-// 	// find correct method
-// 	// checks for exceptions and stores method in cache (_vendor_methods)
-//  	this.vendorMethod = function(method) {
-// 		var vender_method = this._vendor+method;
-// 		method = this._vendor ? method.replace(/^([a-z]{1})/, function(word){return word.toUpperCase()}) : method;
-//
-// 		if(this._vendor_exceptions[this._vendor+method]) {
-// 			this._vendor_methods[vender_method] = this._vendor_exceptions[this._vendor+method];
-// 			return;
-// 		}
-//  		this._vendor_methods[vender_method] = this._vendor+method;
-//  		return;
-// 	}
-//
-// 	// get vendor and optional method name
-// 	// returns name from cache (_vendor_methods)
-// 	// or checks method using vendorMethod
-// 	this.vendor = function(method) {
-// //		u.bug("vendor: "+ this._vendor + ":" + method);
-//
-// 		// only run detection once
-// 		if(this._vendor === undefined) {
-// //			u.bug("no implementation")
-//
-// 			if(document.documentElement.style.webkitTransform != undefined) {
-// //			if(document.body.style.webkitTransform != undefined) {
-// //				u.bug("vendor: webkit")
-// 				this._vendor = "webkit";
-// 			}
-// 			else if(document.documentElement.style.MozTransform != undefined) {
-// //			else if(document.body.style.MozTransform != undefined) {
-// //				u.bug("vendor: moz")
-// 				this._vendor = "moz";
-// 			}
-// 			else if(document.documentElement.style.oTransform != undefined) {
-// //			else if(document.body.style.oTransform != undefined) {
-// //				u.bug("vendor: o")
-// 				this._vendor = "o";
-// 			}
-// 			else if(document.documentElement.style.msTransform != undefined) {
-// //			else if(document.body.style.msTransform != undefined) {
-// //				u.bug("vendor: ms")
-// 				this._vendor = "ms";
-// 			}
-// 			else {
-// //				u.bug("vendor: unknown")
-// 				this._vendor = "";
-// 			}
-// 		}
-//
-// 		if(!method) {
-// 			return this._vendor;
-// 		}
-//
-// 		if(this._vendor_methods[this._vendor+method] === undefined) {
-// 			this.vendorMethod(method);
-// 		}
-//
-// //		u.bug(this._vendor_methods[this._vendor+method] + ", method:" + method)
-// 		return this._vendor_methods[this._vendor+method];
-// 	}
-
-
-
 	/**
 	* Apply CSS transition to node
 	*/
@@ -260,25 +163,11 @@ Util.Animation = u.a = new function() {
 
 
 	// EXPERIMENTAL: remove transform, because Firefox 23 makes render-error, when returning to 0 in translates
+	// DEPRECATED: excess code to replicate one-liner
 	this.removeTransform = function(node) {
 		u.as(node, "transform", "none");
 
 	}
-
-
-	// // Set origin
-	// this.origin = function(node, x, y) {
-	//
-	// 	// set origin
-	// 	u.as(node, "transformOrigin", x +"px "+ y +"px");
-	//
-	// 	// store values
-	// 	node._origin_x = x;
-	// 	node._origin_y = y;
-	//
-	// 	// update dom
-	// 	node.offsetHeight;
-	// }
 
 
 	/**
