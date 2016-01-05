@@ -45,9 +45,9 @@ Util.Form.customValidate["html"] = function(iN) {
 	pattern = iN.getAttribute("pattern");
 
 	if(
-		u.text(iN.field._viewer) &&
-		u.text(iN.field._viewer).length >= min && 
-		u.text(iN.field._viewer).length <= max && 
+		iN.val() &&
+		iN.val().length >= min && 
+		iN.val().length <= max && 
 		(!pattern || iN.val().match("^"+pattern+"$"))
 	) {
 		u.f.fieldCorrect(iN);

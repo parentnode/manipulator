@@ -256,7 +256,7 @@ if(document.all && document.addEventListener == undefined) {
 if(typeof(document.textContent) == "undefined") {
 
 	Util.textContent = u.text = function(node) {
-		if(node.textContent !== undefined) {
+		if(node.textContent) {
 			return node.textContent;
 		}
 		else if(node.innerText) {
