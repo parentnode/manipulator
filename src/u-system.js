@@ -243,7 +243,7 @@ Util.vendorProperty = function(property) {
 // find and store vendor prefix
 // looks through available document styles to find any prefix (one prefixed function is always expected to be there)
 Util.vendor_prefix = false;
-Util.vendorPrefix = function(type) {
+Util.vendorPrefix = function() {
 
 
 	if(Util.vendor_prefix === false) {
