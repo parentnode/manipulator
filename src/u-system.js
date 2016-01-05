@@ -5,7 +5,7 @@ Util.browser = function(model, version) {
 	if(model.match(/\bedge\b/i)) {
 
 		if(navigator.userAgent.match(/Windows[^$]+Gecko[^$]+Edge\/(\d+.\d)/i)) {
-			current_version = navigator.userAgent.match(/Edge\/(\d+.\d)/i)[1];
+			current_version = navigator.userAgent.match(/Edge\/(\d+)/i)[1];
 		}
 	}
 
