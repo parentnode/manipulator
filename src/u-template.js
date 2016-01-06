@@ -160,22 +160,23 @@ u.template = function(template, json, _options) {
 
 					string += item_template.replace(/\{(.+?)\}/g, 
 						function(string) {
-							if(string == "{children}") {
-								if(json[_item].children && json[_item].children.length) {
-									var parent_node = template.parentNode.nodeName.toLowerCase();
-									var parent_class = template.parentNode.className;
-									return '<'+parent_node+' class="'+parent_class+'">'+u.template(template, json[_item].children)+'</'+parent_node+'>';
-								}
-								else {
-									return "";
-								}
-							}
-							else if(json[_item][string.replace(/[\{\}]/g, "")]) {
+							// if(string == "{children}") {
+							// 	if(json[_item].children && json[_item].children.length) {
+							// 		var parent_node = template.parentNode.nodeName.toLowerCase();
+							// 		var parent_class = template.parentNode.className;
+							// 		return '<'+parent_node+' class="'+parent_class+'">'+u.template(template, json[_item].children)+'</'+parent_node+'>';
+							// 	}
+							// 	else {
+							// 		return "";
+							// 	}
+							// }
+							// else 
+							if(json[_item][string.replace(/[\{\}]/g, "")]) {
 								if(json[_item][string.replace(/[\{\}]/g, "")] === true) {
 									return "true";
 								}
 							
-								return json[_item][string.replace(/[\{\}]/g, "")];
+								return json[_item][string.replace(/[\{\}]/g, "")].replace(/(\"|\')/g, "\\$1");
 							}
 							else if(json[_item][string.replace(/[\{\}]/g, "")] === false) {
 								return "false";
@@ -191,7 +192,7 @@ u.template = function(template, json, _options) {
 		}
 		// only one result
 		else {
-			string += template_string.replace(/\{(.+?)\}/g, function(string) {if(json[string.replace(/[\{\}]/g, "")]) {return json[string.replace(/[\{\}]/g, "")]}else{return ""}});
+			string += template_string.replace(/\{(.+?)\}/g, function(string) {if(json[string.replace(/[\{\}]/g, "")]) {return json[string.replace(/[\{\}]/g, "")].replace(/(\"|\')/g, "\\$1")}else{return ""}});
 		}
 	}
 
