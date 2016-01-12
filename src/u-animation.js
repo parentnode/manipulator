@@ -305,23 +305,25 @@ Util.Animation = u.a = new function() {
 	// }
 
 
-
-	// ANIMATION FRAME
-
 	this._animationqueue = {};
 	this.requestAnimationFrame = function(node, callback, duration) {
 //		u.bug("requestAnimationFrame:" + callback + ", " + duration + ", " + u.nodeId(node) + ", " + u.a._requestAnimationId)
 
+		if(!u.a.__animation_frame_start) {
+			u.a.__animation_frame_start = Date.now();
+		}
 		// add animation to stack
-		var start = new Date().getTime();
+//		var start = Date.now() - u.a.__animation_frame_start;
 		var id = u.randomString();
+
+//		u.bug("now:" + Date.now() + ", " + start)
 
 		// create object with all information
 		u.a._animationqueue[id] = {};
 		u.a._animationqueue[id].id = id;
 		u.a._animationqueue[id].node = node;
 		u.a._animationqueue[id].callback = callback;
-		u.a._animationqueue[id].start = start;
+//		u.a._animationqueue[id].start = start;
 		u.a._animationqueue[id].duration = duration;
 
 		// TODO: timers are not very precise - is this a good idea+
@@ -340,13 +342,23 @@ Util.Animation = u.a = new function() {
 
 //				u.bug("frame:" + timestamp);
 
+
+
 				var id, animation;
 				for(id in u.a._animationqueue) {
 
 					animation = u.a._animationqueue[id];
 
+					if(!animation["__animation_frame_start_"+id]) {
+						// add animation to stack
+						animation["__animation_frame_start_"+id] = timestamp;
+//						animation["__animation_frame_start_"+id] = (Date.now() - u.a.__animation_frame_start) + timestamp;
+//						u.bug("now:" + animation["__animation_frame_start_"+id])
+					}
+					
+
 					// progress callback
-					animation.node[animation.callback]((timestamp-animation.start) / animation.duration);
+					animation.node[animation.callback]((timestamp-animation["__animation_frame_start_"+id]) / animation.duration);
 				}
 
 				// continue animationFrame loop
@@ -374,6 +386,7 @@ Util.Animation = u.a = new function() {
 //		u.bug("finalAnimationFrame:" + ", " + id + ", " + u.a._requestAnimationId);
 
 		var animation = u.a._animationqueue[id];
+		animation["__animation_frame_start_"+id] = false;
 		animation.node[animation.callback](1);
 
 		if(typeof(animation.node.transitioned) == "function") {
@@ -408,6 +421,7 @@ Util.Animation = u.a = new function() {
 //				u.bug(this.vendor("cancelAnimationFrame"));
 			window._cancelAnimationFrame(u.a._requestAnimationId);
 
+			u.a.__animation_frame_start = false;
 			u.a._requestAnimationId = false;
 		}
 	}
