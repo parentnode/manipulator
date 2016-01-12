@@ -788,6 +788,7 @@ u.f.textEditor = function(field) {
 		tag._input = u.ae(tag, "div", {"class":"text"});
 		tag._input.tag = tag;
 		tag._input.field = this;
+		tag._input._form = this._input._form;
 
 
 		// if we have media info
@@ -843,6 +844,7 @@ u.f.textEditor = function(field) {
 			tag._input = u.ae(tag._text, "input", {"type":"file", "name":"htmleditor_media[]"});
 			tag._input.tag = tag;
 			tag._input.field = this;
+			tag._input._form = this._input._form;
 
 			// declare get/set value funtion
 			tag._input.val = function(value) {return false;}
@@ -996,6 +998,7 @@ u.f.textEditor = function(field) {
 		tag._input = u.ae(tag, "div", {"class":"text"});
 		tag._input.tag = tag;
 		tag._input.field = this;
+		tag._input._form = this._input._form;
 
 
 		// if we have file info
@@ -1189,6 +1192,7 @@ u.f.textEditor = function(field) {
 		tag._input = u.ae(tag, "div", {"class":"text", "contentEditable":true});
 		tag._input.tag = tag;
 		tag._input.field = this;
+		tag._input._form = this._input._form;
 
 		// declare get/set value funtion
 		tag._input.val = function(value) {
@@ -1420,6 +1424,7 @@ u.f.textEditor = function(field) {
 		li._input.li = li;
 		li._input.tag = tag;
 		li._input.field = this;
+		li._input._form = this._input._form;
 
 		// declare get/set value funtion
 		li._input.val = function(value) {
@@ -1472,6 +1477,7 @@ u.f.textEditor = function(field) {
 		tag._input = u.ae(tag, "div", {"class":"text", "contentEditable":true});
 		tag._input.tag = tag;
 		tag._input.field = this;
+		tag._input._form = this._input._form;
 
 		// declare get/set value funtion
 		tag._input.val = function(value) {
