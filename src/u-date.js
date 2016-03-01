@@ -15,27 +15,39 @@
 
 Util.date = function(format, timestamp, months) {
 
+	// default to current time if timestamp is not set
 	var date = timestamp ? new Date(timestamp) : new Date();
 
 	// not a valid date
 	if(isNaN(date.getTime())) {
 
-		// look for correct timezone
-		if(!timestamp.match(/[A-Z]{3}\+[0-9]{4}/)) {
+		if(new Date(timestamp.replace(/ /, "T"))) {
 
-			// offset declared without timezone (twitter - IE doesn't understand)
-			if(timestamp.match(/ \+[0-9]{4}/)) {
+			date = new Date(timestamp.replace(/ /, "T"));
 
-				// add timezone and try to create date again
-				date = new Date(timestamp.replace(/ (\+[0-9]{4})/, " GMT$1"));
-			}
 		}
+		else {
+
+			// look for correct timezone
+			if(!timestamp.match(/[A-Z]{3}\+[0-9]{4}/)) {
+
+				// offset declared without timezone (twitter - IE doesn't understand)
+				if(timestamp.match(/ \+[0-9]{4}/)) {
+
+					// add timezone and try to create date again
+					date = new Date(timestamp.replace(/ (\+[0-9]{4})/, " GMT$1"));
+				}
+			}
+
+		}
+
 
 		// final test - if it still fails, return current time
 		if(isNaN(date.getTime())) {
 			date = new Date();
 		}
 	}
+//	u.bug("date:" + date.getDate());
 
 
 	var tokens = /d|j|m|n|F|Y|G|H|i|s/g;
