@@ -49,28 +49,6 @@ Util.svg = function(svg_object) {
 		svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
 
 
-		// width and height settings
-		if(svg_object.title) {
-			svg.setAttributeNS(null, "title", svg_object.title);
-		}
-		if(svg_object.class) {
-			svg.setAttributeNS(null, "class", svg_object.class);
-		}
-
-		if(svg_object.width) {
-			svg.setAttributeNS(null, "width", svg_object.width);
-		}
-		if(svg_object.height) {
-			svg.setAttributeNS(null, "height", svg_object.height);
-		}
-		if(svg_object.id) {
-			svg.setAttributeNS(null, "id", svg_object.id);
-		}
-		if(svg_object.node) {
-			svg.node = svg_object.node;
-		}
-
-
 		// TODO: implement filters
 //		if(svg_object.filters[shape]) {}
 
@@ -92,6 +70,29 @@ Util.svg = function(svg_object) {
 			u._svg_cache[svg_object.name] = svg.cloneNode(true);
 		}
 	}
+
+	// update metadata
+	// width and height settings
+	if(svg_object.title) {
+		svg.setAttributeNS(null, "title", svg_object.title);
+	}
+	if(svg_object.class) {
+		svg.setAttributeNS(null, "class", svg_object.class);
+	}
+
+	if(svg_object.width) {
+		svg.setAttributeNS(null, "width", svg_object.width);
+	}
+	if(svg_object.height) {
+		svg.setAttributeNS(null, "height", svg_object.height);
+	}
+	if(svg_object.id) {
+		svg.setAttributeNS(null, "id", svg_object.id);
+	}
+	if(svg_object.node) {
+		svg.node = svg_object.node;
+	}
+
 
 	// if node is specified, append svg to node
 	if(svg_object.node) {
