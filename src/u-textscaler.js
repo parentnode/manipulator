@@ -189,6 +189,7 @@ u.textscaler = function(node, _settings) {
 //						u.bug("end textscaler event")
 						u.e.removeEvent(window, "resize", window._man_text.scale);
 						window._man_text = false;
+						break;
 					}
 				}
 			}
