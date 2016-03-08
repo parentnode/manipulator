@@ -82,9 +82,15 @@ Util.Form = u.f = new function() {
 		_form.native_form.setAttribute("novalidate", "novalidate");
 
 		// set submit reference to internal submit handler
-		// but keep reference to DOM submot
+		// but keep reference to DOM submit
 		_form.DOMsubmit = _form.native_form.submit;
 		_form.submit = this._submit;
+
+
+		// set reset reference to internal reset handler
+		// but keep reference to DOM reset
+		_form.DOMreset = _form.native_form.reset;
+		_form.reset = this._reset;
 
 
 		// objects for fields and actions
@@ -541,7 +547,7 @@ Util.Form = u.f = new function() {
 
 
 		// get all actions
-		var actions = u.qsa(".actions li input[type=button],.actions li input[type=submit],.actions li a.button", _form);
+		var actions = u.qsa(".actions li input[type=button],.actions li input[type=submit],.actions li input[type=reset],.actions li a.button", _form);
 		for(i = 0; action = actions[i]; i++) {
 
 			// make sure even a.buttons knows form
@@ -564,6 +570,25 @@ Util.Form = u.f = new function() {
 			u.xInObject(_form.actions);
 		}
 
+	}
+
+
+	// Reset
+	// internal reset handler - attatched to form as form.reset
+	// original form.reset will be available as form.DOMreset
+	this._reset = function (event, iN) {
+
+//		u.bug("reset")
+
+		// do pre validation of all fields
+		for (name in this.fields) {
+			if (this.fields[name] && this.fields[name].field && this.fields[name].type != "hidden" && !this.fields[name].getAttribute("readonly")) {
+
+//				u.bug("reset:" + name);
+				this.fields[name].val("");
+
+			}
+		}
 	}
 
 
@@ -655,6 +680,11 @@ Util.Form = u.f = new function() {
 					// validate after setting value
 					u.f.validate(this);
 				}
+				// uncheck (to ensure reset works)
+				else {
+					option.checked = false;
+				}
+
 			}
 		}
 		// find checked option
@@ -709,10 +739,17 @@ Util.Form = u.f = new function() {
 					return i;
 				}
 			}
+			// deselect but no empty value option
+			if (value === "") {
+				this.selectedIndex = -1;
+				u.f.validate(this);
+				return -1;
+			}
+
 			return false;
 		}
 		else {
-			return this.default_value != this.options[this.selectedIndex].value ? this.options[this.selectedIndex].value : "";
+			return (this.selectedIndex >= 0 && this.default_value != this.options[this.selectedIndex].value) ? this.options[this.selectedIndex].value : "";
 		}
 	}
 	// value get/setter for file inputs
@@ -720,6 +757,11 @@ Util.Form = u.f = new function() {
 		if(value !== undefined) {
 			this.value = value;
 //				alert('adding values manually to input type="file" is not supported')
+
+			// resetting like this is not crossbrowser safe
+			if (value === "") {
+				this.value = null;
+			}
 		}
 		else {
 
@@ -846,7 +888,7 @@ Util.Form = u.f = new function() {
 
 	// internal - input is changed (onchange event) - attached to input
 	this._changed = function(event) {
-//		u.bug("value changed:" + this.name + ":" + event.type + ":" + u.nodeId(event.srcElement));
+//		u.bug("value changed:" + this.name + ":" + event.type);
 
 		// input cannot be changed without being used (selects in particular)
 		this.used = true;
@@ -870,7 +912,7 @@ Util.Form = u.f = new function() {
 	}
 	// internal - input is updated (onkeyup event) - attached to input
 	this._updated = function(event) {
-//		u.bug("value updated:" + this.name + ":" + event.type + ":" + u.nodeId(event.srcElement));
+//		u.bug("value updated:" + this.name + ":" + event.type);
 
 		// if key is not [TAB], [ENTER], [SHIFT], [CTRL], [ALT]
 		if(event.keyCode != 9 && event.keyCode != 13 && event.keyCode != 16 && event.keyCode != 17 && event.keyCode != 18) {
@@ -892,6 +934,11 @@ Util.Form = u.f = new function() {
 			// like radio buttons
 			else if(this.field._input && typeof(this.field._input.updated) == "function") {
 				this.field._input.updated(this);
+			}
+
+			// does field have callback declared
+			if(typeof(this.field.updated) == "function") {
+				this.field.updated(this);
 			}
 
 			// does form have callback declared
@@ -1164,8 +1211,8 @@ Util.Form = u.f = new function() {
 	// activate button
 	this.activateButton = function(action) {
 
-		// if submit button, make sure it does not submit form without validation
-		if(action.type && action.type == "submit") {
+		// if submit or reset button, make sure it does not submit form without validation or reset native form, when form is a pseudo form
+		if(action.type && action.type == "submit" || action.type == "reset") {
 			// need to cancel onclick event to avoid normal post in older browsers where killing mouseup/down is not enough
 			action.onclick = function(event) {
 				u.e.kill(event ? event : window.event);
@@ -1190,6 +1237,16 @@ Util.Form = u.f = new function() {
 
 					// internal submit
 					this._form.submit(event, this);
+				}
+				else if (this.type && this.type.match(/reset/i)) {
+
+					// store submit button info
+					this._form._submit_button = false;
+					// remove any previous submit info
+					this._form._submit_input = false;
+
+					// internal submit
+					this._form.reset(event, this);
 				}
 
 				// TODO: what is default action when not a submit button??
