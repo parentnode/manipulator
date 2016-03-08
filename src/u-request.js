@@ -105,7 +105,9 @@ Util.request = function(node, url, _options) {
 				var params;
 //				u.bug("params typeof:" + typeof(node[request_id].request_params) + ", " + node[request_id].request_params.constructor.toString().match(/FormData/i));
 
-				if(typeof(node[request_id].request_params) == "object" && !node[request_id].request_params.constructor.toString().match(/FormData/i)) {
+
+				// Stringify JSON objects
+				if(typeof(node[request_id].request_params) == "object" && node[request_id].request_params.constructor.toString().match(/function Object/i)) {
 					params = JSON.stringify(node[request_id].request_params);
 				}
 				else {
