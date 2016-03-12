@@ -1,3 +1,6 @@
+// default debug is console
+u.bug_console_only = true;
+
 // test urls
 Util.debugURL = function(url) {
 	if(u.bug_force) {
