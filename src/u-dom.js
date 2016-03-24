@@ -365,7 +365,17 @@ Util.clickableElement = u.ce = function(node, _options) {
 
 		u.e.click(node);
 		if(node._click_type == "link") {
+
+
+			// apply full link fun
 			node.clicked = function(event) {
+
+				// allow for custom action before actual click is executed
+				if(typeof(node.preClicked) == "function") {
+					node.preClicked();
+				}
+
+				// meta key pressed
 				if(event && (event.metaKey || event.ctrlKey)) {
 					window.open(this.url);
 				}
