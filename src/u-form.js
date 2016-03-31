@@ -905,6 +905,11 @@ Util.Form = u.f = new function() {
 			this.field._input.changed(this);
 		}
 
+		// does field have callback declared
+		if(typeof(this.field.changed) == "function") {
+			this.field.changed(this);
+		}
+
 		// does form have callback declared
 		if(typeof(this._form.changed) == "function") {
 			this._form.changed(this);
