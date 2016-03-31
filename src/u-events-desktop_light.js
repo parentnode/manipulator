@@ -30,6 +30,7 @@ if(document.all && document.addEventListener == undefined) {
 		}
 //		window.event.target = element;
 		win_event.target = element;
+		win_event.currentTarget = element;
 //		u.xInObject(win_event);
 //		u.bug("window.event.timeStamp a" + win_event.timeStamp)
 

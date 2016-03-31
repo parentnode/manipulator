@@ -328,6 +328,7 @@ Util.textContent = u.text = function(node) {
 
 
 // make element clickable with options
+// options can also contain tracking information
 Util.clickableElement = u.ce = function(node, _options) {
 
 	node._use_link = "a";
@@ -363,7 +364,8 @@ Util.clickableElement = u.ce = function(node, _options) {
 
 	if(typeof(u.e) != "undefined" && typeof(u.e.click) == "function") {
 
-		u.e.click(node);
+		// set up click event handler and pass options for tracking
+		u.e.click(node, _options);
 		if(node._click_type == "link") {
 
 
@@ -381,8 +383,6 @@ Util.clickableElement = u.ce = function(node, _options) {
 				}
 				else {
 					// HASH/POPSTATE navigation
-					// FX 5 and others cannot find page ??
-					// TODO: needs additional testing!
 					if(typeof(u.h) != "undefined" && u.h.is_listening) {
 						u.h.navigate(this.url, this);
 					}

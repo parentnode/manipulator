@@ -155,8 +155,10 @@ Optional parameters
 // it is important to do as many calculation beforehand to make event handling as fast as possible
 // if you do too many calculations on each event dragging will be lagging and ... well crappy.
 u.e.drag = function(node, boundaries, _options) {
+//	u.bug("set drag:"+u.nodeId(node))
 
-//	u.bug("set click:"+e.nodeName)
+	node.e_drag_options = _options ? _options : {};
+
 	node.e_drag = true;
 
 	node._moves_pick = 0;
@@ -766,7 +768,14 @@ u.e._drop = function(event) {
 
 	// return swipe events to handlers
 	if(this.e_swipe && this.swiped) {
-//		u.bug("_drop swiped:"+this.swiped);
+		u.bug("_drop swiped:"+this.swiped);
+
+
+		// set appropriate eventAction if it does not exist
+		this.e_swipe_options.eventAction = "Swiped "+ this.swiped;
+		// track event
+		u.stats.event(this, this.e_swipe_options);
+
 
 		if(this.swiped == "left" && typeof(this.swipedLeft) == "function") {
 			this.swipedLeft(event);
@@ -782,6 +791,14 @@ u.e._drop = function(event) {
 		}
 //		this.swiped = false;
 //		u.bug(this.swiped);
+		
+	}
+	else if(this.e_drag) {
+
+		// set appropriate eventAction if it does not exist
+		this.e_drag_options.eventAction = u.stringOr(this.e_drag_options.eventAction, "Dropped");
+		// track event
+		u.stats.event(this, this.e_drag_options);
 		
 	}
 	// else transition element into place
@@ -894,6 +911,9 @@ Swipe
 * ? element.swipedLeft
 */
 u.e.swipe = function(node, boundaries, _options) {
+
+	node.e_swipe_options = _options ? _options : {};
+
 	node.e_swipe = true;
 
 	u.e.drag(node, boundaries, _options);

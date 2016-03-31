@@ -45,7 +45,7 @@ u.navigation = function(_options) {
 
 
 		// stats
-		// TODO: this.hash_node add to stats
+		// TODO: this.hash_node add to stats (or extend tracking options in some way)
 		u.stats.pageView(url);
 
 

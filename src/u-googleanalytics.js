@@ -6,57 +6,100 @@ if(u.ga_account) {
     m=s.getElementsByTagName(o)[0];a.async=1;a.defer=true;a.src=g;m.parentNode.insertBefore(a,m)
     })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
+	// track page view for initial load
     ga('create', u.ga_account, u.ga_domain);
     ga('send', 'pageview');
 
 
-
-// 	var _gaq = _gaq || [];
-// 	_gaq.push(['_setAccount', u.ga_account]);
-// 	_gaq.push(['_trackPageview']);
-// 
-// 	(function() {
-// 		var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-// 		ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-// 		
-// //		text += "#google<br>";
-// 		
-// 		var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-// 	})();
+	// when analytics is loaded
+	// ga(function() {
+	// 	u.bug("ga loaded")
+	//
+	// })
 
 
 	u.stats = new function() {
 
+		// track regurlar page view
 		this.pageView = function(url) {
-//			_gaq.push(['_trackPageview', url]);
 			ga('send', 'pageview', url);
 		}
 
-		this.event = function(node, action, label) {
-//			_gaq.push(['_trackEvent', location.href.replace(document.location.protocol + "//" + document.domain, ""), action, (label ? label : this.nodeSnippet(node))]);
-			ga('_trackEvent', location.href.replace(document.location.protocol + "//" + document.domain, ""), action, (label ? label : this.nodeSnippet(node)));
-		}
-		
-		this.customVar = function(slot, name, value, scope) {
+
+		// track event
+		this.event = function(node, _options) {
+
+			// default values
+			var event = false;
+			var eventCategory = "Uncategorized";
+			var eventAction = null;
+			var eventLabel = null;
+			var eventValue = null;
+			var nonInteraction = false;
+			var hitCallback = null;
 
 
-			// _gaq.push(['_setCustomVar',
-			//       slot,		// This custom var is set to slot #1.  Required parameter.
-			//       name,		// The name of the custom variable.  Required parameter.
-			//       value,	// The value of the custom variable.  Required parameter.
-			//       scope		// Sets the scope to visitor-level.  Optional parameter.
-			//  ]);
-			
-		}
+			if(typeof(_options) == "object") {
+				var _argument;
+				for(_argument in _options) {
 
-		this.nodeSnippet = function(e) {
-			
-			if(e.textContent != undefined) {
-				return u.cutString(e.textContent.trim(), 20) + "(<"+e.nodeName+">)";
+					switch(_argument) {
+						case "event"				: event					= _options[_argument]; break;
+
+						case "eventCategory"		: eventCategory			= _options[_argument]; break;
+						case "eventAction"			: eventAction			= _options[_argument]; break;
+						case "eventLabel"			: eventLabel			= _options[_argument]; break;
+						case "eventValue"			: eventValue			= _options[_argument]; break;
+						case "nonInteraction"		: nonInteraction		= _options[_argument]; break;
+						case "hitCallback"			: hitCallback			= _options[_argument]; break;
+					}
+				}
 			}
-			else {
-				return u.cutString(e.innerText.trim(), 20) + "(<"+e.nodeName+">)";
+
+			// Set missing eventAction (if possible)
+			if(!eventAction && event && event.type) {
+				eventAction = event.type;
 			}
+			else if(!eventAction) {
+				eventAction = "Unknown";
+			}
+
+			// Set missing eventLabel (if possible)
+			if(!eventLabel && event && event.currentTarget && event.currentTarget.url) {
+				eventLabel = event.currentTarget.url;
+			}
+			else if(!eventLabel) {
+				eventLabel = this.nodeSnippet(node);
+			}
+
+			//ga('send', 'event', [eventCategory], [eventAction], [eventLabel], [eventValue], [fieldsObject]);
+			ga('send', 'event', {
+				"eventCategory": eventCategory, 
+				"eventAction": eventAction,
+				"eventLabel": eventLabel,
+				"eventValue": eventValue,
+				"nonInteraction": nonInteraction,
+				"hitCallback": hitCallback
+			});
+
+		}
+
+		// LEGACY
+		// this.customVar = function(slot, name, value, scope) {
+		//
+		//
+		// 	// _gaq.push(['_setCustomVar',
+		// 	//       slot,		// This custom var is set to slot #1.  Required parameter.
+		// 	//       name,		// The name of the custom variable.  Required parameter.
+		// 	//       value,	// The value of the custom variable.  Required parameter.
+		// 	//       scope		// Sets the scope to visitor-level.  Optional parameter.
+		// 	//  ]);
+		//
+		// }
+
+		// Simple label generator
+		this.nodeSnippet = function(node) {
+			return u.cutString(u.text(node).trim(), 20) + "(<"+node.nodeName+">)";
 		}
 	}
 

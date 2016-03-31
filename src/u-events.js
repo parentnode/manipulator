@@ -541,7 +541,11 @@ Util.Events = u.e = new function() {
 	* Notifies:
 	* element.held
 	*/
-	this.hold = function(node) {
+	this.hold = function(node, _options) {
+
+		node.e_hold_options = _options ? _options : {};
+		node.e_hold_options.eventAction = u.stringOr(node.e_hold_options.eventAction, "Held");
+
 		node.e_hold = true;
 		u.e.addStartEvent(node, this._inputStart);
 	}
@@ -549,7 +553,8 @@ Util.Events = u.e = new function() {
 //		u.bug("_held:" + u.nodeId(this));
 
 		// track event
-		u.stats.event(this, "held");
+		this.e_hold_options.event = event;
+		u.stats.event(this, this.e_hold_options);
 
 		//remove event up/end
 		u.e.resetNestedEvents(this);
@@ -564,8 +569,11 @@ Util.Events = u.e = new function() {
 	* Notifies:
 	* element.clicked
 	*/
-	this.click = this.tap = function(node) {
+	this.click = this.tap = function(node, _options) {
 //		u.bug("set click:"+u.nodeId(node));
+
+		node.e_click_options = _options ? _options : {};
+		node.e_click_options.eventAction = u.stringOr(node.e_click_options.eventAction, "Clicked");
 
 		node.e_click = true;
 		u.e.addStartEvent(node, this._inputStart);
@@ -573,10 +581,13 @@ Util.Events = u.e = new function() {
 	this._clicked = function(event) {
 //		u.bug("_clicked:" + u.nodeId(this))
 
-
-		// track event
-		u.stats.event(this, "clicked");
-
+		// dblclick and hold event bubble to _clicked if they do not meet the requirement 
+		// (holding for 750ms or clicking twice withing 400ms)
+		if(this.e_click_options) {
+			// track event
+			this.e_click_options.event = event;
+			u.stats.event(this, this.e_click_options);
+		}
 
 		// remove up/end event
 //		u.e.resetEvents(this);
@@ -593,7 +604,11 @@ Util.Events = u.e = new function() {
 	* Notifies:
 	* element.dblclicked
 	*/
-	this.dblclick = this.doubletap = function(node) {
+	this.dblclick = this.doubletap = function(node, _options) {
+
+		node.e_dblclick_options = _options ? _options : {};
+		node.e_dblclick_options.eventAction = u.stringOr(node.e_dblclick_options.eventAction, "DblClicked");
+
 		node.e_dblclick = true;
 		u.e.addStartEvent(node, this._inputStart);
 	}
@@ -603,7 +618,8 @@ Util.Events = u.e = new function() {
 		if(u.t.valid(this.t_clicked) && event) {
 
 			// track event
-			u.stats.event(this, "dblclicked");
+			this.e_dblclick_options.event = event;
+			u.stats.event(this, this.e_dblclick_options);
 
 			// remove up/end event
 			u.e.resetNestedEvents(this);
