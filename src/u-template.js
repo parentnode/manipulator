@@ -171,14 +171,13 @@ u.template = function(template, json, _options) {
 							// 	}
 							// }
 							// else 
-							if(json[_item][string.replace(/[\{\}]/g, "")]) {
+							if(json[_item][string.toString().replace(/[\{\}]/g, "")]) {
 								if(json[_item][string.replace(/[\{\}]/g, "")] === true) {
 									return "true";
 								}
-							
-								return json[_item][string.replace(/[\{\}]/g, "")].replace(/(\"|\')/g, "\\$1");
+								return json[_item][string.toString().replace(/[\{\}]/g, "")].toString().replace(/(\"|\')/g, "\\$1");
 							}
-							else if(json[_item][string.replace(/[\{\}]/g, "")] === false) {
+							else if(json[_item][string.toString().replace(/[\{\}]/g, "")] === false) {
 								return "false";
 							}
 							else {
@@ -192,12 +191,15 @@ u.template = function(template, json, _options) {
 		}
 		// only one result
 		else {
-			string += template_string.replace(/\{(.+?)\}/g, function(string) {if(json[string.replace(/[\{\}]/g, "")]) {return json[string.replace(/[\{\}]/g, "")].replace(/(\"|\')/g, "\\$1")}else{return ""}});
+			string += template_string.replace(/\{(.+?)\}/g, function(string) {if(json[string.replace(/[\{\}]/g, "")]) {return json[string.replace(/[\{\}]/g, "")].replace(/(\"|\')/g, "\\$1")} else {return ""}});
 		}
 	}
 
 
 	if(type_template == "HTML_STRING" || type_template == "HTML") {
+
+		// unescape quotes when outputting to HTML
+		string = string.replace(/\\("|')/g, "$1");
 
 		// IE <=9 doesn't support table.innerHTML, so wrap node in div and innerHTML entire table
 		if (type_parent == "table") {
