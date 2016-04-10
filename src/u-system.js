@@ -129,6 +129,18 @@ Util.system = function(os, version) {
 		}
 	
 	}
+	else if(os.match(/\bmac\b/i)) {
+
+		if(navigator.userAgent.match(/(Macintosh; Intel Mac OS X )(\d+[._]{1}\d)/i)) {
+			current_version = navigator.userAgent.match(/(Macintosh; Intel Mac OS X )(\d+[._]{1}\d)/i)[2].replace("_", ".");
+		}
+	}
+	else if(os.match(/\blinux\b/i)) {
+
+		if(navigator.userAgent.match(/linux|x11/i) && !navigator.userAgent.match(/android/i)) {
+			current_version = true;
+		}
+	}
 	else if(os.match(/\bios\b/i)) {
 
 		if(navigator.userAgent.match(/(OS )(\d+[._]{1}\d+[._\d]*)( like Mac OS X)/i)) {
@@ -143,20 +155,14 @@ Util.system = function(os, version) {
 	}
 	else if(os.match(/\bandroid\b/i)) {
 
-		if(navigator.userAgent.match(/(Android )(\d+.\d)/i)) {
-			current_version = navigator.userAgent.match(/(Android )(\d+.\d)/i)[2];
+		if(navigator.userAgent.match(/Android[ ._]?(\d+.\d)/i)) {
+			current_version = navigator.userAgent.match(/Android[ ._]?(\d+.\d)/i)[1];
 		}
 	}
-	else if(os.match(/\bmac\b/i)) {
+	else if(os.match(/\bwinphone\b/i)) {
 
-		if(navigator.userAgent.match(/(Macintosh; Intel Mac OS X )(\d+[._]{1}\d)/i)) {
-			current_version = navigator.userAgent.match(/(Macintosh; Intel Mac OS X )(\d+[._]{1}\d)/i)[2].replace("_", ".");
-		}
-	}
-	else if(os.match(/\blinux\b/i)) {
-
-		if(navigator.userAgent.match(/linux|x11/i) && !navigator.userAgent.match(/android/i)) {
-			current_version = true;
+		if(navigator.userAgent.match(/Windows[ ._]?Phone[ ._]?(\d+.\d)/i)) {
+			current_version = navigator.userAgent.match(/Windows[ ._]?Phone[ ._]?(\d+.\d)/i)[1];
 		}
 	}
 
