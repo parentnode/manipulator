@@ -161,8 +161,8 @@ u.e.drag = function(node, boundaries, _options) {
 
 	node.e_drag = true;
 
-	node._moves_pick = 0;
-
+	node._moves_counted = 0;
+	node._moves_required = (u.system("android, winphone")) ? 2 : 0;
 
 	// check for empty node
 	if(node.childNodes.length < 2 && node.innerHTML.trim() == "") {
@@ -384,14 +384,18 @@ y: 3 -> -2 = 5 (3 - -2)
 */
 
 
-	if((init_speed_x > init_speed_y && this.only_horizontal) || 
-	   (init_speed_x < init_speed_y && this.only_vertical) ||
-	   (!this.only_vertical && !this.only_horizontal)) {
+	if(
+		(init_speed_x > init_speed_y && this.only_horizontal) || 
+		(init_speed_x < init_speed_y && this.only_vertical) ||
+		(!this.only_vertical && !this.only_horizontal)) {
 
-//		u.bug("valid pick:" + u.nodeId(this))
+//		u.bug("valid pick:" + u.nodeId(this) + ", " + this._moves_counted + ", " + this._moves_required)
 
-		if(this._moves_pick > 1) {
-			
+		if(this._moves_counted >= this._moves_required) {
+
+			// reset moves count
+			this._moves_counted = 0;
+
 //			u.bug("actual pick:" + u.nodeId(this))
 
 			// reset inital events to avoid unintended bubbling if pick direction makes sense
@@ -487,7 +491,7 @@ y: 3 -> -2 = 5 (3 - -2)
 
 		}
 		else {
-			this._moves_pick++;
+			this._moves_counted++;
 		}
 
 	}
@@ -553,7 +557,7 @@ u.e._drag = function(event) {
 		this._y = this.current_y;
 	}
 
-//	u.bug("locked:" + this.locked);
+	u.bug("locked:" + this.locked);
 
 	if(this.e_swipe) {
 //		u.bug("swiping:" + this.locked + ", " + this.only_horizontal + ", " + this.only_vertical + ", " + Math.abs(this.current_xps) + ":" + Math.abs(this.current_yps));
@@ -768,7 +772,7 @@ u.e._drop = function(event) {
 
 	// return swipe events to handlers
 	if(this.e_swipe && this.swiped) {
-		u.bug("_drop swiped:"+this.swiped);
+//		u.bug("_drop swiped:"+this.swiped);
 
 
 		// set appropriate eventAction if it does not exist
@@ -793,14 +797,6 @@ u.e._drop = function(event) {
 //		u.bug(this.swiped);
 		
 	}
-	else if(this.e_drag) {
-
-		// set appropriate eventAction if it does not exist
-		this.e_drag_options.eventAction = u.stringOr(this.e_drag_options.eventAction, "Dropped");
-		// track event
-		u.stats.event(this, this.e_drag_options);
-		
-	}
 	// else transition element into place
 	
 
@@ -809,6 +805,7 @@ u.e._drop = function(event) {
 
 	// projection is enabled
 	else if(!this.drag_strict && !this.locked) {
+//		u.bug("project ending")
 //		u.bug("if(!this.drag_strict && !this.locked)");
 
 		// block init values
@@ -862,11 +859,21 @@ u.e._drop = function(event) {
 		u.a.translate(this, this.current_x, this.current_y);
 	}
 	
+	if(this.e_drag && !this.e_swipe) {
+//		u.bug("drop tracked")
+
+		// set appropriate eventAction if it does not exist
+		this.e_drag_options.eventAction = u.stringOr(this.e_drag_options.eventAction, "Dropped");
+		// track event
+		u.stats.event(this, this.e_drag_options);
+	
+	}
 
 	// notify of drop
 	if(typeof(this[this.callback_dropped]) == "function") {
 		this[this.callback_dropped](event);
 	}
+
 
 	// if(typeof(this.dropped) == "function") {
 	// 	this.dropped(event);
