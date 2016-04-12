@@ -87,7 +87,7 @@ u.f.textEditor = function(field) {
 		u.ae(editor_hint_content, "p", {"html":"This HTML editor has been developed to maintain a strict control of the design - therefore it looks different from other HTML editors. The features available are aligned with the design of the specific page, and the Editor might not have the same features available in every context."});
 
 		u.ae(editor_hint_content, "h4", {"html":"General use:"});
-		u.ae(editor_hint_content, "p", {"html":"All HTML nodes can be deleted using the Trashcan in the Right side. The Editor allways requires one node to exist and you cannot delete the last remaining node."});
+		u.ae(editor_hint_content, "p", {"html":"All HTML nodes can be deleted using the Trashcan in the Right side. The Editor always requires one node to exist and you cannot delete the last remaining node."});
 		u.ae(editor_hint_content, "p", {"html":"HTML nodes can be re-ordered by dragging the bubble in the Left side."});
 		u.ae(editor_hint_content, "p", {"html":"You can add new nodes by clicking on the + below the editor. The options availble are the ones allowed for the current content type."});
 
@@ -1049,6 +1049,7 @@ u.f.textEditor = function(field) {
 			tag._input = u.ae(tag._text, "input", {"type":"file", "name":"htmleditor_file"});
 			tag._input.tag = tag;
 			tag._input.field = this;
+			tag._input._form = this._input._form;
 
 			// declare get/set value funtion
 			tag._input.val = function(value) {return false;}
@@ -1103,6 +1104,8 @@ u.f.textEditor = function(field) {
 
 	// attached to tag._input node for file-tags
 	field._file_updated = function(event) {
+
+		u.bug("file:" + u.nodeId(this))
 
 		// create data form object to upload file
 		var form_data = new FormData();
