@@ -2265,7 +2265,7 @@ u.f.textEditor = function(field) {
 			}
 
 			// valid text node (h1-h6, p)
-			else if(node.nodeName.toLowerCase().match(field.text_allowed.join("|"))) {
+			else if(field.text_allowed && node.nodeName.toLowerCase().match(field.text_allowed.join("|"))) {
 
 
 //				u.bug("found text node:" + node.innerHTML + ":" + node.innerHTML.trim() + ":" + node.innerHTML.trim().replace(/(<br>|<br \/>)$/, "") + ":" + node.innerHTML.trim().replace(/(<br>|<br \/>)$/, "").replace(/\n\r|\n|\r/g, "<br>"))
@@ -2290,9 +2290,9 @@ u.f.textEditor = function(field) {
 			}
 
 			// valid list node (ul, ol)
-			else if(node.nodeName.toLowerCase().match(field.list_allowed.join("|"))) {
+			else if(field.list_allowed.length && node.nodeName.toLowerCase().match(field.list_allowed.join("|"))) {
 
-//				u.bug("found list node")
+//				u.bug("found list node:" + u.nodeId(node) + "," + field.list_allowed.join("|"))
 
 				// handle list node
 				var lis = u.qsa("li", node);
