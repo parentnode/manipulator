@@ -1227,38 +1227,42 @@ Util.Form = u.f = new function() {
 		// handle button click
 		u.ce(action);
 
-		// default handling - can be overwritten in local implementation
-		action.clicked = function(event) {
-			u.e.kill(event);
+		// apply action if action has not already been declared
+		if(!action.clicked) {
+			// default handling - can be overwritten in local implementation
+			action.clicked = function(event) {
+				u.e.kill(event);
 
-			// don't execute if button is disabled
-			if(!u.hc(this, "disabled")) {
-				if(this.type && this.type.match(/submit/i)) {
+				// don't execute if button is disabled
+				if(!u.hc(this, "disabled")) {
+					if(this.type && this.type.match(/submit/i)) {
 
-					// store submit button info
-					this._form._submit_button = this;
-					// remove any previous submit info
-					this._form._submit_input = false;
+						// store submit button info
+						this._form._submit_button = this;
+						// remove any previous submit info
+						this._form._submit_input = false;
 
-					// internal submit
-					this._form.submit(event, this);
+						// internal submit
+						this._form.submit(event, this);
+					}
+					else if (this.type && this.type.match(/reset/i)) {
+
+						// store submit button info
+						this._form._submit_button = false;
+						// remove any previous submit info
+						this._form._submit_input = false;
+
+						// internal submit
+						this._form.reset(event, this);
+					}
+
+					// TODO: what is default action when not a submit button??
+					// else {
+					// 	location.href = this.url;
+					// }
 				}
-				else if (this.type && this.type.match(/reset/i)) {
-
-					// store submit button info
-					this._form._submit_button = false;
-					// remove any previous submit info
-					this._form._submit_input = false;
-
-					// internal submit
-					this._form.reset(event, this);
-				}
-
-				// TODO: what is default action when not a submit button??
-				// else {
-				// 	location.href = this.url;
-				// }
 			}
+			
 		}
 
 		// handle [ENTER] on button
