@@ -69,6 +69,7 @@ u.notifier = function(node) {
 
 			// check for login
 			var login = u.qs(".scene.login", response);
+			var messages = u.qsa(".scene div.messages p", response);
 			if(login && !u.qs("#login_overlay")) {
 
 				this.autosave_disabled = true;
@@ -160,7 +161,14 @@ u.notifier = function(node) {
 //					alert("handle it")
 				}
 			}
-			
+
+			// look for messages in HTML
+			else if(messages) {
+//				u.bug(messages);
+				for(i = 0; message = messages[i]; i++) {
+					output = u.ae(this.notifications, "div", {"class":message.className, "html":message.innerHTML});
+				}
+			}
 		}
 
 
