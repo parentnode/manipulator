@@ -91,13 +91,7 @@ Util.lowerCaseFirst = u.lcfirst = function(string) {
 }
 
 
-/**
-* normalize
-* Normalizes, lowercases and replaces unknown chars with - (hyphen)
-*
-* @param string $string String to be normalized
-* @return normalized string
-*/
+// Normalizes, lowercases and replaces unknown chars with - (hyphen)
 Util.normalize = function(string) {
 
 	// lowercase
