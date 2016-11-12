@@ -339,6 +339,17 @@ u.f.textEditor = function(field) {
 		this.updateViewer();
 		this.updateContent();
 
+
+		// callback to field updated
+		if(typeof(this.updated) == "function") {
+			this.updated(this._input);
+		}
+
+		// callback to field changed
+		if(typeof(this.changed) == "function") {
+			this.changed(this._input);
+		}
+
 		// callback to form updated
 		if(this._input._form && typeof(this._input._form.updated) == "function") {
 			this._input._form.updated(this._input);
@@ -364,6 +375,7 @@ u.f.textEditor = function(field) {
 
 		// loop through tags
 		for(i = 0; tag = tags[i]; i++) {
+//			console.log(tag)
 
 			// is tag a text
 			if(u.hc(tag, this.text_allowed.join("|"))) {
@@ -433,14 +445,14 @@ u.f.textEditor = function(field) {
 		var i, node, tag, type, value, j, html = "";
 
 		for(i = 0; tag = tags[i]; i++) {
-//				u.bug(u.nodeId(node));
+//			u.bug(u.nodeId(tag));
 
 			// text node
 			if(u.hc(tag, this.text_allowed.join("|"))) {
 
 				// get tag type
 				type = tag._type.val();
-				html += "<"+type+">"+tag._input.val()+"</"+type+">\n";
+				html += '<'+type + (tag._classname ? (' class="'+tag._classname+'"') : '')+'>'+tag._input.val()+'</'+type+'>'+"\n";
 			}
 
 			// list node
@@ -448,7 +460,7 @@ u.f.textEditor = function(field) {
 
 				// get tag type
 				type = tag._type.val();
-				html += "<"+type+">\n";
+				html += "<"+type+(tag._classname ? (' class="'+tag._classname+'"') : '')+">\n";
 
 				// get list tiems
 				lis = u.qsa("div.li", tag);
@@ -468,7 +480,7 @@ u.f.textEditor = function(field) {
 			// code node
 			else if(u.hc(tag, "code")) {
 
-				html += '<code>'+tag._input.val()+'</code>'+"\n";
+				html += '<code'+(tag._classname ? (' class="'+tag._classname+'"') : '')+'>'+tag._input.val()+'</code>'+"\n";
 			}
 
 			// media node
@@ -520,14 +532,26 @@ u.f.textEditor = function(field) {
 
 
 		// add remove button
-		tag._remove = u.ae(tag, "div", {"class":"remove"});
-		tag._remove.field = this;
-		tag._remove.tag = tag;
-		u.ce(tag._remove);
-		tag._remove.clicked = function() {
+		tag.bn_remove = u.ae(tag, "div", {"class":"remove"});
+		tag.bn_remove.field = this;
+		tag.bn_remove.tag = tag;
+		u.ce(tag.bn_remove);
+		tag.bn_remove.clicked = function() {
 			this.field.deleteTag(this.tag);
 		}
 
+		if(u.hc(tag, this.list_allowed.join("|")) || u.hc(tag, this.text_allowed.join("|")) || u.hc(tag, this.code_allowed.join("|"))) {
+
+			// add remove button
+			tag.bn_classname = u.ae(tag, "div", {"class":"classname"});
+			u.ae(tag.bn_classname, "span", {"html":"CSS"});
+			tag.bn_classname.field = this;
+			tag.bn_classname.tag = tag;
+			u.ce(tag.bn_classname);
+			tag.bn_classname.clicked = function() {
+				this.field.classnameTag(this.tag);
+			}
+		}
 
 		return tag;
 	}
@@ -558,6 +582,28 @@ u.f.textEditor = function(field) {
 			// save - new state (delete is permanent)
 			this._input._form.submit();
 
+		}
+
+	}
+
+	// add classname input to tag (when clicking on classname button)
+	field.classnameTag = function(tag) {
+
+		if(!u.hc(tag.bn_classname, "open")) {
+
+			var form = u.f.addForm(tag.bn_classname, {"class":"labelstyle:inject"});
+			var fieldset = u.f.addFieldset(form);
+			var input_classname = u.f.addField(fieldset, {"label":"classname", "name":"classname", "error_message":"", "value":tag._classname});
+			input_classname.tag = tag;
+			u.ac(tag.bn_classname, "open");
+			u.f.init(form);
+			input_classname._input.focus();
+
+			input_classname._input.blurred = function() {
+				this.field.tag._classname = this.val();
+				this.field.tag.bn_classname.removeChild(this._form);
+				u.rc(this.field.tag.bn_classname, "open");
+			}
 		}
 
 	}
@@ -746,7 +792,7 @@ u.f.textEditor = function(field) {
 
 		// content has been modified or selected (can happen with mouse or keys)
 		u.e.addEvent(tag._input, "keyup", this._changed_ext_video_content);
-		u.e.addEvent(tag._input, "mouseup", this._changed_ext_video_content);
+		u.e.addEndEvent(tag._input, this._changed_ext_video_content);
 
 		// add focus and blur handlers
 		u.e.addEvent(tag._input, "focus", tag.field._focused_content);
@@ -821,7 +867,7 @@ u.f.textEditor = function(field) {
 
 			// content has been modified or selected (can happen with mouse or keys)
 			u.e.addEvent(tag._input, "keyup", this._changed_media_content);
-			u.e.addEvent(tag._input, "mouseup", this._changed_media_content);
+			u.e.addEndEvent(tag._input, this._changed_media_content);
 
 			// add focus and blur handlers
 			u.e.addEvent(tag._input, "focus", tag.field._focused_content);
@@ -950,7 +996,7 @@ u.f.textEditor = function(field) {
 
 				// content has been modified or selected (can happen with mouse or keys)
 				u.e.addEvent(this.tag._input, "keyup", this.tag.field._changed_media_content);
-				u.e.addEvent(this.tag._input, "mouseup", this.tag.field._changed_media_content);
+				u.e.addEndEvent(this.tag._input, this.tag.field._changed_media_content);
 
 				// add focus and blur handlers
 				u.e.addEvent(this.tag._input, "focus", this.tag.field._focused_content);
@@ -1026,7 +1072,7 @@ u.f.textEditor = function(field) {
 
 			// content has been modified or selected (can happen with mouse or keys)
 			u.e.addEvent(tag._input, "keyup", this._changed_file_content);
-			u.e.addEvent(tag._input, "mouseup", this._changed_file_content);
+			u.e.addEndEvent(tag._input, this._changed_file_content);
 
 			// add focus and blur handlers
 			u.e.addEvent(tag._input, "focus", tag.field._focused_content);
@@ -1214,7 +1260,7 @@ u.f.textEditor = function(field) {
 
 		// content has been modified or selected (can happen with mouse or keys)
 		u.e.addEvent(tag._input, "keyup", this._code_updated);
-		u.e.addEvent(tag._input, "mouseup", this._code_updated);
+		u.e.addStartEvent(tag._input, this._code_selection_started);
 
 		// add focus and blur handlers
 		u.e.addEvent(tag._input, "focus", this._focused_content);
@@ -1241,6 +1287,12 @@ u.f.textEditor = function(field) {
 		return tag;
 	}
 
+	// mousedown/touchstart event occured - wait for the counterpart (mouseup/touchend)
+	// this is done to prevent having window events listening all the time
+	field._code_selection_started = function(event) {
+		this._selection_event_id = u.e.addWindowEndEvent(this, this.field._code_updated);
+	}
+
 	field._changing_code_content = function(event) {
 //		u.bug("_changing_code_content:" + u.nodeId(this) + ", val:" + this.val() + ", " + event.keyCode);
 
@@ -1260,6 +1312,12 @@ u.f.textEditor = function(field) {
 	field._code_updated = function(event) {
 
 //		u.bug("_code_updated:" + u.nodeId(this) + ", key:" + event.keyCode + ", val:" + this.val());
+
+		// do we have a valid window event listener
+		if(this._selection_event_id) {
+			u.e.removeWindowEndEvent(this, this._selection_event_id);
+			delete this._selection_event_id;
+		}
 
 
 		// get selection, to use for deletion
@@ -1446,7 +1504,8 @@ u.f.textEditor = function(field) {
 
 		// content has been modified or selected (can happen with mouse or keys)
 		u.e.addEvent(li._input, "keyup", this._changed_content);
-		u.e.addEvent(li._input, "mouseup", this._changed_content);
+		// listen for mouse/touch selections - this attaches window end event listener
+		u.e.addStartEvent(li._input, this._selection_started);
 
 		// add focus and blur handlers
 		u.e.addEvent(li._input, "focus", this._focused_content);
@@ -1499,7 +1558,8 @@ u.f.textEditor = function(field) {
 
 		// content has been modified or selected (can happen with mouse or keys)
 		u.e.addEvent(tag._input, "keyup", this._changed_content);
-		u.e.addEvent(tag._input, "mouseup", this._changed_content);
+		// listen for mouse/touch selections - this attaches window end event listener
+		u.e.addStartEvent(tag._input, this._selection_started);
 
 		// add focus and blur handlers
 		u.e.addEvent(tag._input, "focus", this._focused_content);
@@ -1546,11 +1606,22 @@ u.f.textEditor = function(field) {
 
 	}
 
+	// mousedown/touchstart event occured - wait for the counterpart (mouseup/touchend)
+	// this is done to prevent having window events listening all the time
+	field._selection_started = function(event) {
+		this._selection_event_id = u.e.addWindowEndEvent(this, this.field._changed_content);
+	}
 
 	// attached to tag._input node for text-tags and list-tags
 	field._changed_content = function(event) {
 
-//		u.bug("changed value:" + u.nodeId(this) + ", key:" + event.keyCode + ", val:" + this.val());
+		// u.bug("changed value:" + u.nodeId(this) + ", key:" + event.keyCode + ", val:" + this.val());
+
+		// do we have a valid window event listener
+		if(this._selection_event_id) {
+			u.e.removeWindowEndEvent(this, this._selection_event_id);
+			delete this._selection_event_id;
+		}
 
 
 		// get selection, to use for deletion
@@ -1711,9 +1782,12 @@ u.f.textEditor = function(field) {
 		// new selection
 		if(selection && !selection.isCollapsed) {
 
+			u.bug("selection:" + u.nodeId(this))
 			// check if
 			var node = selection.anchorNode;
 
+			u.bug("node:" + u.nodeId(node))
+			
 			// test u.nodeWithin for this purpose
 
 			while(node != this) {
@@ -1721,6 +1795,9 @@ u.f.textEditor = function(field) {
 					break;
 				}
 				node = node.parentNode;
+
+				u.bug("node:" + u.nodeId(node))
+				
 			}
 
 			// Text has been selected, show selection options
@@ -1997,6 +2074,7 @@ u.f.textEditor = function(field) {
 		// link option
 		this.selection_options._link = u.ae(ul, "li", {"class":"link", "html":"Link"});
 		this.selection_options._link.field = this;
+		this.selection_options._link.tag = node;
 		this.selection_options._link.selection = selection;
 		u.ce(this.selection_options._link);
 		this.selection_options._link.inputStarted = function(event) {
@@ -2005,12 +2083,13 @@ u.f.textEditor = function(field) {
 		}
 		this.selection_options._link.clicked = function(event) {
 			u.e.kill(event);
-			this.field.addAnchorTag(this.selection);
+			this.field.addAnchorTag(this.selection, this.tag);
 		}
 
 		// EM option
 		this.selection_options._em = u.ae(ul, "li", {"class":"em", "html":"Itallic"});
 		this.selection_options._em.field = this;
+		this.selection_options._em.tag = node;
 		this.selection_options._em.selection = selection;
 		u.ce(this.selection_options._em);
 		this.selection_options._em.inputStarted = function(event) {
@@ -2018,12 +2097,13 @@ u.f.textEditor = function(field) {
 		}
 		this.selection_options._em.clicked = function(event) {
 			u.e.kill(event);
-			this.field.addEmTag(this.selection);
+			this.field.addEmTag(this.selection, this.tag);
 		}
 
 		// STRONG option
 		this.selection_options._strong = u.ae(ul, "li", {"class":"strong", "html":"Bold"});
 		this.selection_options._strong.field = this;
+		this.selection_options._strong.tag = node;
 		this.selection_options._strong.selection = selection;
 		u.ce(this.selection_options._strong);
 		this.selection_options._strong.inputStarted = function(event) {
@@ -2031,30 +2111,41 @@ u.f.textEditor = function(field) {
 		}
 		this.selection_options._strong.clicked = function(event) {
 			u.e.kill(event);
-			this.field.addStrongTag(this.selection);
+			this.field.addStrongTag(this.selection, this.tag);
+		}
+
+		// SPAN option
+		this.selection_options._span = u.ae(ul, "li", {"class":"span", "html":"CSS class"});
+		this.selection_options._span.field = this;
+		this.selection_options._span.tag = node;
+		this.selection_options._span.selection = selection;
+		u.ce(this.selection_options._span);
+		this.selection_options._span.inputStarted = function(event) {
+			u.e.kill(event);
+			this.field.selection_options.is_active = true;
+		}
+		this.selection_options._span.clicked = function(event) {
+			u.e.kill(event);
+			this.field.addSpanTag(this.selection, this.tag);
 		}
 
 	}
 
 
 	// add mouseover delete option to injected tags
-	field.deleteOption = function(node) {
+	field.deleteOrEditOption = function(node) {
 
 		node.over = function(event) {
-			u.t.resetTimer(this.t_out);
 
 			if(!this.bn_delete) {
+
 				this.bn_delete = u.ae(document.body, "span", {"class":"delete_selection", "html":"X"});
 				this.bn_delete.node = this;
 
 				this.bn_delete.over = function(event) {
 					u.t.resetTimer(this.node.t_out);
 				}
-				this.bn_delete.out = function(event) {
-					this.node.t_out = u.t.setTimer(this.node, this.node.reallyout, 300);
-				}
 				u.e.addEvent(this.bn_delete, "mouseover", this.bn_delete.over);
-				u.e.addEvent(this.bn_delete, "mouseout", this.bn_delete.out);
 
 				u.ce(this.bn_delete);
 				this.bn_delete.clicked = function() {
@@ -2067,42 +2158,74 @@ u.f.textEditor = function(field) {
 
 					var fragment = document.createTextNode(this.node.innerHTML);
 					this.node.parentNode.replaceChild(fragment, this.node);
-					this.node.reallyout();
+
+					// remove delete option
+					this.node.out();
+
 					this.node.field.update();
 
 				}
 
 				u.as(this.bn_delete, "top", (u.absY(this)-5)+"px");
-				u.as(this.bn_delete, "left", (u.absX(this)+this.offsetWidth-5)+"px");
+//				u.as(this.bn_delete, "left", (u.absX(this)+this.offsetWidth-5)+"px");
+				u.as(this.bn_delete, "left", (u.absX(this)-5)+"px");
 			}
+
+			if(this.nodeName.toLowerCase() == "a" || this.nodeName.toLowerCase() == "span" && !this.bn_edit) {
+
+				this.bn_edit = u.ae(document.body, "span", {"class":"edit_selection", "html":"?"});
+				this.bn_edit.node = this;
+
+				this.bn_edit.over = function(event) {
+					u.t.resetTimer(this.node.t_out);
+				}
+				u.e.addEvent(this.bn_edit, "mouseover", this.bn_edit.over);
+
+				u.ce(this.bn_edit);
+				this.bn_edit.clicked = function() {
+					u.e.kill(event);
+
+					if(this.node.nodeName.toLowerCase() == "span") {
+						this.node.field.editSpanTag(this.node);
+					}
+					else if(this.node.nodeName.toLowerCase() == "a") {
+						this.node.field.editAnchorTag(this.node);
+					}
+
+				}
+
+				u.as(this.bn_edit, "top", (u.absY(this)-5)+"px");
+//				u.as(this.bn_delete, "left", (u.absX(this)+this.offsetWidth-5)+"px");
+				u.as(this.bn_edit, "left", (u.absX(this)-23)+"px");
+			}
+
 		}
 
 		node.out = function(event) {
-			u.t.resetTimer(this.t_out);
-			this.t_out = u.t.setTimer(this, this.reallyout, 300);
-		}
-
-		node.reallyout = function(event) {
 			if(this.bn_delete) {
 				document.body.removeChild(this.bn_delete);
-				this.bn_delete = null;
+				delete this.bn_delete;
+			}
+			if(this.bn_edit) {
+				document.body.removeChild(this.bn_edit);
+				delete this.bn_edit;
 			}
 		}
 
-		u.e.addEvent(node, "mouseover", node.over);
-		u.e.addEvent(node, "mouseout", node.out);
+		u.e.hover(node, {"delay":1000});
 	}
 
 
 	// activate existing inline formatting
-	field.activateInlineFormatting = function(input) {
+	field.activateInlineFormatting = function(input, tag) {
 
 		var i, node;
 		var inline_tags = u.qsa("a,strong,em,span", input);
 
 		for(i = 0; node = inline_tags[i]; i++) {
 			node.field = input.field;
-			this.deleteOption(node);
+			node.tag = tag;
+			this.deleteOrEditOption(node);
 		}
 	}
 
@@ -2112,102 +2235,214 @@ u.f.textEditor = function(field) {
 
 	// INLINE FORMATTING HELPERS FOR TEXT NODES
 
-	// extend options pane with Anchor options
-	field.anchorOptions = function(node) {
 
-		var form = u.f.addForm(this.selection_options, {"class":"labelstyle:inject"});
-		u.ae(form, "h3", {"html":"Link options"});
-		var fieldset = u.f.addFieldset(form);
-		var input_url = u.f.addField(fieldset, {"label":"url", "name":"url"});
-
-		var input_target = u.f.addField(fieldset, {"type":"checkbox", "label":"New window?", "name":"target"});
-		var bn_save = u.f.addAction(form, {"value":"Create link", "class":"button"});
-		u.f.init(form);
-
-
-		form.a = node;
-		form.field = this;
-
-		form.submitted = function() {
-
-			if(this.fields["url"].val() && this.fields["url"].val() != this.fields["url"].default_value) {
-				this.a.href = this.fields["url"].val();
-			}
-
-			if(this.fields["target"].val() && this.fields["target"].val() != this.fields["target"].default_value) {
-//					this.a.target = this.fields["target"].val();
-				this.a.target = "_blank";
-			}
-			this.field.selection_options.is_active = false;
-			this.field.hideSelectionOptions();
-		}
-	}
 
 
 	// add anchor tag
-	field.addAnchorTag = function(selection) {
+	field.addAnchorTag = function(selection, tag) {
 		var range, a, url, target;
 
 		var a = document.createElement("a");
 		a.field = this;
+		a.tag = tag;
 
 		range = selection.getRangeAt(0);
-		range.surroundContents(a);
-		selection.removeAllRanges();
+		try {
+			range.surroundContents(a);
+			selection.removeAllRanges();
 
-		this.anchorOptions(a);
-		this.deleteOption(a);
+			this.anchorOptions(a);
+			this.deleteOrEditOption(a);
+		}
+		catch(exception) {
+			selection.removeAllRanges();
+			this.hideSelectionOptions();
 
+			alert("You cannot cross the boundaries of another selection. Yet.");
+		}
 	}
 
+	// extend options pane with Anchor options
+	field.anchorOptions = function(a) {
+
+		var form = u.f.addForm(this.selection_options, {"class":"labelstyle:inject"});
+		u.ae(form, "h3", {"html":"Link options"});
+		var fieldset = u.f.addFieldset(form);
+		var input_url = u.f.addField(fieldset, {"label":"url", "name":"url", "value":a.href.replace(location.protocol + "//" + document.domain, ""), "error_message":""});
+
+		var input_target = u.f.addField(fieldset, {"type":"checkbox", "label":"Open in new window?", "checked":(a.target ? "checked" : false), "name":"target", "error_message":""});
+		var bn_save = u.f.addAction(form, {"value":"Save link", "class":"button"});
+		u.f.init(form);
+
+
+		form.a = a;
+		form.field = this;
+
+		form.submitted = function() {
+
+			if(this.fields["url"].val()) {
+				this.a.href = this.fields["url"].val();
+			}
+			else {
+				this.a.removeAttribute("href");
+			}
+
+			if(this.fields["target"].val()) {
+				this.a.target = "_blank";
+			}
+			else {
+				this.a.removeAttribute("target");
+			}
+
+			this.field.selection_options.is_active = false;
+			this.field.hideSelectionOptions();
+		}
+	}
+	// edit span tag
+	field.editAnchorTag = function(a) {
+
+		this.hideSelectionOptions();
+
+		// position of node
+		var x = u.absX(a.tag);
+		var y = u.absY(a.tag);
+
+		// create options div
+		this.selection_options = u.ae(document.body, "div", {"id":"selection_options"});
+
+		// position options pane according to field
+		u.as(this.selection_options, "top", y+"px");
+		u.as(this.selection_options, "left", (x + a.tag.offsetWidth) +"px");
+
+		this.selection_options.is_active = false;
+
+		this.anchorOptions(a);
+	}
+
+
 	// add string tag
-	field.addStrongTag = function(selection) {
+	field.addStrongTag = function(selection, tag) {
 
 		var range, a, url, target;
 		var strong = document.createElement("strong");
 		strong.field = this;
+		strong.tag = tag;
 //			u.bug("field:" + u.nodeId(this));
 
 		range = selection.getRangeAt(0);
-		range.surroundContents(strong);
-		selection.removeAllRanges();
+		try {
+			range.surroundContents(strong);
+			selection.removeAllRanges();
 
-		this.deleteOption(strong);
-		this.hideSelectionOptions();
+			this.deleteOrEditOption(strong);
+			this.hideSelectionOptions();
+		}
+		catch(exception) {
+			selection.removeAllRanges();
+			this.hideSelectionOptions();
+
+			alert("You cannot cross the boundaries of another selection. Yet.");
+		}
 	}
 
 	// add em tag
-	field.addEmTag = function(selection) {
+	field.addEmTag = function(selection, tag) {
 
 		var range, a, url, target;
 		var em = document.createElement("em");
 		em.field = this;
+		em.tag = tag;
 
 		range = selection.getRangeAt(0);
-		range.surroundContents(em);
-		selection.removeAllRanges();
+		try {
+			range.surroundContents(em);
+			selection.removeAllRanges();
 
-		this.deleteOption(em);
-		this.hideSelectionOptions();
+			this.deleteOrEditOption(em);
+			this.hideSelectionOptions();
+		}
+		catch(exception) {
+			selection.removeAllRanges();
+			this.hideSelectionOptions();
+
+			alert("You cannot cross the boundaries of another selection. Yet.");
+		}
 	}
 
 
-	// TODO: add span option
-	// add span options
-	field.spanOptions = function(node) {}
-	
+
 	// add span tag
-	field.addSpanTag = function(selection) {
+	field.addSpanTag = function(selection, tag) {
 
 		var span = document.createElement("span");
 		span.field = this;
+		span.tag = tag;
 
 		var range = selection.getRangeAt(0);
-		range.surroundContents(span);
-		selection.removeAllRanges();
+		try {
+			range.surroundContents(span);
+			selection.removeAllRanges();
 
-		this.deleteOption(span);
+			this.spanOptions(span);
+			this.deleteOrEditOption(span);
+		}
+		catch(exception) {
+			selection.removeAllRanges();
+			this.hideSelectionOptions();
+
+			alert("You cannot cross the boundaries of another selection. Yet.");
+		}
+	}
+
+	// edit span tag
+	field.editSpanTag = function(span) {
+
 		this.hideSelectionOptions();
+
+		// position of node
+		var x = u.absX(span.tag);
+		var y = u.absY(span.tag);
+
+		// create options div
+		this.selection_options = u.ae(document.body, "div", {"id":"selection_options"});
+
+		// position options pane according to field
+		u.as(this.selection_options, "top", y+"px");
+		u.as(this.selection_options, "left", (x + span.tag.offsetWidth) +"px");
+
+		this.selection_options.is_active = false;
+
+		this.spanOptions(span);
+	}
+
+	// add span options
+	field.spanOptions = function(span) {
+
+		var form = u.f.addForm(this.selection_options, {"class":"labelstyle:inject"});
+		u.ae(form, "h3", {"html":"CSS class"});
+		var fieldset = u.f.addFieldset(form);
+		var input_classname = u.f.addField(fieldset, {"label":"classname", "name":"classname", "value":span.className, "error_message":""});
+
+		var bn_save = u.f.addAction(form, {"value":"Save class", "class":"button"});
+		u.f.init(form);
+
+
+		form.span = span;
+		form.field = this;
+
+		form.submitted = function() {
+
+			if(this.fields["classname"].val()) {
+				this.span.className = this.fields["classname"].val();
+			}
+			else {
+				this.span.removeAttribute("class");
+			}
+
+			this.field.selection_options.is_active = false;
+			this.field.hideSelectionOptions();
+
+		}
 	}
 
 
@@ -2251,14 +2486,14 @@ u.f.textEditor = function(field) {
 						for(index in fragments) {
 							value = fragments[index].replace(/\n\r|\n|\r/g, "<br>");
 							tag = field.addTextTag("p", fragments[index]);
-							field.activateInlineFormatting(tag._input);
+							field.activateInlineFormatting(tag._input, tag);
 						}
 					}
 					// wrap textnode in one paragraph
 					else {
 						value = node.nodeValue; //.replace(/\n\r|\n|\r/g, "<br>");
 						tag = field.addTextTag("p", value);
-						field.activateInlineFormatting(tag._input);
+						field.activateInlineFormatting(tag._input, tag);
 					}
 
 				}
@@ -2275,7 +2510,11 @@ u.f.textEditor = function(field) {
 
 				// add new text node to editor
 				tag = field.addTextTag(node.nodeName.toLowerCase(), value);
-				field.activateInlineFormatting(tag._input);
+				if(node.className) {
+					tag._classname = node.className;
+				}
+				
+				field.activateInlineFormatting(tag._input, tag);
 
 			}
 			// valid text node (code)
@@ -2285,7 +2524,11 @@ u.f.textEditor = function(field) {
 
 				// // add new text node to editor
 				tag = field.addCodeTag(node.nodeName.toLowerCase(), node.innerHTML);
-				field.activateInlineFormatting(tag._input);
+				if(node.className) {
+					tag._classname = node.className;
+				}
+
+				field.activateInlineFormatting(tag._input, tag);
 
 			}
 
@@ -2301,10 +2544,13 @@ u.f.textEditor = function(field) {
 
 				// add new list node, and first li to editor
 				tag = field.addListTag(node.nodeName.toLowerCase(), value);
+				if(node.className) {
+					tag._classname = node.className;
+				}
 
 				// activate Inline
 				var li = u.qs("div.li", tag);
-				field.activateInlineFormatting(li._input);
+				field.activateInlineFormatting(li._input, li);
 
 
 				// loop through remaining li-element and add them, one by one
@@ -2313,7 +2559,7 @@ u.f.textEditor = function(field) {
 //						value = li.innerHTML.replace(/\n\r|\n|\r/g, "<br>");
 						value = li.innerHTML.trim().replace(/(<br>|<br \/>)$/, "").replace(/\n\r|\n|\r/g, "<br>");
 						li = field.addListItem(tag, value);
-						field.activateInlineFormatting(li._input);
+						field.activateInlineFormatting(li._input, li);
 					}
 				}
 			}
@@ -2357,7 +2603,7 @@ u.f.textEditor = function(field) {
 				for(j = 0; child = children[j]; j++) {
 					value = child.innerHTML.replace(/\n\r|\n|\r/g, "");
 					tag = field.addTextTag(field.text_allowed[0], value);
-					field.activateInlineFormatting(tag._input);
+					field.activateInlineFormatting(tag._input, tag);
 				}
 			}
 
@@ -2368,7 +2614,7 @@ u.f.textEditor = function(field) {
 
 				value = node.innerHTML.replace(/\n\r|\n|\r/g, "");
 				tag = field.addTextTag(field.text_allowed[0], value);
-				field.activateInlineFormatting(tag._input);
+				field.activateInlineFormatting(tag._input, tag);
 
 			}
 			else {
@@ -2386,7 +2632,7 @@ u.f.textEditor = function(field) {
 		//.replace(/\n\r|\n|\r/g, "<br>");
 		//
 		tag = field.addTextTag(field.text_allowed[0], value);
-		field.activateInlineFormatting(tag._input);
+		field.activateInlineFormatting(tag._input, tag);
 
 	}
 
