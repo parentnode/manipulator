@@ -89,3 +89,28 @@ Util.upperCaseFirst = u.ucfirst = function(string) {
 Util.lowerCaseFirst = u.lcfirst = function(string) {
 	return string.replace(/^(.){1}/, function($1) {return $1.toLowerCase()});
 }
+
+
+/**
+* normalize
+* Normalizes, lowercases and replaces unknown chars with - (hyphen)
+*
+* @param string $string String to be normalized
+* @return normalized string
+*/
+Util.normalize = function(string) {
+
+	// lowercase
+	string = string.toLowerCase();
+
+	// replace all specialchars with hyphens
+	string = string.replace(/[^a-z0-9\_]/g, '-');
+
+	// remove double hyphens
+	string = string.replace(/-+/g, '-');
+
+	// remove leading and trailing hyphens
+	string = string.replace(/^-|-$/g, '');
+
+	return string;
+}
