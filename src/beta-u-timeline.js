@@ -47,11 +47,16 @@ u.timeline = function(node) {
 
 
 	node.finishTimelineAtOnce = function() {
+		this._animationframe_cancelled = true;
 		window[u.vendorProperty("cancelAnimationFrame")](this._animationframe);
 
 		var i, frame;
 		for(i = 0; frame = this._timeline_future_actions[i]; i++) {
-			frame.action.bind(this);
+			frame.action.bind(this)();
+		}
+
+		if(typeof(this.timelineEnded) == "function") {
+			this.timelineEnded();
 		}
 
 	}
