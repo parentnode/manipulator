@@ -5,6 +5,7 @@ Util.Form = u.f = new function() {
 	this.customInit = {};
 	this.customValidate = {};
 	this.customSend = {};
+	this.customHintPosition = {};
 
 
 
@@ -97,8 +98,7 @@ Util.Form = u.f = new function() {
 		// all named fields and buttons can be accessed through this objects
 		_form.fields = {};
 		_form.actions = {};
-		_form.errors = {};
-
+		_form.error_fields = {};
 
 		// Label styles - defines special handling of label values
 		// specified via form classname as labelstyle:inject
@@ -585,6 +585,7 @@ Util.Form = u.f = new function() {
 			if (this.fields[name] && this.fields[name].field && this.fields[name].type != "hidden" && !this.fields[name].getAttribute("readonly")) {
 
 //				u.bug("reset:" + name);
+				this.fields[name].used = false;
 				this.fields[name].val("");
 
 			}
@@ -602,6 +603,7 @@ Util.Form = u.f = new function() {
 
 		// do pre validation of all fields
 		for(name in this.fields) {
+			// make sure field actually references a valid Manipulator input
 			if(this.fields[name] && this.fields[name].field && typeof(this.fields[name].val) == "function") {
 //				u.bug("field:" + name);
 				// change used state for input
@@ -612,20 +614,38 @@ Util.Form = u.f = new function() {
 			}
 		}
 
+//		u.bug("submitted");
+//		console.log(iN ? iN : this.fields[Object.keys(this.error_fields)[0]])
+
 		// if error is found after validation
-		if(Object.keys(this.errors).length) {
-//		if(u.qs(".field.error", this)) {
-			if(typeof(this.validationFailed) == "function") {
-				this.validationFailed();
-			}
-		}
-		else {
+		if(!Object.keys(this.error_fields).length) {
+
+//			this.updateFormValidationState(iN ? iN : this.fields[Object.keys(this.error_fields)[0]]);
+
+//		}
+//		else {
 			// does callback exist
 			if(typeof(this.submitted) == "function") {
 				this.submitted(iN);
 			}
 			// actual submit
 			else {
+
+				// Prevent from sending default values when form is submitted without javascript
+				// and labelstyle:inject is applied
+				for(name in this.fields) {
+//					u.bug(name + ", " + this.fields[name] + ", " + this.fields[name].default_value + ", " + typeof(this.fields[name].val) + "; " + this.fields[name].val())
+						
+					// element does not have value
+					if(this.fields[name] && this.fields[name].default_value && typeof(this.fields[name].val) == "function" && !this.fields[name].val()) {
+						// input is actually input
+						if(this.fields[name].nodeName.match(/^(input|textarea)$/i)) {
+							this.fields[name].value = "";
+						}
+					}
+				}
+
+				//u.bug("this is where I should cut the rope")
 				this.DOMsubmit();
 			}
 		}
@@ -862,18 +882,19 @@ Util.Form = u.f = new function() {
 //			u.bug("keypressed:" + event.keyCode);
 
 			// ENTER key
-			if(event.keyCode == 13 && !u.hc(this, "disabled")) {
+			if(event.keyCode == 13 && !u.hc(this, "disabled") && typeof(this.clicked) == "function") {
 				u.e.kill(event);
 
+				this.clicked(event);
 //				u.bug("[ENTER] pressed:" + u.nodeId(this));
 
 				// store submit info
-				this._form.submit_input = false;
-				// delete any previous submit info
-				this._form.submit_button = this;
-
-				// internal submit
-				this._form.submit(event);
+				// this._form.submit_input = false;
+				// // delete any previous submit info
+				// this._form.submit_button = this;
+				//
+				// // internal submit
+				// this._form.submit(event);
 			}
 		}
 
@@ -1118,31 +1139,29 @@ Util.Form = u.f = new function() {
 
 		// is help element available, then position it appropriately to input
 		if(field._help) {
+			
+			// check for custom hint position
+			// allows to overwrite any field type hint position
+			var custom_hint_position;
+			for(custom_hint_position in this.customHintPosition) {
+				if(u.hc(field, custom_hint_position)) {
+					this.customHintPosition[custom_hint_position](field._form, field);
+					return;
+				}
+			}
+			
 
-			// custom for HTML fields
-			var f_h =  field.offsetHeight;
-			var f_p_t = parseInt(u.gcs(field, "padding-top"));
-			var f_p_b = parseInt(u.gcs(field, "padding-bottom"));
-			var f_b_t = parseInt(u.gcs(field, "border-top-width"));
-			var f_b_b = parseInt(u.gcs(field, "border-bottom-width"));
-			var f_h_h = field._help.offsetHeight;
+			var input_middle, help_top;
 
-//			alert(f_h + ", " + f_p_t + ", " + f_p_b + ", " + f_b_t + ", " + f_b_b + ", " + f_h_h);
-
-			if(u.hc(field, "html")) {
-
-				var l_h = field._input._label.offsetHeight;
-				var help_top = (((f_h - (f_p_t + f_p_b + f_b_b + f_b_t)) / 2)) - (f_h_h / 2) + l_h;
-				u.as(field._help, "top", help_top + "px");
+ 			if(u.hc(field, "html")) {
+				input_middle = field._editor.offsetTop + (field._editor.offsetHeight / 2);
 			}
 			else {
-
-	//			u.bug(f_b_t + ", " + f_b_b)
-	//			u.bug("((" + f_h + " - (" + f_p_t + "+" + f_p_b + ")) / 2) + 2 = " + (((f_h - (f_p_t + f_p_b)) / 2) + 2));
-	//			u.bug("(" + (((f_h - (f_p_t + f_p_b)) / 2) + 2) + ")" + " - " + "(" + (f_h_h / 2) + ")");
-				var help_top = (((f_h - (f_p_t + f_p_b + f_b_b + f_b_t)) / 2) + 2) - (f_h_h / 2)
-				u.as(field._help, "top", help_top + "px");
+				input_middle = field._input.offsetTop + (field._input.offsetHeight / 2);
 			}
+
+			help_top = input_middle - field._help.offsetHeight / 2;
+			u.as(field._help, "top", help_top + "px");
 		}
 	}
 
@@ -1229,6 +1248,8 @@ Util.Form = u.f = new function() {
 
 		// apply action if action has not already been declared
 		if(!action.clicked) {
+
+
 			// default handling - can be overwritten in local implementation
 			action.clicked = function(event) {
 				u.e.kill(event);
@@ -1257,9 +1278,9 @@ Util.Form = u.f = new function() {
 					}
 
 					// TODO: what is default action when not a submit button??
-					// else {
-					// 	location.href = this.url;
-					// }
+					else {
+						location.href = this.url;
+					}
 				}
 			}
 			
@@ -1347,17 +1368,19 @@ Util.Form = u.f = new function() {
 			// if help element is available
 			this.positionHint(iN.field);
 
-			iN._form.errors[iN.name] = true;
+			iN._form.error_fields[iN.name] = true;
 
-			// input validation failed
-			if(typeof(iN.validationFailed) == "function") {
-				iN.validationFailed();
-			}
+			this.updateFormValidationState(iN);
 
-			if(typeof(iN._form.validationFailed) == "function") {
-//				u.bug("fieldError validation failed")
-				iN._form.validationFailed(iN._form.errors);
-			}
+// 			// input validation failed
+// 			if(typeof(iN.validationFailed) == "function") {
+// 				iN.validationFailed();
+// 			}
+//
+// 			if(typeof(iN._form.validationFailed) == "function") {
+// //				u.bug("fieldError validation failed")
+// 				iN._form.validationFailed(iN._form.error_fields);
+// 			}
 
 		}
 	}
@@ -1382,21 +1405,77 @@ Util.Form = u.f = new function() {
 			u.rc(iN.field, "error");
 		}
 
-		delete iN._form.errors[iN.name];
-		if(!Object.keys(iN._form.errors).length) {
+		delete iN._form.error_fields[iN.name];
+
+		this.updateFormValidationState(iN);
+
+		// if(!Object.keys(iN._form.error_fields).length) {
+		// 	if(typeof(iN._form.validationPassed) == "function") {
+		// 		iN._form.validationPassed();
+		// 	}
+		// }
+		// else {
+		// 	if(typeof(iN._form.validationFailed) == "function") {
+		// 		iN._form.validationFailed(iN._form.error_fields);
+		// 	}
+		// }
+	}
+
+	// check current state of validation
+	// check for errors
+	// make sure required fields are filled out
+	this.checkFormValidation = function(form) {
+
+		if(Object.keys(form.error_fields).length) {
+			return false;
+		}
+
+		var x, field;
+		for(x in form.fields) {
+			input = form.fields[x];
+			if(input.field && u.hc(form.fields[x].field, "required") && !u.hc(form.fields[x].field, "correct")) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	this.updateFormValidationState = function(iN) {
+		if(this.checkFormValidation(iN._form)) {
+
+			if(typeof(iN.validationPassed) == "function") {
+				iN.validationPassed();
+			}
+
+			if(typeof(iN.field.validationPassed) == "function") {
+				iN.field.validationPassed();
+			}
+
 			if(typeof(iN._form.validationPassed) == "function") {
 				iN._form.validationPassed();
 			}
+
+			return true;
 		}
 		else {
-			if(typeof(iN._form.validationFailed) == "function") {
-				iN._form.validationFailed(iN._form.errors);
+
+			if(typeof(iN.validationFailed) == "function") {
+				iN.validationFailed(iN._form.error_fields);
 			}
+
+			if(typeof(iN.field.validationFailed) == "function") {
+				iN.field.validationFailed(iN._form.error_fields);
+			}
+
+			if(typeof(iN._form.validationFailed) == "function") {
+				iN._form.validationFailed(iN._form.error_fields);
+			}
+
+			return false;
 		}
+
 	}
-
-
-
 	// validate input
 	// - string
 	// - number
