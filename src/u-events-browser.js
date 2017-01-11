@@ -65,7 +65,7 @@ u.e.removeWindowEvent = function(node, type, id) {
 	u.e.removeEvent(window, type, window["_OnWindowEvent_callback_"+id]);
 
 	// remove callback references
-	window["_OnWindowEvent_node_"+id]["_OnWindowEvent_callback_"+id] = null;
+//	window["_OnWindowEvent_node_"+id]["_OnWindowEvent_callback_"+id] = null;
 	window["_OnWindowEvent_node_"+id] = null;
 	window["_OnWindowEvent_callback_"+id] = null;
 }
