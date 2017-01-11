@@ -16,4 +16,4 @@ Visit http://think.dk or http://parentnode.dk for more information.
 Manipulator is licensed as follows:
 
 ##Source code:
-https://github.com/parentnode/manipulator/blob/master/MIT-LICENSE.md
+https://github.com/parentnode/manipulator/blob/master/MIT-LICENSE.txt
