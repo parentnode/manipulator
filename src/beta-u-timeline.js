@@ -29,7 +29,7 @@ u.timeline = function(node) {
 		this._timeline_start = start;
 		this._animationframe_cancelled = false;
 
-		console.log(JSON.parse(JSON.stringify(this._timeline_future_actions)));
+//		console.log(JSON.parse(JSON.stringify(this._timeline_future_actions)));
 
 		// start playback
 		this._animationframe = window[u.vendorProperty("requestAnimationFrame")](this._first_timeline_frame.bind(this));
