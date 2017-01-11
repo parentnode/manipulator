@@ -577,6 +577,18 @@ Util.hasFixedParent = u.hfp = function(node) {
 
 
 // FOR CONSIDERATION
+/**
+* FOR CONSIDERATION
+*/
+Util.insertAfter = u.ia = function(after_node, insert_node) {
+	var next_node = u.ns(after_node);
+	if(next_node) {
+		after_node.parentNode.insertBefore(next_node, insert_node);
+	}
+	else {
+		after_node.parentNode.appendChild(insert_node);
+	}
+}
 
 
 // select text in node
