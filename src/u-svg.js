@@ -76,8 +76,9 @@ Util.svg = function(svg_object) {
 	if(svg_object.title) {
 		svg.setAttributeNS(null, "title", svg_object.title);
 	}
-	if(svg_object.class) {
-		svg.setAttributeNS(null, "class", svg_object.class);
+	// Error in WKHTMLTO / Webkit 533, when using svg_object.class - but svg_object["class"] works
+	if(svg_object["class"]) {
+		svg.setAttributeNS(null, "class", svg_object["class"]);
 	}
 
 	if(svg_object.width) {
