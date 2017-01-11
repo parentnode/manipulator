@@ -15,10 +15,12 @@ Util.request = function(node, url, _options) {
 	// set default values
 	node[request_id].request_method = "GET";
 	node[request_id].request_async = true;
-	node[request_id].request_params = "";
+	node[request_id].request_data = "";
 	node[request_id].request_headers = false;
 
 	node[request_id].callback_response = "response";
+	node[request_id].callback_error = "responseError";
+
 	node[request_id].jsonp_callback = "callback";
 
 
@@ -29,11 +31,16 @@ Util.request = function(node, url, _options) {
 
 			switch(argument) {
 				case "method"				: node[request_id].request_method		= _options[argument]; break;
-				case "params"				: node[request_id].request_params		= _options[argument]; break;
+
+				// PARAMS IS DEPRECATED - REPLACED BY data
+				case "params"				: node[request_id].request_data			= _options[argument]; break;
+				case "data"					: node[request_id].request_data			= _options[argument]; break;
+
 				case "async"				: node[request_id].request_async		= _options[argument]; break;
 				case "headers"				: node[request_id].request_headers		= _options[argument]; break;
 
 				case "callback"				: node[request_id].callback_response	= _options[argument]; break;
+				case "error_callback"		: node[request_id].callback_error		= _options[argument]; break;
 
 				case "jsonp_callback"		: node[request_id].jsonp_callback		= _options[argument]; break;
 			}
@@ -41,7 +48,7 @@ Util.request = function(node, url, _options) {
 		}
 	}
 
-//	u.bug("request:" + node[request_id].request_url + ", " + node[request_id].request_method + ", " + node[request_id].request_params + ", " + node[request_id].request_async + ", " + node[request_id].request_headers);
+//	u.bug("request:" + node[request_id].request_url + ", " + node[request_id].request_method + ", " + node[request_id].request_data + ", " + node[request_id].request_async + ", " + node[request_id].request_headers);
 
 	// regular HTTP request
 	if(node[request_id].request_method.match(/GET|POST|PUT|PATCH/i)) {
@@ -70,7 +77,7 @@ Util.request = function(node, url, _options) {
 //				u.bug("GET request");
 
 				// convert JSON params to regular params, JSON cannot be sent as GET
-				var params = u.JSONtoParams(node[request_id].request_params);
+				var params = u.JSONtoParams(node[request_id].request_data);
 
 				// add params to url
 				node[request_id].request_url += params ? ((!node[request_id].request_url.match(/\?/g) ? "?" : "&") + params) : "";
@@ -103,15 +110,15 @@ Util.request = function(node, url, _options) {
 
 				// stringify possible JSON object
 				var params;
-//				u.bug("params typeof:" + typeof(node[request_id].request_params) + ", " + node[request_id].request_params.constructor.toString().match(/FormData/i));
+//				u.bug("params typeof:" + typeof(node[request_id].request_data) + ", " + node[request_id].request_data.constructor.toString().match(/FormData/i));
 
 
 				// Stringify JSON objects
-				if(typeof(node[request_id].request_params) == "object" && node[request_id].request_params.constructor.toString().match(/function Object/i)) {
-					params = JSON.stringify(node[request_id].request_params);
+				if(typeof(node[request_id].request_data) == "object" && node[request_id].request_data.constructor.toString().match(/function Object/i)) {
+					params = JSON.stringify(node[request_id].request_data);
 				}
 				else {
-					params = node[request_id].request_params;
+					params = node[request_id].request_data;
 				}
 
 				// open connection
@@ -177,7 +184,7 @@ Util.request = function(node, url, _options) {
 		}
 
 		// convert JSON params to regular params, JSON cannot be sent as GET
-		var params = u.JSONtoParams(node[request_id].request_params);
+		var params = u.JSONtoParams(node[request_id].request_data);
 
 		// add params to url
 		node[request_id].request_url += params ? ((!node[request_id].request_url.match(/\?/g) ? "?" : "&") + params) : "";
@@ -360,25 +367,36 @@ Util.validateResponse = function(response){
 
 		// callback to Response handler
 //		u.bug("response:" + typeof(response.node[response.node.callback_response]))
-		if(typeof(response.node[response.node[response.request_id].callback_response]) == "function") {
+
+		// Function reference
+		if(typeof(response.node[response.request_id].callback_response) == "function") {
+			response.node[response.request_id].callback_response(object, response.request_id);
+		}
+		// Function name
+		else if(typeof(response.node[response.node[response.request_id].callback_response]) == "function") {
 			response.node[response.node[response.request_id].callback_response](object, response.request_id);
 		}
 
-		// // callback to Response handler
-		// if(typeof(response.node.Response) == "function") {
-		// 	response.node.Response(object);
-		// }
-		// if(typeof(response.node.response) == "function") {
-		// 	response.node.response(object);
-		// }
 	}
 	else {
 
 		// callback to ResponseError handler
-		if(typeof(response.node.responseError) == "function") {
-			response.node.responseError(response);
+		// Function reference
+		if(typeof(response.node[response.request_id].callback_error) == "function") {
+			response.node[response.request_id].callback_error(response, response.request_id);
 		}
+		// Function name
+		else if(typeof(response.node[response.node[response.request_id].callback_error]) == "function") {
+			response.node[response.node[response.request_id].callback_error](response, response.request_id);
+		}
+
 		// no responseError is declared - forward error to normal response handler
+
+		// Function reference - no error handler
+		else if(typeof(response.node[response.request_id].callback_response) == "function") {
+			response.node[response.request_id].callback_response(response, response.request_id);
+		}
+		// Function name - no error handler
 		else if(typeof(response.node[response.node[response.request_id].callback_response]) == "function") {
 			response.node[response.node[response.request_id].callback_response](response, response.request_id);
 		}
