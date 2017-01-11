@@ -85,6 +85,10 @@ u.notifier = function(node) {
 				u.ae(overlay, login);
 				u.as(document.body, "overflow", "hidden");
 				var form = u.qs("form", overlay);
+
+				var relogin = u.ae(login, "p", {"class":"relogin", "html":(u.txt["relogin"] ? u.txt["relogin"] : "Your session expired")});
+				login.insertBefore(relogin, form);
+
 				form.overlay = overlay;
 				u.ae(form, "input", {"type":"hidden", "name":"ajaxlogin", "value":"true"})
 				u.f.init(form);
