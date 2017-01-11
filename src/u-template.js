@@ -158,8 +158,7 @@ u.template = function(template, json, _options) {
 											//else 
 				
 
-					string += item_template.replace(/\{(.+?)\}/g, 
-						function(string) {
+					string += item_template.replace(/\{(.+?)\}/g, function(string) {
 							// if(string == "{children}") {
 							// 	if(json[_item].children && json[_item].children.length) {
 							// 		var parent_node = template.parentNode.nodeName.toLowerCase();
@@ -171,29 +170,70 @@ u.template = function(template, json, _options) {
 							// 	}
 							// }
 							// else 
-							if(json[_item][string.toString().replace(/[\{\}]/g, "")]) {
-								if(json[_item][string.replace(/[\{\}]/g, "")] === true) {
-									return "true";
-								}
-								return json[_item][string.toString().replace(/[\{\}]/g, "")].toString().replace(/(\"|\')/g, "\\$1");
-							}
-							else if(json[_item][string.toString().replace(/[\{\}]/g, "")] === false) {
-								return "false";
-							}
-							else {
-								return "";
-							}
+
+						var key = string.toString().replace(/[\{\}]/g, "");
+
+						if(typeof(json[_item][key]) == "string" && json[_item][key]) {
+							return json[_item][key].toString().replace(/(\"|\')/g, "\\$1");
 						}
-					);
+						else if (typeof (json[_item][key]) == "number") {
+							return json[_item][key];
+						}
+						else if(typeof(json[_item][key]) == "boolean") {
+							// Insert BOOL marker, to be replaced with real boolean
+							// (not encapsulated in quotes) before string is returned
+							return "MAN_BOOL" + json[_item][key] + "MAN_BOOL";
+						}
+						else if (typeof (json[_item][key]) == "object") {
+							return "MAN_OBJ" + JSON.stringify(json[_item][key]) + "MAN_OBJ";
+						}
+						else {
+							return "";
+						}
+
+					});
 				}
 
 			}
 		}
 		// only one result
 		else {
-			string += template_string.replace(/\{(.+?)\}/g, function(string) {if(json[string.replace(/[\{\}]/g, "")]) {return json[string.replace(/[\{\}]/g, "")].replace(/(\"|\')/g, "\\$1")} else {return ""}});
+			string += template_string.replace(/\{(.+?)\}/g, function(string) {
+				var key = json[string.replace(/[\{\}]/g, "")];
+
+				// clean up strings
+				if(typeof(json[key]) == "string" && json[key]) {
+					return json[key].replace(/(\"|\')/g, "\\$1")
+				}
+				// return numbers correct
+				else if (typeof (json[key]) == "number") {
+					return json[key];
+				}
+				else if(typeof(json[key]) == "boolean") {
+
+					// Insert BOOL marker, to be replaced with real boolean
+					// (not encapsulated in quotes) before string is returned
+					return "MAN_BOOL" + json[key] + "MAN_BOOL";
+				}
+				else if (typeof (json[key]) == "object") {
+					return "MAN_OBJ" + JSON.stringify(json[key]).replace(/(\"|\')/g, "\\$1") + "MAN_OBJ";
+				}
+				else {
+					return "";
+				}
+			});
 		}
 	}
+
+	// replace boolean markers with real boolean values
+	string = string.replace(/\"MAN_BOOLtrueMAN_BOOL\"/g, "true");
+	string = string.replace(/\"MAN_BOOLfalseMAN_BOOL\"/g, "false");
+
+	// replace object markers with real object
+	string = string.replace(/\"MAN_OBJ(.+)MAN_OBJ\"/g, function (string) {
+		string = string.replace(/\"MAN_OBJ(.+)MAN_OBJ\"/g, "$1");
+		return string.replace(/\\("|')/g, "$1");
+	});
 
 
 	if(type_template == "HTML_STRING" || type_template == "HTML") {
