@@ -18,6 +18,8 @@ Util.request = function(node, url, _options) {
 	node[request_id].request_data = "";
 	node[request_id].request_headers = false;
 
+	node[request_id].response_type = false;
+
 	node[request_id].callback_response = "response";
 	node[request_id].callback_error = "responseError";
 
@@ -30,19 +32,21 @@ Util.request = function(node, url, _options) {
 		for(argument in _options) {
 
 			switch(argument) {
-				case "method"				: node[request_id].request_method		= _options[argument]; break;
+				case "method"				: node[request_id].request_method			= _options[argument]; break;
 
 				// PARAMS IS DEPRECATED - REPLACED BY data
-				case "params"				: node[request_id].request_data			= _options[argument]; break;
-				case "data"					: node[request_id].request_data			= _options[argument]; break;
+				case "params"				: node[request_id].request_data				= _options[argument]; break;
+				case "data"					: node[request_id].request_data				= _options[argument]; break;
 
-				case "async"				: node[request_id].request_async		= _options[argument]; break;
-				case "headers"				: node[request_id].request_headers		= _options[argument]; break;
+				case "async"				: node[request_id].request_async			= _options[argument]; break;
+				case "headers"				: node[request_id].request_headers			= _options[argument]; break;
 
-				case "callback"				: node[request_id].callback_response	= _options[argument]; break;
-				case "error_callback"		: node[request_id].callback_error		= _options[argument]; break;
+				case "responseType"			: node[request_id].response_type			= _options[argument]; break;
 
-				case "jsonp_callback"		: node[request_id].jsonp_callback		= _options[argument]; break;
+				case "callback"				: node[request_id].callback_response		= _options[argument]; break;
+				case "error_callback"		: node[request_id].callback_error			= _options[argument]; break;
+
+				case "jsonp_callback"		: node[request_id].jsonp_callback			= _options[argument]; break;
 			}
 
 		}
@@ -56,6 +60,11 @@ Util.request = function(node, url, _options) {
 		node[request_id].HTTPRequest = this.createRequestObject();
 		node[request_id].HTTPRequest.node = node;
 		node[request_id].HTTPRequest.request_id = request_id;
+
+		// set specific responseType for request
+		if(node[request_id].response_type) {
+			node[request_id].HTTPRequest.responseType = node[request_id].response_type;
+		}
 
 		// listen for async request state change
 		if(node[request_id].request_async) {
@@ -83,13 +92,17 @@ Util.request = function(node, url, _options) {
 				node[request_id].request_url += params ? ((!node[request_id].request_url.match(/\?/g) ? "?" : "&") + params) : "";
 
 				node[request_id].HTTPRequest.open(node[request_id].request_method, node[request_id].request_url, node[request_id].request_async);
-				node[request_id].HTTPRequest.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+				if(typeof(node[request_id].request_headers) != "object" || (!node[request_id].request_headers["Content-Type"] && !node[request_id].request_headers["content-type"])) {
+					node[request_id].HTTPRequest.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+				}
 
 				// rails form proofing
-				var csfr_field = u.qs('meta[name="csrf-token"]');
-				if(csfr_field && csfr_field.content) {
-					node[request_id].HTTPRequest.setRequestHeader("X-CSRF-Token", csfr_field.content);
-				}
+				// - should be sent in _options 
+				// - don't want a lot of system-exceptions piling up
+				// var csfr_field = u.qs('meta[name="csrf-token"]');
+				// if(csfr_field && csfr_field.content) {
+				// 	node[request_id].HTTPRequest.setRequestHeader("X-CSRF-Token", csfr_field.content);
+				// }
 
 				// add additional headers
 				if(typeof(node[request_id].request_headers) == "object") {
@@ -114,6 +127,7 @@ Util.request = function(node, url, _options) {
 
 
 				// Stringify JSON objects
+				// TODO: 'function Object' is that mobile safari? - which versions?
 				if(typeof(node[request_id].request_data) == "object" && node[request_id].request_data.constructor.toString().match(/function Object/i)) {
 					params = JSON.stringify(node[request_id].request_data);
 				}
@@ -125,24 +139,33 @@ Util.request = function(node, url, _options) {
 				node[request_id].HTTPRequest.open(node[request_id].request_method, node[request_id].request_url, node[request_id].request_async);
 
 				// use appropriate header
-				if(!params.constructor.toString().match(/FormData/i)) {
+				// XMLHttpRequests are sent as content-type text if nothing is declared
+				// FormData will automatically get a form-data content-type (including boundary information)
+				// if custom headers are not specified, set content-type according to what is being sent
+				if(!params.constructor.toString().match(/FormData/i) && (typeof(node[request_id].request_headers) != "object" || (!node[request_id].request_headers["Content-Type"] && !node[request_id].request_headers["content-type"]))) {
 					node[request_id].HTTPRequest.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 				}
-				// node[request_id].HTTPRequest.setRequestHeader("Content-Type","multipart/formdata");
+
 
 				// rails form proofing
-				var csfr_field = u.qs('meta[name="csrf-token"]');
-				if(csfr_field && csfr_field.content) {
-					node[request_id].HTTPRequest.setRequestHeader("X-CSRF-Token", csfr_field.content);
-				}
+				// - should be sent in _options 
+				// - don't want a lot of system-exceptions piling up
+				// var csfr_field = u.qs('meta[name="csrf-token"]');
+				// if(csfr_field && csfr_field.content) {
+				// 	node[request_id].HTTPRequest.setRequestHeader("X-CSRF-Token", csfr_field.content);
+				// }
 
 				// add additional headers
+				// setting a content-type for a form-data request will ruin the request
+				// - but that's the developers fault. Don't check for it.
 				if(typeof(node[request_id].request_headers) == "object") {
 					var header;
 					for(header in node[request_id].request_headers) {
 						node[request_id].HTTPRequest.setRequestHeader(header, node[request_id].request_headers[header]);
 					}
 				}
+
+
 
 				// send params
 				node[request_id].HTTPRequest.send(params);
