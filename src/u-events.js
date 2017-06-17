@@ -45,7 +45,7 @@ Util.Events = u.e = new function() {
 	// theoretical support for dual input sources
 	if(navigator.maxTouchPoints > 1) {
 
-		if(typeof(document.ontouchmove) == "undefined" && typeof(document.onmousemove) == "undefined") {
+		if((typeof(document.ontouchmove) == "undefined" && typeof(document.onmousemove) == "undefined") || (document.ontouchmove === null && document.onmousemove === null)) {
 
 			this.event_support = "multi";
 		}
@@ -662,6 +662,7 @@ Util.Events = u.e = new function() {
 
 		// default values
 		node._hover_out_delay = 100;
+		node._hover_over_delay = 0;
 		node._callback_out = "out";
 		node._callback_over = "over";
 
@@ -674,6 +675,7 @@ Util.Events = u.e = new function() {
 				switch(argument) {
 					case "over"				: node._callback_over		= _options[argument]; break;
 					case "out"				: node._callback_out		= _options[argument]; break;
+					case "delay_over"		: node._hover_over_delay	= _options[argument]; break;
 					case "delay"			: node._hover_out_delay		= _options[argument]; break;
 				}
 			}
@@ -683,28 +685,66 @@ Util.Events = u.e = new function() {
 		u.e.addOverEvent(node, this._over);
 		u.e.addOutEvent(node, this._out);
 	}
-	this._over = function(event) {
 
-		u.t.resetTimer(this.t_out);
+	// actual mouseover event - wait for delay, if any
+	this._over = function(event) {
 //		u.bug("_over:" + u.nodeId(this));
 
-		// notify base (but only when state changes)
-		if(typeof(this[this._callback_over]) == "function" && !this.is_hovered) {
-			this[this._callback_over](event);
+		u.t.resetTimer(this.t_out);
+
+		// no delay
+		if(!this._hover_over_delay) {
+			u.e.__over.call(this, event);
+		}
+		// set wait delay
+		else if(!u.t.valid(this.t_over)) {
+			this.t_over = u.t.setTimer(this, u.e.__over, this._hover_over_delay, event);
+		}
+	}
+
+	this.__over = function(event) {
+//		u.bug("__over:" + u.nodeId(this));
+
+		u.t.resetTimer(this.t_out);
+
+		// only notify base when state changes
+		if(!this.is_hovered) {
+			this.is_hovered = true;
+
+			// skip initial over delay while in hovered state
+			u.e.removeOverEvent(this, u.e._over);
+			u.e.addOverEvent(this, u.e.__over);
+
+			
+			// notify base (but only when state changes)
+			if(typeof(this[this._callback_over]) == "function") {
+				this[this._callback_over](event);
+			}
+
 		}
 
-		this.is_hovered = true;
-
 	}
+	// actual mouseout event - wait for delay
 	this._out = function(event) {
 //		u.bug("_out:" + u.nodeId(this));
+
+		u.t.resetTimer(this.t_over);
+		u.t.resetTimer(this.t_out);
+
+		// update out delay
 		this.t_out = u.t.setTimer(this, u.e.__out, this._hover_out_delay, event);
+
 	}
+	// delayed out event with callback
 	this.__out = function(event) {
+//		u.bug("_out_is_real:" + u.nodeId(this));
+
 		this.is_hovered = false;
 
-//		u.bug("_out_is_real:" + u.nodeId(this));
-		
+		// restore event handlers
+		u.e.removeOverEvent(this, u.e.__over);
+		u.e.addOverEvent(this, u.e._over);
+
 		// notify base
 		if(typeof(this[this._callback_out]) == "function") {
 			this[this._callback_out](event);
