@@ -2114,6 +2114,20 @@ u.f.textEditor = function(field) {
 			this.field.addStrongTag(this.selection, this.tag);
 		}
 
+		// SUP option
+		this.selection_options._sup = u.ae(ul, "li", {"class":"sup", "html":"Superscript"});
+		this.selection_options._sup.field = this;
+		this.selection_options._sup.tag = node;
+		this.selection_options._sup.selection = selection;
+		u.ce(this.selection_options._sup);
+		this.selection_options._sup.inputStarted = function(event) {
+			u.e.kill(event);
+		}
+		this.selection_options._sup.clicked = function(event) {
+			u.e.kill(event);
+			this.field.addSupTag(this.selection, this.tag);
+		}
+
 		// SPAN option
 		this.selection_options._span = u.ae(ul, "li", {"class":"span", "html":"CSS class"});
 		this.selection_options._span.field = this;
@@ -2359,6 +2373,30 @@ u.f.textEditor = function(field) {
 			selection.removeAllRanges();
 
 			this.deleteOrEditOption(em);
+			this.hideSelectionOptions();
+		}
+		catch(exception) {
+			selection.removeAllRanges();
+			this.hideSelectionOptions();
+
+			alert("You cannot cross the boundaries of another selection. Yet.");
+		}
+	}
+
+	// add sup tag
+	field.addSupTag = function(selection, tag) {
+
+		var range, a, url, target;
+		var sup = document.createElement("sup");
+		sup.field = this;
+		sup.tag = tag;
+
+		range = selection.getRangeAt(0);
+		try {
+			range.surroundContents(sup);
+			selection.removeAllRanges();
+
+			this.deleteOrEditOption(sup);
 			this.hideSelectionOptions();
 		}
 		catch(exception) {
