@@ -68,9 +68,17 @@ u.notifier = function(node) {
 		else if(typeof(response) == "object" && response.isHTML) {
 
 			// check for login
-			var login = u.qs(".scene.login", response);
+			var login = u.qs(".scene.login form", response);
 			var messages = u.qsa(".scene div.messages p", response);
 			if(login && !u.qs("#login_overlay")) {
+
+				// // remove article from login (if it exists)
+				// // it should not be shown in quick login
+				// var article = u.qs("div.article", login);
+				// if(article) {
+				// 	article.parentNode.removeChild(article);
+				// }
+
 
 				this.autosave_disabled = true;
 
@@ -84,18 +92,18 @@ u.notifier = function(node) {
 				overlay.node = this;
 				u.ae(overlay, login);
 				u.as(document.body, "overflow", "hidden");
-				var form = u.qs("form", overlay);
+//				var form = u.qs("form", overlay);
 
-				var relogin = u.ae(login, "p", {"class":"relogin", "html":(u.txt["relogin"] ? u.txt["relogin"] : "Your session expired")});
-				login.insertBefore(relogin, form);
+				var relogin = u.ie(login, "h1", {"class":"relogin", "html":(u.txt["relogin"] ? u.txt["relogin"] : "Your session expired")});
+//				login.insertBefore(relogin, form);
 
-				form.overlay = overlay;
-				u.ae(form, "input", {"type":"hidden", "name":"ajaxlogin", "value":"true"})
-				u.f.init(form);
+				login.overlay = overlay;
+				u.ae(login, "input", {"type":"hidden", "name":"ajaxlogin", "value":"true"})
+				u.f.init(login);
 
-				form.fields["username"].focus();
+				login.fields["username"].focus();
 
-				form.submitted = function() {
+				login.submitted = function() {
 					this.response = function(response) {
 						if(response.isJSON && response.cms_status == "success") {
 							var csrf_token = response.cms_object["csrf-token"];
