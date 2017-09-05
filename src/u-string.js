@@ -108,3 +108,11 @@ Util.normalize = function(string) {
 
 	return string;
 }
+
+// select correct form, based on count
+Util.pluralize = function(count, singular, plural) {
+	if(count != 1) {
+		return count + " " + plural;
+	}
+	return count + " " + singular;
+}
