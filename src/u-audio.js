@@ -99,15 +99,15 @@ Util.audioPlayer = function(_options) {
 
 		// Play audio
 		player.play = function(position) {
-
+//			console.log(this.audio.currentTime + "; " + position);
 			// use position only if stated (position can be 0)
-			if(this.audio.currentTime && position !== undefined) {
+			if(typeof(this.audio.currentTime) == "number" && position !== undefined) {
 				this.audio.currentTime = position;
 			}
 
 			// has src? then play
 			if(this.audio.src) {
-				this.audio.play();
+				return this.audio.play();
 			}
 		}
 
@@ -132,7 +132,7 @@ Util.audioPlayer = function(_options) {
 			this.load(src, _options);
 
 			// play when ready
-			this.play(position);
+			return this.play(position);
 		}
 
 		// Pause playback but stay at current position
@@ -219,7 +219,7 @@ Util.audioPlayer = function(_options) {
 			}
 			u.e.addEvent(this.audio, "loadstart", this.audio._loadstart);
 
-			// enough is loaded to play entire movie
+			// enough is loaded to play entire audio
 			this.audio._canplaythrough = function(event) {
 //				u.bug("_canplaythrough");
 
@@ -231,7 +231,7 @@ Util.audioPlayer = function(_options) {
 			}
 			u.e.addEvent(this.audio, "canplaythrough", this.audio._canplaythrough);
 
-			// movie is playing
+			// audio is playing
 			this.audio._playing = function(event) {
 //				u.bug("_playing");
 
@@ -244,7 +244,7 @@ Util.audioPlayer = function(_options) {
 			}
 			u.e.addEvent(this.audio, "playing", this.audio._playing);
 
-			// movie is paused
+			// audio is paused
 			this.audio._paused = function(event) {
 //				u.bug("_paused");
 
@@ -257,7 +257,7 @@ Util.audioPlayer = function(_options) {
 			}
 			u.e.addEvent(this.audio, "pause", this.audio._paused);
 
-			// movie is stalled
+			// audio is stalled
 			this.audio._stalled = function(event) {
 //				u.bug("_stalled");
 
@@ -268,9 +268,19 @@ Util.audioPlayer = function(_options) {
 					this.player.stalled(event);
 				}
 			}
-			u.e.addEvent(this.audio, "stalled", this.audio._paused);
+			u.e.addEvent(this.audio, "stalled", this.audio._stalled);
 
-			// movie has played til its end
+			// audio error
+			this.audio._error = function(event) {
+				u.bug("_error");
+
+				if(typeof(this.player.error) == "function") {
+					this.player.error(event);
+				}
+			}
+			u.e.addEvent(this.audio, "error", this.audio._error);
+
+			// audio has played til its end
 			this.audio._ended = function(event) {
 //				u.bug("_ended");
 
@@ -355,7 +365,7 @@ Util.audioPlayer = function(_options) {
 		src = src.replace(/\?[^$]+/, "");
 
 		// remove format extension
-		src = src.replace(/.mp3|.ogg|.wav/, "");
+		src = src.replace(/(.mp3|.ogg|.wav)$/, "");
 
 
 		// if flash fallback is used, always use mp3
