@@ -10,8 +10,6 @@ u.preloader = function(node, files, _options) {
 	var callback_preloader_loading = "loading";
 	var callback_preloader_waiting = "waiting";
 
-
-
 	node._callback_min_delay = 0;
 
 
@@ -24,7 +22,6 @@ u.preloader = function(node, files, _options) {
 				case "loaded"               : callback_preloader_loaded       = _options[_argument]; break;
 				case "loading"              : callback_preloader_loading      = _options[_argument]; break;
 				case "waiting"              : callback_preloader_waiting      = _options[_argument]; break;
-
 
 				case "callback_min_delay"   : node._callback_min_delay              = _options[_argument]; break;
 			}
@@ -39,12 +36,13 @@ u.preloader = function(node, files, _options) {
 //		u._preloader_queue = u.ae(document.body, "div");
 		u._preloader_processes = 0;
 
-		if(u.e && u.e.event_pref == "touch") {
+		// define default max number of processes
+		if(u.e && u.e.event_support == "touch") {
 			u._preloader_max_processes = 1;
 		}
 		// TODO: option to load more simultaneously - implement as parameter as well?
 		else {
-			u._preloader_max_processes = 4;
+			u._preloader_max_processes = 2;
 		}
 
 	}
@@ -116,52 +114,109 @@ u._queueLoader = function() {
 				u.rc(next, "waiting");
 				u.ac(next, "loading");
 
+				if(next._file.match(/png|jpg|gif|svg/)) {
 
-				next.loaded = function(event) {
-					this.image = event.target;
+					next.loaded = function(event) {
+						this.image = event.target;
 
-					// fallback support
-					this._image = this.image;
+						// fallback support
+						this._image = this.image;
 
-					// this._image = {};
-					// this._image.width = event.target.width;
-					// this._image.height = event.target.height;
-					// this._image.src = event.target.src;
+						// this._image = {};
+						// this._image.width = event.target.width;
+						// this._image.height = event.target.height;
+						// this._image.src = event.target.src;
 
-					this._queue.nodes[this.i] = this;
+						this._queue.nodes[this.i] = this;
 
-//					u.as(this, "backgroundImage", "url("+event.target.src+")");
-//					u.bug("loaded and used")
+	//					u.as(this, "backgroundImage", "url("+event.target.src+")");
+	//					u.bug("loaded and used")
 
-					u.rc(this, "loading");
-					u.ac(this, "loaded");
+						u.rc(this, "loading");
+						u.ac(this, "loaded");
 
-					u._preloader_processes--;
+						u._preloader_processes--;
 
-					if(!u.qs("li.waiting,li.loading", this._queue)) {
+						if(!u.qs("li.waiting,li.loading", this._queue)) {
 
-						// remove loading class from request node
-						u.rc(this._queue._node, "loading");
+							// remove loading class from request node
+							u.rc(this._queue._node, "loading");
 
 
-						if(typeof(this._queue._node[this._queue._callback_loaded]) == "function") {
-							this._queue._node[this._queue._callback_loaded](this._queue.nodes);
+							if(typeof(this._queue._node[this._queue._callback_loaded]) == "function") {
+								this._queue._node[this._queue._callback_loaded](this._queue.nodes);
+							}
+
+							// callback to specific callback function
+							// if(typeof(this._queue._callback) == "function") {
+							// 	this._queue._node._callback = this._queue._callback;
+							// 	this._queue._node._callback(this._queue.nodes);
+							// }
+							// // or callback to default (loaded)
+							// else if(typeof(this._queue._node.loaded) == "function") {
+							// 	this._queue._node.loaded(this._queue.nodes);
+							// }
 						}
 
-						// callback to specific callback function
-						// if(typeof(this._queue._callback) == "function") {
-						// 	this._queue._node._callback = this._queue._callback;
-						// 	this._queue._node._callback(this._queue.nodes);
-						// }
-						// // or callback to default (loaded)
-						// else if(typeof(this._queue._node.loaded) == "function") {
-						// 	this._queue._node.loaded(this._queue.nodes);
-						// }
+						u._queueLoader();
 					}
+					u.loadImage(next, next._file);
 
-					u._queueLoader();
 				}
-				u.loadImage(next, next._file);
+				else if(next._file.match(/mp3|aac|wav|ogg/)) {
+
+					next.loaded = function(event) {
+						console.log(event);
+//						this.image = event.target;
+
+						// fallback support
+//						this._image = this.image;
+
+						// this._image = {};
+						// this._image.width = event.target.width;
+						// this._image.height = event.target.height;
+						// this._image.src = event.target.src;
+
+						this._queue.nodes[this.i] = this;
+
+	//					u.as(this, "backgroundImage", "url("+event.target.src+")");
+	//					u.bug("loaded and used")
+
+						u.rc(this, "loading");
+						u.ac(this, "loaded");
+
+						u._preloader_processes--;
+
+						if(!u.qs("li.waiting,li.loading", this._queue)) {
+
+							// remove loading class from request node
+							u.rc(this._queue._node, "loading");
+
+
+							if(typeof(this._queue._node[this._queue._callback_loaded]) == "function") {
+								this._queue._node[this._queue._callback_loaded](this._queue.nodes);
+							}
+
+						}
+
+						u._queueLoader();
+					}
+					if(typeof(u.audioPlayer) == "function") {
+
+						next.audioPlayer = u.audioPlayer();
+						next.load(next._file);
+
+					}
+					else {
+						u.bug("You need u.audioPlayer to preload MP3s");
+					}
+				}
+
+				// TODO: Add video and font preloading
+				else {
+					
+				}
+
 			}
 			else {
 				break
