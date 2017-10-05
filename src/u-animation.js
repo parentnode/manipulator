@@ -59,7 +59,7 @@ Util.Animation = u.a = new function() {
 
 							if(typeof(callback) == "function") {
 								var key = u.randomString(4);
-								node[key] = callback;
+								node[key].callback = callback;
 								node[key].callback(event);
 								node[key] = null;
 								callback = null;
