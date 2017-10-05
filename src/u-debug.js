@@ -76,11 +76,13 @@ Util.bug = function(message, corner, color) {
 				d_target.style.left = option[3];
 				d_target.style.backgroundColor = u.bug_bg ? u.bug_bg : "#ffffff";
 				d_target.style.color = "#000000";
+				d_target.style.fontSize = "11px";
+				d_target.style.lineHeight = "11px";
 				d_target.style.textAlign = "left";
 				if(d_target.style.maxWidth) {
 					d_target.style.maxWidth = u.bug_max_width ? u.bug_max_width+"px" : "auto";
 				}
-				d_target.style.padding = "3px";
+				d_target.style.padding = "2px 3px";
 			}
 
 			if(typeof(message) != "string") {
