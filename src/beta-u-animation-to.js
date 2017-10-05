@@ -20,6 +20,7 @@
 		// values required for each type
 		var pairs = value.trim().split(" ");
 		var sets = [];
+		var part;
 		for(x in pairs) {
 			parts = pairs[x].trim().split(",");
 
@@ -51,6 +52,8 @@
 
 		// values required for each type
 		var pairs = {"m":2, "l":2, "a":7, "c":6, "s":4, "q":4, "z":0};
+
+		var x, sets;
 
 		// add structure to string for parsability
 		value = value.replace(/-/g, " -");
