@@ -466,6 +466,7 @@ Util.addClass = u.ac = function(node, classname, dom_update) {
 	return false;
 }
 // Remove all instances of classname from element
+// TODO: SVG.className cannot be set (needs to be SVG.className.baseVal || use classList works from IE 11)
 Util.removeClass = u.rc = function(node, classname, dom_update) {
 	try {
 		if(classname) {
