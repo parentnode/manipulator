@@ -8,7 +8,7 @@ u.textscaler = function(node, _settings) {
 //	u.bug("set text scaling")
 
 //	u.bug_console_only = true;
-
+//	console.log(node);
 
 
 	// additional info passed to function as JSON object
@@ -166,12 +166,27 @@ u.textscaler = function(node, _settings) {
 		window._man_text.scale = function() {
 
 			// get width just once for each event
+			var _width = u.browserW();
+			var _height = u.browserH();
+
 			window._man_text._width = u.browserW();
 			window._man_text._height = u.browserH();
 
+
 			var i, node;
 			for(i = 0; node = window._man_text.nodes[i]; i++) {
-//				u.bug("scale:" + node);
+//				u.bug("scale:" + node + ", " + node._man_text);
+
+				// if(node._man_text.ref) {
+				// 				window._man_text._width = node._man_text.ref.offsetWidth;
+				// 				window._man_text._height = node._man_text.ref.offsetHeight;
+				//
+				// }
+				// else {
+				// 				window._man_text._width = _width;
+				// 				window._man_text._height = _height;
+				//
+				// }
 
 				// is node still a part of the dom
 				// don't want to make this check to complex, or it will slow down rendering
@@ -268,7 +283,7 @@ u.textscaler = function(node, _settings) {
 	for(tag in node.text_settings) {
 
 		// global width + height settings
-		if(tag == "min_height" || tag == "max_height" || tag == "min_width" || tag == "max_width" || tag == "unit") {
+		if(tag == "min_height" || tag == "max_height" || tag == "min_width" || tag == "max_width" || tag == "unit" || tag == "ref") {
 			node._man_text[tag] = node.text_settings[tag];
 			node.text_settings[tag] = null;
 			delete node.text_settings[tag];
@@ -283,7 +298,7 @@ u.textscaler = function(node, _settings) {
 			node.text_settings[tag].css_rule = window._man_text.style_tag.sheet.cssRules[0];
 		}
 
-
+		
 //		u.bug("cssText:" + node.text_settings[tag].css_rule.cssText + ", " + u.nodeId(node));
 //					u.xInObject(settings[tag].css_rule);
 	}
