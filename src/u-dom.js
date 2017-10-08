@@ -618,23 +618,13 @@ Util.inNodeList = function(node, list) {
 }
 
 // is node within scope
-// TODO: compare speed with other methods
 Util.nodeWithin = u.nw = function(node, scope) {
-	var node_key = u.randomString(8);
-	var scope_key = u.randomString(8);
-	u.ac(node, node_key);
-	u.ac(scope, scope_key);
 
-	if(u.qs("."+scope_key+" ."+node_key)) {
-
-		u.rc(node, node_key);
-		u.rc(scope, scope_key);
-
-		return true;
+	if(scope != node) {
+		if(scope.contains(node)) {
+			return true
+		}
 	}
-
-	u.rc(node, node_key);
-	u.rc(scope, scope_key);
 	return false;
-}
 
+}
