@@ -398,7 +398,9 @@ Util.Events = u.e = new function() {
 		this.move_last_y = 0;
 
 		// keep track of moves after start event to cancel event more controlled (after a number of moves)
-		this._moves_cancel = 0;
+//		this._moves_cancel = 0;
+//		u.bug("this._moves_counted:" + this._moves_counted);
+//		this._moves_counted = 0;
 
 		// reset swipe detections
 		this.swiped = false;
@@ -463,7 +465,7 @@ Util.Events = u.e = new function() {
 		if(this.e_drag || this.e_swipe) {
 //			u.bug("drag set" + this.nodeName)
 			u.e.addMoveEvent(this, u.e._pick);
-			u.e.addEndEvent(this, u.e._drop);
+//			u.e.addEndEvent(this, u.e._drop);
 		}
 
 
@@ -491,7 +493,8 @@ Util.Events = u.e = new function() {
 		var offset_y = u.eventY(event) - this.start_event_y;
 
 		// should click be cancelled
-		if(event.type.match(/mouseout/) || this._moves_cancel > 1 || (event.type.match(/move/) && (Math.abs(offset_x) > 15 || Math.abs(offset_y) > 15))) {
+		if(event.type.match(/mouseout/) || (event.type.match(/move/) && (Math.abs(offset_x) > 15 || Math.abs(offset_y) > 15))) {
+//		if(event.type.match(/mouseout/) || this._moves_cancel > 5 || (event.type.match(/move/) && (Math.abs(offset_x) > 15 || Math.abs(offset_y) > 15))) {
 
 			u.e.resetClickEvents(this);
 
@@ -503,10 +506,10 @@ Util.Events = u.e = new function() {
 		}
 
 		// count move events to cancel click appropriately
-		else if(event.type.match(/move/)) {
-
-			this._moves_cancel++;
-		}
+		// else if(event.type.match(/move/)) {
+		//
+		// 	this._moves_cancel++;
+		// }
 
 	}
 
