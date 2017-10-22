@@ -9,3 +9,7 @@ if(!u || !Util) {
 	// hande stats requests if stats is not enabled
 	u.stats = new function() {this.pageView = function(){};this.event = function(){};}
 }
+
+function fun(v) {return (typeof(v) === "function")}
+function obj(v) {return (typeof(v) === "object")}
+function str(v) {return (typeof(v) === "string")}
