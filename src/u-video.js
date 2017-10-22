@@ -9,13 +9,21 @@ Util.videoPlayer = function(_options) {
 
 	// autoplay
 	player._autoplay = false;
+	player._muted = false;
+	player._loop = false;
+	player._playsinline = false;
+	player._crossorigin = "anonymous";
 
 	// native controls default settings
-	player._controls = false;
+	player._native_controls = false;
 
 
 	// play/pause button
 	player._controls_playpause = false;
+	player._controls_play = false;
+	player._controls_pause = false;
+	player._controls_stop = false;
+
 	// TODO: zoom/fullscreen button
 	player._controls_zoom = false;
 	// TODO: volume button
@@ -60,29 +68,29 @@ Util.videoPlayer = function(_options) {
 
 		// Load video
 		player.load = function(src, _options) {
-//			u.bug("load video:" + src);
+			u.bug("load video:" + src);
 
 			// optional controls override
-			if(typeof(_options) == "object") {
-				var _argument;
-				for(_argument in _options) {
-
-					switch(_argument) {
-
-						case "autoplay"     : this._autoplay               = _options[_argument]; break;
-						case "controls"     : this._controls               = _options[_argument]; break;
-
-						case "playpause"    : this._controls_playpause     = _options[_argument]; break;
-						case "zoom"         : this._controls_zoom          = _options[_argument]; break;
-						case "volume"       : this._controls_volume        = _options[_argument]; break;
-						case "search"       : this._controls_search        = _options[_argument]; break;
-						case "fullscreen"   : this._controls_fullscreen    = _options[_argument]; break;
-
-						case "ff_skip"      : this._ff_skip                = _options[_argument]; break;
-						case "rw_skip"      : this._rw_skip                = _options[_argument]; break;
-					}
-				}
-			}
+			// if(typeof(_options) == "object") {
+			// 	var _argument;
+			// 	for(_argument in _options) {
+			//
+			// 		switch(_argument) {
+			//
+			// 			case "autoplay"     : this._autoplay               = _options[_argument]; break;
+			// 			case "controls"     : this._controls               = _options[_argument]; break;
+			//
+			// 			case "playpause"    : this._controls_playpause     = _options[_argument]; break;
+			// 			case "zoom"         : this._controls_zoom          = _options[_argument]; break;
+			// 			case "volume"       : this._controls_volume        = _options[_argument]; break;
+			// 			case "search"       : this._controls_search        = _options[_argument]; break;
+			// 			case "fullscreen"   : this._controls_fullscreen    = _options[_argument]; break;
+			//
+			// 			case "ff_skip"      : this._ff_skip                = _options[_argument]; break;
+			// 			case "rw_skip"      : this._rw_skip                = _options[_argument]; break;
+			// 		}
+			// 	}
+			// }
 
 			// stop video if playing
 			if(u.hc(this, "playing")) {
@@ -90,7 +98,7 @@ Util.videoPlayer = function(_options) {
 			}
 
 			// reset video safety net (or old video may show before new one loads)
-			this.setup();
+			this.setup(_options);
 
 			// only attempt to load video if source is available
 			if(src) {
@@ -102,8 +110,8 @@ Util.videoPlayer = function(_options) {
 				// load video
 				this.video.load();
 
-				this.video.controls = player._controls;
-				this.video.autoplay = player._autoplay;
+				// this.video.controls = player._controls;
+				// this.video.autoplay = player._autoplay;
 			}
 		}
 
