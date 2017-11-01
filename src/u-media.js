@@ -61,7 +61,7 @@ Util.mediaPlayer = function(_options) {
 
 		// Load media
 		player.load = function(src, _options) {
-			u.bug("load media:" + src);
+//			u.bug("load media:" + src);
 
 
 			// stop media if playing
@@ -128,13 +128,13 @@ Util.mediaPlayer = function(_options) {
 
 		// Pause playback but stay at current position
 		player.pause = function() {
-			u.bug("pause");
+//			u.bug("pause");
 			this.media.pause();
 		}
 
 		// Stop playback and reset postion
 		player.stop = function() {
-			u.bug("stop");
+//			u.bug("stop");
 			this.media.pause();
 
 			// reset position
@@ -347,7 +347,7 @@ u.setupMedia = function(player, _options) {
 
 		// media is playing
 		player.media._playing = function(event) {
-			u.bug("_playing");
+//			u.bug("_playing");
 
 			u.rc(this.player, "loading|paused");
 			u.ac(this.player, "playing");
@@ -360,7 +360,7 @@ u.setupMedia = function(player, _options) {
 
 		// media is paused
 		player.media._paused = function(event) {
-			u.bug("_paused");
+//			u.bug("_paused");
 
 			u.rc(this.player, "playing|loading");
 			u.ac(this.player, "paused");
@@ -386,7 +386,7 @@ u.setupMedia = function(player, _options) {
 
 		// media error
 		player.media._error = function(event) {
-			u.bug("_error");
+//			u.bug("_error");
 
 			if(typeof(this.player.error) == "function") {
 				this.player.error(event);
@@ -457,7 +457,7 @@ u.correctMediaSource = function(player, src) {
 	var param = src.match(/\?[^$]+/) ? src.match(/(\?[^$]+)/)[1] : "";
 	src = src.replace(/\?[^$]+/, "");
 
-	console.log(player)
+//	console.log(player)
 
 	// u.bug("cpt:m4v"+this.media.canPlayType("media/x-m4v"));
 	// u.bug("cpt:mp4"+this.media.canPlayType("media/mp4"));
@@ -540,7 +540,7 @@ u.correctMediaSource = function(player, src) {
 // controls overlay
 u.setupMediaControls = function(player, _options) {
 
-	u.bug("u.setupMediaControls");
+//	u.bug("u.setupMediaControls");
 //	console.log(_options)
 
 	// additional info passed to function as JSON object
@@ -828,6 +828,7 @@ u.detectMediaAutoplay = function(player) {
 				}
 
 				u.media_autoplay_detection = true;
+				u.test_autoplay.pause();
 				delete u.test_autoplay;
 
 			}
@@ -835,8 +836,9 @@ u.detectMediaAutoplay = function(player) {
 		}
 
 		// autoplay test passed
-		u.test_autoplay.playing = function() {
-			u.bug("playing");
+		u.test_autoplay.playing = function(event) {
+			// u.bug("playing");
+			// console.log(event);
 
 			u.media_can_autoplay = true;
 			u.media_can_autoplay_muted = true;
@@ -844,46 +846,81 @@ u.detectMediaAutoplay = function(player) {
 			this.check();
 		}
 		// autoplay test failed
-		u.test_autoplay.notplaying = function() {
+		u.test_autoplay.notplaying = function(event) {
+			// u.bug("notplaying");
+			// console.log(event);
+
 			u.media_can_autoplay = false;
 
 			// switch to muted and try again
 			u.test_autoplay.muted = true;
-			u.test_autoplay.play().then(
-				u.test_autoplay.playing_muted.bind(u.test_autoplay)
-			).catch(
-				u.test_autoplay.notplaying_muted.bind(u.test_autoplay)
-			);
+//			u.test_autoplay.setAttribute("muted", "true");
 
+			var promise = u.test_autoplay.play();
+			if(promise && typeof(promise.then) == "function") {
+				promise.then(
+					u.test_autoplay.playing_muted.bind(u.test_autoplay)
+				).catch(
+					u.test_autoplay.notplaying_muted.bind(u.test_autoplay)
+				);
+			}
 		}
 		// autoplay muted test passed
-		u.test_autoplay.playing_muted = function() {
-			u.bug("playing_muted");
+		u.test_autoplay.playing_muted = function(event) {
+			// u.bug("playing_muted");
+			// console.log(event);
+
 			u.media_can_autoplay_muted = true;
 
 			this.check();
 		}
 		// autoplay muted test failed
-		u.test_autoplay.notplaying_muted = function() {
-			u.bug("notplaying_muted");
+		u.test_autoplay.notplaying_muted = function(event) {
+			// u.bug("notplaying_muted");
+			// console.log(event);
+
 			u.media_can_autoplay_muted = false;
 
 			this.check();
 		}
 
+		// player failed
+		u.test_autoplay.error = function(event) {
+			// u.bug("notplaying_muted");
+			// console.log(event);
+
+			u.media_can_autoplay = false;
+			u.media_can_autoplay_muted = false;
+
+			this.check();
+		}
+		
+		u.e.addEvent(u.test_autoplay, "playing", u.test_autoplay.playing);
+		u.e.addEvent(u.test_autoplay, "error", u.test_autoplay.error);
+
 		// test data
-		var mp3 = "data:audio/mpeg;base64,/+MYxAAAAANIAUAAAASEEB/jwOFM/0MM/90b/+RhST//w4NFwOjf///PZu////9lns5GFDv//l9GlUIEEIAAAgIg8Ir/JGq3/+MYxDsLIj5QMYcoAP0dv9HIjUcH//yYSg+CIbkGP//8w0bLVjUP///3Z0x5QCAv/yLjwtGKTEFNRTMuOTeqqqqqqqqqqqqq/+MYxEkNmdJkUYc4AKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq";
+		var mp3 = "data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjQwLjEwMQAAAAAAAAAAAAAA//NYwAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAASAAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg////////////////////////////////////////////AAAAAExhdmM1Ni42MAAAAAAAAAAAAAAAACQAAAAAAAAAAAEgAk6hJgAAAAAAAAAAAAAA//MYxAAAAANIAAAAAExBTUUzLjk5LjVVVVVVVVVVVVVVVVVV//MYxBcAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//MYxC4AAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV";
 
 		// test properties
 		u.test_autoplay.volume = 0.01;
 		u.test_autoplay.autoplay = true;
 		u.test_autoplay.playsinline = true;
 		u.test_autoplay.src = mp3;
-		u.test_autoplay.play().then(
-			u.test_autoplay.playing.bind(u.test_autoplay)
-		).catch(
-			u.test_autoplay.notplaying.bind(u.test_autoplay)
-		);
+
+//		console.log(u.test_autoplay);
+
+		var promise = u.test_autoplay.play();
+		if(promise && typeof(promise.then) == "function") {
+
+			u.e.removeEvent(u.test_autoplay, "playing", u.test_autoplay.playing);
+			u.e.removeEvent(u.test_autoplay, "error", u.test_autoplay.error);
+
+			promise.then(
+				u.test_autoplay.playing.bind(u.test_autoplay)
+			).catch(
+				u.test_autoplay.notplaying.bind(u.test_autoplay)
+			);
+		}
 
 
 	}
