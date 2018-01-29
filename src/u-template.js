@@ -2,6 +2,7 @@ u.template = function(template, json, _options) {
 	// u.bug("### TEMPLATE ###");
 	// u.bug("template typeof:" + typeof(template));
 	// u.bug("json typeof:" + typeof(json));
+	// console.log(json);
 
 
 	var string = "";
@@ -64,7 +65,7 @@ u.template = function(template, json, _options) {
 
 	// HTML node or HTML STRING
 	if(type_template == "HTML_STRING" || type_template == "HTML") {
-//				u.bug("TEMPLATE:" + template.innerHTML)
+//		u.bug("TEMPLATE:" + template);
 
 		// HTML node
 		if(type_template == "HTML") {
@@ -126,7 +127,6 @@ u.template = function(template, json, _options) {
 
 	// is JSON object or array of objects
 	if(typeof(json) == "object" && ((json.length == undefined && Object.keys(json).length) || json.length)) {
-
 
 		// multiple results
 		if(json.length) {
@@ -197,6 +197,8 @@ u.template = function(template, json, _options) {
 						}
 						// return numbers correct
 						else if(typeof(json[_item][key]) == "number") {
+							// Insert NUM marker, to be replaced with real number
+							// (not encapsulated in quotes) before string is returned
 							return "MAN_NUM" + json[_item][key] + "MAN_NUM";
 						}
 						// return booleans correct
@@ -204,6 +206,12 @@ u.template = function(template, json, _options) {
 							// Insert BOOL marker, to be replaced with real boolean
 							// (not encapsulated in quotes) before string is returned
 							return "MAN_BOOL" + json[_item][key] + "MAN_BOOL";
+						}
+						// return null correct
+						else if(json[_item][key] === null) {
+							// Insert NULL marker, to be replaced with null or empty string 
+							// (depending on template type)
+							return "MAN_NULL";
 						}
 						// return objects correct
 						else if(typeof(json[_item][key]) == "object") {
@@ -232,14 +240,21 @@ u.template = function(template, json, _options) {
 				}
 				// return numbers correct
 				else if(typeof(json[key]) == "number") {
+					// Insert NUM marker, to be replaced with real number
+					// (not encapsulated in quotes) before string is returned
 					return "MAN_NUM" + json[key] + "MAN_NUM";
 				}
 				// return booleans correct
 				else if(typeof(json[key]) == "boolean") {
-
 					// Insert BOOL marker, to be replaced with real boolean
 					// (not encapsulated in quotes) before string is returned
 					return "MAN_BOOL" + json[key] + "MAN_BOOL";
+				}
+				// return null correct
+				else if(json[key] === null) {
+					// Insert NULL marker, to be replaced with null or empty string 
+					// (depending on template type)
+					return "MAN_NULL";
 				}
 				// return objects correct
 				else if(typeof(json[key]) == "object") {
@@ -257,14 +272,16 @@ u.template = function(template, json, _options) {
 
 
 
-	// Post process string
+	// Post process string for MARKERS
 
+	// BOOLEANS
 	string = string.replace(/[\"]?MAN_BOOLtrueMAN_BOOL[\"]?/g, "true");
 	string = string.replace(/[\"]?MAN_BOOLfalseMAN_BOOL[\"]?/g, "false");
 
-
+	// NUMBERS
 	string = string.replace(/[\"]?MAN_NUM(\d+)MAN_NUM[\"]?/g, "$1");
 
+	// OBJECTS
 	string = string.replace(/[\"]?MAN_OBJ([^MAN_OBJ]+)MAN_OBJ[\"]?/g, function(string) {
 		// remove marker
 		string = string.replace(/[\"]?MAN_OBJ([^MAN_OBJ]+)MAN_OBJ[\"]?/g, "$1");
@@ -272,12 +289,17 @@ u.template = function(template, json, _options) {
 		return string.replace(/\\("|')/g, "$1");
 	});
 
+	// NULL values should be returned a bit different depending on template type
+	// In HTML, HTML_STRING and STRING, it doesn't make sense to return null as text "null"
 
 
 	// Prepare final return object/string
 
 	// html strings or objects
 	if(type_template == "HTML_STRING" || type_template == "HTML") {
+
+		// null value = empty string
+		string = string.replace(/MAN_NULL/g, "");
 
 		// unescape quotes when outputting to HTML
 		string = string.replace(/\\("|')/g, "$1");
@@ -313,6 +335,10 @@ u.template = function(template, json, _options) {
 	// json strings or objects
 	else if(type_template == "JSON_STRING" || type_template == "JSON") {
 
+		// null value = null
+		string = string.replace(/[\"]?MAN_NULL[\"]?/g, "null");
+
+		// replace beginning end end of JSON markers
 		string = string.replace(/MAN_JSON_START/g, "{").replace(/MAN_JSON_END/g, "},");
 
 		// u.bug(string.replace(/MAN_JSON_START/g, "{").replace(/MAN_JSON_END/g, "},"))
@@ -322,6 +348,10 @@ u.template = function(template, json, _options) {
 	// plain string
 	else if(type_template == "STRING") {
 		// u.bug(string)
+
+		// null value = empty string
+		string = string.replace(/MAN_NULL/g, "");
+
 		// remove any double escapes
 		return string.replace(/\\("|')/g, "$1");
 	}
