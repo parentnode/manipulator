@@ -27,8 +27,7 @@ Util.saveCookie = function(name, value, _options) {
 
 	// check localStorage first, undless the force is against it
 	if(!force && typeof(window.localStorage) == "object" && typeof(window.sessionStorage) == "object") {
-
-		if(expires === false) {
+		if(expires === true) {
 			window.sessionStorage.setItem(name, value);
 		}
 		else {
