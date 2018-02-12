@@ -1,0 +1,41 @@
+# DEFAULT BEHAVIOUR
+* text eol=lf
+
+# MEDIA
+*.jpg	binary
+*.gif	binary
+*.png	binary
+*.mp3	binary
+*.ogg	binary
+*.mp4	binary
+*.ogv	binary
+*.mov	binary
+*.pdf	binary
+*.ico	binary
+*.swf	binary
+
+# FONTS
+*.eot	binary
+*.ttf	binary
+*.woff	binary
+*.woff2	binary
+
+# OTHER BINARIES
+*.exe	binary
+*.zip	binary
+*.gz	binary
+*.tar	binary
+
+# LIBRARY CONTENT
+png		binary
+jpg		binary
+gif		binary
+mp3		binary
+pdf		binary
+mp4		binary
+mov		binary
+ogv		binary
+ogg		binary
+m4v		binary
+pdf		binary
+zip		binary
