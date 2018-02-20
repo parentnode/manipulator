@@ -6,8 +6,11 @@
 *.gif	binary
 *.png	binary
 *.mp3	binary
+*.wav	binary
 *.ogg	binary
 *.mp4	binary
+*.3gp	binary
+*.webm	binary
 *.ogv	binary
 *.mov	binary
 *.pdf	binary
@@ -25,17 +28,21 @@
 *.zip	binary
 *.gz	binary
 *.tar	binary
+*.phar	binary
 
 # LIBRARY CONTENT
 png		binary
 jpg		binary
 gif		binary
 mp3		binary
+wav		binary
 pdf		binary
 mp4		binary
+3gp		binary
 mov		binary
 ogv		binary
 ogg		binary
 m4v		binary
+webm	binary
 pdf		binary
 zip		binary
