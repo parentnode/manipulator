@@ -1,6 +1,22 @@
+/**
+* Notify response object structure
+* {
+*	"cms_message":{
+*		"message":[
+*			"message1", "message2"
+*		],
+*		"error":[
+*			"message1", "message2"
+*		]
+*		
+*	}
+* }
+*/
+
 u.notifier = function(node) {
 	
-	// u.bug("enable notifier");
+	u.bug_force = true;
+	u.bug("enable notifier");
 
 	var notifications = u.qs("div.notifications", node);
 	if(!notifications) {
@@ -8,8 +24,7 @@ u.notifier = function(node) {
 	}
 
 	node.notifications.hide_delay = 4500;
-	node.notifications.hide = function() {
-
+	node.notifications.hide = function(node) {
 		u.a.transition(this, "all 0.5s ease-in-out");
 		u.a.translate(this, 0, -this.offsetHeight);
 	}
@@ -30,26 +45,27 @@ u.notifier = function(node) {
 			}
 		}
 
-		var output;
+		var output = [];
 
-		// u.bug("message:" + typeof(response) + "; JSON: " + response.isJSON + "; HTML: " + response.isHTML);
+//		u.bug("message:" + typeof(response) + "; JSON: " + response.isJSON + "; HTML: " + response.isHTML);
 
-		if(typeof(response) == "object" && response.isJSON) {
+		if(typeof(response) == "object") {
+//		if(typeof(response) == "object" && response.isJSON) {
 
 			var message = response.cms_message;
-			var cms_status = response.cms_status;
+			var cms_status = typeof(response.cms_status) != "undefined" ? response.cms_status : "";
 
 			// TODO: message can be JSON object
 			if(typeof(message) == "object") {
 				for(type in message) {
 //					u.bug("typeof(message[type]:" + typeof(message[type]) + "; " + type);
 					if(typeof(message[type]) == "string") {
-						output = u.ae(this.notifications, "div", {"class":class_name+" "+cms_status, "html":message[type]});
+						output.push(u.ae(this.notifications, "div", {"class":class_name+" "+cms_status+" "+type, "html":message[type]}));
 					}
 					else if(typeof(message[type]) == "object" && message[type].length) {
 						var node, i;
 						for(i = 0; _message = message[type][i]; i++) {
-							output = u.ae(this.notifications, "div", {"class":class_name+" "+cms_status, "html":_message});
+							output.push(u.ae(this.notifications, "div", {"class":class_name+" "+cms_status+" "+type, "html":_message}));
 						}
 					
 					}
@@ -57,7 +73,7 @@ u.notifier = function(node) {
 			
 			}
 			else if(typeof(message) == "string") {
-				output = u.ae(this.notifications, "div", {"class":class_name+" "+cms_status, "html":message});
+				output.push(u.ae(this.notifications, "div", {"class":class_name+" "+cms_status, "html":message}));
 			}
 		
 			if(typeof(this.notifications.show) == "function") {
@@ -178,13 +194,13 @@ u.notifier = function(node) {
 			else if(messages) {
 //				u.bug(messages);
 				for(i = 0; message = messages[i]; i++) {
-					output = u.ae(this.notifications, "div", {"class":message.className, "html":message.innerHTML});
+					output.push(u.ae(this.notifications, "div", {"class":message.className, "html":message.innerHTML}));
 				}
 			}
 		}
 
 
-		u.t.setTimer(this.notifications, this.notifications.hide, this.notifications.hide_delay);
+		this.t_notifier = u.t.setTimer(this.notifications, this.notifications.hide, this.notifications.hide_delay, output);
 
 		// if(message) {
 		// 	message.hide = function() {
