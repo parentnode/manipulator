@@ -56,6 +56,11 @@ Util.bug = function(message, corner, color) {
 	if(u.debugURL()) {
 
 		if(!u.bug_console_only) {
+
+			if(typeof(console) == "object") {
+				console.log(message);
+			}
+
 			var option, options = new Array([0, "auto", "auto", 0], [0, 0, "auto", "auto"], ["auto", 0, 0, "auto"], ["auto", "auto", 0, 0]);
 			if(isNaN(corner)) {
 				color = corner;
@@ -93,7 +98,7 @@ Util.bug = function(message, corner, color) {
 			message = message ? message.replace(/\>/g, "&gt;").replace(/\</g, "&lt;").replace(/&lt;br&gt;/g, "<br>") : "Util.bug with no message?";
 			u.ae(debug_div, "div", {"style":"color: " + color, "html": message});
 		}
-		if(typeof(console) == "object") {
+		else if(typeof(console) == "object") {
 			console.log(message);
 		}
 	}
