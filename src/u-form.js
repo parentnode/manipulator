@@ -540,6 +540,9 @@ Util.Form = u.f = new function() {
 			if(!_form.fields[hidden_field.name]) {
 				_form.fields[hidden_field.name] = hidden_field;
 
+				// map internal form reference
+				hidden_field._form = _form;
+
 				// add get/set value funtion
 				hidden_field.val = this._value;
 			}
@@ -1497,11 +1500,10 @@ Util.Form = u.f = new function() {
 	// - datetime
 	// - files
 	this.validate = function(iN) {
-//		u.bug("validate:" + iN.name)
-
+//		u.bug("validate:" + iN.name + ", " + iN.val());
 
 		// validation is disabled
-		if(!iN._form._validation) {
+		if(!iN._form._validation || !iN._form.field) {
 			return true;
 		}
 
