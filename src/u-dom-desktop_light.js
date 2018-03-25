@@ -272,7 +272,8 @@ if(typeof(document.textContent) == "undefined") {
 
 // is node within scope - Node.contains didn't exist pre Fx 9, Ch ? 
 // Polyfill
-Util.nodeWithin = u.nw = function(node, scope) {
+// TODO: nodeWithin is DEPRECATED in favor of u.contains
+u.contains = Util.nodeWithin = u.nw = function(node, scope) {
 
 	if(scope != node) {
 

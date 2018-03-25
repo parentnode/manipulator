@@ -618,7 +618,7 @@ Util.inNodeList = function(node, list) {
 }
 
 // is node within scope
-Util.nodeWithin = u.nw = function(node, scope) {
+u.contains = Util.nodeWithin = u.nw = function(node, scope) {
 
 	if(scope != node) {
 		if(scope.contains(node)) {
@@ -627,4 +627,11 @@ Util.nodeWithin = u.nw = function(node, scope) {
 	}
 	return false;
 
+}
+u.containsOrIs = function(node, scope) {
+
+	if(scope == node || u.contains(node, scope)) {
+		return true
+	}
+	return false;
 }
