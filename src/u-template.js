@@ -7,7 +7,7 @@ u.template = function(template, json, _options) {
 
 	var string = "";
 	var template_string = "";
-	var clone, container, item_template, dom, node_list, type_template, type_parent, template_contructor;
+	var clone, container, item_template, dom, node_list, type_template, type_parent;
 
 	// settings
 	// append results to node
@@ -198,13 +198,13 @@ u.template = function(template, json, _options) {
 						// return numbers correct
 						else if(typeof(json[_item][key]) == "number") {
 							// Insert NUM marker, to be replaced with real number
-							// (not encapsulated in quotes) before string is returned
+							// (not encapsulated in quotes) before string is returned as JSON
 							return "MAN_NUM" + json[_item][key] + "MAN_NUM";
 						}
 						// return booleans correct
 						else if(typeof(json[_item][key]) == "boolean") {
 							// Insert BOOL marker, to be replaced with real boolean
-							// (not encapsulated in quotes) before string is returned
+							// (not encapsulated in quotes) before string is returned as JSON
 							return "MAN_BOOL" + json[_item][key] + "MAN_BOOL";
 						}
 						// return null correct
@@ -215,7 +215,8 @@ u.template = function(template, json, _options) {
 						}
 						// return objects correct
 						else if(typeof(json[_item][key]) == "object") {
-//							return "MAN_OBJ" + JSON.stringify(json[_item][key]) + "MAN_OBJ";
+							// Insert OBJ marker, to be replaced with real object
+							// (not encapsulated in quotes) before string is returned as JSON
 							return "MAN_OBJ" + JSON.stringify(json[_item][key]).replace(/(\"|\')/g, "\\$1") + "MAN_OBJ";
 						}
 						else {
@@ -241,23 +242,25 @@ u.template = function(template, json, _options) {
 				// return numbers correct
 				else if(typeof(json[key]) == "number") {
 					// Insert NUM marker, to be replaced with real number
-					// (not encapsulated in quotes) before string is returned
+					// (not encapsulated in quotes) before string is returned as JSON
 					return "MAN_NUM" + json[key] + "MAN_NUM";
 				}
 				// return booleans correct
 				else if(typeof(json[key]) == "boolean") {
 					// Insert BOOL marker, to be replaced with real boolean
-					// (not encapsulated in quotes) before string is returned
+					// (not encapsulated in quotes) before string is returned as JSON
 					return "MAN_BOOL" + json[key] + "MAN_BOOL";
 				}
 				// return null correct
 				else if(json[key] === null) {
-					// Insert NULL marker, to be replaced with null or empty string 
+					// Insert NULL marker, to be replaced with null or empty string
 					// (depending on template type)
 					return "MAN_NULL";
 				}
 				// return objects correct
 				else if(typeof(json[key]) == "object") {
+					// Insert OBJ marker, to be replaced with real object
+					// (not encapsulated in quotes) before string is returned as JSON
 					return "MAN_OBJ" + JSON.stringify(json[key]).replace(/(\"|\')/g, "\\$1") + "MAN_OBJ";
 				}
 				else {
@@ -273,33 +276,24 @@ u.template = function(template, json, _options) {
 
 
 	// Post process string for MARKERS
-
-	// BOOLEANS
-	string = string.replace(/[\"]?MAN_BOOLtrueMAN_BOOL[\"]?/g, "true");
-	string = string.replace(/[\"]?MAN_BOOLfalseMAN_BOOL[\"]?/g, "false");
-
-	// NUMBERS
-	string = string.replace(/[\"]?MAN_NUM(\d+)MAN_NUM[\"]?/g, "$1");
-
-	// OBJECTS
-	string = string.replace(/[\"]?MAN_OBJ([^MAN_OBJ]+)MAN_OBJ[\"]?/g, function(string) {
-		// remove marker
-		string = string.replace(/[\"]?MAN_OBJ([^MAN_OBJ]+)MAN_OBJ[\"]?/g, "$1");
-		// unescape quotes
-		return string.replace(/\\("|')/g, "$1");
-	});
-
-	// NULL values should be returned a bit different depending on template type
-	// In HTML, HTML_STRING and STRING, it doesn't make sense to return null as text "null"
-
-
 	// Prepare final return object/string
 
 	// html strings or objects
 	if(type_template == "HTML_STRING" || type_template == "HTML") {
 
+		// BOOLEANS + NUMBERS
+		string = string.replace(/MAN_(BOOL|NUM)(.+?(?=MAN_(BOOL|NUM)))MAN_(BOOL|NUM)/g, "$2");
+
 		// null value = empty string
 		string = string.replace(/MAN_NULL/g, "");
+
+		// OBJECTS
+		string = string.replace(/MAN_OBJ(.+?(?=MAN_OBJ))MAN_OBJ/g, function(string) {
+			// remove marker
+			string = string.replace(/MAN_OBJ(.+?(?=MAN_OBJ))MAN_OBJ/g, "$1");
+			// unescape quotes
+			return string.replace(/\\("|')/g, "$1");
+		});
 
 		// unescape quotes when outputting to HTML
 		string = string.replace(/\\("|')/g, "$1");
@@ -313,7 +307,6 @@ u.template = function(template, json, _options) {
 		else {
 			dom = document.createElement(type_parent);
 			dom.innerHTML = string;
-			
 		}
 
 		// should children be appended to node automatically
@@ -335,11 +328,19 @@ u.template = function(template, json, _options) {
 	// json strings or objects
 	else if(type_template == "JSON_STRING" || type_template == "JSON") {
 
+		// BOOLEANS + NUMBERS
+		string = string.replace(/[\"]?MAN_(BOOL|NUM)(.+?(?=MAN_(BOOL|NUM)))MAN_(BOOL|NUM)[\"]?/g, "$2");
+
 		// null value = null
 		string = string.replace(/[\"]?MAN_NULL[\"]?/g, "null");
 
-		// replace beginning end end of JSON markers
-		string = string.replace(/MAN_JSON_START/g, "{").replace(/MAN_JSON_END/g, "},");
+		// OBJECTS
+		string = string.replace(/[\"]?MAN_OBJ(.+?(?=MAN_OBJ))MAN_OBJ[\"]?/g, function(string) {
+			// remove marker
+			string = string.replace(/[\"]?MAN_OBJ(.+?(?=MAN_OBJ))MAN_OBJ[\"]?/g, "$1");
+			// unescape quotes
+			return string.replace(/\\("|')/g, "$1");
+		});
 
 		// u.bug(string.replace(/MAN_JSON_START/g, "{").replace(/MAN_JSON_END/g, "},"))
 		return eval("["+string.replace(/MAN_JSON_START/g, "{").replace(/MAN_JSON_END/g, "},")+"]");
@@ -347,10 +348,20 @@ u.template = function(template, json, _options) {
 
 	// plain string
 	else if(type_template == "STRING") {
-		// u.bug(string)
+
+		// BOOLEANS + NUMBERS
+		string = string.replace(/MAN_(BOOL|NUM)(.+?(?=MAN_(BOOL|NUM)))MAN_(BOOL|NUM)/g, "$2");
 
 		// null value = empty string
 		string = string.replace(/MAN_NULL/g, "");
+
+		// OBJECTS
+		string = string.replace(/MAN_OBJ(.+?(?=MAN_OBJ))MAN_OBJ/g, function(string) {
+			// remove marker
+			string = string.replace(/MAN_OBJ(.+?(?=MAN_OBJ))MAN_OBJ/g, "$1");
+			// unescape quotes
+			return string.replace(/\\("|')/g, "$1");
+		});
 
 		// remove any double escapes
 		return string.replace(/\\("|')/g, "$1");
