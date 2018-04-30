@@ -602,7 +602,7 @@ Util.Form = u.f = new function() {
 	// original form.submit will be available as form.DOMsubmit
 	this._submit = function(event, iN) {
 
-//		u.bug("_submitted:" + this._validation)
+		// u.bug("_submitted:" + this._validation)
 
 		// do pre validation of all fields
 		for(name in this.fields) {
@@ -612,7 +612,7 @@ Util.Form = u.f = new function() {
 				// change used state for input
 				this.fields[name].used = true;
 				// validate
-//				u.bug("validate from _submit")
+				// u.bug("validate from _submit:" + name)
 				u.f.validate(this.fields[name]);
 			}
 		}
@@ -653,7 +653,7 @@ Util.Form = u.f = new function() {
 					}
 				}
 
-				//u.bug("this is where I should cut the rope")
+				// u.bug("this is where I should cut the rope")
 				this.DOMsubmit();
 			}
 		}
