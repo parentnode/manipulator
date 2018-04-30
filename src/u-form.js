@@ -1500,10 +1500,11 @@ Util.Form = u.f = new function() {
 	// - datetime
 	// - files
 	this.validate = function(iN) {
-//		u.bug("validate:" + iN.name + ", " + iN.val());
+//		u.bug("validate name: " + iN.name + ", value: " + iN.val());
+//		console.log(iN);
 
-		// validation is disabled
-		if(!iN._form._validation || !iN._form.field) {
+		// validation is disabled or input has no field – validation success
+		if(!iN._form._validation || !iN.field) {
 			return true;
 		}
 
@@ -1713,10 +1714,6 @@ Util.Form = u.f = new function() {
 				}
 			}
 
-
-
-
-			// TODO: needs to be tested
 			// select validation
 			else if(u.hc(iN.field, "select")) {
 
@@ -1728,8 +1725,7 @@ Util.Form = u.f = new function() {
 				}
 			}
 
-			// TODO: needs to be tested
-			// checkbox/radio validation
+			// checkbox/radiobutton validation
 			else if(u.hc(iN.field, "checkbox|boolean|radiobuttons")) {
 
 				if(iN.val() !== "") {
