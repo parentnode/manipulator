@@ -361,7 +361,7 @@ Util.validateResponse = function(HTTPRequest){
 		// mark request as expired
 		request.finished = true;
 
-
+		// console.log(HTTPRequest.responseText);
 
 		// u.bug("response:" + HTTPRequest + ":" + u.nodeId(HTTPRequest.node) + ":" + HTTPRequest.status)
 		// u.bug("status:" + HTTPRequest.status + ":" + u.nodeId(HTTPRequest.node));
@@ -388,6 +388,7 @@ Util.validateResponse = function(HTTPRequest){
 			else if(HTTPRequest.responseText && typeof(HTTPRequest.status) == "undefined") {
 				object = u.evaluateResponseText(HTTPRequest.responseText);
 			}
+
 		}
 		catch(exception) {
 			request.exception = exception;
