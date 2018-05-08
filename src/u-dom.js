@@ -451,13 +451,21 @@ Util.hasClass = u.hc = function(node, classname) {
 Util.addClass = u.ac = function(node, classname, dom_update) {
 	try {
 		if(classname) {
-			var regexp = new RegExp("(^|\\s)" + classname + "(\\s|$)");
-			if(!regexp.test(node.className)) {
-				node.className += node.className ? " " + classname : classname;
-
-				// force dom update (performance killer, but will make rendering more detailed)
-				dom_update === false ? false : node.offsetTop;
+			if(node.classList){
+				if(!node.classList.contains(classname)) {
+					node.classList.add(classname);
+					// force dom update (performance killer, but will make rendering more detailed)
+					dom_update === false ? false : node.offsetTop;
+				}
 			}
+			else {
+				var regexp = new RegExp("(^|\\s)" + classname + "(\\s|$)");
+				if(!regexp.test(node.className)) {
+					node.className += node.className ? " " + classname : classname;
+					dom_update === false ? false : node.offsetTop;
+				}
+			}
+			
 			return node.className;
 		}
 	}
@@ -466,6 +474,7 @@ Util.addClass = u.ac = function(node, classname, dom_update) {
 	}
 	return false;
 }
+
 // Remove all instances of classname from element
 // TODO: SVG.className cannot be set (needs to be SVG.className.baseVal || use classList works from IE 11)
 Util.removeClass = u.rc = function(node, classname, dom_update) {
