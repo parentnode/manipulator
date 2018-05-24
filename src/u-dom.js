@@ -471,12 +471,17 @@ Util.addClass = u.ac = function(node, classname, dom_update) {
 Util.removeClass = u.rc = function(node, classname, dom_update) {
 	try {
 		if(classname) {
-			var regexp = new RegExp("(\\b)" + classname + "(\\s|$)", "g");
-			node.className = node.className.replace(regexp, " ").trim().replace(/[\s]{2}/g, " ");
-
-			// force dom update (performance killer, but will make rendering more detailed)
-			dom_update === false ? false : node.offsetTop;
-			return node.className;
+			if(node.classList.contains(classname)) {
+				node.classList.remove(classname);
+			}
+			else {
+				var regexp = new RegExp("(\\b)" + classname + "(\\s|$)", "g");
+				node.className = node.className.replace(regexp, " ").trim().replace(/[\s]{2}/g, " ");
+	
+				// force dom update (performance killer, but will make rendering more detailed)
+				dom_update === false ? false : node.offsetTop;
+				return node.className;
+			}
 		}
 	}
 	catch(exception) {
@@ -498,7 +503,7 @@ Util.toggleClass = u.tc = function(node, classname, _classname, dom_update) {
 					node.classList.add(_classname);
 				}
 			}
-			
+
 			else {
 				node.classList.add(classname);
 				if(_classname) {
