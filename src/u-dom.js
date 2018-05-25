@@ -478,12 +478,17 @@ Util.addClass = u.ac = function(node, classname, dom_update) {
 Util.removeClass = u.rc = function(node, classname, dom_update) {
 	try {
 		if(classname) {
-			var regexp = new RegExp("(\\b)" + classname + "(\\s|$)", "g");
-			node.className = node.className.replace(regexp, " ").trim().replace(/[\s]{2}/g, " ");
-
-			// force dom update (performance killer, but will make rendering more detailed)
-			dom_update === false ? false : node.offsetTop;
-			return node.className;
+			if(node.classList.contains(classname)) {
+				node.classList.remove(classname);
+			}
+			else {
+				var regexp = new RegExp("(\\b)" + classname + "(\\s|$)", "g");
+				node.className = node.className.replace(regexp, " ").trim().replace(/[\s]{2}/g, " ");
+	
+				// force dom update (performance killer, but will make rendering more detailed)
+				dom_update === false ? false : node.offsetTop;
+				return node.className;
+			}
 		}
 	}
 	catch(exception) {
@@ -497,22 +502,41 @@ Util.removeClass = u.rc = function(node, classname, dom_update) {
 // if _classname is given as parameter, switch between to two classnames
 Util.toggleClass = u.tc = function(node, classname, _classname, dom_update) {
 	try {
-		var regexp = new RegExp("(^|\\s)" + classname + "(\\s|$|\:)");
-		if(regexp.test(node.className)) {
-			u.rc(node, classname, false);
-			if(_classname) {
-				u.ac(node, _classname, false);
+		if(node.classList) {
+
+			if(node.classList.contains(classname)) {
+				node.classList.remove(classname);
+				if(_classname) {
+					node.classList.add(_classname);
+				}
+			}
+
+			else {
+				node.classList.add(classname);
+				if(_classname) {
+					node.classList.remove(_classname);
+				}
 			}
 		}
 		else {
-			u.ac(node, classname, false);
-			if(_classname) {
-				u.rc(node, _classname, false);
+			var regexp = new RegExp("(^|\\s)" + classname + "(\\s|$|\:)");
+			if(regexp.test(node.className)) {
+				u.rc(node, classname, false);
+				if(_classname) {
+					u.ac(node, _classname, false);
+				}
 			}
-		}
 
-		dom_update === false ? false : node.offsetTop;
-		return node.className;
+			else {
+				u.ac(node, classname, false);
+				if(_classname) {
+					u.rc(node, _classname, false);
+				}
+			}
+	
+			dom_update === false ? false : node.offsetTop;
+			return node.className;
+		}
 	}
 	catch(exception) {
 		u.exception("u.tc", arguments, exception);
