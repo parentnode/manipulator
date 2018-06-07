@@ -11,6 +11,8 @@ Util.debugURL = function(url) {
 
 // identify node
 Util.nodeId = function(node, include_path) {
+	console.log("Util.nodeId IS DEPRECATED. Use commas in u.bug in stead.");
+	console.log(arguments.callee.caller);
 	try {
 		if(!include_path) {
 			return node.id ? node.nodeName+"#"+node.id : (node.className ? node.nodeName+"."+node.className : (node.name ? node.nodeName + "["+node.name+"]" : node.nodeName));
@@ -36,8 +38,8 @@ Util.exception = function(name, _arguments, _exception) {
 
 	u.bug("Exception in: " + name + " (" + _exception + ")");
 	u.bug("Invoked with arguments:");
-	u.xInObject(_arguments);
-
+	console.log(_arguments);
+	console.log(_exception);
 	u.bug("Called from:");
 
 	// does caller has name
@@ -52,7 +54,7 @@ Util.exception = function(name, _arguments, _exception) {
 
 
 // write output to screen
-Util.bug = function(message, corner, color) {
+Util.bug = function() {
 	if(u.debugURL()) {
 
 		if(!u.bug_console_only) {
@@ -61,6 +63,7 @@ Util.bug = function(message, corner, color) {
 				console.log(message);
 			}
 
+			// TODO move to separate function
 			var option, options = new Array([0, "auto", "auto", 0], [0, 0, "auto", "auto"], ["auto", 0, 0, "auto"], ["auto", "auto", 0, 0]);
 			if(isNaN(corner)) {
 				color = corner;
@@ -99,7 +102,11 @@ Util.bug = function(message, corner, color) {
 			u.ae(debug_div, "div", {"style":"color: " + color, "html": message});
 		}
 		else if(typeof(console) == "object") {
-			console.log(message);
+
+			var i;
+			for(i = 0; i < arguments.length; i++) {
+				console.log(arguments[i]);
+			}
 		}
 	}
 }
