@@ -37,19 +37,20 @@ Util.nodeId = function(node, include_path) {
 Util.exception = function(name, _arguments, _exception) {
 
 	u.bug("Exception in: " + name + " (" + _exception + ")");
+	console.error(_exception);
 	u.bug("Invoked with arguments:");
 	console.log(_arguments);
-	console.log(_exception);
-	u.bug("Called from:");
 
-	// does caller has name
-	if(_arguments.callee.caller.name) {
-		u.bug("arguments.callee.caller.name:" + _arguments.callee.caller.name)
-	}
-	// show a part of the caller function code
-	else {
-		u.bug("arguments.callee.caller:" + _arguments.callee.caller.toString().substring(0, 250));
-	}
+	// u.bug("Called from:");
+	//
+	// // does caller has name
+	// if(_arguments.callee.caller.name) {
+	// 	u.bug("arguments.callee.caller.name:" + _arguments.callee.caller.name)
+	// }
+	// // show a part of the caller function code
+	// else {
+	// 	u.bug("arguments.callee.caller:" + _arguments.callee.caller.toString().substring(0, 250));
+	// }
 }
 
 
@@ -105,6 +106,7 @@ Util.bug = function() {
 
 			var i;
 			for(i = 0; i < arguments.length; i++) {
+				// console.trace();
 				console.log(arguments[i]);
 			}
 		}
