@@ -11,12 +11,10 @@ Util.videoPlayer = function(_options) {
 }
 
 Util.mediaPlayer = function(_options) {
-
-
-
+	// u.bug("mediaPlayer:", _options);
 
 	var player = document.createElement("div");
-	player.type = _options.type || "video";
+	player.type = _options && _options.type || "video";
 	u.ac(player, player.type+"player");
 
 
@@ -101,6 +99,7 @@ Util.mediaPlayer = function(_options) {
 
 		// Load and play
 		player.loadAndPlay = function(src, _options) {
+			// u.bug("loadAndPlay:" + src, this);
 
 			// default position is 0
 			var position = 0;
@@ -545,7 +544,7 @@ u.setupMediaControls = function(player, _options) {
 //	console.log(_options)
 
 	// additional info passed to function as JSON object
-	if(typeof(_options) == "object") {
+	if(obj(_options)) {
 		var _argument;
 		for(_argument in _options) {
 
@@ -578,7 +577,7 @@ u.setupMediaControls = function(player, _options) {
 	if(player._custom_controls || !_options) {
 		player.media.removeAttribute("controls");
 	}
-	else{
+	else {
 		player.media.controls = player._controls;
 	}
 
@@ -807,17 +806,21 @@ u.setupMediaControls = function(player, _options) {
 
 
 u.detectMediaAutoplay = function(player) {
+//	u.bug("detectMediaAutoplay:", player, u.media_autoplay_detection);
 
 	if(!u.media_autoplay_detection) {
-		u.media_autoplay_detection = [player];
+//		u.bug("Actual detection");
 
+		u.media_autoplay_detection = [player];
 		u.test_autoplay = document.createElement("video");
 
 		// check if test is done and make callback to all queued players
 		u.test_autoplay.check = function() {
 
+			// If detection is done
 			if(u.media_can_autoplay !== undefined && u.media_can_autoplay_muted !== undefined) {
 
+				// Respond to all waiting players
 				for(var i = 0, player; i < u.media_autoplay_detection.length; i++) {
 					player = u.media_autoplay_detection[i];
 					player.can_autoplay = u.media_can_autoplay;
@@ -838,8 +841,7 @@ u.detectMediaAutoplay = function(player) {
 
 		// autoplay test passed
 		u.test_autoplay.playing = function(event) {
-			// u.bug("playing");
-			// console.log(event);
+			// u.bug("playing:", event);
 
 			u.media_can_autoplay = true;
 			u.media_can_autoplay_muted = true;
@@ -847,9 +849,8 @@ u.detectMediaAutoplay = function(player) {
 			this.check();
 		}
 		// autoplay test failed
-		u.test_autoplay.notplaying = function(event) {
+		u.test_autoplay.notplaying = function() {
 			// u.bug("notplaying");
-			// console.log(event);
 
 			u.media_can_autoplay = false;
 
@@ -867,8 +868,7 @@ u.detectMediaAutoplay = function(player) {
 		}
 		// autoplay muted test passed
 		u.test_autoplay.playing_muted = function(event) {
-			// u.bug("playing_muted");
-			// console.log(event);
+			// u.bug("playing_muted", event);
 
 			u.media_can_autoplay_muted = true;
 
@@ -876,8 +876,7 @@ u.detectMediaAutoplay = function(player) {
 		}
 		// autoplay muted test failed
 		u.test_autoplay.notplaying_muted = function(event) {
-			// u.bug("notplaying_muted");
-			// console.log(event);
+			// u.bug("notplaying_muted", event);
 
 			u.media_can_autoplay_muted = false;
 
@@ -886,8 +885,7 @@ u.detectMediaAutoplay = function(player) {
 
 		// player failed
 		u.test_autoplay.error = function(event) {
-			// u.bug("autoplay error");
-			// console.log(event);
+			// u.bug("autoplay error", event);
 
 			u.media_can_autoplay = false;
 			u.media_can_autoplay_muted = false;
@@ -924,12 +922,24 @@ u.detectMediaAutoplay = function(player) {
 
 	}
 	// detection in progress, add player to callback queue
-	else if(u.media_can_autoplay_muted !== undefined && u.media_can_autoplay !== undefined) {
-		u.media_autoplay_detection.push(player)
+	else if(u.media_autoplay_detection !== true) {
+//		console.log(this);
+//		u.bug("u.media_autoplay_detection:", u.media_autoplay_detection);
+
+		u.media_autoplay_detection.push(player);
 	}
-	// call back - but break chain of command (let calling function return first)
-	else if(typeof(player.ready) == "function") {
-		u.t.setTimer(player, "ready", 20);
+	// Autoplay detection already complated - call back - but break chain of command (let calling function return first)
+	else {
+//		u.bug("Timerbased callback");
+		u.t.setTimer(player, function() {
+
+			this.can_autoplay = u.media_can_autoplay;
+			this.can_autoplay_muted = u.media_can_autoplay_muted;
+
+			if(fun(this.ready)){
+				this.ready();
+			}
+		}, 20);
 	}
 
 }
