@@ -143,6 +143,15 @@ Util.Objects["oneButtonForm"] = new function() {
 								}
 							}
 						}
+						else {
+							
+							// does default callback exist
+							if(typeof(this.node.confirmedError) == "function") {
+								u.bug("confirmedError");
+								this.node.confirmedError(response);
+							}
+							
+						}
 
 					}
 					u.ac(this.confirm_submit_button, "disabled");
@@ -170,7 +179,7 @@ Util.Objects["oneButtonForm"] = new function() {
 						this.DOMsubmit();
 					}
 					else {
-						u.request(this, this.action, {"method":"post", "params":u.f.getParams(this)});
+						u.request(this, this.action, {"method":"post", "data":u.f.getParams(this)});
 					}
 				}
 			}
