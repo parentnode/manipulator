@@ -1509,7 +1509,7 @@ Util.Form = u.f = new function() {
 		}
 
 
-		var min, max, pattern;
+		var min, max, pattern, compare_to;
 		var validated = false;
 
 
@@ -1551,11 +1551,13 @@ Util.Form = u.f = new function() {
 				min = min ? min : 8;
 				max = max ? max : 20;
 				pattern = iN.getAttribute("pattern");
+				compare_to = iN.getAttribute("data-compare-to");
 
 				if(
 					iN.val().length >= min && 
 					iN.val().length <= max && 
-					(!pattern || iN.val().match("^"+pattern+"$"))
+					(!pattern || iN.val().match("^"+pattern+"$")) &&
+					(!compare_to || iN.val() == iN._form.fields[compare_to].val())
 				) {
 					this.fieldCorrect(iN);
 				}
