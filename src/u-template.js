@@ -128,6 +128,8 @@ u.template = function(template, json, _options) {
 	// is JSON object or array of objects
 	if(typeof(json) == "object" && ((json.length == undefined && Object.keys(json).length) || json.length)) {
 
+//		console.log("OBJECT:", json, json["pattern"]);
+
 		// multiple results
 		if(json.length) {
 //			u.bug("multiple results");
@@ -193,7 +195,7 @@ u.template = function(template, json, _options) {
 
 						// clean up strings
 						if(typeof(json[_item][key]) == "string" && json[_item][key]) {
-							return json[_item][key].toString().replace(/(\"|\')/g, "\\$1");
+							return json[_item][key].toString().replace(/(\\|\"|\')/g, "\\$1");
 						}
 						// return numbers correct
 						else if(typeof(json[_item][key]) == "number") {
@@ -229,7 +231,7 @@ u.template = function(template, json, _options) {
 		}
 		// only one result (or empty array)
 		else {
-//			u.bug("single result");
+			// u.bug("single result");
 
 			string += template_string.replace(/\{(.+?)\}/g, function(string) {
 
@@ -237,7 +239,7 @@ u.template = function(template, json, _options) {
 
 				// clean up strings
 				if(typeof(json[key]) == "string" && json[key]) {
-					return json[key].replace(/(\"|\')/g, "\\$1");
+					return json[key].replace(/(\\|\"|\')/g, "\\$1");
 				}
 				// return numbers correct
 				else if(typeof(json[key]) == "number") {
@@ -273,8 +275,6 @@ u.template = function(template, json, _options) {
 	// 	console.log("no results");
 	// }
 
-
-
 	// Post process string for MARKERS
 	// Prepare final return object/string
 
@@ -292,11 +292,11 @@ u.template = function(template, json, _options) {
 			// remove marker
 			string = string.replace(/MAN_OBJ(.+?(?=MAN_OBJ))MAN_OBJ/g, "$1");
 			// unescape quotes
-			return string.replace(/\\("|')/g, "$1");
+			return string.replace(/\\(\\|"|')/g, "$1");
 		});
 
 		// unescape quotes when outputting to HTML
-		string = string.replace(/\\("|')/g, "$1");
+		string = string.replace(/\\(\\|"|')/g, "$1");
 
 		// IE <=9 doesn't support table.innerHTML, so wrap node in div and innerHTML entire table
 		if(type_parent == "table") {
@@ -342,7 +342,6 @@ u.template = function(template, json, _options) {
 			return string.replace(/\\("|')/g, "$1");
 		});
 
-		// u.bug(string.replace(/MAN_JSON_START/g, "{").replace(/MAN_JSON_END/g, "},"))
 		return eval("["+string.replace(/MAN_JSON_START/g, "{").replace(/MAN_JSON_END/g, "},")+"]");
 	}
 
@@ -360,11 +359,11 @@ u.template = function(template, json, _options) {
 			// remove marker
 			string = string.replace(/MAN_OBJ(.+?(?=MAN_OBJ))MAN_OBJ/g, "$1");
 			// unescape quotes
-			return string.replace(/\\("|')/g, "$1");
+			return string.replace(/\\(\\|"|')/g, "$1");
 		});
 
 		// remove any double escapes
-		return string.replace(/\\("|')/g, "$1");
+		return string.replace(/\\(\\|"|')/g, "$1");
 	}
 
 }
