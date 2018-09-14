@@ -486,7 +486,7 @@ u.f.textEditor = function(field) {
 			// media node
 			else if(u.hc(tag, "media") && tag._variant) {
 
-				html += '<div class="media item_id:'+tag._item_id+' variant:'+tag._variant+' name:'+tag._name+' filesize:'+tag._filesize+' format:'+tag._format+'">'+"\n";
+				html += '<div class="media item_id:'+tag._item_id+' variant:'+tag._variant+' name:'+tag._name+' filesize:'+tag._filesize+' format:'+tag._format+' width:'+tag._width+' height:'+tag._height+'">'+"\n";
 				html += '\t<p><a href="/images/'+tag._item_id+'/'+tag._variant+'/480x.'+tag._format+'">'+tag._input.val()+"</a></p>";
 				html += "</div>\n";
 			}
@@ -542,7 +542,7 @@ u.f.textEditor = function(field) {
 
 		if(u.hc(tag, this.list_allowed.join("|")) || u.hc(tag, this.text_allowed.join("|")) || u.hc(tag, this.code_allowed.join("|"))) {
 
-			// add remove button
+			// add CSS button
 			tag.bn_classname = u.ae(tag, "div", {"class":"classname"});
 			u.ae(tag.bn_classname, "span", {"html":"CSS"});
 			tag.bn_classname.field = this;
@@ -569,6 +569,9 @@ u.f.textEditor = function(field) {
 			else if(u.hc(tag, "media")) {
 				this.deleteMedia(tag);
 			}
+
+			// TODO: only remove automatically on non-file inputs
+			// on file inputs (media/file), the file deletion may fail and thus the tag should not be removed
 
 			// remove node
 			tag.parentNode.removeChild(tag);
@@ -846,6 +849,8 @@ u.f.textEditor = function(field) {
 			tag._filesize = u.cv(node, "filesize");
 			tag._format = u.cv(node, "format");
 			tag._variant = u.cv(node, "variant");
+			tag._width = u.cv(node, "width");
+			tag._height = u.cv(node, "height");
 
 			tag._input.contentEditable = true;
 			tag._input.innerHTML = u.qs("a", node).innerHTML;
