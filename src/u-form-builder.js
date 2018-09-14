@@ -340,7 +340,6 @@ u.f.verifyAttributes = function(attributes) {
 
 u.f.addAction = function(node, _options) {
 
-
 	// default values
 	var action_type = "submit";
 	var action_name = "js_name";
@@ -362,7 +361,7 @@ u.f.addAction = function(node, _options) {
 	}
 
 	// find actions ul
-	var p_ul = node.nodeName.toLowerCase() == "ul" ? node : u.pn(node, {"include":"ul"});
+	var p_ul = node.nodeName.toLowerCase() == "ul" ? node : u.pn(node, {"include":"ul.actions"});
 	// check if ul is actions ul
 	// if not, it should be created automatically
 	if(!p_ul || !u.hc(p_ul, "actions")) {
