@@ -278,7 +278,7 @@ u.contains = Util.nodeWithin = u.nw = function(node, scope) {
 	if(scope != node) {
 
 		if(typeof(scope.contains) == "function") {
-			scope.contains(node)) {
+			if(scope.contains(node)) {
 				return true
 			}
 		}
