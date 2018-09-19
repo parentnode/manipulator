@@ -39,7 +39,7 @@ Util.audioPlayer = function(_options) {
 
 
 	// Does browser have HTML5 support
-	if(player.audio && typeof(player.audio.play) == "function") {
+	if(player.audio && fun(player.audio.play)) {
 
 		// set up functions for HTML5 player
 
@@ -147,7 +147,7 @@ Util.audioPlayer = function(_options) {
 
 
 			// additional info passed to function as JSON object
-			if(typeof(_options) == "object") {
+			if(obj(_options)) {
 				var _argument;
 				for(_argument in _options) {
 
@@ -190,7 +190,7 @@ Util.audioPlayer = function(_options) {
 
 					u.ac(this.player, "loading");
 
-					if(typeof(this.player.loading) == "function") {
+					if(fun(this.player.loading)) {
 						this.player.loading(event);
 					}
 				}
@@ -202,7 +202,7 @@ Util.audioPlayer = function(_options) {
 
 					u.rc(this.player, "loading");
 
-					if(typeof(this.player.canplaythrough) == "function") {
+					if(fun(this.player.canplaythrough)) {
 						this.player.canplaythrough(event);
 					}
 				}
@@ -215,7 +215,7 @@ Util.audioPlayer = function(_options) {
 					u.rc(this.player, "loading|paused");
 					u.ac(this.player, "playing");
 
-					if(typeof(this.player.playing) == "function") {
+					if(fun(this.player.playing)) {
 						this.player.playing(event);
 					}
 				}
@@ -228,7 +228,7 @@ Util.audioPlayer = function(_options) {
 					u.rc(this.player, "playing|loading");
 					u.ac(this.player, "paused");
 
-					if(typeof(this.player.paused) == "function") {
+					if(fun(this.player.paused)) {
 						this.player.paused(event);
 					}
 				}
@@ -241,7 +241,7 @@ Util.audioPlayer = function(_options) {
 					u.rc(this.player, "playing|paused");
 					u.ac(this.player, "loading");
 
-					if(typeof(this.player.stalled) == "function") {
+					if(fun(this.player.stalled)) {
 						this.player.stalled(event);
 					}
 				}
@@ -251,7 +251,7 @@ Util.audioPlayer = function(_options) {
 				this.audio._error = function(event) {
 					u.bug("_error");
 
-					if(typeof(this.player.error) == "function") {
+					if(fun(this.player.error)) {
 						this.player.error(event);
 					}
 				}
@@ -263,7 +263,7 @@ Util.audioPlayer = function(_options) {
 
 					u.rc(this.player, "playing|paused");
 
-					if(typeof(this.player.ended) == "function") {
+					if(fun(this.player.ended)) {
 						this.player.ended(event);
 					}
 				}
@@ -278,7 +278,7 @@ Util.audioPlayer = function(_options) {
 					this.player.currentTime = this.currentTime;
 					this.player.metaLoaded = true;
 
-					if(typeof(this.player.loadedmetadata) == "function") {
+					if(fun(this.player.loadedmetadata)) {
 						this.player.loadedmetadata(event);
 					}
 				}
@@ -290,7 +290,7 @@ Util.audioPlayer = function(_options) {
 	
 					this.player.audioLoaded = true;
 
-					if(typeof(this.player.loadeddata) == "function") {
+					if(fun(this.player.loadeddata)) {
 						this.player.loadeddata(event);
 					}
 				}
@@ -301,7 +301,7 @@ Util.audioPlayer = function(_options) {
 	//				u.bug("_timeupdate:" + this.currentTime);
 					this.player.currentTime = this.currentTime;
 
-					if(typeof(this.player.timeupdate) == "function") {
+					if(fun(this.player.timeupdate)) {
 						this.player.timeupdate(event);
 					}
 				}
@@ -332,7 +332,7 @@ Util.audioPlayer = function(_options) {
 	}
 	
 	// Flash support
-	else if(typeof(u.audioPlayerFallback) == "function") {
+	else if(fun(u.audioPlayerFallback)) {
 
 		// remove HTML5 element
 		player.removeChild(player.audio);

@@ -45,7 +45,7 @@ u.slideshow = function(list, _options) {
 
 
 	// additional info passed to function as JSON object
-	if(typeof(_options) == "object") {
+	if(obj(_options)) {
 		var argument;
 		for(argument in _options) {
 
@@ -125,7 +125,7 @@ u.slideshow = function(list, _options) {
 		u.rc(this, "loading");
 
 		// callback to loaded
-		if(typeof(this.loaded) == "function") {
+		if(fun(this.loaded)) {
 			this.loaded();
 		}
 	}
@@ -253,7 +253,7 @@ u.slideshow = function(list, _options) {
 
 
 				// notify of drop
-				if(typeof(this[this._callback_picked]) == "function") {
+				if(fun(this[this._callback_picked])) {
 					this[this._callback_picked](event);
 				}
 			}
@@ -328,7 +328,7 @@ u.slideshow = function(list, _options) {
 				}
 
 				// notify of drop
-				if(typeof(this[this._callback_moved]) == "function") {
+				if(fun(this[this._callback_moved])) {
 					this[this._callback_moved](event);
 				}
 			}
@@ -394,7 +394,7 @@ u.slideshow = function(list, _options) {
 				}
 
 				// notify of drop
-				if(typeof(this[this._callback_dropped]) == "function") {
+				if(fun(this[this._callback_dropped])) {
 					this[this._callback_dropped](event);
 				}
 			}
@@ -403,7 +403,7 @@ u.slideshow = function(list, _options) {
 
 
 		// callback - slideshow is prepared
-		if(typeof(this.prepared) == "function") {
+		if(fun(this.prepared)) {
 			this.prepared();
 		}
 
@@ -481,7 +481,7 @@ u.slideshow = function(list, _options) {
 		this._loaded();
 
 		// preloading is done
-		if(typeof(this.preloaded) == "function") {
+		if(fun(this.preloaded)) {
 			this.preloaded();
 		}
 
@@ -494,7 +494,9 @@ u.slideshow = function(list, _options) {
 
 		var i, node;
 		// loop through nodes for initial setup
-		for(i = 0; node = this.nodes[i]; i++) {
+		for(i = 0; i < this.nodes[i]; i++) {
+			node = this.nodes[i];
+
 			node.slideshow = this;
 			node._i = i;
 
@@ -520,7 +522,7 @@ u.slideshow = function(list, _options) {
 		}
 
 		// callback when done
-		if(typeof(this.built) == "function") {
+		if(fun(this.built)) {
 			this.built();
 		}
 		// no callback - just start preloading
@@ -636,7 +638,7 @@ u.slideshow = function(list, _options) {
 // 			this.selected_node.transitioned = function() {
 // 				u.a.transition(this, "none");
 // //				u.bug("selected_node entered:" + u.nodeId(this))
-// 				if(typeof(this.slideshow.nodeEntered) == "function") {
+// 				if(fun(this.slideshow.nodeEntered)) {
 // 					this.slideshow.nodeEntered(this);
 // 				}
 // 			}
@@ -645,7 +647,7 @@ u.slideshow = function(list, _options) {
 			u.a.transition(this.selected_node, "none");
 			u.a.setOpacity(this.selected_node, 1);
 //			this.selected_node.transitioned();
-			if(typeof(this.nodeEntered) == "function") {
+			if(fun(this.nodeEntered)) {
 				this.nodeEntered(this.selected_node);
 			}
 
@@ -756,7 +758,7 @@ u.slideshow = function(list, _options) {
 				this.selected_node.transitioned = function() {
 //					u.bug("selected entered")
 					u.a.transition(this, "none");
-					if(typeof(this.slideshow.nodeEntered) == "function") {
+					if(fun(this.slideshow.nodeEntered)) {
 						this.slideshow.nodeEntered(this);
 					}
 				}
@@ -779,7 +781,7 @@ u.slideshow = function(list, _options) {
 					// internal clearing (display none, _hidden and remove transition)
 					this.slideshow._clearNode(this, "org node cleared");
 
-					if(typeof(this.slideshow.nodeCleared) == "function") {
+					if(fun(this.slideshow.nodeCleared)) {
 						this.slideshow.nodeCleared(this);
 					}
 				}
@@ -812,7 +814,7 @@ u.slideshow = function(list, _options) {
 
 		// CALLBACK
 		// node selected
-		if(typeof(this.nodeSelected) == "function") {
+		if(fun(this.nodeSelected)) {
 			this.nodeSelected(this.selected_node);
 		}
 

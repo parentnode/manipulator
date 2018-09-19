@@ -39,13 +39,13 @@ Util.Timer = u.t = new function() {
 		var node = timer._n;
 		
 		// function reference
-		if(typeof(timer._a) == "function") {
+		if(fun(timer._a)) {
 			node._timer_action = timer._a;
 			node._timer_action(timer._p);
 			node._timer_action = null;
 		}
 		// function name
-		else if(typeof(node[timer._a]) == "function") {
+		else if(fun(node[timer._a])) {
 			node[timer._a](timer._p);
 		}
 
@@ -74,12 +74,12 @@ Util.Timer = u.t = new function() {
 	this._executeInterval = function(id) {
 
 		var node = this._timers[id]._n;
-		if(typeof(this._timers[id]._a) == "function") {
+		if(fun(this._timers[id]._a)) {
 			node._interval_action = this._timers[id]._a;
 			node._interval_action(this._timers[id]._p);
 			node._interval_action = null;
 		}
-		else if(typeof(node[this._timers[id]._a]) == "function") {
+		else if(fun(node[this._timers[id]._a])) {
 			node[this._timers[id]._a](this._timers[id]._p);
 		}
 

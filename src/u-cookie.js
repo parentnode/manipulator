@@ -11,7 +11,7 @@ Util.saveCookie = function(name, value, _options) {
 	var force = false;
 
 	// additional info passed to function as JSON object
-	if(typeof(_options) == "object") {
+	if(obj(_options)) {
 		var _argument;
 		for(_argument in _options) {
 
@@ -26,7 +26,7 @@ Util.saveCookie = function(name, value, _options) {
 	}
 
 	// check localStorage first, undless the force is against it
-	if(!force && typeof(window.localStorage) == "object" && typeof(window.sessionStorage) == "object") {
+	if(!force && obj(window.localStorage) && obj(window.sessionStorage)) {
 		if(expires === true) {
 			window.sessionStorage.setItem(name, value);
 		}
@@ -42,7 +42,7 @@ Util.saveCookie = function(name, value, _options) {
 	if(expires === false) {
 		expires = ";expires=Mon, 04-Apr-2020 05:00:00 GMT";
 	}
-	else if(typeof(expires) === "string") {
+	else if(str(expires)) {
 		expires = ";expires="+expires;
 	}
 	else {
@@ -50,7 +50,7 @@ Util.saveCookie = function(name, value, _options) {
 	}
 
 	// create correct path value
-	if(typeof(path) === "string") {
+	if(str(path)) {
 		path = ";path="+path;
 	}
 	else {
@@ -65,10 +65,10 @@ Util.getCookie = function(name) {
 	var matches;
 
 	// check localStarage first
-	if(typeof(window.sessionStorage) == "object" && window.sessionStorage.getItem(name)) {
+	if(obj(window.sessionStorage) && window.sessionStorage.getItem(name)) {
 		return window.sessionStorage.getItem(name)
 	}
-	else if(typeof(window.localStorage) == "object" && window.localStorage.getItem(name)) {
+	else if(obj(window.localStorage) && window.localStorage.getItem(name)) {
 		return window.localStorage.getItem(name)
 	}
 
@@ -83,7 +83,7 @@ Util.deleteCookie = function(name, _options) {
 	var path = false;
 
 	// additional info passed to function as JSON object
-	if(typeof(_options) == "object") {
+	if(obj(_options)) {
 		var _argument;
 		for(_argument in _options) {
 
@@ -95,15 +95,15 @@ Util.deleteCookie = function(name, _options) {
 	}
 
 	// clear all references
-	if(typeof(window.sessionStorage) == "object") {
+	if(obj(window.sessionStorage)) {
 		window.sessionStorage.removeItem(name);
 	}
-	if(typeof(window.localStorage) == "object") {
+	if(obj(window.localStorage)) {
 		window.localStorage.removeItem(name);
 	}
 
 	// create correct path value
-	if(typeof(path) === "string") {
+	if(str(path)) {
 		path = ";path="+path;
 	}
 	else {
@@ -171,7 +171,7 @@ Util.cookieReference = function(node, _options) {
 	var ignore_classvars = false;
 
 	// additional info passed to function as JSON object
-	if(typeof(_options) == "object") {
+	if(obj(_options)) {
 		var _argument;
 		for(_argument in _options) {
 

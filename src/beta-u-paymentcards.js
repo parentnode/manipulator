@@ -58,7 +58,8 @@ u.paymentCards = new function() {
 
 		if(card && parseInt(card_number) == card_number) {
 			var i, allowed_length;
-			for(i = 0; allowed_length = card.card_length[i]; i++) {
+			for(i = 0; i < card.card_length.length; i++) {
+				allowed_length = card.card_length[i];
 
 				// check length
 				if(card_number.length == allowed_length) {
@@ -129,7 +130,9 @@ u.paymentCards = new function() {
 
 		if(cvc && parseInt(cvc) == cvc) {
 			var i, allowed_length;
-			for(i = 0; allowed_length = cvc_length[i]; i++) {
+			for(i = 0; i < cvc_length.length; i++) {
+				allowed_length = cvc_length[i];
+				
 				if(cvc.toString().length == allowed_length) {
 					return true;
 				}
@@ -142,7 +145,9 @@ u.paymentCards = new function() {
 	this.getCardTypeFromNumber = function(card_number) {
 		var i, j, card, pattern, regex;
 		for(i = 0; card = this.payment_cards[i]; i++) {
-			for(j = 0; pattern = card.patterns[j]; j++) {
+			for(j = 0; j < card.patterns.length; j++) {
+				pattern = card.patterns[j];
+
 				if(card_number.match('^' + pattern)) {
 					return card;
 				}

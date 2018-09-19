@@ -43,7 +43,8 @@ if(document.all && document.addEventListener == undefined) {
 
 			// loop through event callbacks
 			var i, attachedAction;
-			for(i = 0; attachedAction = window.attachedEvents[eid][window.event.type][i]; i++) {
+			for(i = 0; i < window.attachedEvents[eid][window.event.type].length; i++) {
+				attachedAction = window.attachedEvents[eid][window.event.type][i];
 
 //				u.bug("execute:" + u.nodeId(element) + ":" + attachedAction.toString().substring(0, 40))
 
@@ -89,7 +90,7 @@ if(document.all && document.addEventListener == undefined) {
 //		u.xInObject(node);
 
 		// adding eventlistener for objects (like the XMLHttpRequest)
-		if(typeof(node) == "object" && typeof(node.childNodes) == "undefined") {
+		if(obj(node) && typeof(node.childNodes) == "undefined") {
 			// simply hardcode events - it works further back browser wise
 			node["on"+ type] = action;
 			return;
@@ -141,7 +142,7 @@ if(document.all && document.addEventListener == undefined) {
 	u.e.removeEvent = function(node, type, action) {
 //		u.bug("remove event:" + u.nodeId(node) + ":" + type)
 
-		if(typeof(node) == "object" && typeof(node.childNodes) == "undefined") {
+		if(obj(node) && typeof(node.childNodes) == "undefined") {
 			// simply hardcode events - it works further back browser wise
 			node["on"+ type] = null;
 			return;

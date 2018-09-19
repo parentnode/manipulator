@@ -13,7 +13,7 @@ u.scrollTo = function(node, _options) {
 
 
 	// additional info passed to function as JSON object
-	if(typeof(_options) == "object") {
+	if(obj(_options)) {
 		var _argument;
 		for(_argument in _options) {
 			switch(_argument) {
@@ -169,7 +169,7 @@ u.scrollTo = function(node, _options) {
 				this.scrollTo(this._to_x, this._to_y);
 
 				// callback
-				if(typeof(this[this.callback_scroll_to]) == "function") {
+				if(fun(this[this.callback_scroll_to])) {
 					this[this.callback_scroll_to]();
 				}
 
@@ -192,7 +192,7 @@ u.scrollTo = function(node, _options) {
 			this.cancelScrollTo();
 
 			// callback
-			if(typeof(this[this.callback_scroll_cancelled]) == "function") {
+			if(fun(this[this.callback_scroll_cancelled])) {
 				this[this.callback_scroll_cancelled]();
 			}
 		}	

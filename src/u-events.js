@@ -347,7 +347,7 @@ Util.Events = u.e = new function() {
 		this.resetClickEvents(node);
 
 		// is drag event enabled?
-		if(typeof(this.resetDragEvents) == "function") {
+		if(fun(this.resetDragEvents)) {
 			this.resetDragEvents(node);
 		}
 	}
@@ -477,7 +477,7 @@ Util.Events = u.e = new function() {
 
 
 		// callback TODO - what function name?
-		if(typeof(this.inputStarted) == "function") {
+		if(fun(this.inputStarted)) {
 			this.inputStarted(event);
 		}
 
@@ -499,7 +499,7 @@ Util.Events = u.e = new function() {
 			u.e.resetClickEvents(this);
 
 			// new event
-			if(typeof(this.clickCancelled) == "function") {
+			if(fun(this.clickCancelled)) {
 				this.clickCancelled(event);
 			}
 
@@ -517,7 +517,7 @@ Util.Events = u.e = new function() {
 //		u.bug("_move:" + u.nodeId(this))
 		// new event
 
-		if(typeof(this.moved) == "function") {
+		if(fun(this.moved)) {
 
 			this.current_x = u.eventX(event) - this.start_event_x;
 			this.current_y = u.eventY(event) - this.start_event_y;
@@ -563,7 +563,7 @@ Util.Events = u.e = new function() {
 		u.e.resetNestedEvents(this);
 
 		// notify held
-		if(typeof(this.held) == "function") {
+		if(fun(this.held)) {
 			this.held(event);
 		}
 	}
@@ -597,7 +597,7 @@ Util.Events = u.e = new function() {
 		u.e.resetNestedEvents(this);
 
 		// notify of click
-		if(typeof(this.clicked) == "function") {
+		if(fun(this.clicked)) {
 			this.clicked(event);
 		}
 
@@ -628,7 +628,7 @@ Util.Events = u.e = new function() {
 			u.e.resetNestedEvents(this);
 
 			// notify base
-			if(typeof(this.dblclicked) == "function") {
+			if(fun(this.dblclicked)) {
 				this.dblclicked(event);
 			}
 			return;
@@ -671,7 +671,7 @@ Util.Events = u.e = new function() {
 
 
 		// additional info passed to function as JSON object
-		if(typeof(_options) == "object") {
+		if(obj(_options)) {
 			var argument;
 			for(argument in _options) {
 
@@ -720,7 +720,7 @@ Util.Events = u.e = new function() {
 
 			
 			// notify base (but only when state changes)
-			if(typeof(this[this._callback_over]) == "function") {
+			if(fun(this[this._callback_over])) {
 				this[this._callback_over](event);
 			}
 
@@ -749,7 +749,7 @@ Util.Events = u.e = new function() {
 		u.e.addOverEvent(this, u.e._over);
 
 		// notify base
-		if(typeof(this[this._callback_out]) == "function") {
+		if(fun(this[this._callback_out])) {
 			this[this._callback_out](event);
 		}
 		

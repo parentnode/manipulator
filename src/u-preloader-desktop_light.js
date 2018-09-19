@@ -36,7 +36,7 @@ if(document.all || (new Image().onerror) === undefined) {
 			u.rc(this.node, "loading");
 
 			// notify base
-			if(typeof(this.node.loaded) == "function") {
+			if(fun(this.node.loaded)) {
 				this.node.loaded(event);
 			}
 		}

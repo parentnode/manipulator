@@ -49,12 +49,12 @@ u.e.addWindowEvent = function(node, type, action) {
 
 	window["_OnWindowEvent_node_"+ id] = node;
 	// callback passed as function reference
-	if(typeof(action) == "function") {
+	if(fun(action)) {
 		eval('window["_OnWindowEvent_callback_' + id + '"] = function(event) {window["_OnWindowEvent_node_'+ id + '"]._OnWindowEvent_callback_'+id+' = '+action+'; window["_OnWindowEvent_node_'+ id + '"]._OnWindowEvent_callback_'+id+'(event);};');
 	} 
 	// callback passed as function name value
 	else {
-		eval('window["_OnWindowEvent_callback_' + id + '"] = function(event) {if(typeof(window["_OnWindowEvent_node_'+ id + '"]["'+action+'"]) == "function") {window["_OnWindowEvent_node_'+id+'"]["'+action+'"](event);}};');
+		eval('window["_OnWindowEvent_callback_' + id + '"] = function(event) {if(fun(window["_OnWindowEvent_node_'+ id + '"]["'+action+'"])) {window["_OnWindowEvent_node_'+id+'"]["'+action+'"](event);}};');
 	}
 	u.e.addEvent(window, type, window["_OnWindowEvent_callback_" + id]);
 	return id;
@@ -78,12 +78,12 @@ u.e.addWindowStartEvent = function(node, action) {
 
 	window["_Onstart_node_"+ id] = node;
 	// callback passed as function reference
-	if(typeof(action) == "function") {
+	if(fun(action)) {
 		eval('window["_Onstart_callback_' + id + '"] = function(event) {window["_Onstart_node_'+ id + '"]._Onstart_callback_'+id+' = '+action+'; window["_Onstart_node_'+ id + '"]._Onstart_callback_'+id+'(event);};');
 	} 
 	// callback passed as function name value
 	else {
-		eval('window["_Onstart_callback_' + id + '"] = function(event) {if(typeof(window["_Onstart_node_'+ id + '"]["'+action+'"]) == "function") {window["_Onstart_node_'+id+'"]["'+action+'"](event);}};');
+		eval('window["_Onstart_callback_' + id + '"] = function(event) {if(fun(window["_Onstart_node_'+ id + '"]["'+action+'"])) {window["_Onstart_node_'+id+'"]["'+action+'"](event);}};');
 	}
 	u.e.addStartEvent(window, window["_Onstart_callback_" + id]);
 	return id;
@@ -106,12 +106,12 @@ u.e.addWindowMoveEvent = function(node, action) {
 
 	window["_Onmove_node_"+ id] = node;
 	// callback passed as function reference
-	if(typeof(action) == "function") {
+	if(fun(action)) {
 		eval('window["_Onmove_callback_' + id + '"] = function(event) {window["_Onmove_node_'+ id + '"]._Onmove_callback_'+id+' = '+action+'; window["_Onmove_node_'+ id + '"]._Onmove_callback_'+id+'(event);};');
 	} 
 	// callback passed as function name value
 	else {
-		eval('window["_Onmove_callback_' + id + '"] = function(event) {if(typeof(window["_Onmove_node_'+ id + '"]["'+action+'"]) == "function") {window["_Onmove_node_'+id+'"]["'+action+'"](event);}};');
+		eval('window["_Onmove_callback_' + id + '"] = function(event) {if(fun(window["_Onmove_node_'+ id + '"]["'+action+'"])) {window["_Onmove_node_'+id+'"]["'+action+'"](event);}};');
 	}
 
 	// add event listener
@@ -136,12 +136,12 @@ u.e.addWindowEndEvent = function(node, action) {
 
 	window["_Onend_node_"+ id] = node;
 	// callback passed as function reference
-	if(typeof(action) == "function") {
+	if(fun(action)) {
 		eval('window["_Onend_callback_' + id + '"] = function(event) {window["_Onend_node_'+ id + '"]._Onend_callback_'+id+' = '+action+'; window["_Onend_node_'+ id + '"]._Onend_callback_'+id+'(event);};');
 	} 
 	// callback passed as function name value
 	else {
-		eval('window["_Onend_callback_' + id + '"] = function(event) {if(typeof(window["_Onend_node_'+ id + '"]["'+action+'"]) == "function") {window["_Onend_node_'+id+'"]["'+action+'"](event);}};');
+		eval('window["_Onend_callback_' + id + '"] = function(event) {if(fun(window["_Onend_node_'+ id + '"]["'+action+'"])) {window["_Onend_node_'+id+'"]["'+action+'"](event);}};');
 	}
 
 	// add event listener

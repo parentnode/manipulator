@@ -87,7 +87,7 @@ Util.Objects["oneButtonForm"] = new function() {
 					u.t.resetTimer(this.t_confirm);
 
 					// Make callback to oneButtonForm node
-					if(typeof(this.node.submitted) == "function") {
+					if(fun(this.node.submitted)) {
 						u.bug("oneButtonForm");
 						this.node.submitted();
 					}
@@ -126,12 +126,12 @@ Util.Objects["oneButtonForm"] = new function() {
 								}
 								else if(this.success_function) {
 									u.bug("function:" + this.success_function);
-									if(typeof(this.node[this.success_function]) == "function") {
+									if(fun(this.node[this.success_function])) {
 										this.node[this.success_function](response);
 									}
 								}
 								// does default callback exist
-								else if(typeof(this.node.confirmed) == "function") {
+								else if(fun(this.node.confirmed)) {
 									u.bug("confirmed");
 									this.node.confirmed(response);
 								}
@@ -146,7 +146,7 @@ Util.Objects["oneButtonForm"] = new function() {
 						else {
 							
 							// does default callback exist
-							if(typeof(this.node.confirmedError) == "function") {
+							if(fun(this.node.confirmedError)) {
 								u.bug("confirmedError");
 								this.node.confirmedError(response);
 							}

@@ -21,7 +21,7 @@ Util.Keyboard = u.k = new function() {
 		node.callback_keyboard = "clicked";
 		node.metakey_required = true;
 
-		if(typeof(_options) == "object") {
+		if(obj(_options)) {
 			var argument;
 			for(argument in _options) {
 
@@ -78,7 +78,8 @@ Util.Keyboard = u.k = new function() {
 			nodes = this.shortcuts[key];
 
 			// loop throgh nodes
-			for(i = 0; node = nodes[i]; i++) {
+			for(i = 0; i < nodes.length; i++) {
+				node = nodes[i];
 
 				// is node still attached to document.body
 				if(u.nodeWithin(node, document.body)) {
@@ -88,7 +89,7 @@ Util.Keyboard = u.k = new function() {
 						u.e.kill(event);
 
 						// execute
-						if(typeof(node[node.callback_keyboard]) == "function") {
+						if(fun(node[node.callback_keyboard])) {
 							node[node.callback_keyboard](event);
 						}
 

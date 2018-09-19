@@ -34,7 +34,7 @@ u.eventChain = function(node, _options) {
 		else {
 
 			// callback if declared
-			if(typeof(this.eventChainEnded) == "function") {
+			if(fun(this.eventChainEnded)) {
 				this.eventChainEnded();
 			}
 		}
@@ -49,7 +49,7 @@ u.eventChain = function(node, _options) {
 		// TODO: stop any running animations?
 
 		// callback if declared
-		if(typeof(this.eventChainEnded) == "function") {
+		if(fun(this.eventChainEnded)) {
 			this.eventChainEnded();
 		}
 	}

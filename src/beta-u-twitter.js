@@ -15,7 +15,8 @@ u.twitter = function(node) {
 			var ul = document.createElement("ul");
 
 			var stream_item, i, node, tweet, username, fullname, avatar, time, base_div;
-			for(i = 0; stream_item = tweets[i]; i++) {
+			for(i = 0; i < tweets.length; i++) {
+				stream_item = tweets[i];
 
 				base_div = u.qs("div.tweet", stream_item);
 				
@@ -31,7 +32,7 @@ u.twitter = function(node) {
 
 			}
 
-			if(typeof(this.tweetsLoaded) == "function") {
+			if(fun(this.tweetsLoaded)) {
 				this.tweetsLoaded(ul);
 			}
 		}

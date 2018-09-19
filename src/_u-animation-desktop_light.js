@@ -23,7 +23,7 @@ if(!u.support("transition")) {
 			if(callback) {
 //				u.bug("custom transition callback:" + callback + ", " + u.nodeId(node))
 
-				if(typeof(callback) == "function") {
+				if(fun(callback)) {
 
 					node.transitioned = callback;
 
@@ -49,7 +49,7 @@ if(!u.support("transition")) {
 		// if(typeof(this[this._transition_callback]) == "object") {
 		// 	u.xInObject(this[this._transition_callback]);
 		// }
-		if(event.target == this && typeof(this[this._transition_callback]) == "function") {
+		if(event.target == this && fun(this[this._transition_callback])) {
 			
 //			u.bug("callback2:" + this._transition_callback)
 
@@ -91,7 +91,7 @@ if(!u.support("transition")) {
 
 			// callback if duration is set (and opacity differs)
 			if(node.duration && node._opacity !== opacity) {
-				u.t.setTimer(node, function() {if(typeof(this[this._transition_callback]) == "function") {this[this._transition_callback]();}}, node.duration);
+				u.t.setTimer(node, function() {if(fun(this[this._transition_callback])) {this[this._transition_callback]();}}, node.duration);
 			}
 		}
 		// only run if opacity is different from current value
@@ -130,7 +130,7 @@ if(!u.support("transition")) {
 
 					this.___transitioned = u.a._transitioned;
 					this.___transitioned(event);
-					// if(typeof(this[this._transition_callback]) == "function") {
+					// if(fun(this[this._transition_callback])) {
 					// 	this[this._transition_callback](event);
 					// }
 				}
@@ -573,10 +573,10 @@ if(!u.support("transition")) {
 
 					u.as(this, "backgroundColor", this._bg_color);
 
-					if(typeof(this[this._transition_callback]) == "function") {
+					if(fun(this[this._transition_callback])) {
 						this[this._transition_callback](event);
 					}
-					// if(typeof(this.transitioned) == "function") {
+					// if(fun(this.transitioned)) {
 					// 	this.transitioned(event);
 					// }
 				}
@@ -720,7 +720,7 @@ if(!u.support("transform")) {
 	u.a.rotate = function(node, deg) {
 
 		if(node.duration && node._rotation !== deg) {
-			u.t.setTimer(node, function() {if(typeof(this.transitioned) == "function") {this.transitioned();}}, node.duration);
+			u.t.setTimer(node, function() {if(fun(this.transitioned)) {this.transitioned();}}, node.duration);
 		}
 		node._rotation = deg;
 
@@ -731,7 +731,7 @@ if(!u.support("transform")) {
 	u.a.scale = function(node, scale) {
 
 		if(node.duration && node._scale !== scale) {
-			u.t.setTimer(node, function() {if(typeof(this.transitioned) == "function") {this.transitioned();}}, node.duration);
+			u.t.setTimer(node, function() {if(fun(this.transitioned)) {this.transitioned();}}, node.duration);
 		}
 		node._scale = scale;
 	}

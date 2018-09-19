@@ -13,7 +13,9 @@ Util.cutString = function(string, length) {
 
 	// calculate length compensation
 	if(matches) {
-		for(i = 0; match = matches[i]; i++){
+		for(i = 0; i < matches.length; i++){
+			match = matches[i];
+
 			// only compensate if entity is within shown length
 			if(string.indexOf(match) < length){
 				length += match.length-1;
@@ -130,7 +132,7 @@ Util.isStringJSON = function(string) {
 		try {
 			// test for json object()
 			var test = JSON.parse(string);
-			if(typeof(test) == "object") {
+			if(obj(test)) {
 				test.isJSON = true;
 				return test;
 			}

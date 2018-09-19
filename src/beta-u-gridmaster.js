@@ -52,7 +52,7 @@ u.gridMaster = function(list, _options) {
 	}
 
 	// additional info passed to function as JSON object
-	if(typeof(_options) == "object") {
+	if(obj(_options)) {
 		var argument;
 		for(argument in _options) {
 
@@ -118,7 +118,8 @@ u.gridMaster = function(list, _options) {
 //		u.bug("nodes:" + this.nodes.length + ", " + this.selector);
 
 		var i, j, k, node, grid_node, static_node;
-		for(i = 0, j = 0, k = 0; grid_node = this.grid.nodes[i]; i++, k++) {
+		for(i = 0, j = 0, k = 0; i < this.grid.nodes.length; i++, k++) {
+			grid_node = this.grid.nodes[i];
 
 			if(this.nodes.length > j) {
 
@@ -190,7 +191,7 @@ u.gridMaster = function(list, _options) {
 //					u.bug(typeof(this[node.gm_prepare]) + ", " + node.gm_prepare);
 
 					// does prepare fuction exist
-					if(typeof(this[node.gm_prepare]) == "function") {
+					if(fun(this[node.gm_prepare])) {
 						this[node.gm_prepare](node);
 					}
 
@@ -231,7 +232,8 @@ u.gridMaster = function(list, _options) {
 //		u.bug("nodes:" + this.nodes.length)
 		// loop through nodes
 		var i, node, j;
-		for(i = 0, j = 0; node = this.nodes[i]; i++) {
+		for(i = 0, j = 0; i < this.nodes.length; i++) {
+			node = this.nodes[i];
 
 //			u.bug(u.nodeId(node) + ", " + typeof(this[node.gm_build]))
 
@@ -275,7 +277,7 @@ u.gridMaster = function(list, _options) {
 						u.a.setOpacity(this, 1);
 
 	//					u.bug("renderedNode:" + this.gm.renderedNode);
-						if(typeof(this.gm[this.gm_rendered]) == "function") {
+						if(fun(this.gm[this.gm_rendered])) {
 							this.gm[this.gm_rendered](this);
 						}
 					}
@@ -288,7 +290,7 @@ u.gridMaster = function(list, _options) {
 //				node.gm_i = j;
 
 				// local build manipulation
-				if(typeof(this[node.gm_build]) == "function") {
+				if(fun(this[node.gm_build])) {
 					this[node.gm_build](node);
 				}
 
@@ -329,7 +331,7 @@ u.gridMaster = function(list, _options) {
 								// set image source, so node is ready for rendering
 								this.gm_image.src = queue[0]._image.src;
 
-								if(typeof(this[this.gm_render]) == "function") {
+								if(fun(this[this.gm_render])) {
 									this[this.gm_render]();
 								}
 							}
@@ -360,7 +362,7 @@ u.gridMaster = function(list, _options) {
 						node.gm_video.canplaythrough = function() {
 		//					u.bug("video canplaythrough")
 							// control the rendering
-							if(typeof(this.node[this.node.gm_render]) == "function") {
+							if(fun(this.node[this.node.gm_render])) {
 								this.node[this.node.gm_render]();
 							}
 	//						this.node.renderNode();
@@ -387,7 +389,7 @@ u.gridMaster = function(list, _options) {
 						// control the rendering
 //						u.bug(typeof(this[this.gm_render]));
 
-						if(typeof(this[this.gm_render]) == "function") {
+						if(fun(this[this.gm_render])) {
 							this[this.gm_render]();
 						}
 //						this.renderNode();
@@ -399,7 +401,7 @@ u.gridMaster = function(list, _options) {
 				// no media to load
 				else {
 	//				u.bug("delayedRendering")
-					if(typeof(node[node.gm_render]) == "function") {
+					if(fun(node[node.gm_render])) {
 						node[node.gm_render]();
 					}
 
@@ -459,7 +461,8 @@ u.gridMaster = function(list, _options) {
 
 
 			// resize all visible nodes
-			for(i = 0; node = this.nodes[i]; i++) {
+			for(i = 0; i < this.nodes.length; i++) {
+				node = this.nodes[i];
 	//			u.bug("node resize:" + u.nodeId(node));
 
 				// grid is based on width
@@ -467,7 +470,7 @@ u.gridMaster = function(list, _options) {
 	//	 			u.bug(node.gm_grid_proportion + ", " + node.gm_grid_width + ", " + calc_width);
 
 					// custom resize
-					if(typeof(this[node.gm_resize]) == "function") {
+					if(fun(this[node.gm_resize])) {
 						this[node.gm_resize](node, calc_width);
 					}
 
@@ -501,7 +504,7 @@ u.gridMaster = function(list, _options) {
 	//	 			u.bug(node.gm_grid_proportion + ", " + node.gm_grid_height + ", " + calc_height);
 
 					// custom resize
-					if(typeof(this[node.gm_resize]) == "function") {
+					if(fun(this[node.gm_resize])) {
 						this[node.gm_resize](node, calc_height);
 					}
 					// regular resize

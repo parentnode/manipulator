@@ -25,7 +25,7 @@ u.fontsReady = function(node, fonts, _options) {
 	var max_time = 3000;
 
 	// additional info passed to function as JSON object
-	if(typeof(_options) == "object") {
+	if(obj(_options)) {
 		var _argument;
 		for(_argument in _options) {
 
@@ -43,7 +43,7 @@ u.fontsReady = function(node, fonts, _options) {
 	window["_man_fonts_"] = window["_man_fonts_"] || {};
 
 //	var fontApi = false;
-	window["_man_fonts_"].fontApi = document.fonts && typeof(document.fonts.check) == "function" ? true : false;
+	window["_man_fonts_"].fontApi = document.fonts && fun(document.fonts.check) ? true : false;
 	window["_man_fonts_"].fonts = window["_man_fonts_"].fonts || {};
 
 
@@ -97,7 +97,8 @@ u.fontsReady = function(node, fonts, _options) {
 
 
 	// Prepare fonts for loaded-test
-	for(i = 0; font = fonts[i]; i++) {
+	for(i = 0; i < fonts.length; i++) {
+		font = fonts[i];
 
 		// set default style + weight
 		font.style = font.style || "normal";
@@ -153,7 +154,8 @@ u.fontsReady = function(node, fonts, _options) {
 
 		var i, node, font_string;
 
-		for(i = 0; node = this.nodes[i]; i++) {
+		for(i = 0; i < this.nodes.length; i++) {
+			node = this.nodes[i];
 
 			// only load if font has not already been loaded
 			if(window["_man_fonts_"].fonts[node.font_id] && window["_man_fonts_"].fonts[node.font_id].status == "waiting") {
@@ -189,7 +191,7 @@ u.fontsReady = function(node, fonts, _options) {
 
 
 					// check current load status
-					if(window["_man_fonts_"+this.loadkey] && typeof(window["_man_fonts_"+this.loadkey].checkFontsStatus) == "function") {
+					if(window["_man_fonts_"+this.loadkey] && fun(window["_man_fonts_"+this.loadkey].checkFontsStatus)) {
 //						console.log("do check")
 						window["_man_fonts_"+this.loadkey].checkFontsStatus();
 					}
@@ -205,7 +207,7 @@ u.fontsReady = function(node, fonts, _options) {
 		}
 
 		// check current load status
-		if(typeof(this.checkFontsStatus) == "function") {
+		if(fun(this.checkFontsStatus)) {
 			this.checkFontsStatus();
 		}
 
@@ -216,7 +218,9 @@ u.fontsReady = function(node, fonts, _options) {
 //		u.bug("checkFontsStatus");
 
 		var i, node;
-		for(i = 0; node = this.nodes[i]; i++) {
+		for(i = 0; i < this.nodes.length; i++) {
+			node = this.nodes[i];
+
 //			console.log(window["_man_fonts_"].fonts[node.font_id]);
 			if(window["_man_fonts_"].fonts[node.font_id].status == "waiting") {
 
@@ -224,10 +228,10 @@ u.fontsReady = function(node, fonts, _options) {
 				if(this.start_time + this.max_time <= new Date().getTime()) {
 
 					// give up - max time has passed
-					if(typeof(this.callback_node[this.callback_timeout]) == "function") {
+					if(fun(this.callback_node[this.callback_timeout])) {
 						this.callback_node[this.callback_timeout]();
 					}
-					else if(typeof(this.callback_node[this.callback_name]) == "function") {
+					else if(fun(this.callback_node[this.callback_name])) {
 						this.callback_node[this.callback_name]();
 					}
 
@@ -247,7 +251,7 @@ u.fontsReady = function(node, fonts, _options) {
 
 
 		// all fonts are loaded
-		if(typeof(this.callback_node[this.callback_name]) == "function") {
+		if(fun(this.callback_node[this.callback_name])) {
 			this.callback_node[this.callback_name]();
 		}
 
@@ -265,7 +269,8 @@ u.fontsReady = function(node, fonts, _options) {
 
 		var basenode, i, node, loaded = 0;
 
-		for(i = 0; node = this.nodes[i]; i++) {
+		for(i = 0; i < this.nodes.length; i++) {
+			node = this.nodes[i];
 
 			// find basenode for comparison
 			basenode = this.basenodes[node.font_style+node.font_weight];
@@ -278,7 +283,7 @@ u.fontsReady = function(node, fonts, _options) {
 
 		// all fonts loaded
 		if(loaded == this.nodes.length) {
-			if(typeof(this.callback_node[this.callback_name]) == "function") {
+			if(fun(this.callback_node[this.callback_name])) {
 				this.callback_node[this.callback_name]();
 			}
 
@@ -294,10 +299,10 @@ u.fontsReady = function(node, fonts, _options) {
 
 			// give up - max time has passed
 			else {
-				if(typeof(this.callback_node[this.callback_timeout]) == "function") {
+				if(fun(this.callback_node[this.callback_timeout])) {
 					this.callback_node[this.callback_timeout]();
 				}
-				else if(typeof(this.callback_node[this.callback_name]) == "function") {
+				else if(fun(this.callback_node[this.callback_name])) {
 					this.callback_node[this.callback_name]();
 				}
 			}

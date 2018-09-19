@@ -14,7 +14,7 @@ u.timeline = function(node) {
 		var start = 0;
 
 		// additional info passed to function as JSON object
-		if(typeof(_options) == "object") {
+		if(obj(_options)) {
 			var argument;
 			for(argument in _options) {
 
@@ -39,7 +39,7 @@ u.timeline = function(node) {
 		this._animationframe_cancelled = true;
 		window[u.vendorProperty("cancelAnimationFrame")](this._animationframe);
 
-		if(typeof(this.timelineStopped) == "function") {
+		if(fun(this.timelineStopped)) {
 			this.timelineStopped();
 		}
 	}
@@ -51,11 +51,13 @@ u.timeline = function(node) {
 		window[u.vendorProperty("cancelAnimationFrame")](this._animationframe);
 
 		var i, frame;
-		for(i = 0; frame = this._timeline_future_actions[i]; i++) {
+		for(i = 0; i < this._timeline_future_actions.length; i++) {
+			frame = this._timeline_future_actions[i];
+
 			frame.action.bind(this)();
 		}
 
-		if(typeof(this.timelineEnded) == "function") {
+		if(fun(this.timelineEnded)) {
 			this.timelineEnded();
 		}
 
@@ -74,7 +76,9 @@ u.timeline = function(node) {
 
 		// execute any relevant frames
 		var i, frame;
-		for(i = 0; frame = this._timeline_future_actions[i]; i++) {
+		for(i = 0; i < this._timeline_future_actions.length; i++) {
+			frame = this._timeline_future_actions[i];
+
 			if(frame.timestamp < progress) {
 
 				// execute action
@@ -96,7 +100,7 @@ u.timeline = function(node) {
 			this._animationframe = window[u.vendorProperty("requestAnimationFrame")](this._timeline_frame.bind(this));
 		}
 		else {
-			if(typeof(this.timelineEnded) == "function") {
+			if(fun(this.timelineEnded)) {
 				this.timelineEnded();
 			}
 		}

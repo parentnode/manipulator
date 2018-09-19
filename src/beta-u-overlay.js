@@ -28,7 +28,7 @@ u.overlay = function (_options) {
 
 
 	// Apply parameters
-	if(typeof(_options) == "object") {
+	if(obj(_options)) {
 		var _argument;
 		for(_argument in _options) {
 			switch(_argument) {
@@ -100,7 +100,7 @@ u.overlay = function (_options) {
 		});
 
 
-		if(typeof(this.resized) == "function") {
+		if(fun(this.resized)) {
 			this.resized(event);
 		}
 
@@ -153,7 +153,7 @@ u.overlay = function (_options) {
 		document.body.removeChild(this.protection);
 
 		// callback to invoker to notify about closing
-		if (typeof (this.closed) == "function") {
+		if (fun (this.closed)) {
 			this.closed(event);
 		}
 

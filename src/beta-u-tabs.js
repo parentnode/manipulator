@@ -9,7 +9,9 @@ Util.Objects["tabs"] = new function() {
 		tabset.selectTab = function(id) {
 			var i, tab, pane;
 
-			for(i = 0; tab = this.tabs[i]; i++) {
+			for(i = 0; i < this.tabs.length; i++) {
+				tab = this.tabs[i];
+
 				if(tab.tab_id != id) {
 					u.rc(tab, "selected");
 				}
@@ -18,7 +20,9 @@ Util.Objects["tabs"] = new function() {
 				}
 			}
 
-			for(i = 0; pane = this.panes[i]; i++) {
+			for(i = 0; i < this.panes.length; i++) {
+				pane = this.panes[i];
+				
 				if(pane.tab_id != id) {
 					u.rc(pane, "selected");
 				}
@@ -34,7 +38,8 @@ Util.Objects["tabs"] = new function() {
 		var panes = u.ae(tabset, "li", "tab_panes");
 		var selected_tab = false;
 
-		for(i = 0; tab = tabset.tabs[i]; i++) {
+		for(i = 0; i < tabset.tabs.length; i++) {
+			tab = tabset.tabs[i];
 
 			tab.tab_id  = tab.className.replace(/tab |tab|selected |selected/, "");
 			if(tab.tab_id) {

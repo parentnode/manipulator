@@ -15,7 +15,7 @@ u.googlemaps = new function() {
 		
 
 
-		if(typeof(_options) == "object") {
+		if(obj(_options)) {
 			var _argument;
 			for(_argument in _options) {
 
@@ -37,12 +37,12 @@ u.googlemaps = new function() {
 			var mapOptions = {center: new google.maps.LatLng(center[0], center[1]), zoom: map._maps_zoom, scrollwheel: map._maps_scrollwheel, streetViewControl: map._maps_streetview, zoomControlOptions: {position: google.maps.ControlPosition.LEFT_TOP}};
 			map.g_map = new google.maps.Map(map, mapOptions);
 
-			if(typeof(map.APIloaded) == "function") {
+			if(fun(map.APIloaded)) {
 				map.APIloaded();
 			}
 
 			google.maps.event.addListener(map.g_map, 'tilesloaded', function() {
-				if(typeof(map.loaded) == "function") {
+				if(fun(map.loaded)) {
 					map.loaded();
 				}
 			});
@@ -66,7 +66,7 @@ u.googlemaps = new function() {
 
 		var _info = false;
 
-		if(typeof(_options) == "object") {
+		if(obj(_options)) {
 			var _argument;
 			for(_argument in _options) {
 
@@ -84,17 +84,17 @@ u.googlemaps = new function() {
 		marker.g_map = map;
 
 		google.maps.event.addListener(marker, 'click', function() {
-			if(typeof(this.clicked) == "function") {
+			if(fun(this.clicked)) {
 				this.clicked();
 			}
 		});
 		google.maps.event.addListener(marker, 'mouseover', function() {
-			if(typeof(this.entered) == "function") {
+			if(fun(this.entered)) {
 				this.entered();
 			}
 		});
 		google.maps.event.addListener(marker, 'mouseout', function() {
-			if(typeof(this.exited) == "function") {
+			if(fun(this.exited)) {
 				this.exited();
 			}
 		});
@@ -106,7 +106,7 @@ u.googlemaps = new function() {
 
 		marker._animation = true;
 
-		if(typeof(_options) == "object") {
+		if(obj(_options)) {
 			var _argument;
 			for(_argument in _options) {
 
@@ -138,7 +138,7 @@ u.googlemaps = new function() {
 
 				if(this.c_exit < new_position.lat()) {
 					this.setMap(null);
-					if(typeof(this.removed) == "function") {
+					if(fun(this.removed)) {
 						this.removed();
 					}
 				}
@@ -160,7 +160,7 @@ u.googlemaps = new function() {
 		map.g_infowindow = new google.maps.InfoWindow({"maxWidth":250});
 
 		google.maps.event.addListener(map.g_infowindow, 'closeclick', function() {
-			if(this._marker && typeof(this._marker.closed) == "function") {
+			if(this._marker && fun(this._marker.closed)) {
 				this._marker.closed();
 				this._marker = false;
 			}
@@ -176,7 +176,7 @@ u.googlemaps = new function() {
 	this.hideInfoWindow = function(map) {
 		map.g_infowindow.close();
 
-		if(map.g_infowindow._marker && typeof(map.g_infowindow._marker.closed) == "function") {
+		if(map.g_infowindow._marker && fun(map.g_infowindow._marker.closed)) {
 			map.g_infowindow._marker.closed();
 			map.g_infowindow._marker = false;
 		}

@@ -53,7 +53,7 @@ Util.mediaPlayer = function(_options) {
 
 
 	// Does browser support HTML5 media
-	if(player.media && typeof(player.media.play) == "function") {
+	if(player.media && fun(player.media.play)) {
 
 		// set up functions for HTML5 player
 
@@ -105,7 +105,7 @@ Util.mediaPlayer = function(_options) {
 			var position = 0;
 
 			// optional position
-			if(typeof(_options) == "object") {
+			if(obj(_options)) {
 				var _argument;
 				for(_argument in _options) {
 
@@ -269,7 +269,7 @@ u.setupMedia = function(player, _options) {
 
 
 	// additional info passed to function as JSON object
-	if(typeof(_options) == "object") {
+	if(obj(_options)) {
 		var _argument;
 		for(_argument in _options) {
 
@@ -327,7 +327,7 @@ u.setupMedia = function(player, _options) {
 
 			u.ac(this.player, "loading");
 
-			if(typeof(this.player.loading) == "function") {
+			if(fun(this.player.loading)) {
 				this.player.loading(event);
 			}
 		}
@@ -339,7 +339,7 @@ u.setupMedia = function(player, _options) {
 
 			u.rc(this.player, "loading");
 
-			if(typeof(this.player.canplaythrough) == "function") {
+			if(fun(this.player.canplaythrough)) {
 				this.player.canplaythrough(event);
 			}
 		}
@@ -352,7 +352,7 @@ u.setupMedia = function(player, _options) {
 			u.rc(this.player, "loading|paused");
 			u.ac(this.player, "playing");
 
-			if(typeof(this.player.playing) == "function") {
+			if(fun(this.player.playing)) {
 				this.player.playing(event);
 			}
 		}
@@ -365,7 +365,7 @@ u.setupMedia = function(player, _options) {
 			u.rc(this.player, "playing|loading");
 			u.ac(this.player, "paused");
 
-			if(typeof(this.player.paused) == "function") {
+			if(fun(this.player.paused)) {
 				this.player.paused(event);
 			}
 		}
@@ -378,7 +378,7 @@ u.setupMedia = function(player, _options) {
 			u.rc(this.player, "playing|paused");
 			u.ac(this.player, "loading");
 
-			if(typeof(this.player.stalled) == "function") {
+			if(fun(this.player.stalled)) {
 				this.player.stalled(event);
 			}
 		}
@@ -388,7 +388,7 @@ u.setupMedia = function(player, _options) {
 		player.media._error = function(event) {
 //			u.bug("_error");
 
-			if(typeof(this.player.error) == "function") {
+			if(fun(this.player.error)) {
 				this.player.error(event);
 			}
 		}
@@ -400,7 +400,7 @@ u.setupMedia = function(player, _options) {
 
 			u.rc(this.player, "playing|paused");
 
-			if(typeof(this.player.ended) == "function") {
+			if(fun(this.player.ended)) {
 				this.player.ended(event);
 			}
 		}
@@ -415,7 +415,7 @@ u.setupMedia = function(player, _options) {
 			this.player.currentTime = this.currentTime;
 			this.player.metaLoaded = true;
 
-			if(typeof(this.player.loadedmetadata) == "function") {
+			if(fun(this.player.loadedmetadata)) {
 				this.player.loadedmetadata(event);
 			}
 		}
@@ -427,7 +427,7 @@ u.setupMedia = function(player, _options) {
 
 			this.player.mediaLoaded = true;
 
-			if(typeof(this.player.loadeddata) == "function") {
+			if(fun(this.player.loadeddata)) {
 				this.player.loadeddata(event);
 			}
 		}
@@ -438,7 +438,7 @@ u.setupMedia = function(player, _options) {
 //				u.bug("_timeupdate:" + this.currentTime);
 			this.player.currentTime = this.currentTime;
 
-			if(typeof(this.player.timeupdate) == "function") {
+			if(fun(this.player.timeupdate)) {
 				this.player.timeupdate(event);
 			}
 		}
@@ -826,7 +826,7 @@ u.detectMediaAutoplay = function(player) {
 					player.can_autoplay = u.media_can_autoplay;
 					player.can_autoplay_muted = u.media_can_autoplay_muted;
 
-					if(typeof(player.ready) == "function") {
+					if(fun(player.ready)) {
 						player.ready();
 					}
 				}
@@ -858,7 +858,7 @@ u.detectMediaAutoplay = function(player) {
 			u.test_autoplay.muted = true;
 
 			var promise = u.test_autoplay.play();
-			if(promise && typeof(promise.then) == "function") {
+			if(promise && fun(promise.then)) {
 				promise.then(
 					u.test_autoplay.playing_muted.bind(u.test_autoplay)
 				).catch(
@@ -907,7 +907,7 @@ u.detectMediaAutoplay = function(player) {
 		u.test_autoplay.src = data;
 
 		var promise = u.test_autoplay.play();
-		if(promise && typeof(promise.then) == "function") {
+		if(promise && fun(promise.then)) {
 
 			u.e.removeEvent(u.test_autoplay, "playing", u.test_autoplay.playing);
 			u.e.removeEvent(u.test_autoplay, "error", u.test_autoplay.error);

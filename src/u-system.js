@@ -43,8 +43,9 @@ Util.browser = function(model, version) {
 	}
 	
 	if(model.match(/\bsafari\b/i)) {
-//		u.bug("##trying to match safari")
-		if(!window.chrome && document.body.style.webkitTransform != undefined && !u.browser("ie,edge")) {
+		// u.bug("##trying to match safari")
+		u.bug(navigator.userAgent);
+		if(!window.chrome && navigator.userAgent.match(/WebKit[^$]+Version\/(\d+)(.\d)/i) && !u.browser("ie,edge")) {
 			current_version = navigator.userAgent.match(/Version\/(\d+)(.\d)/i)[1];
 		}
 	}
@@ -97,7 +98,9 @@ Util.segment = function(segment) {
 	if(!u.current_segment) {
 		var scripts = document.getElementsByTagName("script");
 		var script, i, src;
-		for(i = 0; script = scripts[i]; i++) {
+		for(i = 0; i < scripts.length; i++) {
+			script = scripts[i];
+
 			seg_src = script.src.match(/\/seg_([a-z_]+)/);
 			if(seg_src) {
 				u.current_segment = seg_src[1];
@@ -257,7 +260,7 @@ Util.vendorPrefix = function() {
 		Util.vendor_prefix = "";
 
 		// do not attempt to find vendor prefix in older browsers
-		if(document.documentElement && typeof(window.getComputedStyle) == "function") {
+		if(document.documentElement && fun(window.getComputedStyle)) {
 
 			// get all style properties
 			var styles = window.getComputedStyle(document.documentElement, "");
@@ -267,7 +270,8 @@ Util.vendorPrefix = function() {
 				var i, style, match;
 
 				// loop through styles to find any known prefix
-				for(i = 0; style = styles[i]; i++) {
+				for(i = 0; i < styles.length; i++) {
+					style = styles[i];
 
 					match = style.match(/^-(moz|webkit|ms)-/);
 					if(match) {

@@ -30,8 +30,10 @@ Util.History = u.h = new function() {
 //		u.bug("callbacks invoked:" + url + " (" + this.callbacks.length + ")")
 
 		var i, recipient;
-		for(i = 0; recipient = this.callbacks[i]; i++) {
-			if(typeof(recipient.node[recipient.callback]) == "function") {
+		for(i = 0; i < this.callbacks.length; i++) {
+			recipient = this.callbacks[i];
+
+			if(fun(recipient.node[recipient.callback])) {
 //				u.bug("callback: " + u.nodeId(recipient.node) + ", " + recipient.callback);
 				recipient.node[recipient.callback](url);
 			}
@@ -45,7 +47,7 @@ Util.History = u.h = new function() {
 		var callback_urlchange = "navigate";
 
 		// additional info passed to function as JSON object
-		if(typeof(_options) == "object") {
+		if(obj(_options)) {
 			var argument;
 			for(argument in _options) {
 
@@ -74,7 +76,7 @@ Util.History = u.h = new function() {
 		var callback_urlchange = "navigate";
 
 		// additional info passed to function as JSON object
-		if(typeof(_options) == "object") {
+		if(obj(_options)) {
 			var argument;
 			for(argument in _options) {
 

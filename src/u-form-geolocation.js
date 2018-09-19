@@ -14,7 +14,9 @@ Util.Form.customInit["location"] = function(_form, field) {
 	// use first input as field input 
 	field._input = field._inputs[0];
 
-	for(j = 0; input = field._inputs[j]; j++) {
+	for(j = 0; j < field._inputs.length; j++) {
+		input = field._inputs[j];
+
 		input.field = field;
 		input._form = _form;
 

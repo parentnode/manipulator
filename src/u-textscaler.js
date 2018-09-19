@@ -174,7 +174,8 @@ u.textscaler = function(node, _settings) {
 
 
 			var i, node;
-			for(i = 0; node = window._man_text.nodes[i]; i++) {
+			for(i = 0; i < window._man_text.nodes.length; i++) {
+				node = window._man_text.nodes[i];
 //				u.bug("scale:" + node + ", " + node._man_text);
 
 				// if(node._man_text.ref) {
@@ -218,7 +219,9 @@ u.textscaler = function(node, _settings) {
 //			u.bug("precalc")
 
 			var i, node, tag;
-			for(i = 0; node = window._man_text.nodes[i]; i++) {
+			for(i = 0; i < window._man_text.nodes.length; i++) {
+				node = window._man_text.nodes[i];
+
 //				u.bug("scale:" + node);
 				if(node.parentNode) { // && node.offsetHeight
 

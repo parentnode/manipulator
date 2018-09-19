@@ -29,7 +29,7 @@ u.e._scrollStart = function(event) {
 	u.a.transition(this, "none");
 
 	// notify of pick
-	if(typeof(this.picked) == "function") {
+	if(fun(this.picked)) {
 		this.picked(event);
 	}
 
@@ -60,7 +60,7 @@ u.e._scrolling = function(event) {
 	}
 
 	// notify of movement
-	if(typeof(this.moved) == "function") {
+	if(fun(this.moved)) {
 		this.moved(event);
 	}
 }
@@ -71,7 +71,7 @@ u.e._scrollEnd = function(event) {
 	u.e.resetEvents(this);
 
 	// notify of drop
-	if(typeof(this.dropped) == "function") {
+	if(fun(this.dropped)) {
 		this.dropped(event);
 	}
 }
@@ -138,7 +138,7 @@ u.e._beforeScroll = function(event) {
 	u.e.removeMoveEvent(this, u.e._beforeScroll);
 
 	// notify of pick
-	if(typeof(this.picked) == "function") {
+	if(fun(this.picked)) {
 		this.picked(event);
 	}
 

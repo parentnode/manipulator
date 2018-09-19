@@ -125,11 +125,11 @@ u.readyState = new function () {
 				if (entry.callback) {
 
 					// node available for callback scope
-					if (entry.node && typeof (entry.node[entry.callback]) == "function") {
+					if (entry.node && fun (entry.node[entry.callback])) {
 						entry.node[entry.callback].apply(entry.node, entry.parameters);
 					}
 					// callback on window scope
-					else if (!entry.node && typeof (window[entry.callback]) == "function") {
+					else if (!entry.node && fun (window[entry.callback])) {
 						window[entry.callback].apply(window, entry.parameters);
 					}
 					else {
@@ -154,13 +154,13 @@ u.readyState = new function () {
 				// error callback declared
 				if (entry.error) {
 
-					if (entry.node && typeof (entry.node[entry.error]) == "function") {
+					if (entry.node && fun (entry.node[entry.error])) {
 						entry.node[entry.error].apply(entry.node, entry.parameters);
 					}
-					else if (!entry.node && typeof (window[entry.error]) == "function") {
+					else if (!entry.node && fun (window[entry.error])) {
 						window[entry.error].apply(window, entry.parameters);
 					}
-					else if (typeof (this.errorHandlers[entry.error]) == "function") {
+					else if (fun (this.errorHandlers[entry.error])) {
 						this.errorHandlers[entry.error](entry);
 					}
 
@@ -213,7 +213,7 @@ u.readyState = new function () {
 //				u.bug("last level:" + base + ", " + typeof (base_object) + ", " + base_object)
 
 				// complex comparison
-				if (typeof (value) === "object") {
+				if (obj((value))) {
 
 					if (typeof (base_object) === value["type"] && base_object === value["value"]) {
 						return true;
@@ -228,7 +228,7 @@ u.readyState = new function () {
 			}
 
 			// still more levels of this dependecy to explore
-			else if (properties.length > 0 && typeof (base_object) === "object" || typeof (base_object) === "function") {
+			else if (properties.length > 0 && obj((base_object)) || fun((base_object))) {
 //				u.bug("not last level:" + base + ", " + typeof (base_object))
 				return this.isDefined(base_object, properties.join("."), value);
 

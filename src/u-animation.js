@@ -12,7 +12,7 @@ Util.Animation = u.a = new function() {
 				if(u.gcs(node, "transform").match(/matrix3d\(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 10, 10, 10, 1\)/)) {
 					this._support3d = true;
 				}
-				else {
+	 			else {
 					this._support3d = false;
 				}
 			}
@@ -57,14 +57,14 @@ Util.Animation = u.a = new function() {
 
 							u.a.transition(this, "none");
 
-							if(typeof(callback) == "function") {
+							if(fun(callback)) {
 								var key = u.randomString(4);
 								node[key] = callback;
 								node[key](event);
 								node[key] = null;
 								callback = null;
 							}
-							else if(typeof(this[callback]) == "function") {
+							else if(fun(this[callback])) {
 //								u.bug("callback to: " + callback + ", " + this[callback])
 								this[callback](event);
 								this[callback] = null;
@@ -149,7 +149,7 @@ Util.Animation = u.a = new function() {
 		u.a.transition(event.target, "none");
 
 		// only do callback to correct targets
-		if(event.target == this && typeof(this.transitioned) == "function") {
+		if(event.target == this && fun(this.transitioned)) {
 
 			this.transitioned(event);
 
@@ -389,7 +389,7 @@ Util.Animation = u.a = new function() {
 		animation["__animation_frame_start_"+id] = false;
 		animation.node[animation.callback](1);
 
-		if(typeof(animation.node.transitioned) == "function") {
+		if(fun(animation.node.transitioned)) {
 //			u.bug("callback:" + u.nodeId(animation.node));
 			animation.node.transitioned({});
 		}
