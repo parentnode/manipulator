@@ -358,7 +358,9 @@ Util.Animation = u.a = new function() {
 					
 
 					// progress callback
-					animation.node[animation.callback]((timestamp-animation["__animation_frame_start_"+id]) / animation.duration);
+					if(fun(animation.node[animation.callback])) {
+						animation.node[animation.callback]((timestamp-animation["__animation_frame_start_"+id]) / animation.duration);
+					}
 				}
 
 				// continue animationFrame loop
@@ -387,7 +389,9 @@ Util.Animation = u.a = new function() {
 
 		var animation = u.a._animationqueue[id];
 		animation["__animation_frame_start_"+id] = false;
-		animation.node[animation.callback](1);
+		if(fun(animation.node[animation.callback])) {
+			animation.node[animation.callback](1);
+		}
 
 		if(typeof(animation.node.transitioned) == "function") {
 //			u.bug("callback:" + u.nodeId(animation.node));
