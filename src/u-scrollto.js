@@ -10,6 +10,8 @@ u.scrollTo = function(node, _options) {
 	var scroll_to_y = 0;
 	var to_node = false;
 
+	node._force_scroll_to = false;
+
 
 
 	// additional info passed to function as JSON object
@@ -18,16 +20,18 @@ u.scrollTo = function(node, _options) {
 		for(_argument in _options) {
 			switch(_argument) {
 
-				case "callback"             : node.callback_scroll_to           = _options[_argument]; break;
-				case "callback_cancelled"   : node.callback_scroll_cancelled    = _options[_argument]; break;
+				case "callback"             : node.callback_scroll_to            = _options[_argument]; break;
+				case "callback_cancelled"   : node.callback_scroll_cancelled     = _options[_argument]; break;
 				case "offset_y"             : offset_y                           = _options[_argument]; break;
 				case "offset_x"             : offset_x                           = _options[_argument]; break;
 
-				case "node"              : to_node                               = _options[_argument]; break;
+				case "node"                 : to_node                            = _options[_argument]; break;
 				case "x"                    : scroll_to_x                        = _options[_argument]; break;
 				case "y"                    : scroll_to_y                        = _options[_argument]; break;
 
 				case "scrollIn"             : scrollIn                           = _options[_argument]; break;
+
+				case "force"                : node._force_scroll_to              = _options[_argument]; break;
 
 			}
 		}
@@ -80,10 +84,18 @@ u.scrollTo = function(node, _options) {
 	node._scroll_to_y = u.scrollY();
 
 
+	node.ignoreWheel = function(event) {
+		// u.bug("ignore wheel");
+		u.e.kill(event);
+	}
+	if(node._force_scroll_to) {
+		u.e.addEvent(node, "wheel", node.ignoreWheel);
+	}
+
 
 	// scroll event loopback
 	node.scrollToHandler = function(event) {
-//		u.bug("scrollToHandler:" + u.nodeId(this))
+		// u.bug("scrollToHandler:" + u.nodeId(this))
 
 		u.t.resetTimer(this.t_scroll);
 		this.t_scroll = u.t.setTimer(this, this._scrollTo, 50);
@@ -95,11 +107,28 @@ u.scrollTo = function(node, _options) {
 	// cancel scrolling (if user interaction interrupts animation)
 	node.cancelScrollTo = function() {
 
+		if(!this._force_scroll_to) {
+
+			u.t.resetTimer(this.t_scroll);
+			u.e.removeEvent(this, "scroll", this.scrollToHandler);
+
+			// make sure no further scrolling is done
+			this._scrollTo = null;
+			
+		}
+	}
+
+	// scrolling ended
+	node.scrollToFinished = function() {
+		// console.log("scrollToFinished");
+		// console.log(this);
 		u.t.resetTimer(this.t_scroll);
 		u.e.removeEvent(this, "scroll", this.scrollToHandler);
+		u.e.removeEvent(this, "wheel", this.ignoreWheel);
 
 		// make sure no further scrolling is done
 		this._scrollTo = null;
+
 	}
 
 	// IEMobile is not completely precise in scrolling, so to make it work we have to allow a little offset
@@ -160,10 +189,10 @@ u.scrollTo = function(node, _options) {
 
 			// scrolling is considered done
 			if(this._scroll_to_x == this._to_x && this._scroll_to_y == this._to_y) {
-//				u.bug("done")
+				// u.bug("done")
 
-				// cancel scrolling
-				this.cancelScrollTo();
+				// scrolling finished
+				this.scrollToFinished();
 
 				// just for the sake of it, go to final coords to compensate for any rounding offsets
 				this.scrollTo(this._to_x, this._to_y);
