@@ -7,11 +7,13 @@ Util.init = function(scope) {
 
 	nodes = u.ges("i\:([_a-zA-Z0-9])+", scope);
 
-	for(i = 0; node = nodes[i]; i++) {
+	for(i = 0; i < nodes.length; i++) {
+		node = nodes[i];
+
 		while((object = u.cv(node, "i"))) {
 			// u.bug("init:" + object)
 			u.rc(node, "i:"+object);
-			if(object && typeof(u.o[object]) == "object") {
+			if(object && obj(u.o[object])) {
 				u.o[object].init(node);
 			}
 		}

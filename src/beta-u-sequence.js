@@ -19,7 +19,7 @@ u.sequencePlayer = function(node, options) {
 	player._framerate = 12;
 
 	// additional info passed to function as JSON object
-	if(typeof(options) == "object") {
+	if(obj(options)) {
 		var argument;
 		for(argument in options) {
 
@@ -43,7 +43,7 @@ u.sequencePlayer = function(node, options) {
 		this._autoplay = false;
 
 		// additional info passed to function as JSON object
-		if(typeof(options) == "object") {
+		if(obj(options)) {
 			var argument;
 			for(argument in options) {
 
@@ -85,7 +85,7 @@ u.sequencePlayer = function(node, options) {
 		this._to = this.sequence._end;
 
 		// additional info passed to function as JSON object
-		if(typeof(options) == "object") {
+		if(obj(options)) {
 			var argument;
 			for(argument in options) {
 
@@ -227,10 +227,10 @@ u.sequencePlayer = function(node, options) {
 		if(this._to == this._current_frame) {
 //			u.bug("end reached:" + typeof(this._ended_callback) + ", " + this.ended + "," + u.nodeId(this))
 
-			if(typeof(this._ended_callback) == "function") {
+			if(fun(this._ended_callback)) {
 				this._ended_callback();
 			}
-			else if(typeof(this.ended) == "function") {
+			else if(fun(this.ended)) {
 				this.ended();
 			}
 
@@ -401,11 +401,11 @@ u.sequencePlayer = function(node, options) {
 
 
 
-			if(typeof(this._load_callback) == "function") {
+			if(fun(this._load_callback)) {
 				this._load_callback();
 			}
 			// or callback to default (loaded)
-			else if(typeof(this.loaded) == "function") {
+			else if(fun(this.loaded)) {
 				this.loaded();
 			}
 

@@ -20,7 +20,7 @@ if(/*@cc_on!@*/false && document.documentMode == 9) {
 			if(callback) {
 //				u.bug("custom transition callback:" + callback + ", " + u.nodeId(node))
 
-				if(typeof(callback) == "function") {
+				if(fun(callback)) {
 
 					node.transitioned = callback;
 
@@ -43,10 +43,10 @@ if(/*@cc_on!@*/false && document.documentMode == 9) {
 	u.a._transitioned = function(event) {
 
 		// u.bug("callback1:" + this._transition_callback + ", " + u.nodeId(event.target) + ", " + u.nodeId(this) + ", " + typeof(this[this._transition_callback]))
-		// if(typeof(this[this._transition_callback]) == "object") {
+		// if(obj(this[this._transition_callback])) {
 		// 	u.xInObject(this[this._transition_callback]);
 		// }
-		if(event.target == this && typeof(this[this._transition_callback]) == "function") {
+		if(event.target == this && fun(this[this._transition_callback])) {
 			
 //			u.bug("callback2:" + this._transition_callback)
 
@@ -307,7 +307,7 @@ if(/*@cc_on!@*/false && document.documentMode == 9) {
 
 			// callback if duration is set (and opacity differs)
 			if(node.duration && node._opacity !== opacity) {
-				u.t.setTimer(node, function() {if(typeof(this[this._transition_callback]) == "function") {this[this._transition_callback]();}}, node.duration);
+				u.t.setTimer(node, function() {if(fun(this[this._transition_callback])) {this[this._transition_callback]();}}, node.duration);
 			}
 		}
 		// only run if opacity is different from current value
@@ -346,7 +346,7 @@ if(/*@cc_on!@*/false && document.documentMode == 9) {
 
 					this.___transitioned = u.a._transitioned;
 					this.___transitioned(event);
-					// if(typeof(this[this._transition_callback]) == "function") {
+					// if(fun(this[this._transition_callback])) {
 					// 	this[this._transition_callback](event);
 					// }
 				}
@@ -789,10 +789,10 @@ if(/*@cc_on!@*/false && document.documentMode == 9) {
 
 					u.as(this, "backgroundColor", this._bg_color);
 
-					if(typeof(this[this._transition_callback]) == "function") {
+					if(fun(this[this._transition_callback])) {
 						this[this._transition_callback](event);
 					}
-					// if(typeof(this.transitioned) == "function") {
+					// if(fun(this.transitioned)) {
 					// 	this.transitioned(event);
 					// }
 				}

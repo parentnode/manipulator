@@ -57,11 +57,11 @@ if(typeof(window.XMLHttpRequest) == "undefined" || function(){return (typeof(win
 						wrapper.IEreadyState = true;
 					}
 
-					if(typeof(wrapper.statechanged) == "function") {
+					if(fun(wrapper.statechanged)) {
 						wrapper.statechanged();
 						wrapper.parentNode.removeChild(wrapper);
 					}
-					// else if(typeof(wrapper.onreadystatechange) == "function") {
+					// else if(fun(wrapper.onreadystatechange)) {
 					// 	wrapper.onreadystatechange();
 					// }
 				}
@@ -82,7 +82,7 @@ if(typeof(window.XMLHttpRequest) == "undefined" || function(){return (typeof(win
 				}
 				catch(exception) {
 
-					if(typeof(wrapper.statechanged) == "function") {
+					if(fun(wrapper.statechanged)) {
 						this.status = 400;
 						this.IEreadyState = true;
 

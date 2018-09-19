@@ -20,7 +20,7 @@ u.sortable = function(scope, _options) {
 	scope.allow_nesting = false;
 
 	// additional info passed to function as JSON object
-	if(typeof(_options) == "object") {
+	if(obj(_options)) {
 		var _argument;
 		for(_argument in _options) {
 
@@ -111,7 +111,7 @@ u.sortable = function(scope, _options) {
 
 
 				// notify picked
-				if(typeof(d_node.scope[d_node.scope.callback_picked]) == "function") {
+				if(fun(d_node.scope[d_node.scope.callback_picked])) {
 					d_node.scope[d_node.scope.callback_picked](event);
 				}
 			}
@@ -208,7 +208,7 @@ u.sortable = function(scope, _options) {
 		}
 
 		// notify dragged
-		if(typeof(this.scope[this.scope.callback_moved]) == "function") {
+		if(fun(this.scope[this.scope.callback_moved])) {
 			this.scope[this.scope.callback_moved](event);
 		}
 		
@@ -262,7 +262,7 @@ u.sortable = function(scope, _options) {
 		}
 
 		// notify dropped
-		if(typeof(this.scope[this.scope.callback_dropped]) == "function") {
+		if(fun(this.scope[this.scope.callback_dropped])) {
 			this.scope[this.scope.callback_dropped](event);
 		}
 
@@ -286,7 +286,8 @@ u.sortable = function(scope, _options) {
 //		for(i = 0; node = this.draggable_nodes[i]; i++) {
 
 		// loop through backwards to check children first 
-		for(i = this.draggable_nodes.length-1; node = this.draggable_nodes[i]; i--) {
+		for(i = this.draggable_nodes.length-1; i > 0; i--) {
+			node = this.draggable_nodes[i];
 
 			// do not check current node or target node for overlap and parent UL is included in targets
 			if(node != this._dragged && node != this.tN && (!this.targets || u.hc(node.parentNode, this.targets))) {
@@ -428,7 +429,8 @@ u.sortable = function(scope, _options) {
 
 		var structure = [];
 		var i, node, id, relation, position;
-		for(i = 0; node = this.draggable_nodes[i]; i++) {
+		for(i = 0; i < this.draggable_nodes.length; i++) {
+			node = this.draggable_nodes[i];
 
 //			u.bug("struct:" + u.nodeId(node));
 
@@ -515,7 +517,9 @@ u.sortable = function(scope, _options) {
 			var temp_scope = scope.target_nodes;
 			scope.target_nodes = [scope];
 			var target_node;
-			for(i = 0; target_node = temp_scope[i]; i++) {
+			for(i = 0; i < temp_scope.length; i++) {
+				target_node = temp_scope[i];
+
 				scope.target_nodes.push(target_node);
 			} 
 		}
@@ -545,7 +549,8 @@ u.sortable = function(scope, _options) {
 
 
 	// set up dragables
-	for(i = 0; d_node = scope.draggable_nodes[i]; i++) {
+	for(i = 0; i < scope.draggable_nodes.length; i++) {
+		d_node = scope.draggable_nodes[i];
 
 //		u.bug("d_node:" + u.nodeId(d_node));
 
@@ -575,7 +580,9 @@ u.sortable = function(scope, _options) {
 		// cross-reference all drag children, so every event.target knows node
 		var drag_children = u.qsa("*", d_node.drag);
 		if(drag_children) {
-			for(j = 0; child = drag_children[j]; j++) {
+			for(j = 0; j < drag_children.length; j++) {
+				child = drag_children[j];
+
 				child.d_node = d_node;
 //				u.bug("set d_node:" + u.nodeId(child) + ", " + u.nodeId(d_node))
 

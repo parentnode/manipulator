@@ -14,7 +14,7 @@ u.navigation = function(_options) {
 
 
 	// additional info passed to function as JSON object
-	if(typeof(_options) == "object") {
+	if(obj(_options)) {
 		var argument;
 		for(argument in _options) {
 
@@ -60,7 +60,7 @@ u.navigation = function(_options) {
 //			u.bug("base cN:" + url)
 
 			// forward navigation event to #content
-			if(this.cN && typeof(this.cN.navigate) == "function") {
+			if(this.cN && fun(this.cN.navigate)) {
 				this.cN.navigate(url);
 			}
 
@@ -70,11 +70,11 @@ u.navigation = function(_options) {
 //			u.bug("base decide:" + url + ", " + (this.cN.scene ? u.nodeId(this.cN.scene) : this.cN.scene))
 
 			// forward navigation event to .scene if it has navigate function
-			if(this.cN.scene && this.cN.scene.parentNode && typeof(this.cN.scene.navigate) == "function") {
+			if(this.cN.scene && this.cN.scene.parentNode && fun(this.cN.scene.navigate)) {
 				this.cN.scene.navigate(url);
 			}
 			// else forward to content
-			else if(this.cN && typeof(this.cN.navigate) == "function") {
+			else if(this.cN && fun(this.cN.navigate)) {
 				this.cN.navigate(url);
 			}
 

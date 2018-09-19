@@ -34,7 +34,7 @@ u.notifier = function(node) {
 		var class_name = "message";
 
 		// additional info passed to function as JSON object
-		if(typeof(_options) == "object") {
+		if(obj(_options)) {
 			var argument;
 			for(argument in _options) {
 
@@ -49,22 +49,24 @@ u.notifier = function(node) {
 
 //		u.bug("message:" + typeof(response) + "; JSON: " + response.isJSON + "; HTML: " + response.isHTML);
 
-		if(typeof(response) == "object") {
-//		if(typeof(response) == "object" && response.isJSON) {
+		if(obj(response)) {
+//		if(obj(response) && response.isJSON) {
 
 			var message = response.cms_message;
 			var cms_status = typeof(response.cms_status) != "undefined" ? response.cms_status : "";
 
 			// TODO: message can be JSON object
-			if(typeof(message) == "object") {
+			if(obj(message)) {
 				for(type in message) {
 //					u.bug("typeof(message[type]:" + typeof(message[type]) + "; " + type);
-					if(typeof(message[type]) == "string") {
+					if(str(message[type])) {
 						output.push(u.ae(this.notifications, "div", {"class":class_name+" "+cms_status+" "+type, "html":message[type]}));
 					}
-					else if(typeof(message[type]) == "object" && message[type].length) {
+					else if(obj(message[type]) && message[type].length) {
 						var node, i;
-						for(i = 0; _message = message[type][i]; i++) {
+						for(i = 0; i < message[type].length; i++) {
+							_message = message[type][i];
+
 							output.push(u.ae(this.notifications, "div", {"class":class_name+" "+cms_status+" "+type, "html":_message}));
 						}
 					
@@ -72,16 +74,16 @@ u.notifier = function(node) {
 				}
 			
 			}
-			else if(typeof(message) == "string") {
+			else if(str(message)) {
 				output.push(u.ae(this.notifications, "div", {"class":class_name+" "+cms_status, "html":message}));
 			}
 		
-			if(typeof(this.notifications.show) == "function") {
+			if(fun(this.notifications.show)) {
 				this.notifications.show();
 			}
 		
 		}
-		else if(typeof(response) == "object" && response.isHTML) {
+		else if(obj(response) && response.isHTML) {
 
 			// check for login
 			var login = u.qs(".scene.login form", response);
@@ -129,15 +131,18 @@ u.notifier = function(node) {
 							var dom_vars = u.qsa("*", page);
 
 							var i, node;
-							for(i = 0; node = data_vars[i]; i++) {
+							for(i = 0; i < data_vars.length; i++) {
+								node = data_vars[i];
 								// u.bug("data:" + u.nodeId(node) + ", " + node.getAttribute("data-csrf-token"));
 								node.setAttribute("data-csrf-token", csrf_token);
 							}
-							for(i = 0; node = input_vars[i]; i++) {
+							for(i = 0; ni <input_vars.length; i++) {
+								node = input_vars[i];
 								// u.bug("input:" + u.nodeId(node) + ", " + node.value);
 								node.value = csrf_token;
 							}
-							for(i = 0; node = dom_vars[i]; i++) {
+							for(i = 0;i <= dom_vars.length; i++) {
+								node = dom_vars[i];
 								if(node.csrf_token) {
 									// u.bug("dom:" + u.nodeId(node) + ", " + node.csrf_token);
 									node.csrf_token = csrf_token;
@@ -149,7 +154,9 @@ u.notifier = function(node) {
 							// additional overlay cleanup (edge case handling)
 							var multiple_overlays = u.qsa("#login_overlay");
 							if(multiple_overlays) {
-								for(i = 0; overlay = multiple_overlays[i]; i++) {
+								for(i = 0; i < multiple_overlays.length; i++) {
+									overlay = multiple_overlays[i];
+
 									overlay.parentNode.removeChild(overlay);
 								}
 							}
@@ -193,7 +200,9 @@ u.notifier = function(node) {
 			// look for messages in HTML
 			else if(messages) {
 //				u.bug(messages);
-				for(i = 0; message = messages[i]; i++) {
+				for(i = 0; i < messages.length; i++) {
+					message = messages[i];
+
 					output.push(u.ae(this.notifications, "div", {"class":message.className, "html":message.innerHTML}));
 				}
 			}

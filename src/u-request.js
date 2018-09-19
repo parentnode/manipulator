@@ -30,7 +30,7 @@ Util.request = function(node, url, _options) {
 
 
 	// additional info passed to function as JSON object
-	if(typeof(_options) == "object") {
+	if(obj(_options)) {
 		var argument;
 		for(argument in _options) {
 
@@ -90,7 +90,7 @@ Util.request = function(node, url, _options) {
 				}
 			}
 			// correctly handle readystatechange
-			if(typeof(node[request_id].HTTPRequest.addEventListener) == "function") {
+			if(fun(node[request_id].HTTPRequest.addEventListener)) {
 				u.e.addEvent(node[request_id].HTTPRequest, "readystatechange", node[request_id].HTTPRequest.statechanged);
 			}
 		}
@@ -125,7 +125,7 @@ Util.request = function(node, url, _options) {
 				}
 
 				// add additional headers
-				if(typeof(node[request_id].request_headers) == "object") {
+				if(obj(node[request_id].request_headers)) {
 					var header;
 					for(header in node[request_id].request_headers) {
 						node[request_id].HTTPRequest.setRequestHeader(header, node[request_id].request_headers[header]);
@@ -148,7 +148,7 @@ Util.request = function(node, url, _options) {
 
 				// Stringify JSON objects
 				// TODO: 'function Object' is that mobile safari? - which versions?
-				if(typeof(node[request_id].request_data) == "object" && node[request_id].request_data.constructor.toString().match(/function Object/i)) {
+				if(obj(node[request_id].request_data) && node[request_id].request_data.constructor.toString().match(/function Object/i)) {
 					params = JSON.stringify(node[request_id].request_data);
 				}
 				else {
@@ -180,7 +180,7 @@ Util.request = function(node, url, _options) {
 				// add additional headers
 				// setting a content-type for a form-data request will ruin the request
 				// - but that's the developers fault. Don't check for it.
-				if(typeof(node[request_id].request_headers) == "object") {
+				if(obj(node[request_id].request_headers)) {
 					var header;
 					for(header in node[request_id].request_headers) {
 						node[request_id].HTTPRequest.setRequestHeader(header, node[request_id].request_headers[header]);
@@ -271,7 +271,7 @@ Util.request = function(node, url, _options) {
 
 // convert simple (first level only) JSON to parameter string
 Util.JSONtoParams = function(json) {
-	if(typeof(json) == "object") {
+	if(obj(json)) {
 		var params = "", param;
 		for(param in json) {
 			params += (params ? "&" : "") + param + "=" + json[param];
@@ -296,7 +296,7 @@ Util.evaluateResponseText = function(responseText) {
 	var object;
 
 	// already a JSON object (could be the response from a SCRIPT)
-	if(typeof(responseText) == "object") {
+	if(obj(responseText)) {
 		// u.bug("guessing object:" + responseText, "green");
 
 		responseText.isJSON = true;
@@ -409,11 +409,11 @@ Util.validateResponse = function(HTTPRequest){
 //		u.bug("response:" + typeof(response.node[response.node.callback_response]))
 
 		// Function reference
-		if(typeof(request.callback_response) == "function") {
+		if(fun(request.callback_response)) {
 			request.callback_response(object, request_id);
 		}
 		// Function name
-		else if(typeof(node[request.callback_response]) == "function") {
+		else if(fun(node[request.callback_response])) {
 			node[request.callback_response](object, request_id);
 		}
 
@@ -422,22 +422,22 @@ Util.validateResponse = function(HTTPRequest){
 
 		// callback to ResponseError handler
 		// Function reference
-		if(typeof(request.callback_error) == "function") {
+		if(fun(request.callback_error)) {
 			request.callback_error({error:true,status:request.status}, request_id);
 		}
 		// Function name
-		else if(typeof(node[request.callback_error]) == "function") {
+		else if(fun(node[request.callback_error])) {
 			node[request.callback_error]({error:true,status:request.status}, request_id);
 		}
 
 		// no responseError is declared - forward error to normal response handler
 
 		// Function reference - no error handler
-		else if(typeof(request.callback_response) == "function") {
+		else if(fun(request.callback_response)) {
 			request.callback_response({error:true,status:request.status}, request_id);
 		}
 		// Function name - no error handler
-		else if(typeof(node[request.callback_response]) == "function") {
+		else if(fun(node[request.callback_response])) {
 			node[request.callback_response]({error:true,status:request.status}, request_id);
 		}
 

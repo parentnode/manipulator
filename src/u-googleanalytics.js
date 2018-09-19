@@ -39,7 +39,7 @@ if(u.ga_account) {
 			var hitCallback = null;
 
 
-			if(typeof(_options) == "object") {
+			if(obj(_options)) {
 				var _argument;
 				for(_argument in _options) {
 

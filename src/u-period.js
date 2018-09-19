@@ -48,7 +48,7 @@ Util.period = function(format, time) {
 	var seconds = 0;
 
 	// additional info passed to function as JSON object
-	if(typeof(time) == "object") {
+	if(obj(time)) {
 		var argument;
 		for(argument in time) {
 

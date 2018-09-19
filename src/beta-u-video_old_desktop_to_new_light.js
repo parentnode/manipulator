@@ -37,7 +37,7 @@ Util.videoPlayer = function(_options) {
 
 
 	// additional info passed to function as JSON object
-	if(typeof(_options) == "object") {
+	if(obj(_options)) {
 		var _argument;
 		for(_argument in _options) {
 
@@ -62,7 +62,7 @@ Util.videoPlayer = function(_options) {
 
 
 	// Does browser support HTML5 video
-	if(typeof(player.video.play) == "function") {
+	if(fun(player.video.play)) {
 
 		// set up functions for HTML5 player
 
@@ -71,7 +71,7 @@ Util.videoPlayer = function(_options) {
 			u.bug("load video:" + src);
 
 			// optional controls override
-			// if(typeof(_options) == "object") {
+			// if(obj(_options)) {
 			// 	var _argument;
 			// 	for(_argument in _options) {
 			//
@@ -136,7 +136,7 @@ Util.videoPlayer = function(_options) {
 			var position = 0;
 
 			// optional position
-			if(typeof(_options) == "object") {
+			if(obj(_options)) {
 				var _argument;
 				for(_argument in _options) {
 
@@ -259,7 +259,7 @@ Util.videoPlayer = function(_options) {
 
 				u.ac(this.player, "loading");
 
-				if(typeof(this.player.loading) == "function") {
+				if(fun(this.player.loading)) {
 					this.player.loading(event);
 				}
 			}
@@ -271,7 +271,7 @@ Util.videoPlayer = function(_options) {
 
 				u.rc(this.player, "loading");
 
-				if(typeof(this.player.canplaythrough) == "function") {
+				if(fun(this.player.canplaythrough)) {
 					this.player.canplaythrough(event);
 				}
 			}
@@ -284,7 +284,7 @@ Util.videoPlayer = function(_options) {
 				u.rc(this.player, "loading|paused");
 				u.ac(this.player, "playing");
 
-				if(typeof(this.player.playing) == "function") {
+				if(fun(this.player.playing)) {
 					this.player.playing(event);
 				}
 			}
@@ -297,7 +297,7 @@ Util.videoPlayer = function(_options) {
 				u.rc(this.player, "playing|loading");
 				u.ac(this.player, "paused");
 
-				if(typeof(this.player.paused) == "function") {
+				if(fun(this.player.paused)) {
 					this.player.paused(event);
 				}
 			}
@@ -310,7 +310,7 @@ Util.videoPlayer = function(_options) {
 				u.rc(this.player, "playing|paused");
 				u.ac(this.player, "loading");
 
-				if(typeof(this.player.stalled) == "function") {
+				if(fun(this.player.stalled)) {
 					this.player.stalled(event);
 				}
 			}
@@ -322,7 +322,7 @@ Util.videoPlayer = function(_options) {
 
 				u.rc(this.player, "playing|paused");
 
-				if(typeof(this.player.ended) == "function") {
+				if(fun(this.player.ended)) {
 					this.player.ended(event);
 				}
 			}
@@ -337,7 +337,7 @@ Util.videoPlayer = function(_options) {
 				this.player.currentTime = this.currentTime;
 				this.player.metaLoaded = true;
 
-				if(typeof(this.player.loadedmetadata) == "function") {
+				if(fun(this.player.loadedmetadata)) {
 					this.player.loadedmetadata(event);
 				}
 			}
@@ -349,7 +349,7 @@ Util.videoPlayer = function(_options) {
 	
 				this.player.videoLoaded = true;
 
-				if(typeof(this.player.loadeddata) == "function") {
+				if(fun(this.player.loadeddata)) {
 					this.player.loadeddata(event);
 				}
 			}
@@ -360,7 +360,7 @@ Util.videoPlayer = function(_options) {
 //				u.bug("_timeupdate:" + this.currentTime);
 				this.player.currentTime = this.currentTime;
 
-				if(typeof(this.player.timeupdate) == "function") {
+				if(fun(this.player.timeupdate)) {
 					this.player.timeupdate(event);
 				}
 			}
@@ -401,7 +401,7 @@ Util.videoPlayer = function(_options) {
 	}
 
 	// Flash support
-	else if(typeof(u.videoPlayerFallback) == "function") {
+	else if(fun(u.videoPlayerFallback)) {
 
 		// remove HTML5 element
 		player.removeChild(player.video);

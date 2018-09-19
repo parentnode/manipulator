@@ -192,7 +192,7 @@ u.e.drag = function(node, boundaries, _options) {
 
 
 	// additional info passed to function as JSON object
-	if(typeof(_options) == "object") {
+	if(obj(_options)) {
 		var _argument;
 		for(_argument in _options) {
 
@@ -452,7 +452,7 @@ y: 3 -> -2 = 5 (3 - -2)
 			u.e.addEndEvent(this, u.e._drop);
 
 			// notify of pick
-			if(typeof(this[this.callback_picked]) == "function") {
+			if(fun(this[this.callback_picked])) {
 				this[this.callback_picked](event);
 			}
 
@@ -757,10 +757,10 @@ u.e._drag = function(event) {
 	}
 
 	// notify of movement
-	if(typeof(this[this.callback_moved]) == "function") {
+	if(fun(this[this.callback_moved])) {
 		this[this.callback_moved](event);
 	}
-	// if(typeof(this.moved) == "function") {
+	// if(fun(this.moved)) {
 	// 	this.moved(event);
 	// }
 
@@ -789,16 +789,16 @@ u.e._drop = function(event) {
 		u.stats.event(this, this.e_swipe_options);
 
 
-		if(this.swiped == "left" && typeof(this.swipedLeft) == "function") {
+		if(this.swiped == "left" && fun(this.swipedLeft)) {
 			this.swipedLeft(event);
 		}
-		else if(this.swiped == "right" && typeof(this.swipedRight) == "function") {
+		else if(this.swiped == "right" && fun(this.swipedRight)) {
 			this.swipedRight(event);
 		}
-		else if(this.swiped == "down" && typeof(this.swipedDown) == "function") {
+		else if(this.swiped == "down" && fun(this.swipedDown)) {
 			this.swipedDown(event);
 		}
-		else if(this.swiped == "up" && typeof(this.swipedUp) == "function") {
+		else if(this.swiped == "up" && fun(this.swipedUp)) {
 			this.swipedUp(event);
 		}
 //		this.swiped = false;
@@ -845,7 +845,7 @@ u.e._drop = function(event) {
 			this.transitioned = null;
 			u.a.transition(this, "none");
 
-			if(typeof(this.projected) == "function") {
+			if(fun(this.projected)) {
 				this.projected(event);
 			}
 		}
@@ -878,12 +878,12 @@ u.e._drop = function(event) {
 	}
 
 	// notify of drop
-	if(typeof(this[this.callback_dropped]) == "function") {
+	if(fun(this[this.callback_dropped])) {
 		this[this.callback_dropped](event);
 	}
 
 
-	// if(typeof(this.dropped) == "function") {
+	// if(fun(this.dropped)) {
 	// 	this.dropped(event);
 	// }
 

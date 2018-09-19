@@ -60,7 +60,7 @@ Util.bug = function() {
 
 		if(!u.bug_console_only) {
 
-			if(typeof(console) == "object") {
+			if(obj(console)) {
 				console.log(message);
 			}
 
@@ -102,7 +102,7 @@ Util.bug = function() {
 			message = message ? message.replace(/\>/g, "&gt;").replace(/\</g, "&lt;").replace(/&lt;br&gt;/g, "<br>") : "Util.bug with no message?";
 			u.ae(debug_div, "div", {"style":"color: " + color, "html": message});
 		}
-		else if(typeof(console) == "object") {
+		else if(obj(console)) {
 
 			var i;
 			for(i = 0; i < arguments.length; i++) {
@@ -122,7 +122,7 @@ Util.xInObject = function(object, _options) {
 
 
 		// additional info passed to function as JSON object
-		if(typeof(_options) == "object") {
+		if(obj(_options)) {
 			var _argument;
 			for(_argument in _options) {
 
@@ -138,14 +138,14 @@ Util.xInObject = function(object, _options) {
 		for(x in object) {
 
 		//	u.bug(x + ":" + object[x] + ":" + typeof(object[x]));
-			if(explore_objects && object[x] && typeof(object[x]) == "object" && typeof(object[x].nodeName) != "string") {
+			if(explore_objects && object[x] && obj(object[x]) && typeof(object[x].nodeName) != "string") {
 				s += x + "=" + object[x]+" => \n";
 				s += u.xInObject(object[x], true);
 			}
-			else if(object[x] && typeof(object[x]) == "object" && typeof(object[x].nodeName) == "string") {
+			else if(object[x] && obj(object[x]) && str(object[x].nodeName)) {
 				s += x + "=" + object[x]+" -> " + u.nodeId(object[x], 1) + "\n";
 			}
-			else if(object[x] && typeof(object[x]) == "function") {
+			else if(object[x] && fun(object[x])) {
 				s += x + "=function\n";
 			}
 			else {

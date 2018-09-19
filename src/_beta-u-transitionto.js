@@ -135,7 +135,7 @@ u.a.to(node3, "2s ease-in" {"x1":200,"x2":100}();
 					// clean up
 					this.cN.cleanScenes();
 
-					if(typeof(this.entered) == "function") {
+					if(fun(this.entered)) {
 						this.entered();
 					}
 				}
@@ -176,7 +176,7 @@ u.a.to(node3, "2s ease-in" {"x1":200,"x2":100}();
 					// clean up
 					this.cN.cleanScenes();
 
-					if(typeof(this.entered) == "function") {
+					if(fun(this.entered)) {
 						this.entered();
 					}
 				}
@@ -217,7 +217,7 @@ u.a.to(node3, "2s ease-in" {"x1":200,"x2":100}();
 					// clean up
 					this.cN.cleanScenes();
 
-					if(typeof(this.cN.scene.entered) == "function") {
+					if(fun(this.cN.scene.entered)) {
 						this.cN.scene.entered();
 					}
 				}
@@ -255,7 +255,7 @@ u.a.to(node3, "2s ease-in" {"x1":200,"x2":100}();
 					// clean up
 					this.cN.cleanScenes();
 
-					if(typeof(this.entered) == "function") {
+					if(fun(this.entered)) {
 						this.entered();
 					}
 				}
@@ -305,7 +305,7 @@ u.a.to(node3, "2s ease-in" {"x1":200,"x2":100}();
 						// clean up
 						this.cN.cleanScenes();
 
-						if(typeof(this.entered) == "function") {
+						if(fun(this.entered)) {
 							this.entered();
 						}
 					}
@@ -343,7 +343,7 @@ u.a.to(node3, "2s ease-in" {"x1":200,"x2":100}();
 					this.transitioned = null;
 					u.a.transition(this, "none");
 
-					if(typeof(this.entered) == "function") {
+					if(fun(this.entered)) {
 						this.entered();
 					}
 				}

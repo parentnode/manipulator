@@ -4,11 +4,11 @@ u.segmentSwitch = function(page) {
 	page.segmentSwitch = function() {
 
 		// global mobile size detection
-		if(u.browserW() < 600 && typeof(page.switchToMobile) == "function") {
+		if(u.browserW() < 600 && fun(page.switchToMobile)) {
 					u.bug("switch")
 			page.switchToMobile();
 		}
-		else if(u.browserW() > 600 && typeof(page.switchToMobileOutdated) == "function") {
+		else if(u.browserW() > 600 && fun(page.switchToMobileOutdated)) {
 					u.bug("outdated")
 			page.switchToMobileOutdated();
 		}

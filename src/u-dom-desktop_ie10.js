@@ -5,7 +5,7 @@ if(/*@cc_on!@*/false && document.documentMode <= 10) {
 	Util.appendElement = u.ae = function(_parent, node_type, attributes) {
 		try {
 			// is node_type already DOM node
-			var node = (typeof(node_type) == "object") ? node_type : document.createElement(node_type);
+			var node = (obj(node_type)) ? node_type : document.createElement(node_type);
 
 			if(attributes) {
 				var attribute;
@@ -42,7 +42,7 @@ if(/*@cc_on!@*/false && document.documentMode <= 10) {
 	// IE attribute bug - will not apply value for checkboxes
 	Util.insertElement = u.ie = function(_parent, node_type, attributes) {
 		try {
-			var node = (typeof(node_type) == "object") ? node_type : document.createElement(node_type);
+			var node = (obj(node_type)) ? node_type : document.createElement(node_type);
 
 			if(attributes) {
 				var attribute;

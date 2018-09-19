@@ -14,7 +14,7 @@ u.preloader = function(node, files, _options) {
 
 
 	// additional info passed to function as JSON object
-	if(typeof(_options) == "object") {
+	if(obj(_options)) {
 		var _argument;
 		for(_argument in _options) {
 
@@ -62,7 +62,9 @@ u.preloader = function(node, files, _options) {
 		new_queue.nodes = new Array();
 		new_queue._start_time = new Date().getTime();
 
-		for(i = 0; file = files[i]; i++) {
+		for(i = 0; i < files.length; i++) {
+			file = files[i];
+
 			entry = u.ae(new_queue, "li", {"class":"waiting"});
 			entry.i = i;
 			entry._queue = new_queue
@@ -73,7 +75,7 @@ u.preloader = function(node, files, _options) {
 		u.ac(node, "waiting");
 
 		// callback to request node (in queue)
-		if(typeof(node[new_queue._callback_waiting]) == "function") {
+		if(fun(node[new_queue._callback_waiting])) {
 			node[new_queue._callback_waiting](new_queue.nodes);
 		}
 
@@ -104,7 +106,7 @@ u._queueLoader = function() {
 					u.ac(next._queue._node, "loading");
 
 					// callback - loading has begun
-					if(typeof(next._queue._node[next._queue._callback_loading]) == "function") {
+					if(fun(next._queue._node[next._queue._callback_loading])) {
 						next._queue._node[next._queue._callback_loading](next._queue.nodes);
 					}
 				}
@@ -143,17 +145,17 @@ u._queueLoader = function() {
 							u.rc(this._queue._node, "loading");
 
 
-							if(typeof(this._queue._node[this._queue._callback_loaded]) == "function") {
+							if(fun(this._queue._node[this._queue._callback_loaded])) {
 								this._queue._node[this._queue._callback_loaded](this._queue.nodes);
 							}
 
 							// callback to specific callback function
-							// if(typeof(this._queue._callback) == "function") {
+							// if(fun(this._queue._callback)) {
 							// 	this._queue._node._callback = this._queue._callback;
 							// 	this._queue._node._callback(this._queue.nodes);
 							// }
 							// // or callback to default (loaded)
-							// else if(typeof(this._queue._node.loaded) == "function") {
+							// else if(fun(this._queue._node.loaded)) {
 							// 	this._queue._node.loaded(this._queue.nodes);
 							// }
 						}
@@ -193,7 +195,7 @@ u._queueLoader = function() {
 							u.rc(this._queue._node, "loading");
 
 
-							if(typeof(this._queue._node[this._queue._callback_loaded]) == "function") {
+							if(fun(this._queue._node[this._queue._callback_loaded])) {
 								this._queue._node[this._queue._callback_loaded](this._queue.nodes);
 							}
 
@@ -201,7 +203,7 @@ u._queueLoader = function() {
 
 						u._queueLoader();
 					}
-					if(typeof(u.audioPlayer) == "function") {
+					if(fun(u.audioPlayer)) {
 
 						next.audioPlayer = u.audioPlayer();
 						next.load(next._file);
@@ -266,7 +268,7 @@ u.loadImage = function(node, src) {
 u._imageLoaded = function(event) {
 	u.rc(this.node, "loading");
 	// notify base
-	if(typeof(this.node.loaded) == "function") {
+	if(fun(this.node.loaded)) {
 		this.node.loaded(event);
 	}
 
@@ -281,10 +283,10 @@ u._imageLoadError = function(event) {
 	u.ac(this.node, "error");
 	// notify base
 	// fallback to loaded if no failed callback function declared 
-	if(typeof(this.node.loaded) == "function" && typeof(this.node.failed) != "function") {
+	if(fun(this.node.loaded) && typeof(this.node.failed) != "function") {
 		this.node.loaded(event);
 	}
-	else if(typeof(this.node.failed) == "function") {
+	else if(fun(this.node.failed)) {
 		this.node.failed(event);
 	}
 }
@@ -294,7 +296,7 @@ u._imageLoadProgress = function(event) {
 
 	u.bug("progress")
 	// notify base
-	if(typeof(this.node.progress) == "function") {
+	if(fun(this.node.progress)) {
 		this.node.progress(event);
 	}
 	

@@ -169,7 +169,9 @@ u.videoPlayerFallback = function(player) {
 				player.hasQueue = false;
 
 				var i, action;
-				for(i = 0; action = player.actionsQueue[i]; i++) {
+				for(i = 0; i < player.actionsQueue.length; i++) {
+					action = player.actionsQueue[i];
+
 					player._action = action;
 					if(player.paramsQueue[0]) {
 						player._action(player.paramsQueue[0]);

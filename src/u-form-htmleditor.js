@@ -150,7 +150,8 @@ u.f.textEditor = function(field) {
 
 		// loop through tags
 		var tag, i;
-		for(i = 0; tag = tags[i]; i++) {
+		for(i = 0; i < tags.length; i++) {
+			tag = tags[i];
 
 //			u.bug("type:" + type + " - " + tag + " match:" + tag.match("^("+this[type+"_support"].split(",").join("|")+")$") + "-" + tag.match(re) + "-" + tag.match(/^(h1|h2|h3)$/gi) + " - " + "/^("+this[type+"_support"].split(",").join("|")+")$/");
 			// it tag is supported for type, add it to type_allowed array
@@ -341,22 +342,22 @@ u.f.textEditor = function(field) {
 
 
 		// callback to field updated
-		if(typeof(this.updated) == "function") {
+		if(fun(this.updated)) {
 			this.updated(this._input);
 		}
 
 		// callback to field changed
-		if(typeof(this.changed) == "function") {
+		if(fun(this.changed)) {
 			this.changed(this._input);
 		}
 
 		// callback to form updated
-		if(this._input._form && typeof(this._input._form.updated) == "function") {
+		if(this._input._form && fun(this._input._form.updated)) {
 			this._input._form.updated(this._input);
 		}
 
 		// callback to form changed
-		if(this._input._form && typeof(this._input._form.changed) == "function") {
+		if(this._input._form && fun(this._input._form.changed)) {
 			this._input._form.changed(this._input);
 		}
 	}
@@ -374,7 +375,9 @@ u.f.textEditor = function(field) {
 		this._viewer.innerHTML = "";
 
 		// loop through tags
-		for(i = 0; tag = tags[i]; i++) {
+		for(i = 0; i < tags.length; i++) {
+			tag = tags[i];
+
 //			console.log(tag)
 
 			// is tag a text
@@ -392,7 +395,8 @@ u.f.textEditor = function(field) {
 
 				// add list items
 				lis = u.qsa("div.li", tag);
-				for(j = 0; li = lis[j]; j++) {
+				for(j = 0; j < lis.length; j++) {
+					li = lis[j];
 					li = u.ae(list, tag._type.val(), {"html":li._input.val()});
 				}
 			}
@@ -444,7 +448,8 @@ u.f.textEditor = function(field) {
 
 		var i, node, tag, type, value, j, html = "";
 
-		for(i = 0; tag = tags[i]; i++) {
+		for(i = 0; i < tags.length; i++) {
+			tag = tags[i];
 //			u.bug(u.nodeId(tag));
 
 			// text node
@@ -464,7 +469,9 @@ u.f.textEditor = function(field) {
 
 				// get list tiems
 				lis = u.qsa("div.li", tag);
-				for(j = 0; li = lis[j]; j++) {
+				for(j = 0; j < lis.length; j++) {
+					li = lis[j];
+
 					html += "\t<li>"+li._input.val()+"</li>\n";
 				}
 
@@ -635,7 +642,9 @@ u.f.textEditor = function(field) {
 				var i, option;
 
 				// try to find option with matching value
-				for(i = 0; option = this.childNodes[i]; i++) {
+				for(i = 0; i < this.childNodes.length; i++) {
+					option = this.childNodes[i];
+
 //					u.bug("aoption:" + option)
 					if(u.text(option) == value) {
 
@@ -1916,7 +1925,9 @@ u.f.textEditor = function(field) {
 			var paste_parts = paste_content.trim().split(/\n\r|\n|\r/g);
 //			alert(paste_parts.join(","))
 			var text_nodes = [];
-			for(i = 0; text = paste_parts[i]; i++) {
+			for(i = 0; i < paste_parts.length; i++) {
+				text = paste_parts[i];
+
 				text_nodes.push(document.createTextNode(text));
 
 				// only insert br-tag if there is more than one paste-part and not after the last one
@@ -1927,7 +1938,8 @@ u.f.textEditor = function(field) {
 
 			// loop through nodes in opposite order
 			// webkit collapses space after selection if I don't 
-			for(i = text_nodes.length-1; node = text_nodes[i]; i--) {
+			for(i = text_nodes.length-1; i > 0; i--) {
+				node = text_nodes[i];
 
 				// get current range
 				var range = selection.getRangeAt(0);
@@ -2241,7 +2253,9 @@ u.f.textEditor = function(field) {
 		var i, node;
 		var inline_tags = u.qsa("a,strong,em,span", input);
 
-		for(i = 0; node = inline_tags[i]; i++) {
+		for(i = 0; i < inline_tags.length; i++) {
+			node = inline_tags[i];
+
 			node.field = input.field;
 			node.tag = tag;
 			this.deleteOrEditOption(node);
@@ -2510,7 +2524,8 @@ u.f.textEditor = function(field) {
 
 
 		// loop through childNodes
-		for(i = 0; node = field._viewer.childNodes[i]; i++) {
+		for(i = 0; i < field._viewer.childNodes.length; i++) {
+			node = field._viewer.childNodes[i];
 
 //			u.bug("node" + u.nodeId(node) + ", " + node.nodeName + ", " + typeof(node.nodeName));
 
@@ -2598,7 +2613,8 @@ u.f.textEditor = function(field) {
 
 				// loop through remaining li-element and add them, one by one
 				if(lis.length > 1) {
-					for(j = 1; li = lis[j]; j++) {
+					for(j = 1; j < lis.length; j++) {
+						li = lis[j];
 //						value = li.innerHTML.replace(/\n\r|\n|\r/g, "<br>");
 						value = li.innerHTML.trim().replace(/(<br>|<br \/>)$/, "").replace(/\n\r|\n|\r/g, "<br>");
 						li = field.addListItem(tag, value);
@@ -2643,7 +2659,9 @@ u.f.textEditor = function(field) {
 //				u.bug("found denied list node")
 
 				var children = u.cn(node);
-				for(j = 0; child = children[j]; j++) {
+				for(j = 0; j < children.length; j++) {
+					child = children[j];
+
 					value = child.innerHTML.replace(/\n\r|\n|\r/g, "");
 					tag = field.addTextTag(field.text_allowed[0], value);
 					field.activateInlineFormatting(tag._input, tag);

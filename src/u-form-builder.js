@@ -13,7 +13,7 @@ u.f.addForm = function(node, _options) {
 	var form_class = "";
 
 	// additional info passed to function as JSON object
-	if(typeof(_options) == "object") {
+	if(obj(_options)) {
 		var _argument;
 		for(_argument in _options) {
 
@@ -36,7 +36,7 @@ u.f.addFieldset = function(node, _options) {
 	var fieldset_class = "";
 
 	// additional info passed to function as JSON object
-	if(typeof(_options) == "object") {
+	if(obj(_options)) {
 		var _argument;
 		for(_argument in _options) {
 
@@ -77,7 +77,7 @@ u.f.addField = function(node, _options) {
 
 
 	// additional info passed to function as JSON object
-	if(typeof(_options) == "object") {
+	if(obj(_options)) {
 		var _argument;
 		for(_argument in _options) {
 
@@ -259,7 +259,8 @@ u.f.addField = function(node, _options) {
 		// add options
 		if(field_options) {
 			var i, option;
-			for(i = 0; option = field_options[i]; i++) {
+			for(i = 0; i < field_options.length; i++) {
+				option = field_options[i];
 				
 				if(option.value == field_value) {
 					u.ae(select, "option", {"value":option.value, "html":option.text, "selected":"selected"});
@@ -279,7 +280,8 @@ u.f.addField = function(node, _options) {
 
 		if(field_options) {
 			var i, option;
-			for(i = 0; option = field_options[i]; i++) {
+			for(i = 0; i < field_options.length; i++) {
+				option = field_options[i];
 
 				var div = u.ae(field, "div", {"class":"item"});
 				
@@ -347,7 +349,7 @@ u.f.addAction = function(node, _options) {
 	var action_class = "";
 
 	// additional info passed to function as JSON object
-	if(typeof(_options) == "object") {
+	if(obj(_options)) {
 		var _argument;
 		for(_argument in _options) {
 
