@@ -43,6 +43,9 @@ Util.Events = u.e = new function() {
 
 
 	// theoretical support for dual input sources
+	// TODO: in some rare edge cases Firefox on windows ontouchmove and onmousemove are both null but maxTouchPoints is 0.
+	// In most cases this in-between state disappears after restarting the computer (maybe maxTouchPoints should not be used for this detection??)
+
 	if(navigator.maxTouchPoints > 1) {
 
 		if((typeof(document.ontouchmove) == "undefined" && typeof(document.onmousemove) == "undefined") || (document.ontouchmove === null && document.onmousemove === null)) {
@@ -66,6 +69,8 @@ Util.Events = u.e = new function() {
 		}
 
 	}
+
+	// console.log(this.event_support);
 
 //	this.event_support = navigator.maxTouchPoints > 1 "multi" ? : (typeof(document.ontouchmove) == "undefined" ? "touch" : "mouse"));
 //	this.event_pref = "touch";
@@ -322,7 +327,7 @@ Util.Events = u.e = new function() {
 
 	// reset events for click, hold and dblclick
 	this.resetClickEvents = function(node) {
-//		u.bug("resetClickEvents:" + u.nodeId(node));
+		// u.bug("resetClickEvents:", node);
 
 		u.t.resetTimer(node.t_held);
 		u.t.resetTimer(node.t_clicked);
@@ -372,7 +377,7 @@ Util.Events = u.e = new function() {
 	* Multiple event possible
 	*/
 	this._inputStart = function(event) {
-//		u.bug("_inputStart:" + u.nodeId(this));
+		// u.bug("_inputStart:", this);
 
 //		u.xInObject(event);
 
@@ -486,7 +491,7 @@ Util.Events = u.e = new function() {
 
 
 	this._cancelClick = function(event) {
-//		u.bug("_cancelClick:" + u.nodeId(this))
+		// u.bug("_cancelClick:", this);
 
 		// use complete move since inputStart to determine whether to cancel click
 		var offset_x = u.eventX(event) - this.start_event_x;
@@ -616,7 +621,8 @@ Util.Events = u.e = new function() {
 		u.e.addStartEvent(node, this._inputStart);
 	}
 	this._dblclicked = function(event) {
-//		u.bug("_dblclicked:" + u.nodeId(this) + ", " + event.type)
+		// u.bug("_dblclicked:",this, event.type);
+
 		// if valid click timer, treat as dblclick
 		if(u.t.valid(this.t_clicked) && event) {
 
