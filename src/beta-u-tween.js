@@ -84,12 +84,35 @@ u.tween = function(node, _options) {
 		
 	}
 
+	if(node._t.type == "HTML") {
+		console.log("HTML")
+		var current_styles = window.getComputedStyle(node, null);
+
+		console.log(current_styles);
+
+		var i, style;
+		for(i = 0; i < _options.vars.length; i++) {
+			style = _options.vars[i];
+
+			// for now just getting first entry in object
+			property = Object.keys(style)[0];
+
+
+			real_property = (u.vendorProperty(property).replace(/([A-Z]{1})/g, "-$1")).toLowerCase().replace(/^(webkit|ms)/, "-$1");
+
+
+			node._t.start[property] = current_styles[real_property];
+			node._t.end[property] = style[property];
+		}
+		
+	}
 
 	// _options proposal:
 	// {duration: value, delay: value, vars: [
 	// 		{parameter1: value, ease: easeFunc, modifier: function},
 	// 		{parameter2: value, ease: easeFunc, modifier: function}
 	// 	], onStart: function, ease: globalEase}
+
 
 	
 	// Parse values to identify UNITS (px, %, em, etc)
@@ -120,17 +143,22 @@ u.addToMatrix = function(node, _option) {
 
 u.create_t = function(node) {
 
+	node._t = {};
+
 	if(node instanceof HTMLElement) {
+		node._t.type = "HTML";
 		node._t.setProperty = function() {
 			this.style[u.vendorProperty(property)] = value;
 		}
 	}
 	else if(node instanceof SVGElement) {
+		node._t.type = "SVG";
 		node._t.setProperty = function() {
 			this.setAttribute(property, value);
 		}
 	}
 	else if(node instanceof Object) {
+		node._t.type = "Object";
 		node._t.setProperty = function() {
 			this.property = value;
 		}
