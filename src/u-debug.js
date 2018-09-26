@@ -60,19 +60,25 @@ Util.bug = function() {
 
 		if(!u.bug_console_only) {
 
+			var i, message;
+
+			// also output console if available (but not only in console)
 			if(obj(console)) {
-				console.log(message);
+				for(i = 0; i < arguments.length; i++) {
+					if(arguments[i] || typeof(arguments[i]) == "undefined") {
+						// console.trace();
+						console.log(arguments[i]);
+					}
+				}
 			}
 
 			// TODO move to separate function
 			var option, options = new Array([0, "auto", "auto", 0], [0, 0, "auto", "auto"], ["auto", 0, 0, "auto"], ["auto", "auto", 0, 0]);
-			if(isNaN(corner)) {
-				color = corner;
-				corner = 0;
-			}
-			if(typeof(color) != "string") {
-				color = "black";
-			}
+
+			var corner = u.bug_corner ? u.bug_corner : 0;
+			var color = u.bug_color ? u.bug_color : "black";
+
+			
 			option = options[corner];
 
 			if(!document.getElementById("debug_id_"+corner)) {
@@ -94,19 +100,29 @@ Util.bug = function() {
 				d_target.style.padding = "2px 3px";
 			}
 
-			if(typeof(message) != "string") {
-				message = message.toString();
+			for(i = 0; i < arguments.length; i++) {
+
+				if(arguments[i] === undefined) {
+					message = "undefined";
+				}
+				else if(!str(arguments[i]) && fun(arguments[i].toString)) {
+					message = arguments[i].toString();
+				}
+				else {
+					message = arguments[i];
+				}
+
+				var debug_div = document.getElementById("debug_id_"+corner);
+				message = message ? message.replace(/\>/g, "&gt;").replace(/\</g, "&lt;").replace(/&lt;br&gt;/g, "<br>") : "Util.bug with no message?";
+				u.ae(debug_div, "div", {"style":"color: " + color, "html": message});
+
 			}
 
-			var debug_div = document.getElementById("debug_id_"+corner);
-			message = message ? message.replace(/\>/g, "&gt;").replace(/\</g, "&lt;").replace(/&lt;br&gt;/g, "<br>") : "Util.bug with no message?";
-			u.ae(debug_div, "div", {"style":"color: " + color, "html": message});
 		}
 		else if(obj(console)) {
 
 			var i;
 			for(i = 0; i < arguments.length; i++) {
-				// console.trace();
 				console.log(arguments[i]);
 			}
 		}
@@ -137,8 +153,7 @@ Util.xInObject = function(object, _options) {
 		var x, s = "--- start object ---\n";
 		for(x in object) {
 
-		//	u.bug(x + ":" + object[x] + ":" + typeof(object[x]));
-			if(explore_objects && object[x] && obj(object[x]) && typeof(object[x].nodeName) != "string") {
+			if(explore_objects && object[x] && obj(object[x]) && !str(object[x].nodeName)) {
 				s += x + "=" + object[x]+" => \n";
 				s += u.xInObject(object[x], true);
 			}
@@ -164,4 +179,3 @@ Util.xInObject = function(object, _options) {
 
 	}
 }
-
