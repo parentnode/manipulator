@@ -323,7 +323,7 @@ u.setupMedia = function(player, _options) {
 
 		// loading has started
 		player.media._loadstart = function(event) {
-//				u.bug("_loadstart");
+			// u.bug("_loadstart");
 
 			u.ac(this.player, "loading");
 
@@ -335,7 +335,7 @@ u.setupMedia = function(player, _options) {
 
 		// enough is loaded to play entire movie
 		player.media._canplaythrough = function(event) {
-//				u.bug("_canplaythrough");
+			// u.bug("_canplaythrough");
 
 			u.rc(this.player, "loading");
 
@@ -347,7 +347,7 @@ u.setupMedia = function(player, _options) {
 
 		// media is playing
 		player.media._playing = function(event) {
-//			u.bug("_playing");
+			// u.bug("_playing");
 
 			u.rc(this.player, "loading|paused");
 			u.ac(this.player, "playing");
@@ -360,7 +360,7 @@ u.setupMedia = function(player, _options) {
 
 		// media is paused
 		player.media._paused = function(event) {
-//			u.bug("_paused");
+			// u.bug("_paused");
 
 			u.rc(this.player, "playing|loading");
 			u.ac(this.player, "paused");
@@ -373,7 +373,7 @@ u.setupMedia = function(player, _options) {
 
 		// media is stalled
 		player.media._stalled = function(event) {
-//				u.bug("_stalled");
+			// u.bug("_stalled");
 
 			u.rc(this.player, "playing|paused");
 			u.ac(this.player, "loading");
@@ -386,7 +386,7 @@ u.setupMedia = function(player, _options) {
 
 		// media error
 		player.media._error = function(event) {
-//			u.bug("_error");
+			// u.bug("_error");
 
 			if(fun(this.player.error)) {
 				this.player.error(event);
@@ -396,7 +396,7 @@ u.setupMedia = function(player, _options) {
 
 		// media has played til its end
 		player.media._ended = function(event) {
-//				u.bug("_ended");
+			// u.bug("_ended");
 
 			u.rc(this.player, "playing|paused");
 
@@ -408,8 +408,8 @@ u.setupMedia = function(player, _options) {
 
 		// metadata loaded
 		player.media._loadedmetadata = function(event) {
-//				u.bug("_loadedmetadata:duration:" + this.duration);
-//				u.bug("_loadedmetadata:currentTime:" + this.currentTime);
+			// u.bug("_loadedmetadata:duration:" + this.duration);
+			// u.bug("_loadedmetadata:currentTime:" + this.currentTime);
 
 			this.player.duration = this.duration;
 			this.player.currentTime = this.currentTime;
@@ -423,7 +423,7 @@ u.setupMedia = function(player, _options) {
 
 		// media loaded
 		player.media._loadeddata = function(event) {
-//				u.bug("_loadeddata:" + this.duration);
+			// u.bug("_loadeddata:" + this.duration);
 
 			this.player.mediaLoaded = true;
 
@@ -435,7 +435,8 @@ u.setupMedia = function(player, _options) {
 
 		// timeupdate
 		player.media._timeupdate = function(event) {
-//				u.bug("_timeupdate:" + this.currentTime);
+			// u.bug("_timeupdate:" + this.currentTime);
+
 			this.player.currentTime = this.currentTime;
 
 			if(fun(this.player.timeupdate)) {
@@ -772,7 +773,7 @@ u.setupMediaControls = function(player, _options) {
 				u.as(player.controls.search_ff, "display", player.controls.search_ff._default_display);
 				u.as(player.controls.search_rw, "display", player.controls.search_rw._default_display);
 			}
-		
+
 		}
 		else if(player.controls.search) {
 			u.as(player.controls.search_ff, "display", "none");
@@ -806,7 +807,7 @@ u.setupMediaControls = function(player, _options) {
 
 
 u.detectMediaAutoplay = function(player) {
-//	u.bug("detectMediaAutoplay:", player, u.media_autoplay_detection);
+	// u.bug("detectMediaAutoplay:", player, u.media_autoplay_detection);
 
 	if(!u.media_autoplay_detection) {
 //		u.bug("Actual detection");
@@ -841,7 +842,7 @@ u.detectMediaAutoplay = function(player) {
 
 		// autoplay test passed
 		u.test_autoplay.playing = function(event) {
-			// u.bug("playing:", event);
+			// u.bug("test_autoplay playing:", event);
 
 			u.media_can_autoplay = true;
 			u.media_can_autoplay_muted = true;
@@ -850,7 +851,7 @@ u.detectMediaAutoplay = function(player) {
 		}
 		// autoplay test failed
 		u.test_autoplay.notplaying = function() {
-			// u.bug("notplaying");
+			// u.bug("test_autoplay notplaying");
 
 			u.media_can_autoplay = false;
 
@@ -867,16 +868,16 @@ u.detectMediaAutoplay = function(player) {
 			}
 		}
 		// autoplay muted test passed
-		u.test_autoplay.playing_muted = function(event) {
-			// u.bug("playing_muted", event);
+		u.test_autoplay.playing_muted = function() {
+			// u.bug("test_autoplay playing_muted");
 
 			u.media_can_autoplay_muted = true;
 
 			this.check();
 		}
 		// autoplay muted test failed
-		u.test_autoplay.notplaying_muted = function(event) {
-			// u.bug("notplaying_muted", event);
+		u.test_autoplay.notplaying_muted = function() {
+			// u.bug("test_autoplay notplaying_muted");
 
 			u.media_can_autoplay_muted = false;
 
@@ -885,7 +886,7 @@ u.detectMediaAutoplay = function(player) {
 
 		// player failed
 		u.test_autoplay.error = function(event) {
-			// u.bug("autoplay error", event);
+			// u.bug("test_autoplay error", event);
 
 			u.media_can_autoplay = false;
 			u.media_can_autoplay_muted = false;
