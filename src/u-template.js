@@ -195,7 +195,7 @@ u.template = function(template, json, _options) {
 
 						// clean up strings
 						if(str(json[_item][key]) && json[_item][key]) {
-							return json[_item][key].toString().replace(/(\\|\"|\')/g, "\\$1");
+							return json[_item][key].toString().replace(/(\\|\"|\')/g, "\\$1").replace(/\n/, "\\n");
 						}
 						// return numbers correct
 						else if(typeof(json[_item][key]) == "number") {
@@ -239,7 +239,7 @@ u.template = function(template, json, _options) {
 
 				// clean up strings
 				if(str(json[key]) && json[key]) {
-					return json[key].replace(/(\\|\"|\')/g, "\\$1");
+					return json[key].replace(/(\\|\"|\')/g, "\\$1").replace(/\n/, "\\n");
 				}
 				// return numbers correct
 				else if(typeof(json[key]) == "number") {
