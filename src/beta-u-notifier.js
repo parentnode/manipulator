@@ -47,7 +47,7 @@ u.notifier = function(node) {
 
 		var output = [];
 
-		u.bug("message:" + typeof(response) + "; JSON: " + response.isJSON + "; HTML: " + response.isHTML);
+		// u.bug("message:" + typeof(response) + "; JSON: " + response.isJSON + "; HTML: " + response.isHTML);
 
 		// if(obj(response)) {
 		if(obj(response) && response.isJSON) {
