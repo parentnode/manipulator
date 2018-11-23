@@ -47,10 +47,10 @@ u.notifier = function(node) {
 
 		var output = [];
 
-//		u.bug("message:" + typeof(response) + "; JSON: " + response.isJSON + "; HTML: " + response.isHTML);
+		// u.bug("message:" + typeof(response) + "; JSON: " + response.isJSON + "; HTML: " + response.isHTML);
 
-		if(obj(response)) {
-//		if(obj(response) && response.isJSON) {
+		// if(obj(response)) {
+		if(obj(response) && response.isJSON) {
 
 			var message = response.cms_message;
 			var cms_status = typeof(response.cms_status) != "undefined" ? response.cms_status : "";
