@@ -141,7 +141,7 @@ u.notifier = function(node) {
 								// u.bug("input:" + u.nodeId(node) + ", " + node.value);
 								node.value = csrf_token;
 							}
-							for(i = 0; i <= dom_vars.length; i++) {
+							for(i = 0; i < dom_vars.length; i++) {
 								node = dom_vars[i];
 								if(node.csrf_token) {
 									// u.bug("dom:" + u.nodeId(node) + ", " + node.csrf_token);
