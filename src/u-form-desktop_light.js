@@ -697,7 +697,7 @@ Util.Form = u.f = new function() {
 		if(value !== undefined) {
 
 			// find option with matching value
-			for(i = 0; i < this.field._inputs[i]; i++) {
+			for(i = 0; i < this.field._inputs.length; i++) {
 				option = this.field._inputs[i];
 
 				// finding it not unlikely that radio value could be strings "true"/"false"
