@@ -286,7 +286,7 @@ u.sortable = function(scope, _options) {
 //		for(i = 0; node = this.draggable_nodes[i]; i++) {
 
 		// loop through backwards to check children first 
-		for(i = this.draggable_nodes.length-1; i > 0; i--) {
+		for(i = this.draggable_nodes.length-1; i >= 0; i--) {
 			node = this.draggable_nodes[i];
 
 			// do not check current node or target node for overlap and parent UL is included in targets
