@@ -46,28 +46,43 @@ Util.Events = u.e = new function() {
 	// TODO: in some rare edge cases Firefox on windows ontouchmove and onmousemove are both null but maxTouchPoints is 0.
 	// In most cases this in-between state disappears after restarting the computer (maybe maxTouchPoints should not be used for this detection??)
 
-	if(navigator.maxTouchPoints > 1) {
+	// if(navigator.maxTouchPoints > 1) {
+	//
+	// 	if((typeof(document.ontouchmove) == "undefined" && typeof(document.onmousemove) == "undefined") || (document.ontouchmove === null && document.onmousemove === null)) {
+	//
+	// 		this.event_support = "multi";
+	// 	}
+	//
+	// }
+	//
+	// if(!this.event_support) {
+	//
+	// 	if(typeof(document.ontouchmove) == "object" && typeof(document.onmousemove) == "object") {
+	//
+	// 		this.event_support = "multi";
+	//
+	// 	}
+	// 	if(typeof(document.ontouchmove) == "undefined") {
+	//
+	// 		this.event_support = "mouse";
+	//
+	// 	}
+	// 	else {
+	//
+	// 		this.event_support = "touch";
+	//
+	// 	}
+	//
+	// }
 
-		if((typeof(document.ontouchmove) == "undefined" && typeof(document.onmousemove) == "undefined") || (document.ontouchmove === null && document.onmousemove === null)) {
-
-			this.event_support = "multi";
-		}
-
+    if ((obj(document.ontouchmove) && obj(document.ontouchmove)) || (fun(document.ontouchmove) && fun(document.ontouchmove))) {
+        this.event_support = "multi";
+    }
+    else if (obj(document.onmousemove) || fun(document.onmousemove)) {
+		this.event_support = "mouse";
 	}
-
-	if(!this.event_support) {
-
-		if(typeof(document.ontouchmove) == "undefined") {
-
-			this.event_support = "mouse";
-
-		}
-		else {
-
-			this.event_support = "touch";
-
-		}
-
+	else {
+		this.event_support = "touch";
 	}
 
 	// console.log(this.event_support);
