@@ -340,7 +340,7 @@ Util.Events = u.e = new function() {
 		// only act on left click (or equivalent)
 		// button property is 0 for left click - also works as fallback support
 		if(!event.button) {
-			u.bug("left click:", this);
+			// u.bug("left click:", this);
 
 			// ordinary click events
 			if(this.e_click || this.e_dblclick || this.e_hold) {
@@ -405,7 +405,7 @@ Util.Events = u.e = new function() {
 
 		// Right click
 		else if(event.button === 2) {
-			u.bug("right click:", this);
+			// u.bug("right click:", this);
 
 			// listning for right click
 			if(this.e_rightclick) {
