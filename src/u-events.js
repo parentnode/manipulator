@@ -18,15 +18,15 @@ Util.Events = u.e = new function() {
 	// Windows with touch screen has dual input and no event bubble between types
 
 	// auto-choose default event type
-	// support for dual input sources
-    if ((obj(document.ontouchmove) && obj(document.ontouchmove)) || (fun(document.ontouchmove) && fun(document.ontouchmove))) {
+	// support for dual input sources on windows only (everywhere else native implementation handles dual support)
+    if (navigator.userAgent.match(/Windows/i) && ((obj(document.ontouchmove) && obj(document.ontouchmove)) || (fun(document.ontouchmove) && fun(document.ontouchmove)))) {
         this.event_support = "multi";
     }
-    else if (obj(document.onmousemove) || fun(document.onmousemove)) {
-		this.event_support = "mouse";
+    else if (obj(document.ontouchmove) || fun(document.ontouchmove)) {
+		this.event_support = "touch";
 	}
 	else {
-		this.event_support = "touch";
+		this.event_support = "mouse";
 	}
 
 	// console.log(this.event_support);
