@@ -22,6 +22,7 @@
 u.slideshow = function(list, _options) {
 	var i, node;
 
+	// u.bug("list:", list);
 
 
 	// add next/prev links
@@ -78,6 +79,11 @@ u.slideshow = function(list, _options) {
 	slideshow._width = slideshow.offsetWidth;
 	slideshow._height = slideshow.offsetHeight;
 
+	// get slideshow nodes
+	slideshow.nodes = u.qsa("li"+slideshow._selector, slideshow.list);
+	// u.bug("slideshow.nodes:", slideshow.nodes.length, slideshow.nodes);
+
+
 //	slideshow._width = slideshow.list.offsetWidth;
 
 	// create navigation
@@ -103,23 +109,47 @@ u.slideshow = function(list, _options) {
 	}
 
 	// TODO: create index
-	if(slideshow._navigation) {}
+	if(slideshow._index) {
+
+		slideshow.index = u.ae(slideshow, "ul", {class:"index"});
+
+		for(i = 0; i < slideshow.nodes.length; i++) {
+			node = u.ae(slideshow.index, "li", {class: slideshow.nodes[i].className});
+			node.slide = slideshow.nodes[i];
+			node.slideshow = slideshow;
+
+			// map index node (if index is enabled)
+			slideshow.nodes[i].index = node;
+
+			u.ce(node);
+			node.clicked = function() {
+				this.slideshow.selectNode(this.slide._i);
+			}
+			// slideshow.nodes[i];
+			
+		}
+		
+
+	}
 
 
 
 	// add loading class after 1000ms loading time
 	slideshow.showLoading = function() {
-//		u.bug("loading!!!!")
+		// u.bug("loading!!!!");
+
 		u.ac(this, "loading");
 	}
 	slideshow.loading = function() {
-		if(!this.t_loading) {
+		if(!u.t.valid(this.t_loading)) {
+			// u.bug("loading timer");
+
 			this.t_loading = u.t.setTimer(this, this.showLoading, 1000);
 		}
 	}
 	// slideshow is loaded
 	slideshow._loaded = function() {
-//		u.bug("!!!!loaded")
+		// u.bug("!!!!loaded");
 
 		u.t.resetTimer(this.t_loading);
 		u.rc(this, "loading");
@@ -130,11 +160,17 @@ u.slideshow = function(list, _options) {
 		}
 	}
 
+	slideshow.resized = function() {
+		u.bug("slideshow resized");
+
+		this._width = this.offsetWidth;
+		this._height = this.offsetHeight;
+	}
 
 	// set up carousel
 	// TODO: make incremental/sequentiel/all load methods
 	slideshow.prepare = function() {
-//		u.bug("prepare slideshow:" + u.nodeId(this, true))
+		// u.bug("prepare slideshow:", this);
 
 		// only set up swiping if more than one node in list
 		if(this.nodes.length > 1) {
@@ -406,16 +442,21 @@ u.slideshow = function(list, _options) {
 		if(fun(this.prepared)) {
 			this.prepared();
 		}
+		// continue default process
+		else {
+			this.build();
+		}
 
 	}
 
 	// preload slideshow
 	// TODO: implement additional load methods
 	slideshow.preload = function(start_with) {
-//		u.bug("preload slideshow:" + u.nodeId(this, true))
+		// u.bug("preload slideshow:", start_with);
 
 		// start loading process
 		this.loading();
+
 
 		// incremental load (4 nodes - 2 prev + 2 next)
 
@@ -437,42 +478,77 @@ u.slideshow = function(list, _options) {
 		else {
 			this._load_base = this.selected_node;
 		}
-//		u.bug("loadbase:" + this._load_base._i)
+		// u.bug("loadbase:", this._load_base._i);
 
+		// if(!u.hc(this._load_base, "ready")) {
+		if(!this._load_base.is_ready) {
+			// u.bug("load base node");
 
-		if(!u.hc(this._load_base, "ready")) {
-			this.loadNode(this._load_base);
+			if(fun(this.loadNode)) {
+				this.loadNode(this._load_base);
+			}
+			else {
+				this._loadNode(this._load_base);
+			}
 			return;
 		}
 
 		var next_1 = this.nodes.length > this._load_base._i+1 ? this.nodes[this._load_base._i+1] : this.nodes[0];
-		if(next_1 && !u.hc(next_1, "ready")) {
-//			u.bug("load next 1:" + next_1._i)
-			this.loadNode(next_1);
+		// if(next_1 && !u.hc(next_1, "ready")) {
+		if(next_1 && !next_1.is_ready) {
+			// u.bug("load next 1:", next_1._i);
+
+			if(fun(this.loadNode)) {
+				this.loadNode(next_1);
+			}
+			else {
+				this._loadNode(next_1);
+			}
 			return;
 		}
 
 		var prev_1 = this._load_base._i > 0 ? this.nodes[this._load_base._i-1] : this.nodes[this.nodes.length-1];
-		if(prev_1 && !u.hc(prev_1, "ready")) {
-//			u.bug("load prev 1:" + prev_1._i + "," + u.nodeId(prev_1))
-			this.loadNode(prev_1);
+		// if(prev_1 && !u.hc(prev_1, "ready")) {
+		if(prev_1 && !prev_1.is_ready) {
+			// u.bug("load prev 1:", prev_1._i);
+
+			if(fun(this.loadNode)) {
+				this.loadNode(prev_1);
+			}
+			else {
+				this._loadNode(prev_1);
+			}
 			return;
 		}
 
 		if(next_1) {
 			var next_2 = this.nodes.length > next_1._i+1 ? this.nodes[next_1._i+1] : this.nodes[0];
-			if(next_2 && !u.hc(next_2, "ready")) {
-//				u.bug("load next 2:" + next_2._i)
-				this.loadNode(next_2);
+			// if(next_2 && !u.hc(next_2, "ready")) {
+			if(next_2 && !next_2.is_ready) {
+				// u.bug("load next 2:", next_2._i);
+
+				if(fun(this.loadNode)) {
+					this.loadNode(next_2);
+				}
+				else {
+					this._loadNode(next_2);
+				}
 				return;
 			}
 		}
 
 		if(prev_1) {
 			var prev_2 = prev_1._i > 0 ? this.nodes[prev_1._i-1] : this.nodes[this.nodes.length-1];
-			if(prev_2 && !u.hc(prev_2, "ready")) {
-//				u.bug("load prev 2:" + prev_2._i)
-				this.loadNode(prev_2);
+			// if(prev_2 && !u.hc(prev_2, "ready")) {
+			if(prev_2 && !prev_2.is_ready) {
+				// u.bug("load prev 2:" + prev_2._i);
+
+				if(fun(this.loadNode)) {
+					this.loadNode(prev_2);
+				}
+				else {
+					this._loadNode(prev_2);
+				}
 				return;
 			}
 		}
@@ -490,27 +566,34 @@ u.slideshow = function(list, _options) {
 
 	// build slideshow nodes
 	slideshow.build = function() {
-//		u.bug("build slideshow:" + u.nodeId(this, true))
+		// u.bug("build slideshow:", this);
 
 		var i, node;
 		// loop through nodes for initial setup
-		for(i = 0; i < this.nodes[i]; i++) {
+		for(i = 0; i < this.nodes.length; i++) {
+			// u.bug("build node:", node);
+
 			node = this.nodes[i];
 
 			node.slideshow = this;
 			node._i = i;
 
-			// move node out of sight
+
+			// default hide all slides, by placing them out of sight
+			// make sure they are displayed block, so calculations 
 			u.a.transition(node, "none");
-			u.a.translate(node, 0, -node.offsetHeight);
+			u.ass(node, {
+				transform: "translate3d(0, "+(-this._height)+"px, 0)"
+			});
+			// u.a.translate(node, 0, -node.offsetHeight);
 
 			// load node
-			if(typeof(this.buildNode)) {
+			if(fun(this.buildNode)) {
 				// move node out of visual scope
 
 				this.buildNode(node);
 			}
-			// internal buildNode if new has not been declared
+			// internal buildNode if override function has not been declared
 			else {
 				this._buildNode(node);
 			}
@@ -525,7 +608,7 @@ u.slideshow = function(list, _options) {
 		if(fun(this.built)) {
 			this.built();
 		}
-		// no callback - just start preloading
+		// no callback - continue default process
 		else {
 			this.preload();
 		}
@@ -534,77 +617,109 @@ u.slideshow = function(list, _options) {
 	// internal buildNode function - default action is to load background image with values from item_id and variant
 	// load node bg - NOT TESTED
 	slideshow._buildNode = function(node) {
-//		u.bug("nodeLoad:" + u.nodeId(node, 1));
+		// u.bug("_buildNode:", node);
 
+	}
+
+	slideshow._loadNode = function(node) {
+		// u.bug("_loadNode:", node);
 
 		// load node background
-		if(!node.initialized) {
-			node.initialized = true;
+		if(!node.is_ready) {
+			node.is_ready = true;
 
 			var item_id = u.cv(node, "item_id");
-			var variant = u.cv(node, "variant");
+
+
+			var image_src = false;
 
 			if(item_id) {
-				// load bg
+
+				var variant = u.cv(node, "variant");
+				var format = u.cv(node, "format");
+
+				image_src = "/images/"+item_id+"/"+variant+"/"+this._width+"x."+format;
+			}
+			else {
+				image_src = node.getAttribute("data-image-src");
+			}
+
+			if(image_src) {
+
 				node.loaded = function(queue) {
 					u.as(this, "backgroundImage", "url("+queue[0]._image.src+")");
 
-					// default hide all stories, by placing them out of sight
+					// default hide all slides, by placing them out of sight
 					// make sure they are displayed block, so calculations 
-					u.a.transition(this, "none");
-					u.a.translate(this, -this.offsetWidth, 0);
-					u.as(this, "display", "block");
+					// u.a.transition(this, "none");
+					// u.ass(this, {
+					// 	transform: "translate3d("+(-this.slideshow._width)+"px, 0, 0)",
+					// 	// display: "block"
+					// });
+					// u.a.translate(this, -this.offsetWidth, 0);
+					// u.as(this, "display", "block");
 
 
 					u.ac(this, "ready");
 
 					// callback to _ready controller (will monitor if all nodes are ready)
-					this.slideshow._ready();
+					this.slideshow.preload();
 				}
-				if(variant) {
-					u.preloader(node, ["/images/"+itemd_id+"/"+variant+"/"+this._width+"x.jpg"]);
-				}
-				else {
-					u.preloader(node, ["/images/"+itemd_id+"/"+this._width+"x.jpg"]);
-				}
+				u.preloader(node, [image_src]);
 
 			}
 			else {
-				u.a.transition(node, "none");
-				u.a.translate(node, -node.offsetWidth, 0);
-				u.as(node, "display", "block");
+				// u.a.transition(node, "none");
+				// u.ass(node, {
+				// 	transform: "translate3d("+(-node.slideshow._width)+"px, 0, 0)",
+				// 	// display: "block"
+				// })
+
+				// u.a.translate(node, -node.offsetWidth, 0);
+				// u.as(node, "display", "block");
 
 
 				u.ac(node, "ready");
 
 				// callback to _ready controller (will monitor if all nodes are ready)
-				this._ready();
+				this.preload();
 			}
 		}
 		else {
-			this._ready();
+			this.preload();
 		}
 	}
 
 
+
+
 	// internal clear node
 	slideshow._clearNode = function(node, comment) {
-//		u.bug("node cleared:" + comment + ", " + u.nodeId(node))
+		// u.bug("node cleared:", node, comment);
+
 		node._hidden = true;
 
 		// avoid too many displayed divs (will crash iOS)
-		u.as(node, "display", "none");
+		u.ass(node, {
+			display: "none"
+		});
+
+		// u.as(node, "display", "none");
 
 		u.a.transition(node, "none");
 	}
 
 	slideshow._unclearNode = function(node, comment) {
+		// u.bug("node uncleared:", node, comment);
 
-//		u.bug("node uncleared:" + comment + ", " + u.nodeId(node))
 		node._hidden = false;
 
 		// avoid too many displayed divs (will crash iOS)
-		u.as(node, "display", "block");
+		u.ass(node, {
+			display: "block"
+		});
+
+		// u.as(node, "display", "block");
 
 	}
 
@@ -612,12 +727,11 @@ u.slideshow = function(list, _options) {
 	// select node
 	// makes callback to nodeSelected and nodeEntered
 	slideshow.selectNode = function(index, static_update) {
-//		u.bug("slideshow.selectNode:" + index + "," + u.nodeId(this.list));
-//		u.bug(index + "," + static_update + ", " + this.selected_node + ", " + u.nodeId(this,1));
+		// u.bug("slideshow.selectNode:", index, static_update);
 
 		// if no selected_node - fresh start, prepare page for initial viewing
 		if(!this.selected_node) {
-//			u.bug("initial setup")
+			// u.bug("initial setup");
 
 			// set selected node
 			this.selected_node = this.nodes[index];
@@ -630,31 +744,41 @@ u.slideshow = function(list, _options) {
 
 			// position node correctly, ready to fade up
 			u.a.transition(this.selected_node, "none");
-			u.a.setOpacity(this.selected_node, 0);
-			u.a.translate(this.selected_node, 0, 0);
+			u.ass(this.selected_node, {
+				opacity: 0,
+				transform: "translate3d(0, 0, 0)"
+			});
+			// u.a.setOpacity(this.selected_node, 0);
+			// u.a.translate(this.selected_node, 0, 0);
 
 			// CALLBACK
 			// node entered
-// 			this.selected_node.transitioned = function() {
+			this.selected_node.transitioned = function() {
 // 				u.a.transition(this, "none");
 // //				u.bug("selected_node entered:" + u.nodeId(this))
-// 				if(fun(this.slideshow.nodeEntered)) {
-// 					this.slideshow.nodeEntered(this);
-// 				}
-// 			}
+
+				if(fun(this.slideshow.nodeEntered)) {
+					this.slideshow.nodeEntered(this);
+				}
+			}
 
 			// show node 
-			u.a.transition(this.selected_node, "none");
-			u.a.setOpacity(this.selected_node, 1);
+			u.a.transition(this.selected_node, "opacity 0.5s ease-in-out");
+			u.ass(this.selected_node, {
+				opacity: 1
+			})
+			// u.a.setOpacity(this.selected_node, 1);
 //			this.selected_node.transitioned();
-			if(fun(this.nodeEntered)) {
-				this.nodeEntered(this.selected_node);
-			}
+			// if(fun(this.nodeEntered)) {
+			// 	this.nodeEntered(this.selected_node);
+			// }
 
 		}
 		// we already have a node shown
 		// needs to handle both swipe and click selects, so needs to be able to move correctly from current position
-		else {
+		else if(this.nodes[index] != this.selected_node) {
+
+			// u.bug("Shift to new node:", index);
 
 			// already shown node
 			var org_node = this.selected_node;
@@ -809,6 +933,16 @@ u.slideshow = function(list, _options) {
 			}
 		}
 
+		if(this.selected_node.index) {
+			u.ac(this.selected_node.index, "selected");
+		}
+
+		if(org_node && org_node.index) {
+			u.rc(org_node.index, "selected");
+		}
+
+
+
 		// proload from new point
 		this.preload();
 
@@ -820,9 +954,6 @@ u.slideshow = function(list, _options) {
 
 	}
 
-	// get slideshow nodes
-	slideshow.nodes = u.qsa("li"+slideshow._selector, slideshow.list);
-//	u.bug("slideshow.nodes:" + slideshow.nodes.length + ", " + u.nodeId(slideshow, true));
 
 
 	return slideshow;
