@@ -142,20 +142,40 @@ Util.Animation = u.a = new function() {
 //		u.bug("default transitioned:" + u.nodeId(this))
 //		u.bug("transitioned: " + u.nodeId(event.target) + ", " + u.nodeId(this) + ", " + typeof(this.transitioned))
 
-		// remove event listener - it's job is done
-		u.e.removeEvent(event.target, u.a.transitionEndEventName(), u.a._transitioned);
+		// Do not remove event listener and transition unless callback stems from correct node
+		if(event.target == this) {
 
-		// transition should be removed here to be cleared before callback
-		u.a.transition(event.target, "none");
+			u.e.removeEvent(event.target, u.a.transitionEndEventName(), u.a._transitioned);
 
-		// only do callback to correct targets
-		if(event.target == this && fun(this.transitioned)) {
+			// transition should be removed here to be cleared before callback
+			u.a.transition(event.target, "none");
 
-			this.transitioned(event);
 
-			this.transitioned = null;
+			// only do callback to correct targets
+			if(fun(this.transitioned)) {
+
+				this.transitioned(event);
+
+				this.transitioned = null;
+
+			}
 
 		}
+
+		// // remove event listener - it's job is done
+		// u.e.removeEvent(event.target, u.a.transitionEndEventName(), u.a._transitioned);
+		//
+		// // transition should be removed here to be cleared before callback
+		// u.a.transition(event.target, "none");
+		//
+		// // only do callback to correct targets
+		// if(event.target == this && fun(this.transitioned)) {
+		//
+		// 	this.transitioned(event);
+		//
+		// 	this.transitioned = null;
+		//
+		// }
 
 	}
 
