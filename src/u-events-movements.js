@@ -177,6 +177,7 @@ u.e.drag = function(node, boundaries, _options) {
 
 	// default values
 	node.drag_strict = true;
+	node.drag_overflow = false;
 //	node.drag_projection = false;
 	node.drag_elastica = 0;
 	node.drag_dropout = true;
@@ -186,6 +187,7 @@ u.e.drag = function(node, boundaries, _options) {
 	node.show_bounds = false;
 
 	// default callbacks
+	node.callback_ready = "ready";
 	node.callback_picked = "picked";
 	node.callback_moved = "moved";
 	node.callback_dropped = "dropped";
@@ -198,6 +200,7 @@ u.e.drag = function(node, boundaries, _options) {
 
 			switch(_argument) {
 				case "strict"			: node.drag_strict			= _options[_argument]; break;
+				case "overflow"			: node.drag_overflow		= _options[_argument]; break;
 //				case "projection"		: node.drag_projection		= _options[_argument]; break;
 				case "elastica"			: node.drag_elastica		= Number(_options[_argument]); break;
 				case "dropout"			: node.drag_dropout			= _options[_argument]; break;
@@ -218,126 +221,15 @@ u.e.drag = function(node, boundaries, _options) {
 
 //	node.process_time = process_time ? process_time : 0;
 
-
-//	u.bug("boundaries:" + typeof(boundaries) + "::" + boundaries.constructor.toString());
-//	u.xInObject(boundaries);
-//	alert(boundaries.constructor);
-//	u.bug(boundaries.scopeName + "," + typeof(boundaries))
-	// use scopeName for old IE
-//	if(boundaries.constructor.toString().match("Array")) {
-	if((boundaries.constructor && boundaries.constructor.toString().match("Array")) || (boundaries.scopeName && boundaries.scopeName != "HTML")) {
-
-//		u.bug("boundaries are array")
-
-		node.start_drag_x = Number(boundaries[0]);
-		node.start_drag_y = Number(boundaries[1]);
-		node.end_drag_x = Number(boundaries[2]);
-		node.end_drag_y = Number(boundaries[3]);
-
-
-		// position node absolute top/left in parentNode
-		// if node is already positioned, make sure it is to top/left
-
-	}
-	// boundaries is node
-//	else if(boundaries.constructor.toString().match("HTML")) {
-	else if((boundaries.constructor && boundaries.constructor.toString().match("HTML")) || (boundaries.scopeName && boundaries.scopeName == "HTML")) {
-
-//		u.bug("boundaries are node")
-
-		// TODO: if we need to compensate for padding and absolute positioning, do it here
-
-
-		node.start_drag_x = u.absX(boundaries) - u.absX(node);
-		node.start_drag_y = u.absY(boundaries) - u.absY(node);
-		node.end_drag_x = node.start_drag_x + boundaries.offsetWidth;
-		node.end_drag_y = node.start_drag_y + boundaries.offsetHeight;
-
-
-		// position node top/left absolute in boundary node
-		// if node is already positioned, make sure it is to top/left
-
-		// only change position to absolute on node
-		// - never change on other nodes, to avoid other content changing place
-
-
-		// TODO: should only be required if translate is not supported
-
-		// node is not positioned - change to absolute position
-		// if(u.gcs(node, "position").match(/absolute/) == null) {
-		// 
-		// 	// var relativeParent = u.relativeTo(node);
-		// 	// var top = u.absY(node) - u.absY(relativeParent);
-		// 	// var left = u.absX(node) - u.absX(relativeParent);
-		// 
-		// 	var top = u.absY(node) - u.absY(node.offsetParent);
-		// 	var left = u.absX(node) - u.absX(node.offsetParent);
-		// 
-		// 	u.as(node, "position", "absolute");
-		// 	u.as(node, "top", top + "px");
-		// 	u.as(node, "left", left + "px");
-		// }
-		// else {
-		// 
-		// 	// TODO: test correct for right positioning
-		// 	// change right to left
-		// 	if(u.gcs(node, "right")) {
-		// 
-		// 		var left = u.absX(node) - u.absX(node.offsetParent);
-		// 		u.as(node, "left", left + "px");
-		// 		u.as(node, "right", "auto");
-		// 	}
-		// 	// TODO: test correct for bottom positioning
-		// 	// change bottom to top
-		// 	if(u.gcs(node, "bottom")) {
-		// 
-		// 		var top = u.absY(node) - u.absY(node.offsetParent);
-		// 		u.as(node, "top", top + "px");
-		// 		u.as(node, "bottom", "auto");
-		// 	}
-		// 	
-		// }
-
-
-	}
-
-	// debug tool - shows boundaries
-	if(node.show_bounds) {
-		var debug_bounds = u.ae(document.body, "div", {"class":"debug_bounds"})
-		debug_bounds.style.position = "absolute";
-		debug_bounds.style.background = "red"
-		debug_bounds.style.left = (u.absX(node) + node.start_drag_x - 1) + "px";
-		debug_bounds.style.top = (u.absY(node) + node.start_drag_y - 1) + "px";
-		debug_bounds.style.width = (node.end_drag_x - node.start_drag_x) + "px";
-		debug_bounds.style.height = (node.end_drag_y - node.start_drag_y) + "px";
-		debug_bounds.style.border = "1px solid white";
-		debug_bounds.style.zIndex = 9999;
-		debug_bounds.style.opacity = .5;
-		if(document.readyState && document.readyState == "interactive") {
-			debug_bounds.innerHTML = "WARNING - injected on DOMLoaded"; 
-		}
-		u.bug("node: "+u.nodeId(node)+" in (" + u.absX(node) + "," + u.absY(node) + "), (" + (u.absX(node)+node.offsetWidth) + "," + (u.absY(node)+node.offsetHeight) +")");
-		u.bug("boundaries: (" + node.start_drag_x + "," + node.start_drag_y + "), (" + node.end_drag_x + ", " + node.end_drag_y + ")");
-	}
-
-
-
-	node._x = node._x ? node._x : 0;
-	node._y = node._y ? node._y : 0;
-
-	// offsetHeight and Width may change during a rotation, so better to save starting point values
-	// dragging locked (only event catching)
-	node.locked = ((node.end_drag_x - node.start_drag_x == node.offsetWidth) && (node.end_drag_y - node.start_drag_y == node.offsetHeight));
-
-	// is the drag one-dimentional
-//	node.only_vertical = (!node.locked && node.end_drag_x - node.start_drag_x == node.offsetWidth);
-//	node.only_horizontal = (!node.locked && node.end_drag_y - node.start_drag_y == node.offsetHeight);
-
-	node.only_vertical = (node.vertical_lock || (!node.locked && node.end_drag_x - node.start_drag_x == node.offsetWidth));
-	node.only_horizontal = (node.horizontal_lock || (!node.locked && node.end_drag_y - node.start_drag_y == node.offsetHeight));
-
+	u.e.setDragBoundaries(node, boundaries);
 
 	u.e.addStartEvent(node, this._inputStart);
+
+
+	// notify of movement
+	if(fun(node[node.callback_ready])) {
+		node[node.callback_ready](event);
+	}
 }
 
 
@@ -842,8 +734,8 @@ u.e._drop = function(event) {
 
 		// callback for projection
 		this.transitioned = function() {
-			this.transitioned = null;
-			u.a.transition(this, "none");
+			// this.transitioned = null;
+			// u.a.transition(this, "none");
 
 			if(fun(this.projected)) {
 				this.projected(event);
@@ -856,11 +748,12 @@ u.e._drop = function(event) {
 //			u.bug("speed")
 			u.a.transition(this, "all 1s cubic-bezier(0,0,0.25,1)");
 		}
-		// so speed, no transition
+		// no speed, no transition
 		else {
 //			u.bug("no speed")
-			u.a.transition(this, "all 0.2s cubic-bezier(0,0,0.25,1)");
-//			u.a.transition(this, "none");
+//			u.a.transition(this, "all 0.2s cubic-bezier(0,0,0.25,1)");
+			u.a.transition(this, "none");
+			// console.log(this.transitioned);
 		}
 
 		// execute projection
@@ -908,6 +801,142 @@ u.e._drop_out = function(event) {
 
 }
 
+
+
+u.e.setDragBoundaries = function(node, boundaries) {
+	u.bug("initDragBoundaries", node, boundaries);
+
+//	u.bug("boundaries:" + typeof(boundaries) + "::" + boundaries.constructor.toString());
+//	u.xInObject(boundaries);
+//	alert(boundaries.constructor);
+//	u.bug(boundaries.scopeName + "," + typeof(boundaries))
+	// use scopeName for old IE
+//	if(boundaries.constructor.toString().match("Array")) {
+	if((boundaries.constructor && boundaries.constructor.toString().match("Array")) || (boundaries.scopeName && boundaries.scopeName != "HTML")) {
+
+//		u.bug("boundaries are array")
+
+		node.start_drag_x = Number(boundaries[0]);
+		node.start_drag_y = Number(boundaries[1]);
+		node.end_drag_x = Number(boundaries[2]);
+		node.end_drag_y = Number(boundaries[3]);
+
+
+		// position node absolute top/left in parentNode
+		// if node is already positioned, make sure it is to top/left
+
+	}
+	// boundaries is node
+//	else if(boundaries.constructor.toString().match("HTML")) {
+	else if((boundaries.constructor && boundaries.constructor.toString().match("HTML")) || (boundaries.scopeName && boundaries.scopeName == "HTML")) {
+
+//		u.bug("boundaries are node")
+
+		// TODO: if we need to compensate for padding and absolute positioning, do it here
+
+		if(node.drag_overflow == "scroll") {
+
+			node.start_drag_x = node.offsetWidth > boundaries.offsetWidth ? boundaries.offsetWidth - node.offsetWidth : 0;
+			node.start_drag_y = node.offsetHeight > boundaries.offsetHeight ? boundaries.offsetHeight - node.offsetHeight : 0;
+			node.end_drag_x = node.offsetWidth > boundaries.offsetWidth ? node.offsetWidth : boundaries.offsetWidth;
+			node.end_drag_y = node.offsetHeight > boundaries.offsetHeight ? node.offsetHeight : boundaries.offsetHeight;
+
+		}
+		else {
+
+			node.start_drag_x = u.absX(boundaries) - u.absX(node);
+			node.start_drag_y = u.absY(boundaries) - u.absY(node);
+			node.end_drag_x = node.start_drag_x + boundaries.offsetWidth;
+			node.end_drag_y = node.start_drag_y + boundaries.offsetHeight;
+
+		}
+
+
+		// position node top/left absolute in boundary node
+		// if node is already positioned, make sure it is to top/left
+
+		// only change position to absolute on node
+		// - never change on other nodes, to avoid other content changing place
+
+
+	}
+
+	// debug tool - shows boundaries
+	if(node.show_bounds) {
+		var debug_bounds = u.ae(document.body, "div", {"class":"debug_bounds"})
+		debug_bounds.style.position = "absolute";
+		debug_bounds.style.background = "red"
+		debug_bounds.style.left = (u.absX(node) + node.start_drag_x - 1) + "px";
+		debug_bounds.style.top = (u.absY(node) + node.start_drag_y - 1) + "px";
+		debug_bounds.style.width = (node.end_drag_x - node.start_drag_x) + "px";
+		debug_bounds.style.height = (node.end_drag_y - node.start_drag_y) + "px";
+		debug_bounds.style.border = "1px solid white";
+		debug_bounds.style.zIndex = 9999;
+		debug_bounds.style.opacity = .5;
+		if(document.readyState && document.readyState == "interactive") {
+			debug_bounds.innerHTML = "WARNING - injected on DOMLoaded"; 
+		}
+		u.bug("node: "+u.nodeId(node)+" in (" + u.absX(node) + "," + u.absY(node) + "), (" + (u.absX(node)+node.offsetWidth) + "," + (u.absY(node)+node.offsetHeight) +")");
+		u.bug("boundaries: (" + node.start_drag_x + "," + node.start_drag_y + "), (" + node.end_drag_x + ", " + node.end_drag_y + ")");
+	}
+
+
+	node._x = node._x ? node._x : 0;
+	node._y = node._y ? node._y : 0;
+
+
+	// If in overflow scroll mode
+	// – make calculations to only apply scrolling if dragged node is bigger than container boundary
+	if(node.drag_overflow == "scroll" && (boundaries.constructor && boundaries.constructor.toString().match("HTML")) || (boundaries.scopeName && boundaries.scopeName == "HTML")) {
+
+		u.bug("start_drag_x:"+ node.start_drag_x, "end_drag_x:" + node.end_drag_x, "start_drag_y:" + node.start_drag_y, "end_drag_y:" + node.end_drag_y, "node.offsetWidth:" + node.offsetWidth, "node.offsetHeight:" + node.offsetHeight, "boundaries.offsetWidth:" + boundaries.offsetWidth, "boundaries.offsetHeight:" + boundaries.offsetHeight)
+
+		node.locked = ((node.end_drag_x - node.start_drag_x <= boundaries.offsetWidth) && (node.end_drag_y - node.start_drag_y <= boundaries.offsetHeight));
+
+		node.only_vertical = (node.vertical_lock || (!node.locked && node.end_drag_x - node.start_drag_x <= boundaries.offsetWidth));
+		node.only_horizontal = (node.horizontal_lock || (!node.locked && node.end_drag_y - node.start_drag_y <= boundaries.offsetHeight));
+
+		console.log("LOCKED:" + node.locked);
+		console.log("LOCKED only_vertical:" + node.only_vertical);
+		console.log("LOCKED only_horizontal:" + node.only_horizontal);
+	}
+	// offsetHeight and Width may change during a rotation, so better to save starting point values
+	// dragging locked (only event catching)
+	else {
+
+		node.locked = ((node.end_drag_x - node.start_drag_x == node.offsetWidth) && (node.end_drag_y - node.start_drag_y == node.offsetHeight));
+
+		// is the drag one-dimentional
+	//	node.only_vertical = (!node.locked && node.end_drag_x - node.start_drag_x == node.offsetWidth);
+	//	node.only_horizontal = (!node.locked && node.end_drag_y - node.start_drag_y == node.offsetHeight);
+
+		node.only_vertical = (node.vertical_lock || (!node.locked && node.end_drag_x - node.start_drag_x == node.offsetWidth));
+		node.only_horizontal = (node.horizontal_lock || (!node.locked && node.end_drag_y - node.start_drag_y == node.offsetHeight));
+		
+	}
+
+
+}
+
+
+u.e.setDragPosition = function(node, x, y) {
+	
+	node.current_xps = 0;
+	node.current_yps = 0;
+	node._x = x;
+	node._y = y;
+
+
+	// set corrected values
+	u.a.translate(node, node._x, node._y);
+
+
+	// notify of movement
+	if(fun(node[node.callback_moved])) {
+		node[node.callback_moved](event);
+	}
+
+}
 
 
 /**
