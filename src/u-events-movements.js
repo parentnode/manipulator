@@ -889,16 +889,16 @@ u.e.setDragBoundaries = function(node, boundaries) {
 	// – make calculations to only apply scrolling if dragged node is bigger than container boundary
 	if(node.drag_overflow == "scroll" && (boundaries.constructor && boundaries.constructor.toString().match("HTML")) || (boundaries.scopeName && boundaries.scopeName == "HTML")) {
 
-		u.bug("start_drag_x:"+ node.start_drag_x, "end_drag_x:" + node.end_drag_x, "start_drag_y:" + node.start_drag_y, "end_drag_y:" + node.end_drag_y, "node.offsetWidth:" + node.offsetWidth, "node.offsetHeight:" + node.offsetHeight, "boundaries.offsetWidth:" + boundaries.offsetWidth, "boundaries.offsetHeight:" + boundaries.offsetHeight)
+		// u.bug("start_drag_x:"+ node.start_drag_x, "end_drag_x:" + node.end_drag_x, "start_drag_y:" + node.start_drag_y, "end_drag_y:" + node.end_drag_y, "node.offsetWidth:" + node.offsetWidth, "node.offsetHeight:" + node.offsetHeight, "boundaries.offsetWidth:" + boundaries.offsetWidth, "boundaries.offsetHeight:" + boundaries.offsetHeight)
 
 		node.locked = ((node.end_drag_x - node.start_drag_x <= boundaries.offsetWidth) && (node.end_drag_y - node.start_drag_y <= boundaries.offsetHeight));
 
 		node.only_vertical = (node.vertical_lock || (!node.locked && node.end_drag_x - node.start_drag_x <= boundaries.offsetWidth));
 		node.only_horizontal = (node.horizontal_lock || (!node.locked && node.end_drag_y - node.start_drag_y <= boundaries.offsetHeight));
 
-		console.log("LOCKED:" + node.locked);
-		console.log("LOCKED only_vertical:" + node.only_vertical);
-		console.log("LOCKED only_horizontal:" + node.only_horizontal);
+		// console.log("LOCKED:" + node.locked);
+		// console.log("LOCKED only_vertical:" + node.only_vertical);
+		// console.log("LOCKED only_horizontal:" + node.only_horizontal);
 	}
 	// offsetHeight and Width may change during a rotation, so better to save starting point values
 	// dragging locked (only event catching)
