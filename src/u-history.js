@@ -9,17 +9,23 @@ Util.History = u.h = new function() {
 
 	// create central navigate function
 	// update hash/url
-	this.navigate = function(url, node) {
+	this.navigate = function(url, node, silent) {
 //		u.bug("u.h.navigate:" + url + ", " + (node ? u.nodeId(node) : "no node"))
 
+		silent = silent || false;
 
 		// popstate handling
 		if(this.popstate) {
 			history.pushState({}, url, url);
-			this.callback(url);
+			if(!silent) {
+				this.callback(url);
+			}
 		}
 		// hash handling
 		else {
+			if(silent) {
+				this.next_hash_is_silent = true;
+			}
 			location.hash = u.h.getCleanUrl(url);
 		}
 
@@ -166,8 +172,13 @@ Util.History = u.h = new function() {
 		var url = u.h.getCleanHash(location.hash);
 //		u.bug("hash changed:" + url)
 
-		// invoke callbacks to stack
-		u.h.callback(url);
+		if(u.h.next_hash_is_silent) {
+			delete u.h.next_hash_is_silent;
+		}
+		else {
+			// invoke callbacks to stack
+			u.h.callback(url);
+		}
 	}
 
 
