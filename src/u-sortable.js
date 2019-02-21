@@ -434,7 +434,7 @@ u.sortable = function(scope, _options) {
 
 //			u.bug("struct:" + u.nodeId(node));
 
-			id = u.cv(node, "node_id");
+			id = u.cv(node, "item_id");
 			relation = this.getRelation(node);
 			position = this.getPositionInList(node);
 
@@ -464,7 +464,7 @@ u.sortable = function(scope, _options) {
 		if(!node.parentNode.relation_id) {
 			var li_relation = u.pn(node, {"include":"li"});
 			if(u.inNodeList(li_relation, this.draggable_nodes)) {
-				node.parentNode.relation_id = u.cv(li_relation, "id");
+				node.parentNode.relation_id = u.cv(li_relation, "item_id");
 			}
 			else {
 				node.parentNode.relation_id = 0;
