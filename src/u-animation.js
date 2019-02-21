@@ -61,13 +61,13 @@ Util.Animation = u.a = new function() {
 								var key = u.randomString(4);
 								node[key] = callback;
 								node[key](event);
-								node[key] = null;
+								delete node[key];
 								callback = null;
 							}
 							else if(fun(this[callback])) {
 //								u.bug("callback to: " + callback + ", " + this[callback])
 								this[callback](event);
-								this[callback] = null;
+//								this[callback] = null;
 							}
 
 
@@ -89,11 +89,6 @@ Util.Animation = u.a = new function() {
 			}
 			else {
 				node.duration = false;
-
-				// delete transitioned callback when "none" transition is set (cleanup)
-				// if(transition.match(/none/i)) {
-				// 	node.transitioned = null;
-				// }
 			}
 
 			u.as(node, "transition", transition);
@@ -154,9 +149,14 @@ Util.Animation = u.a = new function() {
 			// only do callback to correct targets
 			if(fun(this.transitioned)) {
 
+				this.transitioned_before = this.transitioned;
+
 				this.transitioned(event);
 
-				this.transitioned = null;
+				// Unless transition callback has changed
+				if(this.transitioned === this.transitioned_before) {
+					this.transitioned = null;
+				}
 
 			}
 
