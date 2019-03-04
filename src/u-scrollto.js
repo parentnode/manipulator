@@ -98,7 +98,7 @@ u.scrollTo = function(node, _options) {
 		// u.bug("scrollToHandler:" + u.nodeId(this))
 
 		u.t.resetTimer(this.t_scroll);
-		this.t_scroll = u.t.setTimer(this, this._scrollTo, 50);
+		this.t_scroll = u.t.setTimer(this, this._scrollTo, 25);
 	}
 
 	// add scroll event
@@ -161,12 +161,12 @@ u.scrollTo = function(node, _options) {
 			// scrolling right
 			if(this._x_scroll_direction > 0 && this._to_x > s_x) {
 //				u.bug("right")
-				this._scroll_to_x = Math.ceil(s_x + (this._to_x - s_x)/4);
+				this._scroll_to_x = Math.ceil(s_x + (this._to_x - s_x)/8);
 			}
 			// scrolling left
 			else if(this._x_scroll_direction < 0 && this._to_x < s_x) {
 //				u.bug("left")
-				this._scroll_to_x = Math.floor(s_x - (s_x - this._to_x)/4);
+				this._scroll_to_x = Math.floor(s_x - (s_x - this._to_x)/8);
 			}
 			else {
 				this._scroll_to_x = this._to_x;
@@ -176,12 +176,12 @@ u.scrollTo = function(node, _options) {
 			// scrolling down
 			if(this._y_scroll_direction > 0 && this._to_y > s_y) {
 //				u.bug("down")
-				this._scroll_to_y = Math.ceil(s_y + (this._to_y - s_y)/4);
+				this._scroll_to_y = Math.ceil(s_y + (this._to_y - s_y)/8);
 			}
 			// scrolling up
 			else if(this._y_scroll_direction < 0 && this._to_y < s_y) {
 //				u.bug("up")
-				this._scroll_to_y = Math.floor(s_y - (s_y - this._to_y)/4);
+				this._scroll_to_y = Math.floor(s_y - (s_y - this._to_y)/8);
 			}
 			else {
 				this._scroll_to_y = this._to_y;
