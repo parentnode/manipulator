@@ -119,7 +119,7 @@ Util.bug = function() {
 			}
 
 		}
-		else if(obj(console)) {
+		else if(typeof(console) !== "undefined" && obj(console)) {
 
 			var i;
 			for(i = 0; i < arguments.length; i++) {
