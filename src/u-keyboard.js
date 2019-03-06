@@ -82,7 +82,7 @@ Util.Keyboard = u.k = new function() {
 				node = nodes[i];
 
 				// is node still attached to document.body
-				if(u.nodeWithin(node, document.body)) {
+				if(u.contains(document.body, node)) {
 
 					// only execute visible nodes and check for metakey
 					if(node.offsetHeight && ((event.ctrlKey || event.metaKey) || (!node.metakey_required || key == "ESC"))) {

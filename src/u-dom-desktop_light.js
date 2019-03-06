@@ -368,7 +368,7 @@ if(typeof(document.textContent) == "undefined") {
 // Polyfill
 if(typeof(document.contains) == "undefined") {
 
-	u.contains = function(node, scope) {
+	u.contains = function(scope, node) {
 
 		if(scope != node) {
 
