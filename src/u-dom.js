@@ -225,7 +225,7 @@ Util.childNodes = u.cn = function(node, _options) {
 Util.appendElement = u.ae = function(_parent, node_type, attributes) {
 	try {
 		// is node_type already DOM node
-		var node = (obj(node_type)) ? node_type : document.createElement(node_type);
+		var node = (obj(node_type)) ? node_type : (node_type == "svg" ? document.createElementNS("http://www.w3.org/2000/svg", node_type) : document.createElement(node_type));
 		node = _parent.appendChild(node);
 
 		// add attributes
@@ -253,7 +253,7 @@ Util.appendElement = u.ae = function(_parent, node_type, attributes) {
 */
 Util.insertElement = u.ie = function(_parent, node_type, attributes) {
 	try {
-		var node = (obj(node_type)) ? node_type : document.createElement(node_type);
+		var node = (obj(node_type)) ? node_type : (node_type == "svg" ? document.createElementNS("http://www.w3.org/2000/svg", node_type) : document.createElement(node_type));
 		node = _parent.insertBefore(node, _parent.firstChild);
 		// add attributes
 		if(attributes) {
@@ -419,134 +419,133 @@ Util.classVar = u.cv = function(node, var_name) {
 }
 
 // set classname on element, replacing all others
-Util.setClass = u.sc = function(node, classname) {
-	try {
-		var old_class = node.className;
-		node.className = classname;
+Util.setClass = u.sc = function(node, classname, dom_update) {
 
-		// force dom update
-		node.offsetTop;
-		return old_class;
+	// save old classname
+	var old_class;
+
+	// Special case for SVGs
+	if(node instanceof SVGElement) {
+		old_class = node.className.baseVal;
+		node.className.baseVal = classname;
 	}
-	catch(exception) {
-		u.exception("u.sc", arguments, exception);
+	// HTML
+	else {
+		old_class = node.className;
+		node.className = classname;
 	}
-	// return false on error
-	return false;
+
+	// force dom update (performance killer, but will make rendering more detailed)
+	dom_update = (!dom_update) || (node.offsetTop);
+	
+	// return replaced classname
+	return old_class;
 }
-// Element has classname
+
+// Element has classname (or classnames specified as RegEx)
 Util.hasClass = u.hc = function(node, classname) {
-	try {
-		if(classname) {
-			var regexp = new RegExp("(^|\\s)(" + classname + ")(\\s|$)");
+
+	// try doing it via classList
+	if(node.classList.contains(classname)) {
+		return true;
+	}
+	// try regular expression
+	else {
+		var regexp = new RegExp("(^|\\s)(" + classname + ")(\\s|$)");
+		// Special case for SVGs
+		if(node instanceof SVGElement) {
+			if(regexp.test(node.className.baseVal)) {
+				return true;
+			}
+		}
+		// HTML
+		else {
 			if(regexp.test(node.className)) {
 				return true;
 			}
 		}
 	}
-	catch(exception) {
-		u.exception("u.hc", arguments, exception);
-	}
+
 	// return false on error
 	return false;
 }
 
-
 // Add classname to element if it is not already there
 Util.addClass = u.ac = function(node, classname, dom_update) {
-	try {
-		if(classname) {
-			if(node.classList){
-				node.classList.add(classname);
-				// force dom update (performance killer, but will make rendering more detailed)
-				dom_update === false ? false : node.offsetTop;
-			}
-			else {
-				var regexp = new RegExp("(^|\\s)" + classname + "(\\s|$)");
-				if(!regexp.test(node.className)) {
-					node.className += node.className ? " " + classname : classname;
-					dom_update === false ? false : node.offsetTop;
-				}
-			}
-			
-			return node.className;
-		}
-	}
-	catch(exception) {
-		u.exception("u.ac", arguments, exception);
-	}
-	return false;
+
+	// Add class
+	node.classList.add(classname);
+
+	// force dom update (performance killer, but will make rendering more detailed)
+	dom_update = (!dom_update) || (node.offsetTop);
+
+	// return updated classname
+	return node.className;
 }
 
-// Remove all instances of classname from element
-// TODO: SVG.className cannot be set (needs to be SVG.className.baseVal || use classList works from IE 11)
+// Remove all instances of classname from element (or classnames represented as RegEx)
 Util.removeClass = u.rc = function(node, classname, dom_update) {
-	try {
-		if(classname) {
-			if(node.classList.contains(classname)) {
-				node.classList.remove(classname);
-			}
-			else {
-				var regexp = new RegExp("(\\b)" + classname + "(\\s|$)", "g");
-				node.className = node.className.replace(regexp, " ").trim().replace(/[\s]{2}/g, " ");
-	
-				// force dom update (performance killer, but will make rendering more detailed)
-				dom_update === false ? false : node.offsetTop;
-				return node.className;
-			}
+
+	// try removing classname via classList
+	if(node.classList.contains(classname)) {
+		node.classList.remove(classname);
+	}
+	// try regular expression
+	else {
+
+		var regexp = new RegExp("(^|\\s)(" + classname + ")(?=[\\s]|$)", "g");
+
+		// Replace pattern and fix any doublespaces
+		// Special case for SVGs
+		if(node instanceof SVGElement) {
+			node.className.baseVal = node.className.baseVal.replace(regexp, " ").trim().replace(/[\s]{2}/g, " ");
+		}
+		// HTML
+		else {
+			node.className = node.className.replace(regexp, " ").trim().replace(/[\s]{2}/g, " ");
 		}
 	}
-	catch(exception) {
-		u.exception("u.rc", arguments, exception);
-	}
-	return false;
+
+	// force dom update (performance killer, but will make rendering more detailed)
+	dom_update = (!dom_update) || (node.offsetTop);
+
+	// return updated classname
+	return node.className;
 }
+
 // Toggle classname on element
 // if class is applied, then remove
 // if not applied, then apply
 // if _classname is given as parameter, switch between to two classnames
 Util.toggleClass = u.tc = function(node, classname, _classname, dom_update) {
-	try {
-		if(node.classList) {
+	// Node has classname
+	if(u.hc(node, classname)) {
 
-			if(node.classList.contains(classname)) {
-				node.classList.remove(classname);
-				if(_classname) {
-					node.classList.add(_classname);
-				}
-			}
+		// then remove it
+		u.rc(node, classname);
 
-			else {
-				node.classList.add(classname);
-				if(_classname) {
-					node.classList.remove(_classname);
-				}
-			}
-		}
-		else {
-			var regexp = new RegExp("(^|\\s)" + classname + "(\\s|$|\:)");
-			if(regexp.test(node.className)) {
-				u.rc(node, classname, false);
-				if(_classname) {
-					u.ac(node, _classname, false);
-				}
-			}
-
-			else {
-				u.ac(node, classname, false);
-				if(_classname) {
-					u.rc(node, _classname, false);
-				}
-			}
-	
-			dom_update === false ? false : node.offsetTop;
-			return node.className;
+		// Add alt classname if passed
+		if(_classname) {
+			u.ac(node, _classname);
 		}
 	}
-	catch(exception) {
-		u.exception("u.tc", arguments, exception);
+	// Node does not have classname
+	else {
+
+		// Add it
+		u.ac(node, classname);
+
+		// Remove alt classname if passed
+		if(_classname) {
+			u.rc(node, _classname);
+		}
 	}
-	return false;
+
+	// force dom update (performance killer, but will make rendering more detailed)
+	dom_update = (!dom_update) || (node.offsetTop);
+
+	// return updated classname
+	return node.className;
 }
 
 
@@ -557,7 +556,8 @@ Util.applyStyle = u.as = function(node, property, value, dom_update) {
 
 	node.style[u.vendorProperty(property)] = value;
 
-	dom_update === false ? false : node.offsetTop;
+	// force dom update (performance killer, but will make rendering more detailed)
+	dom_update = (!dom_update) || (node.offsetTop);
 }
 
 // apply styles
@@ -577,7 +577,8 @@ Util.applyStyles = u.ass = function(node, styles, dom_update) {
 		}
 	}
 
-	dom_update === false ? false : node.offsetTop;
+	// force dom update (performance killer, but will make rendering more detailed)
+	dom_update = (!dom_update) || (node.offsetTop);
 }
 
 
@@ -585,23 +586,12 @@ Util.applyStyles = u.ass = function(node, styles, dom_update) {
 // compensated for JS value syntax
 Util.getComputedStyle = u.gcs = function(node, property) {
 
-	// query DOM to force update
-	node.offsetHeight;
+	// query DOM to attempt to force update
+	var dom_update = node.offsetHeight;
 
-//	property = property.replace(/([A-Z]{1})/g, function(word){return word.replace(/([A-Z]{1})/, "-$1").toLowerCase()});
-
-	// also convert vendor prefix
-//	property = property.replace(/([A-Z]{1})/g, function(word){return word.replace(/([A-Z]{1})/, "-$1").toLowerCase()}).replace(/^(webkit|ms|moz)/g, "-$1");
-
-//	u.bug("gcs property1:" + property)
 	property = (u.vendorProperty(property).replace(/([A-Z]{1})/g, "-$1")).toLowerCase().replace(/^(webkit|ms)/, "-$1");
 
-//	u.bug("gcs property2:" + property)
-	// return computed style if method is supported
-	if(window.getComputedStyle) {
-		return window.getComputedStyle(node, null).getPropertyValue(property);
-	}
-	return false;
+	return window.getComputedStyle(node, null).getPropertyValue(property);
 }
 
 
@@ -612,6 +602,28 @@ Util.hasFixedParent = u.hfp = function(node) {
 			return true;
 		}
 		node = node.parentNode;
+	}
+	return false;
+}
+
+
+// is node within scope
+u.contains = function(node, scope) {
+
+	if(scope != node) {
+		if(scope.contains(node)) {
+			return true
+		}
+	}
+	return false;
+
+}
+
+// is node equal to or withing scope
+u.containsOrIs = function(node, scope) {
+
+	if(scope == node || u.contains(node, scope)) {
+		return true
 	}
 	return false;
 }
@@ -660,21 +672,3 @@ Util.inNodeList = function(node, list) {
 	return false;
 }
 
-// is node within scope
-u.contains = Util.nodeWithin = u.nw = function(node, scope) {
-
-	if(scope != node) {
-		if(scope.contains(node)) {
-			return true
-		}
-	}
-	return false;
-
-}
-u.containsOrIs = function(node, scope) {
-
-	if(scope == node || u.contains(node, scope)) {
-		return true
-	}
-	return false;
-}
