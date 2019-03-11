@@ -92,7 +92,6 @@ u.googlemaps = new function() {
 	this.addMarker = function(map, coords, _options) {
 //		u.bug("addMarker:" + coords + ", " + map)
 
-		var _info = false;
 		var _icon;
 		var _label = null;
 
@@ -101,7 +100,6 @@ u.googlemaps = new function() {
 			for(_argument in _options) {
 
 				switch(_argument) {
-					case "info"           : _info               = _options[_argument]; break;
 					case "icon"           : _icon               = _options[_argument]; break;
 					case "label"          : _label              = _options[_argument]; break;
 				}
@@ -110,7 +108,7 @@ u.googlemaps = new function() {
 		}
 
 
-		var marker = new google.maps.Marker({position: new google.maps.LatLng(coords[0], coords[1]), animation:google.maps.Animation.DROP, InfoWindow: {content:"hest"}, icon: _icon, label: _label});
+		var marker = new google.maps.Marker({position: new google.maps.LatLng(coords[0], coords[1]), animation:google.maps.Animation.DROP, icon: _icon, label: _label});
 		marker.setMap(map.g_map);
 
 		marker.g_map = map.g_map;
