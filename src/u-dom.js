@@ -443,7 +443,7 @@ Util.setClass = u.sc = function(node, classname, dom_update) {
 	}
 
 	// force dom update (performance killer, but will make rendering more detailed)
-	dom_update = (!dom_update) || (node.offsetTop);
+	dom_update = (dom_update === false) || (node.offsetTop);
 
 	// return replaced classname
 	return old_class;
@@ -484,7 +484,7 @@ Util.addClass = u.ac = function(node, classname, dom_update) {
 	node.classList.add(classname);
 
 	// force dom update (performance killer, but will make rendering more detailed)
-	dom_update = (!dom_update) || (node.offsetTop);
+	dom_update = (dom_update === false) || (node.offsetTop);
 
 	// return updated classname
 	return node.className;
@@ -521,7 +521,7 @@ Util.removeClass = u.rc = function(node, classname, dom_update) {
 	}
 
 	// force dom update (performance killer, but will make rendering more detailed)
-	dom_update = (!dom_update) || (node.offsetTop);
+	dom_update = (dom_update === false) || (node.offsetTop);
 
 	// return updated classname
 	return node.className;
@@ -556,7 +556,7 @@ Util.toggleClass = u.tc = function(node, classname, _classname, dom_update) {
 	}
 
 	// force dom update (performance killer, but will make rendering more detailed)
-	dom_update = (!dom_update) || (node.offsetTop);
+	dom_update = (dom_update === false) || (node.offsetTop);
 
 	// return updated classname
 	return node.className;
@@ -571,7 +571,7 @@ Util.applyStyle = u.as = function(node, property, value, dom_update) {
 	node.style[u.vendorProperty(property)] = value;
 
 	// force dom update (performance killer, but will make rendering more detailed)
-	dom_update = (!dom_update) || (node.offsetTop);
+	dom_update = (dom_update === false) || (node.offsetTop);
 }
 
 // apply styles
@@ -592,7 +592,11 @@ Util.applyStyles = u.ass = function(node, styles, dom_update) {
 	}
 
 	// force dom update (performance killer, but will make rendering more detailed)
-	dom_update = (!dom_update) || (node.offsetTop);
+	// default false
+	// dom_update = (!dom_update) || (node.offsetTop);
+
+	// default true
+	dom_update = (dom_update === false) || (node.offsetTop);
 }
 
 
