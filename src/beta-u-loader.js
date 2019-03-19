@@ -16,7 +16,7 @@ var ManipulatorLoader = function (node, url) {
 
 	include_tag.node = node;
 	include_tag.onload = function (event) {
-		if (fun (this.node.loaded)) {
+		if (typeof(this.node.loaded) == "function") {
 			this.node.loaded(event);
 		}
 	}
@@ -24,7 +24,7 @@ var ManipulatorLoader = function (node, url) {
 		console.log("failed loading:" + this.src ? this.src : this.href);
 
 		// contiue loading anyway
-		if (fun (this.node.loaded)) {
+		if (typeof(this.node.loaded) == "function") {
 			this.node.loaded(event);
 		}
 
@@ -40,7 +40,7 @@ var ManipulatorLoader = function (node, url) {
 	return include_tag;
 }
 
-if (obj(ManipulatorLoadQueue) && ManipulatorLoadQueue.files && ManipulatorLoadQueue.files.length && !ManipulatorLoadQueue.done && !ManipulatorLoadQueue.loading) {
+if (typeof(ManipulatorLoadQueue) == "object" && ManipulatorLoadQueue.files && ManipulatorLoadQueue.files.length && !ManipulatorLoadQueue.done && !ManipulatorLoadQueue.loading) {
 
 	ManipulatorLoadQueue.loading = true;
 
@@ -53,7 +53,7 @@ if (obj(ManipulatorLoadQueue) && ManipulatorLoadQueue.files && ManipulatorLoadQu
 		if (this.files.length) {
 			ManipulatorLoader(this, this.files.shift());
 		}
-		else if(this.node && fun(this.node.loaded)) {
+		else if(this.node && typeof(this.node.loaded) == "function") {
 			this.node.loaded(event);
 		}
 

@@ -7,7 +7,7 @@ u.txt = function(index) {
 	if(!u.translations) {
 
 		// Enable loading of translations file
-		u.bug("Should load translations for:", document.documentElement.lang);
+		// u.bug("Should load translations for:", document.documentElement.lang);
 	}
 	if(index == "assign") {
 		u.bug("USING RESERVED INDEX: assign");

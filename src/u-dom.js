@@ -481,7 +481,10 @@ Util.hasClass = u.hc = function(node, classname) {
 Util.addClass = u.ac = function(node, classname, dom_update) {
 
 	// Add class
-	node.classList.add(classname);
+	var classnames = classname.split(" ");
+	while(classnames.length) {
+		node.classList.add(classnames.shift());
+	}
 
 	// force dom update (performance killer, but will make rendering more detailed)
 	dom_update = (dom_update === false) || (node.offsetTop);
