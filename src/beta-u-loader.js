@@ -40,11 +40,16 @@ var ManipulatorLoader = function (node, url) {
 	return include_tag;
 }
 
-if (obj (ManipulatorLoadQueue) && ManipulatorLoadQueue.files && ManipulatorLoadQueue.files.length && !ManipulatorLoadQueue.done && !ManipulatorLoadQueue.loading) {
+if (obj(ManipulatorLoadQueue) && ManipulatorLoadQueue.files && ManipulatorLoadQueue.files.length && !ManipulatorLoadQueue.done && !ManipulatorLoadQueue.loading) {
 
 	ManipulatorLoadQueue.loading = true;
 
 	ManipulatorLoadQueue.loaded = function (event) {
+		// unsuccessful load
+		if (event.type == "error" && this.node) {
+			this.node.load_errors = true;
+		}
+
 		if (this.files.length) {
 			ManipulatorLoader(this, this.files.shift());
 		}
