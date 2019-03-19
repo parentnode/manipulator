@@ -8,6 +8,9 @@ if(!u || !Util) {
 
 	// hande stats requests if stats is not enabled
 	u.stats = new function() {this.pageView = function(){};this.event = function(){};}
+
+	// handle text request if txt module not included
+	u.txt = function(index) {return index;}
 }
 
 function fun(v) {return (typeof(v) === "function")}
