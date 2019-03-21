@@ -19,11 +19,12 @@ u.smartphoneSwitch = new function() {
 //		console.log("u.smartphoneSwitch.resized" + u.browserW());
 //		console.log(this);
 
-		if(u.browserW() < 500 && !this.state) {
+		// Safari can only be minimized to 500px, so keep breakpoint above that
+		if(u.browserW() < 520 && !this.state) {
 //			console.log("switchOn");
 			this.switchOn();
 		}
-		else if(u.browserW() > 500 && this.state) {
+		else if(u.browserW() > 520 && this.state) {
 			this.switchOff();
 		}
 		
