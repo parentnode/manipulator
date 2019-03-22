@@ -804,7 +804,7 @@ u.e._drop_out = function(event) {
 
 
 u.e.setDragBoundaries = function(node, boundaries) {
-	u.bug("initDragBoundaries", node, boundaries);
+	// u.bug("initDragBoundaries", node, boundaries);
 
 //	u.bug("boundaries:" + typeof(boundaries) + "::" + boundaries.constructor.toString());
 //	u.xInObject(boundaries);
