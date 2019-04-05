@@ -1562,7 +1562,7 @@ Util.Form = u.f = new function() {
 				min = Number(u.cv(iN.field, "min"));
 				max = Number(u.cv(iN.field, "max"));
 				min = min ? min : 8;
-				max = max ? max : 20;
+				max = max ? max : 255;
 				pattern = iN.getAttribute("pattern");
 				compare_to = iN.getAttribute("data-compare-to");
 
