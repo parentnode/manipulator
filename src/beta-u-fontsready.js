@@ -146,8 +146,7 @@ u.fontsReady = function(node, fonts, _options) {
 
 	// Use fonts api to check if fonts are loaded
 	window["_man_fonts_"+loadkey].checkFontsAPI = function() {
-		u.bug("checkFontsAPI", this.loadkey);
-
+		// u.bug("checkFontsAPI", this.loadkey);
 
 		var i, node, font_string;
 
