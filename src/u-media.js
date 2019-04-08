@@ -861,10 +861,24 @@ u.detectMediaAutoplay = function(player) {
 			var promise = u.test_autoplay.play();
 			if(promise && fun(promise.then)) {
 				promise.then(
-					u.test_autoplay.playing_muted.bind(u.test_autoplay)
+					function(){
+						if(u.test_autoplay) {
+							u.t.resetTimer(window.u.test_autoplay.t_check);
+							u.test_autoplay.playing_muted();
+						}
+					}
 				).catch(
-					u.test_autoplay.notplaying_muted.bind(u.test_autoplay)
+					function() {
+						if(u.test_autoplay) {
+							u.t.resetTimer(window.u.test_autoplay.t_check)
+							u.test_autoplay.notplaying_muted();
+						}
+					}
 				);
+
+				u.test_autoplay.t_check = u.t.setTimer(u.test_autoplay, function(){
+					u.test_autoplay.pause();
+				}, 1000);
 			}
 		}
 		// autoplay muted test passed
@@ -929,7 +943,7 @@ u.detectMediaAutoplay = function(player) {
 
 		u.media_autoplay_detection.push(player);
 	}
-	// Autoplay detection already complated - call back - but break chain of command (let calling function return first)
+	// Autoplay detection already completed - call back - but break chain of command (let calling function return first)
 	else {
 //		u.bug("Timerbased callback");
 		u.t.setTimer(player, function() {
