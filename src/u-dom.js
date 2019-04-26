@@ -535,15 +535,16 @@ Util.removeClass = u.rc = function(node, classname, dom_update) {
 // if not applied, then apply
 // if _classname is given as parameter, switch between to two classnames
 Util.toggleClass = u.tc = function(node, classname, _classname, dom_update) {
+
 	// Node has classname
 	if(u.hc(node, classname)) {
 
 		// then remove it
-		u.rc(node, classname);
+		u.rc(node, classname, dom_update);
 
 		// Add alt classname if passed
 		if(_classname) {
-			u.ac(node, _classname);
+			u.ac(node, _classname, dom_update);
 		}
 	}
 	// Node does not have classname
@@ -554,7 +555,7 @@ Util.toggleClass = u.tc = function(node, classname, _classname, dom_update) {
 
 		// Remove alt classname if passed
 		if(_classname) {
-			u.rc(node, _classname);
+			u.rc(node, _classname, dom_update);
 		}
 	}
 
