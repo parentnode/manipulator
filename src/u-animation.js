@@ -208,7 +208,7 @@ Util.Animation = u.a = new function() {
 		node._y = y;
 
 		// update dom
-//		node.offsetHeight;
+		node.offsetHeight;
 	}
 
 
@@ -219,7 +219,7 @@ Util.Animation = u.a = new function() {
 		node._rotation = deg;
 
 		// update dom
-//		node.offsetHeight;
+		node.offsetHeight;
 	}
 
 	this.scale = function(node, scale) {
@@ -229,7 +229,7 @@ Util.Animation = u.a = new function() {
 		node._scale = scale;
 
 		// update dom
-//		node.offsetHeight;
+		node.offsetHeight;
 	}
 
 
@@ -240,7 +240,7 @@ Util.Animation = u.a = new function() {
 		node._opacity = opacity;
 
 		// update dom
-//		node.offsetHeight;
+		node.offsetHeight;
 	}
 
 	this.setWidth = this.width = function(node, width) {
