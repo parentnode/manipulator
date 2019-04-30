@@ -393,6 +393,7 @@ Util.Events = u.e = new function() {
 				// u.bug("drag set:", this);
 				// pick up element when it is moved
 				u.e.addMoveEvent(this, u.e._pick);
+				u.e.addEndEvent(this, u.e._cancelPick);
 			}
 
 			// Scrolling enabled?
