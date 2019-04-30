@@ -438,7 +438,7 @@ u.f.textEditor = function(field) {
 
 	// updates actual Textarea 
 	field.updateContent = function() {
-//			u.bug("updateContent");
+		u.bug("updateContent");
 
 		// get all tags
 		var tags = u.qsa("div.tag", this);
@@ -450,7 +450,7 @@ u.f.textEditor = function(field) {
 
 		for(i = 0; i < tags.length; i++) {
 			tag = tags[i];
-//			u.bug(u.nodeId(tag));
+//			u.bug(tag);
 
 			// text node
 			if(u.hc(tag, this.text_allowed.join("|"))) {
@@ -1165,7 +1165,7 @@ u.f.textEditor = function(field) {
 	// attached to tag._input node for file-tags
 	field._file_updated = function(event) {
 
-		u.bug("file:" + u.nodeId(this))
+		u.bug("file:", this);
 
 		// create data form object to upload file
 		var form_data = new FormData();
@@ -1796,11 +1796,11 @@ u.f.textEditor = function(field) {
 		// new selection
 		if(selection && !selection.isCollapsed) {
 
-			u.bug("selection:" + u.nodeId(this))
+			u.bug("selection:", this);
 			// check if
 			var node = selection.anchorNode;
 
-			u.bug("node:" + u.nodeId(node))
+			u.bug("node:", node);
 			
 			// test u.nodeWithin for this purpose
 
@@ -1810,7 +1810,7 @@ u.f.textEditor = function(field) {
 				}
 				node = node.parentNode;
 
-				u.bug("node:" + u.nodeId(node))
+				u.bug("node:", node);
 				
 			}
 
@@ -1902,11 +1902,14 @@ u.f.textEditor = function(field) {
 
 	// clean pasted content - first version
 	field._pasted_content = function(event) {
+		// u.bug("pasted content", event);
+
 		u.e.kill(event);
 
 		var i, node;
 		var paste_content = event.clipboardData.getData("text/plain");
 
+		// u.bug("paste_content:", paste_content, "yes");
 		// only do anything if paste content is not empty
 		if(paste_content !== "") {
 
@@ -1918,7 +1921,7 @@ u.f.textEditor = function(field) {
 			}
 
 
-//			alert("pasted:" + paste_content + "#:" + paste_content.trim() + "#")
+			// u.bug("pasted:", paste_content, "#:", paste_content.trim(), "#");
 
 			// add break tags for newlines
 			// split string by newlines
@@ -1938,7 +1941,7 @@ u.f.textEditor = function(field) {
 
 			// loop through nodes in opposite order
 			// webkit collapses space after selection if I don't 
-			for(i = text_nodes.length-1; i > 0; i--) {
+			for(i = text_nodes.length-1; i >= 0; i--) {
 				node = text_nodes[i];
 
 				// get current range
@@ -2301,10 +2304,25 @@ u.f.textEditor = function(field) {
 		var form = u.f.addForm(this.selection_options, {"class":"labelstyle:inject"});
 		u.ae(form, "h3", {"html":"Link options"});
 		var fieldset = u.f.addFieldset(form);
-		var input_url = u.f.addField(fieldset, {"label":"url", "name":"url", "value":a.href.replace(location.protocol + "//" + document.domain, ""), "error_message":""});
+		var input_url = u.f.addField(fieldset, {
+			"label":"url", 
+			"name":"url", 
+			"value":a.href.replace(location.protocol + "//" + document.domain, ""), 
+			"pattern":"((http[s]?:\\/)?\\/|mailto:|tel:)[^$]+",
+			"error_message":"Must start with /, http:// or https://, mailto: or tel:"
+		});
 
-		var input_target = u.f.addField(fieldset, {"type":"checkbox", "label":"Open in new window?", "checked":(a.target ? "checked" : false), "name":"target", "error_message":""});
-		var bn_save = u.f.addAction(form, {"value":"Save link", "class":"button"});
+		var input_target = u.f.addField(fieldset, {
+			"type":"checkbox", 
+			"label":"Open in new window?", 
+			"checked":(a.target ? "checked" : false), 
+			"name":"target", 
+			"error_message":""
+		});
+		var bn_save = u.f.addAction(form, {
+			"value":"Save link", 
+			"class":"button"
+		});
 		u.f.init(form);
 
 

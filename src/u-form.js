@@ -1562,7 +1562,7 @@ Util.Form = u.f = new function() {
 				min = Number(u.cv(iN.field, "min"));
 				max = Number(u.cv(iN.field, "max"));
 				min = min ? min : 8;
-				max = max ? max : 20;
+				max = max ? max : 255;
 				pattern = iN.getAttribute("pattern");
 				compare_to = iN.getAttribute("data-compare-to");
 
@@ -1630,10 +1630,16 @@ Util.Form = u.f = new function() {
 			else if(u.hc(iN.field, "tel")) {
 
 				pattern = iN.getAttribute("pattern");
+				compare_to = iN.getAttribute("data-compare-to");
 
 				if(
-					!pattern && iN.val().match(/^([\+0-9\-\.\s\(\)]){5,18}$/) ||
-					(pattern && iN.val().match("^"+pattern+"$"))
+					(
+						!pattern && iN.val().match(/^([\+0-9\-\.\s\(\)]){5,18}$/)
+						||
+						(pattern && iN.val().match("^"+pattern+"$"))
+					)
+					&&
+					(!compare_to || iN.val() == iN._form.fields[compare_to].val())
 				) {
 					this.fieldCorrect(iN);
 				}
@@ -1644,9 +1650,18 @@ Util.Form = u.f = new function() {
 
 			// email validation
 			else if(u.hc(iN.field, "email")) {
+
+				compare_to = iN.getAttribute("data-compare-to");
+				pattern = iN.getAttribute("pattern");
+
 				if(
-					!pattern && iN.val().match(/^([^<>\\\/%$])+\@([^<>\\\/%$])+\.([^<>\\\/%$]{2,20})$/) ||
-					(pattern && iN.val().match("^"+pattern+"$"))
+					(
+						!pattern && iN.val().match(/^([^<>\\\/%$])+\@([^<>\\\/%$])+\.([^<>\\\/%$]{2,20})$/)
+						 ||
+						(pattern && iN.val().match("^"+pattern+"$"))
+					)
+					&&
+					(!compare_to || iN.val() == iN._form.fields[compare_to].val())
 				) {
 					this.fieldCorrect(iN);
 				}

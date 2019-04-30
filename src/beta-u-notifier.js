@@ -47,10 +47,10 @@ u.notifier = function(node) {
 
 		var output = [];
 
-//		u.bug("message:" + typeof(response) + "; JSON: " + response.isJSON + "; HTML: " + response.isHTML);
+		// u.bug("message:" + typeof(response) + "; JSON: " + response.isJSON + "; HTML: " + response.isHTML);
 
-		if(obj(response)) {
-//		if(obj(response) && response.isJSON) {
+		// if(obj(response)) {
+		if(obj(response) && response.isJSON) {
 
 			var message = response.cms_message;
 			var cms_status = typeof(response.cms_status) != "undefined" ? response.cms_status : "";
@@ -136,12 +136,12 @@ u.notifier = function(node) {
 								// u.bug("data:" + u.nodeId(node) + ", " + node.getAttribute("data-csrf-token"));
 								node.setAttribute("data-csrf-token", csrf_token);
 							}
-							for(i = 0; ni <input_vars.length; i++) {
+							for(i = 0; i < input_vars.length; i++) {
 								node = input_vars[i];
 								// u.bug("input:" + u.nodeId(node) + ", " + node.value);
 								node.value = csrf_token;
 							}
-							for(i = 0;i <= dom_vars.length; i++) {
+							for(i = 0; i < dom_vars.length; i++) {
 								node = dom_vars[i];
 								if(node.csrf_token) {
 									// u.bug("dom:" + u.nodeId(node) + ", " + node.csrf_token);

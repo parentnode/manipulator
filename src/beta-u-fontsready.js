@@ -38,14 +38,12 @@ u.fontsReady = function(node, fonts, _options) {
 	}
 
 
-	// detect font api availability
 	// create global font stack to void loading the same font twice
 	window["_man_fonts_"] = window["_man_fonts_"] || {};
 
-//	var fontApi = false;
+	// detect font api availability
 	window["_man_fonts_"].fontApi = document.fonts && fun(document.fonts.check) ? true : false;
 	window["_man_fonts_"].fonts = window["_man_fonts_"].fonts || {};
-
 
 
 	var font, node, i;
@@ -57,8 +55,6 @@ u.fontsReady = function(node, fonts, _options) {
 		fonts.push(font);
 	}
 
-	//	u.bug("fonts:" + fonts.length);
-
 
 	// create unique loadkey for current stack (to provide individual callbacks for separate checks)
 	var loadkey = u.randomString(8);
@@ -67,15 +63,12 @@ u.fontsReady = function(node, fonts, _options) {
 	// Is font API available
 	if(window["_man_fonts_"].fontApi) {
 
+		// Create loading object
 		window["_man_fonts_"+loadkey] = {};
-
-		// set timeout checker
-		window["_man_fonts_"+loadkey].t_timeout = u.t.setTimer(window["_man_fonts_"+loadkey], "checkFontsStatus", max_time);
-
 	}
 	else {
-		
-		// append loader
+
+		// Create and append loading node
 		window["_man_fonts_"+loadkey] = u.ae(document.body, "div");
 
 		// object for style/weight reference nodes
@@ -83,17 +76,18 @@ u.fontsReady = function(node, fonts, _options) {
 
 	}
 
+
 	// create load stack
 	window["_man_fonts_"+loadkey].nodes = [];
 
+	// Start Timeout checker
+	window["_man_fonts_"+loadkey].t_timeout = u.t.setTimer(window["_man_fonts_"+loadkey], "fontCheckTimeout", max_time);
 
 	// store load settings
 	window["_man_fonts_"+loadkey].loadkey = loadkey;
 	window["_man_fonts_"+loadkey].callback_node = node;
-	window["_man_fonts_"+loadkey].callback_name = callback_loaded;
+	window["_man_fonts_"+loadkey].callback_loaded = callback_loaded;
 	window["_man_fonts_"+loadkey].callback_timeout = callback_timeout;
-	window["_man_fonts_"+loadkey].max_time = max_time;
-	window["_man_fonts_"+loadkey].start_time = new Date().getTime();
 
 
 	// Prepare fonts for loaded-test
@@ -108,7 +102,7 @@ u.fontsReady = function(node, fonts, _options) {
 
 		font.id = u.normalize(font.family+font.style+font.weight);
 
-		// add to global stack
+		// add to global stack (to avoid loading a font that was previously loaded)
 		if(!window["_man_fonts_"].fonts[font.id]) {
 			window["_man_fonts_"].fonts[font.id] = font;
 		}
@@ -121,14 +115,15 @@ u.fontsReady = function(node, fonts, _options) {
 			node = {};
 
 		}
+		// Fallback
 		else {
 
 			// add reference base font with given weight+style, if it does not already exist
-			if(!window["_man_fonts_"+loadkey].basenodes[font.style+font.weight]) {
-				window["_man_fonts_"+loadkey].basenodes[font.style+font.weight] = u.ae(window["_man_fonts_"+loadkey], "span", {"html":"I'm waiting for your fonts to load!","style":"font-family: Times !important; font-style: "+font.style+" !important; font-weight: "+font.weight+" !important; font-size: "+font.size+" !important; line-height: 1em !important; opacity: 0 !important;"});
+			if(!window["_man_fonts_"+loadkey].basenodes[u.normalize(font.style+font.weight)]) {
+				window["_man_fonts_"+loadkey].basenodes[u.normalize(font.style+font.weight)] = u.ae(window["_man_fonts_"+loadkey], "span", {"html":"I'm waiting for your fonts to load!","style":"font-family: Times !important; font-style: "+font.style+" !important; font-weight: "+font.weight+" !important; font-size: "+font.size+" !important; line-height: 1em !important; opacity: 0 !important;"});
 			}
 
-			// add font for testing this variant
+			// add font node font information and for testing this variant
 			node = u.ae(window["_man_fonts_"+loadkey], "span", {"html":"I'm waiting for your fonts to load!","style":"font-family: '"+font.family+"', Times !important; font-style: "+font.style+" !important; font-weight: "+font.weight+" !important; font-size: "+font.size+" !important; line-height: 1em !important; opacity: 0 !important;"});
 
 		}
@@ -149,25 +144,20 @@ u.fontsReady = function(node, fonts, _options) {
 	}
 
 
+	// Use fonts api to check if fonts are loaded
 	window["_man_fonts_"+loadkey].checkFontsAPI = function() {
-
+		// u.bug("checkFontsAPI", this.loadkey);
 
 		var i, node, font_string;
 
 		for(i = 0; i < this.nodes.length; i++) {
 			node = this.nodes[i];
 
-			// only load if font has not already been loaded
+			// only load if font has not already been loaded (in this or other context)
 			if(window["_man_fonts_"].fonts[node.font_id] && window["_man_fonts_"].fonts[node.font_id].status == "waiting") {
 	
-
 				// font string to load
 				font_string = node.font_style + " " + node.font_weight + " " + node.font_size + " " + node.font_family;
-//				console.log(font_string);
-
-
-//				console.log("check:" + document.fonts.check(font_string))
-
 
 				// load font and deal with load result
 				document.fonts.load(font_string).then(function(fontFaceSetEvent) {
@@ -176,32 +166,16 @@ u.fontsReady = function(node, fonts, _options) {
 						window["_man_fonts_"].fonts[this.font_id].status = "loaded";
 					}
 					else {
-//						console.log("FAILED TO LOAD FONT: " + this.font_family + ", " + this.font_weight + ", " + this.font_style);
 						window["_man_fonts_"].fonts[this.font_id].status = "failed";
 					}
 
-//					console.log("font loaded");
-//					console.log("time:" + (new Date().getTime() - window["_man_fonts_"+this.loadkey].start_time));
-//					console.log(fontFaceSetEvent);
-//					console.log(this);
-
-//					console.log("load stack:")
-//					console.log(window["_man_fonts_"+this.loadkey])
-//					console.log(typeof(window["_man_fonts_"+this.loadkey].checkFontsStatus));
-
-
-					// check current load status
+					// check current load status (if loading is still in progress)
 					if(window["_man_fonts_"+this.loadkey] && fun(window["_man_fonts_"+this.loadkey].checkFontsStatus)) {
-//						console.log("do check")
 						window["_man_fonts_"+this.loadkey].checkFontsStatus();
 					}
 
 				}.bind(node));
 
-
-			}
-			else {
-//				console.log("already loaded: " + node.font_style + " " + node.font_weight + " " + node.font_size + " " + node.font_family)
 			}
 
 		}
@@ -214,115 +188,127 @@ u.fontsReady = function(node, fonts, _options) {
 	}
 
 
+	// Use fallback method to check if fonts are loaded
+	window["_man_fonts_"+loadkey].checkFontsFallback = function() {
+		// u.bug("checkFontsFallback", this.loadkey);
+
+		var basenode, i, node;
+
+		for(i = 0; i < this.nodes.length; i++) {
+			node = this.nodes[i];
+
+			// find basenode for comparison
+			basenode = this.basenodes[u.normalize(node.font_style+node.font_weight)];
+
+			// check node sizes -  when node changes size, then it is loaded
+			if(node.offsetWidth != basenode.offsetWidth || node.offsetHeight != basenode.offsetHeight) {
+				window["_man_fonts_"].fonts[node.font_id].status = "loaded";
+			}
+		}
+
+		// plan next check in 30ms
+		this.t_fallback = u.t.setTimer(this, "checkFontsFallback", 30);
+
+		// check current load status
+		if(fun(this.checkFontsStatus)) {
+			this.checkFontsStatus();
+		}
+
+	}
+
+	// callback on timeout
+	window["_man_fonts_"+loadkey].fontCheckTimeout = function(event) {
+		// u.bug("timeout", this.loadkey);
+
+		// cancel fallback timer just in case
+		u.t.resetTimer(this.t_fallback);
+
+		// clean up
+		delete window["_man_fonts_"+this.loadkey];
+
+		// remove fallback nodes
+		if(this.parentNode) {
+			this.parentNode.removeChild(this);
+		}
+
+		// give up - max time has passed
+		if(fun(this.callback_node[this.callback_timeout])) {
+			this.callback_node[this.callback_timeout](this.nodes);
+		}
+		// return response to loaded in case timeout callback has not been declared
+		else if(fun(this.callback_node[this.callback_loaded])) {
+			this.callback_node[this.callback_loaded](this.nodes);
+		}
+
+	}
+
+	// Check font status
+	// Loops through fonts to check if they are all loaded
+	// Make callback and clean-up if everything is loaded – do nothing if not
 	window["_man_fonts_"+loadkey].checkFontsStatus = function(event) {
-//		u.bug("checkFontsStatus");
+		// u.bug("checkFontsStatus", this.loadkey);
 
 		var i, node;
 		for(i = 0; i < this.nodes.length; i++) {
 			node = this.nodes[i];
 
-//			console.log(window["_man_fonts_"].fonts[node.font_id]);
+			// Look for any not-yet-loaded fonts
 			if(window["_man_fonts_"].fonts[node.font_id].status == "waiting") {
-
-				// continue checking if max time has not been reached
-				if(this.start_time + this.max_time <= new Date().getTime()) {
-
-					// give up - max time has passed
-					if(fun(this.callback_node[this.callback_timeout])) {
-						this.callback_node[this.callback_timeout]();
-					}
-					else if(fun(this.callback_node[this.callback_name])) {
-						this.callback_node[this.callback_name]();
-					}
-
-					// stop timer
-					u.t.resetTimer(this.t_timeout);
-					// clean up
-					delete window["_man_fonts_"+this.loadkey];
-
-
-				}
-
 				return;
 			}
 
 		}
 
 
+		// All fonts are loaded
 
-		// all fonts are loaded
-		if(fun(this.callback_node[this.callback_name])) {
-			this.callback_node[this.callback_name]();
-		}
 
 		// stop timer
 		u.t.resetTimer(this.t_timeout);
+		u.t.resetTimer(this.t_fallback);
+
 		// clean up
 		delete window["_man_fonts_"+this.loadkey];
-		
-	}
 
-
-
-	// checking if fonts are loaded (fallback method)
-	window["_man_fonts_"+loadkey].checkFontsFallback = function() {
-
-		var basenode, i, node, loaded = 0;
-
-		for(i = 0; i < this.nodes.length; i++) {
-			node = this.nodes[i];
-
-			// find basenode for comparison
-			basenode = this.basenodes[node.font_style+node.font_weight];
-
-			// check node
-			if(node.offsetWidth != basenode.offsetWidth || node.offsetHeight != basenode.offsetHeight) {
-				loaded++;
-			}
-		}
-
-		// all fonts loaded
-		if(loaded == this.nodes.length) {
-			if(fun(this.callback_node[this.callback_name])) {
-				this.callback_node[this.callback_name]();
-			}
-
-			// clean up
+		// remove fallback nodes
+		if(this.parentNode) {
 			this.parentNode.removeChild(this);
 		}
-		// continue checking
-		else {
-			// continue checking if max time has not been reached
-			if(this.start_time + this.max_time > new Date().getTime()) {
-				u.t.setTimer(this, "checkfonts", 30);
+
+
+		// callbacks?
+		if(fun(this.callback_node[this.callback_loaded])) {
+
+			// API
+			if(this.fontApi) {
+				this.callback_node[this.callback_loaded](this.nodes);
+			}
+			// Fallback - Allow browser to digest font (without delay, font doesn't always render correctly)
+			else {
+				setTimeout(function() {
+					this.callback_node[this.callback_loaded](this.nodes); 
+				}.bind(this), 250);
 			}
 
-			// give up - max time has passed
-			else {
-				if(fun(this.callback_node[this.callback_timeout])) {
-					this.callback_node[this.callback_timeout]();
-				}
-				else if(fun(this.callback_node[this.callback_name])) {
-					this.callback_node[this.callback_name]();
-				}
-			}
 		}
 
 	}
 
 
 
+
+	// Start loading/checker
+	// API available
 	if(window["_man_fonts_"].fontApi) {
 
-		// start checking using the Font API
+		// Start checking using the Font API
 		window["_man_fonts_"+loadkey].checkFontsAPI();
-
 	}
+	// Fallback method
 	else {
 
-		// start checking using fallback method
+		// Start checking using fallback method
 		window["_man_fonts_"+loadkey].checkFontsFallback();
-
 	}
 
 }

@@ -1,75 +1,38 @@
-/*
-JSS events
-click/tap
-hold
-dblclick/doubletap
-
-Event that identifies jss event:
-click/tap - up/end
-hold - down/start
-dblclick/doubletap - up/end
-
-Parameters:
-click/tap - element
-hold - element
-dblclick/doubletap - element
-
-Notifications:
-click/tap - clicked/tapped
-hold - held
-dblclick/doubletap - dblclicked/doubletapped
-
-*/
-
 /**
-*	When using this on eventhandler functions "this" is the HTML element
+*	When using this on eventhandler functions "this" is the HTML element which has received the event
 *
 */
 Util.Events = u.e = new function() {
 
-	// TODO: Wrap event_pref in function to be able to use library functions in event detection
+	// TODO: Consider to wrap event_support in function (like css support detection) to be able to use library functions in event detection
 	// now we can't use u.system because function is not declared before execution
 
-//	alert("navigator.maxTouchPoints:" + navigator.maxTouchPoints + ", document.ontouchmove:" + document.ontouchmove + "," + 
-	// auto-choose default event type
-
-//	this.event_pref = typeof(document.ontouchmove) == "undefined" || (navigator.maxTouchPoints > 1) ? "mouse" : "touch";
-
-	// Windows with touch screen has dual input and no event bubble between types
-	// at this point we cannot support touch and mouse on windows platform
 
 	// DEPRECATED - old event preference detection
 	this.event_pref = typeof(document.ontouchmove) == "undefined" || (navigator.maxTouchPoints > 1 && navigator.userAgent.match(/Windows/i)) ? "mouse" : "touch";
 
 
-	// theoretical support for dual input sources
-	if(navigator.maxTouchPoints > 1) {
+	// NOTE: in some rare edge cases in Firefox on windows ontouchmove and onmousemove are both null but maxTouchPoints is 0.
+	// In most cases this in-between state disappears after restarting the computer
 
-		if((typeof(document.ontouchmove) == "undefined" && typeof(document.onmousemove) == "undefined") || (document.ontouchmove === null && document.onmousemove === null)) {
+	// Windows with touch screen has dual input and no event bubble between types
 
-			this.event_support = "multi";
-		}
-
+	// auto-choose default event type
+	// support for dual input sources on windows only (everywhere else native implementation handles dual support)
+	if (navigator.userAgent.match(/Windows/i) && ((obj(document.ontouchmove) && obj(document.onmousemove)) || (fun(document.ontouchmove) && fun(document.onmousemove)))) {
+		this.event_support = "multi";
+	}
+	else if (obj(document.ontouchmove) || fun(document.ontouchmove)) {
+		this.event_support = "touch";
+	}
+	else {
+		this.event_support = "mouse";
 	}
 
-	if(!this.event_support) {
+	// console.log(this.event_support);
 
-		if(typeof(document.ontouchmove) == "undefined") {
 
-			this.event_support = "mouse";
-
-		}
-		else {
-
-			this.event_support = "touch";
-
-		}
-
-	}
-
-//	this.event_support = navigator.maxTouchPoints > 1 "multi" ? : (typeof(document.ontouchmove) == "undefined" ? "touch" : "mouse"));
-//	this.event_pref = "touch";
-
+	// default event mappings
 	this.events = {
 		"mouse": {
 			"start":"mousedown",
@@ -78,22 +41,17 @@ Util.Events = u.e = new function() {
 
 			"over":"mouseover",
 			"out":"mouseout"
-			
 		},
 		"touch": {
-
 			"start":"touchstart",
 			"move":"touchmove",
 			"end":"touchend",
 
 			"over":"touchstart",
 			"out":"touchend"
-			
 		}
 	}
 
-//	} = this.event_support == "touch" ? (this.event_support == "touch" ? "touchstart" : "mousedown")
-//	alert("this.event_pref:" + this.event_pref)
 
 	/**
 	* Kill event
@@ -117,7 +75,7 @@ Util.Events = u.e = new function() {
 			node.addEventListener(type, action, false);
 		}
 		catch(exception) {
-			alert("exception in addEvent:" + node + "," + type + ":" + exception);
+			u.exception("u.e.addEvent", arguments, exception);
 		}
 	}
 
@@ -133,7 +91,7 @@ Util.Events = u.e = new function() {
 			node.removeEventListener(type, action, false);
 		}
 		catch(exception) {
-			u.bug("exception in removeEvent:" + node + "," + type + ":" + exception);
+			u.exception("u.e.removeEvent", arguments, exception);
 		}
 	}
 
@@ -145,33 +103,28 @@ Util.Events = u.e = new function() {
 	* @param action Action to execute on event
 	*/
 	this.addStartEvent = this.addDownEvent = function(node, action) {
-//		u.bug("addStartEvent")
+		// u.bug("addStartEvent", node, action, this.event_support);
 		if(this.event_support == "multi") {
-//			u.bug("multi:" + this.events.mouse.start)
+			// u.bug("Add multi:", this.events.mouse.start);
 			u.e.addEvent(node, this.events.mouse.start, action);
 			u.e.addEvent(node, this.events.touch.start, action);
 		}
 		else {
-//			u.bug("single:" + this.events[this.event_support].start)
+			// u.bug("Add single:" + this.events[this.event_support].start);
 			u.e.addEvent(node, this.events[this.event_support].start, action);
-			
 		}
-//		u.e.addEvent(node, (this.event_pref == "touch" ? "touchstart" : "mousedown"), action);
 	}
-
 	this.removeStartEvent = this.removeDownEvent = function(node, action) {
-//		u.bug("removeStartEvent")
-
+		// u.bug("removeStartEvent", node);
 		if(this.event_support == "multi") {
+			// u.bug("Remove multi:", this.events.mouse.start);
 			u.e.removeEvent(node, this.events.mouse.start, action);
 			u.e.removeEvent(node, this.events.touch.start, action);
 		}
 		else {
-//			u.bug("single:" + this.events[this.event_support].start)
+			// u.bug("Remove single:", this.events[this.event_support].start);
 			u.e.removeEvent(node, this.events[this.event_support].start, action);
-		
 		}
-//		u.e.removeEvent(node, (this.event_pref == "touch" ? "touchstart" : "mousedown"), action);
 	}
 
 	/**
@@ -181,34 +134,28 @@ Util.Events = u.e = new function() {
 	* @param action Action to execute on event
 	*/
 	this.addMoveEvent = function(node, action) {
-//		u.bug("addMoveEvent:" + u.nodeId(node) + ", " + (this.event_pref == "touch" ? "touchmove" : "mousemove"));
-
+		// u.bug("addMoveEvent:", node, action, this.event_support);
 		if(this.event_support == "multi") {
-//			u.bug("multi:" + this.events.mouse.start)
+			// u.bug("Add multi:", this.events.mouse.move);
 			u.e.addEvent(node, this.events.mouse.move, action);
 			u.e.addEvent(node, this.events.touch.move, action);
 		}
 		else {
-//			u.bug("single:" + this.events[this.event_support].start)
+			// u.bug("Add single:", this.events[this.event_support].start);
 			u.e.addEvent(node, this.events[this.event_support].move, action);
-			
 		}
-
-//		u.e.addEvent(node, (this.event_pref == "touch" ? "touchmove" : "mousemove"), action);
 	}
 	this.removeMoveEvent = function(node, action) {
-//		u.bug("removeMoveEvent:" + e.nodeName)
+		// u.bug("removeMoveEvent:", node);
 		if(this.event_support == "multi") {
+			// u.bug("Remove multi:", this.events.mouse.move);
 			u.e.removeEvent(node, this.events.mouse.move, action);
 			u.e.removeEvent(node, this.events.touch.move, action);
 		}
 		else {
-//			u.bug("single:" + this.events[this.event_support].start)
+			// u.bug("Remove single:", this.events[this.event_support].move);
 			u.e.removeEvent(node, this.events[this.event_support].move, action);
-		
 		}
-
-//		u.e.removeEvent(node, (this.event_pref == "touch" ? "touchmove" : "mousemove"), action);
 	}
 
 	/**
@@ -218,45 +165,28 @@ Util.Events = u.e = new function() {
 	* @param action Action to execute on event
 	*/
 	this.addEndEvent = this.addUpEvent = function(node, action) {
-//		u.bug("addEndEvent:" + u.nodeId(node));// + ":" + action)
-
+		// u.bug("addEndEvent:", node, action, this.event_support);
 		if(this.event_support == "multi") {
-//			u.bug("multi:" + this.events.mouse.start)
+			// u.bug("Add multi:", this.events.mouse.end);
 			u.e.addEvent(node, this.events.mouse.end, action);
 			u.e.addEvent(node, this.events.touch.end, action);
 		}
 		else {
-//			u.bug("single:" + this.events[this.event_support].start)
+			// u.bug("Add single:", this.events[this.event_support].end);
 			u.e.addEvent(node, this.events[this.event_support].end, action);
-			
 		}
-//		u.e.addEvent(node, (this.event_pref == "touch" ? "touchend" : "mouseup"), action);
-
-		// add additional mouseout handler if needed
-		// if(node.snapback && u.e.event_pref == "mouse") {
-		// 	u.e.addEvent(node, "mouseout", this._snapback);
-		// }
-
 	}
 	this.removeEndEvent = this.removeUpEvent = function(node, action) {
-//		u.bug("removeEndEvent:" + e.nodeName)
-//		u.e.removeEvent(node, (this.event_pref == "touch" ? "touchend" : "mouseup"), action);
-
+		// u.bug("removeEndEvent:", node);
 		if(this.event_support == "multi") {
+			// u.bug("Remove multi:", this.events.mouse.end);
 			u.e.removeEvent(node, this.events.mouse.end, action);
 			u.e.removeEvent(node, this.events.touch.end, action);
 		}
 		else {
-//			u.bug("single:" + this.events[this.event_support].start)
+			// u.bug("Remove single:", this.events[this.event_support].end);
 			u.e.removeEvent(node, this.events[this.event_support].end, action);
-		
 		}
-
-		// remove additional mouseout handler if needed
-		// if(node.snapback && u.e.event_pref == "mouse") {
-		// 	u.e.removeEvent(node, "mouseout", this._snapback);
-		// }
-
 	}
 
 
@@ -267,24 +197,26 @@ Util.Events = u.e = new function() {
 	* @param action Action to execute on event
 	*/
 	this.addOverEvent = function(node, action) {
-//		u.bug("addOverEvent:" + u.nodeId(node));
-
+		// u.bug("addOverEvent:", node, action, this.event_support);
 		if(this.event_support == "multi") {
+			// u.bug("Add multi:", this.events.mouse.over);
 			u.e.addEvent(node, this.events.mouse.over, action);
 			u.e.addEvent(node, this.events.touch.over, action);
 		}
 		else {
+			// u.bug("Add single:", this.events[this.event_support].over);
 			u.e.addEvent(node, this.events[this.event_support].over, action);
-			
 		}
 	}
 	this.removeOverEvent = function(node, action) {
-//		u.bug("removeOverEvent:" + u.nodeId(node));
+		// u.bug("removeOverEvent:", node);
 		if(this.event_support == "multi") {
+			// u.bug("Remove multi:", this.events.mouse.over);
 			u.e.removeEvent(node, this.events.mouse.over, action);
 			u.e.removeEvent(node, this.events.touch.over, action);
 		}
 		else {
+			// u.bug("Remove single:", this.events[this.event_support].over);
 			u.e.removeEvent(node, this.events[this.event_support].over, action);
 		}
 	}
@@ -297,38 +229,42 @@ Util.Events = u.e = new function() {
 	* @param action Action to execute on event
 	*/
 	this.addOutEvent = function(node, action) {
-//		u.bug("addOutEvent:" + u.nodeId(node));
-
+		// u.bug("addOutEvent:", node, action, this.event_support);
 		if(this.event_support == "multi") {
+			// u.bug("Add multi:", this.events.mouse.out);
 			u.e.addEvent(node, this.events.mouse.out, action);
 			u.e.addEvent(node, this.events.touch.out, action);
 		}
 		else {
+			// u.bug("Add single:", this.events[this.event_support].out);
 			u.e.addEvent(node, this.events[this.event_support].out, action);
-			
 		}
 	}
 	this.removeOutEvent = function(node, action) {
-//		u.bug("removeOutEvent:" + u.nodeId(node));
+		// u.bug("removeOutEvent:", node);
 		if(this.event_support == "multi") {
+			// u.bug("Remove multi:", this.events.mouse.out);
 			u.e.removeEvent(node, this.events.mouse.out, action);
 			u.e.removeEvent(node, this.events.touch.out, action);
 		}
 		else {
+			// u.bug("Remove single:", this.events[this.event_support].out);
 			u.e.removeEvent(node, this.events[this.event_support].out, action);
 		}
 	}
 
 
-	// reset events for click, hold and dblclick
+	// reset events for click, rightclick, hold and dblclick
 	this.resetClickEvents = function(node) {
-//		u.bug("resetClickEvents:" + u.nodeId(node));
+		// u.bug("resetClickEvents:", node);
 
 		u.t.resetTimer(node.t_held);
 		u.t.resetTimer(node.t_clicked);
 	
 		this.removeEvent(node, "mouseup", this._dblclicked);
 		this.removeEvent(node, "touchend", this._dblclicked);
+		this.removeEvent(node, "mouseup", this._rightclicked);
+		this.removeEvent(node, "touchend", this._rightclicked);
 
 		this.removeEvent(node, "mousemove", this._cancelClick);
 		this.removeEvent(node, "touchmove", this._cancelClick);
@@ -342,7 +278,7 @@ Util.Events = u.e = new function() {
 
 	// reset events for node
 	this.resetEvents = function(node) {
-//		u.bug("resetEvents:" + u.nodeId(node))
+		// u.bug("resetEvents:", node);
 
 		this.resetClickEvents(node);
 
@@ -355,14 +291,13 @@ Util.Events = u.e = new function() {
 	// reset events in nested elements
 	// used to reset event on outer elements
 	this.resetNestedEvents = function(node) {
-//		u.bug("resetEvents:" + u.nodeId(node))
+		// u.bug("resetEvents:", node);
 
 		while(node && node.nodeName != "HTML") {
-//			u.bug("reset nested:" + e.nodeName)
+			// u.bug("reset nested:", node);
 			this.resetEvents(node);
 			node = node.parentNode;
 		}
-
 	}
 
 	/**
@@ -372,9 +307,9 @@ Util.Events = u.e = new function() {
 	* Multiple event possible
 	*/
 	this._inputStart = function(event) {
-//		u.bug("_inputStart:" + u.nodeId(this));
-
-//		u.xInObject(event);
+		// u.bug("_inputStart:", this);
+		// u.bug(event);
+	
 
 		// used to handle dblclick timeout event forwarding
 		this.event_var = event;
@@ -386,7 +321,8 @@ Util.Events = u.e = new function() {
 		// this.start_event_y = u.eventY(event) - u.scrollY();
 		this.start_event_x = u.eventX(event);
 		this.start_event_y = u.eventY(event);
-//		u.bug("this.start_event_y:" + this.start_event_y)
+		// u.bug("this.start_event_x:", this.start_event_x);
+		// u.bug("this.start_event_y:", this.start_event_y);
 
 		// reset speed
 		this.current_xps = 0;
@@ -397,104 +333,124 @@ Util.Events = u.e = new function() {
 		this.move_last_x = 0;
 		this.move_last_y = 0;
 
-		// keep track of moves after start event to cancel event more controlled (after a number of moves)
-//		this._moves_cancel = 0;
-//		u.bug("this._moves_counted:" + this._moves_counted);
-//		this._moves_counted = 0;
-
 		// reset swipe detections
 		this.swiped = false;
 
-		// ordinary click events
-		if(this.e_click || this.e_dblclick || this.e_hold) {
-//			u.bug("click set:" + u.nodeId(this));
 
-			// mouseinput - only reset onmove if element is draggable
-			if(event.type.match(/mouse/)) {
-				var node = this;
-				while(node) {
-					if(node.e_drag || node.e_swipe) {
-	//					u.bug("move reset: drag or swipe on:" + u.nodeId(node) + ": add clickCancel on:" + u.nodeId(this));
+		// only act on left click (or equivalent)
+		// button property is 0 for left click - also works as fallback support
+		if(!event.button) {
+			// u.bug("left click:", this);
 
-						u.e.addMoveEvent(this, u.e._cancelClick);
-						break;
-	//					node = false;
+			// ordinary click events
+			if(this.e_click || this.e_dblclick || this.e_hold) {
+				// u.bug("click/dblclick/hold set:", this);
+
+				// mouseinput - only reset onmove if element is draggable
+				if(event.type.match(/mouse/)) {
+					var node = this;
+					while(node) {
+						if(node.e_drag || node.e_swipe) {
+							// u.bug("move reset: drag or swipe on:", node, "add clickCancel on:", this);
+
+							u.e.addMoveEvent(this, u.e._cancelClick);
+							break;
+		//					node = false;
+						}
+						else {
+							node = node.parentNode;
+						}
 					}
-					else {
-						node = node.parentNode;
-					}
+
+					// cancel click on mouseout for mouse events
+					u.e.addEvent(this, "mouseout", u.e._cancelClick);
 				}
 
-				// cancel click on mouseout for mouse events
-				u.e.addEvent(this, "mouseout", u.e._cancelClick);
+				// cancel click on move for touch input as default
+				else {
+					u.e.addMoveEvent(this, u.e._cancelClick);
+				}
+
+
+				// move callback - for custom handling of mousedown+move combo
+				u.e.addMoveEvent(this, u.e._move);
+
+
+				// execute on mouse up
+				u.e.addEndEvent(this, u.e._dblclicked);
+
+
+				// listen for hold?
+				if(this.e_hold) {
+					this.t_held = u.t.setTimer(this, u.e._held, 750);
+
+				}
+
 			}
 
-			// cancel click on move for touch input as default
-			else {
-				u.e.addMoveEvent(this, u.e._cancelClick);
+			// drag enabled? (cannot co-exist with swipe)
+			if(this.e_drag || this.e_swipe) {
+				// u.bug("drag set:", this);
+				// pick up element when it is moved
+				u.e.addMoveEvent(this, u.e._pick);
 			}
 
-
-
-			// move callback - for custom handling of mousedown+move combo
-			u.e.addMoveEvent(this, u.e._move);
-
-			// TODO: EXPERIMENTAL
-			// cancel click on move for touch devices as default
-			// if(u.e.event_pref == "touch") {
-			// 	u.e.addMoveEvent(this, u.e._cancelClick);
-			// }
-
-			//
-			// execute on mouse up
-			u.e.addEndEvent(this, u.e._dblclicked);
-
-
-			// reset events on mouseout
-			// if(u.e.event_pref == "mouse") {
-			// 	u.e.addEvent(this, "mouseout", u.e._cancelClick);
-			// }
-		}
-		// listen for hold?
-		if(this.e_hold) {
-			this.t_held = u.t.setTimer(this, u.e._held, 750);
-
+			// Scrolling enabled?
+			if(this.e_scroll) {
+				// u.bug("scroll set:", this);
+				u.e.addMoveEvent(this, u.e._scrollStart);
+				u.e.addEndEvent(this, u.e._scrollEnd);
+			}
 		}
 
-		// drag enabled? (cannot co-exist with swipe)
-		if(this.e_drag || this.e_swipe) {
-//			u.bug("drag set" + this.nodeName)
-			u.e.addMoveEvent(this, u.e._pick);
-//			u.e.addEndEvent(this, u.e._drop);
+		// Right click
+		else if(event.button === 2) {
+			// u.bug("right click:", this);
+
+			// listning for right click
+			if(this.e_rightclick) {
+
+				// mouseinput - only reset onmove if element is draggable
+				if(event.type.match(/mouse/)) {
+					// cancel click on mouseout for mouse events
+					u.e.addEvent(this, "mouseout", u.e._cancelClick);
+				}
+
+				// cancel click on move for touch input as default
+				else {
+					u.e.addMoveEvent(this, u.e._cancelClick);
+				}
+
+				// move callback - for custom handling of mousedown+move combo
+				u.e.addMoveEvent(this, u.e._move);
+
+				// execute on mouse up
+				u.e.addEndEvent(this, u.e._rightclicked);
+				
+			}
+
 		}
 
-
-		if(this.e_scroll) {
-//			u.bug("drag set" + this.nodeName)
-			u.e.addMoveEvent(this, u.e._scrollStart);
-			u.e.addEndEvent(this, u.e._scrollEnd);
-		}
-
-
-		// callback TODO - what function name?
+		// callback 
+		// TODO - is inputStarted a good name?
 		if(fun(this.inputStarted)) {
 			this.inputStarted(event);
 		}
-
 
 	}
 
 
 	this._cancelClick = function(event) {
-//		u.bug("_cancelClick:" + u.nodeId(this))
+		// u.bug("_cancelClick:", this);
 
 		// use complete move since inputStart to determine whether to cancel click
 		var offset_x = u.eventX(event) - this.start_event_x;
 		var offset_y = u.eventY(event) - this.start_event_y;
 
-		// should click be cancelled
+		// should click be cancelled upon reasonable move
+		// Androids can fire 100s of move-events for even the lightest tap
+		// – so we much detect the distance moved to be sure
 		if(event.type.match(/mouseout/) || (event.type.match(/move/) && (Math.abs(offset_x) > 15 || Math.abs(offset_y) > 15))) {
-//		if(event.type.match(/mouseout/) || this._moves_cancel > 5 || (event.type.match(/move/) && (Math.abs(offset_x) > 15 || Math.abs(offset_y) > 15))) {
 
 			u.e.resetClickEvents(this);
 
@@ -505,18 +461,12 @@ Util.Events = u.e = new function() {
 
 		}
 
-		// count move events to cancel click appropriately
-		// else if(event.type.match(/move/)) {
-		//
-		// 	this._moves_cancel++;
-		// }
-
 	}
 
 	this._move = function(event) {
-//		u.bug("_move:" + u.nodeId(this))
-		// new event
+		// u.bug("_move:", this);
 
+		// Only calculated moved values if they are needed
 		if(fun(this.moved)) {
 
 			this.current_x = u.eventX(event) - this.start_event_x;
@@ -526,8 +476,9 @@ Util.Events = u.e = new function() {
 			// current speed per second
 			this.current_xps = Math.round(((this.current_x - this.move_last_x) / (event.timeStamp - this.move_timestamp)) * 1000);
 			this.current_yps = Math.round(((this.current_y - this.move_last_y) / (event.timeStamp - this.move_timestamp)) * 1000);
-		//	u.bug(this.current_x + ":" + this.move_last_x + ":" + event.timeStamp + ":" + this.move_timestamp)
-		//	u.bug("this.current_xps:" + this.current_xps + " x " + "this.current_yps:" + this.current_yps)
+			// u.bug(this.current_x, his.move_last_x, event.timeStamp, this.move_timestamp);
+			// u.bug("this.current_xps:", this.current_xps);
+			// u.bug("this.current_yps:", this.current_yps);
 
 
 			// remember current move time for next event
@@ -535,7 +486,7 @@ Util.Events = u.e = new function() {
 			this.move_last_x = this.current_x;
 			this.move_last_y = this.current_y;
 
-
+			// callback
 			this.moved(event);
 		}
 	}
@@ -545,6 +496,7 @@ Util.Events = u.e = new function() {
 	* element.held
 	*/
 	this.hold = function(node, _options) {
+		// u.bug("set hold:", node);
 
 		node.e_hold_options = _options ? _options : {};
 		node.e_hold_options.eventAction = u.stringOr(node.e_hold_options.eventAction, "Held");
@@ -553,7 +505,7 @@ Util.Events = u.e = new function() {
 		u.e.addStartEvent(node, this._inputStart);
 	}
 	this._held = function(event) {
-//		u.bug("_held:" + u.nodeId(this));
+		// u.bug("_held:", this);
 
 		// track event
 		this.e_hold_options.event = event;
@@ -573,7 +525,7 @@ Util.Events = u.e = new function() {
 	* element.clicked
 	*/
 	this.click = this.tap = function(node, _options) {
-//		u.bug("set click:"+u.nodeId(node));
+		// u.bug("set click:", node);
 
 		node.e_click_options = _options ? _options : {};
 		node.e_click_options.eventAction = u.stringOr(node.e_click_options.eventAction, "Clicked");
@@ -582,7 +534,7 @@ Util.Events = u.e = new function() {
 		u.e.addStartEvent(node, this._inputStart);
 	}
 	this._clicked = function(event) {
-//		u.bug("_clicked:" + u.nodeId(this))
+		// u.bug("_clicked:", this);
 
 		// dblclick and hold event bubble to _clicked if they do not meet the requirement 
 		// (holding for 750ms or clicking twice withing 400ms)
@@ -593,21 +545,56 @@ Util.Events = u.e = new function() {
 		}
 
 		// remove up/end event
-//		u.e.resetEvents(this);
 		u.e.resetNestedEvents(this);
 
 		// notify of click
 		if(fun(this.clicked)) {
 			this.clicked(event);
 		}
+	}
 
+	/**
+	* Notifies:
+	* element.rightclicked
+	*/
+	this.rightclick = function(node, _options) {
+		// u.bug("set rightclick:", node);
+
+		node.e_rightclick_options = _options ? _options : {};
+		node.e_rightclick_options.eventAction = u.stringOr(node.e_rightclick_options.eventAction, "RightClicked");
+
+		node.e_rightclick = true;
+		u.e.addStartEvent(node, this._inputStart);
+
+		// prevent contextmenu
+		u.e.addEvent(node, "contextmenu", function(event){u.e.kill(event);});
+	}
+	this._rightclicked = function(event) {
+		u.bug("_rightclicked:", this);
+
+		// dblclick and hold event bubble to _clicked if they do not meet the requirement 
+		// (holding for 750ms or clicking twice withing 400ms)
+		if(this.e_rightclick_options) {
+			// track event
+			this.e_rightclick_options.event = event;
+			u.stats.event(this, this.e_rightclick_options);
+		}
+
+		// remove up/end event
+		u.e.resetNestedEvents(this);
+
+		// notify of click
+		if(fun(this.rightclicked)) {
+			this.rightclicked(event);
+		}
 	}
 
 	/**
 	* Notifies:
 	* element.dblclicked
 	*/
-	this.dblclick = this.doubletap = function(node, _options) {
+	this.dblclick = this.doubleclick = this.doubletap = this.dbltap = function(node, _options) {
+		// u.bug("set dblclick:", node);
 
 		node.e_dblclick_options = _options ? _options : {};
 		node.e_dblclick_options.eventAction = u.stringOr(node.e_dblclick_options.eventAction, "DblClicked");
@@ -616,7 +603,8 @@ Util.Events = u.e = new function() {
 		u.e.addStartEvent(node, this._inputStart);
 	}
 	this._dblclicked = function(event) {
-//		u.bug("_dblclicked:" + u.nodeId(this) + ", " + event.type)
+		// u.bug("_dblclicked:",this, event.type);
+
 		// if valid click timer, treat as dblclick
 		if(u.t.valid(this.t_clicked) && event) {
 
@@ -662,6 +650,7 @@ Util.Events = u.e = new function() {
 	// only makes over callback if node is not already hovered
 	// only makes out callback if exit is not to child node
 	this.hover = function(node, _options) {
+		// u.bug("set hover:", node);
 
 		// default values
 		node._hover_out_delay = 100;
@@ -691,7 +680,7 @@ Util.Events = u.e = new function() {
 
 	// actual mouseover event - wait for delay, if any
 	this._over = function(event) {
-//		u.bug("_over:" + u.nodeId(this));
+		// u.bug("real over (_over):", this);
 
 		u.t.resetTimer(this.t_out);
 
@@ -704,9 +693,9 @@ Util.Events = u.e = new function() {
 			this.t_over = u.t.setTimer(this, u.e.__over, this._hover_over_delay, event);
 		}
 	}
-
+	// delayed over event with callback
 	this.__over = function(event) {
-//		u.bug("__over:" + u.nodeId(this));
+		// u.bug("delayed over (__over):", this);
 
 		u.t.resetTimer(this.t_out);
 
@@ -718,7 +707,6 @@ Util.Events = u.e = new function() {
 			u.e.removeOverEvent(this, u.e._over);
 			u.e.addOverEvent(this, u.e.__over);
 
-			
 			// notify base (but only when state changes)
 			if(fun(this[this._callback_over])) {
 				this[this._callback_over](event);
@@ -729,7 +717,7 @@ Util.Events = u.e = new function() {
 	}
 	// actual mouseout event - wait for delay
 	this._out = function(event) {
-//		u.bug("_out:" + u.nodeId(this));
+		// u.bug("real out (_out):", this);
 
 		u.t.resetTimer(this.t_over);
 		u.t.resetTimer(this.t_out);
@@ -740,7 +728,7 @@ Util.Events = u.e = new function() {
 	}
 	// delayed out event with callback
 	this.__out = function(event) {
-//		u.bug("_out_is_real:" + u.nodeId(this));
+		// u.bug("delayed out (__out):", this);
 
 		this.is_hovered = false;
 

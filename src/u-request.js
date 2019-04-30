@@ -350,6 +350,11 @@ Util.validateResponse = function(HTTPRequest){
 		var node = HTTPRequest.node;
 		var request_id = HTTPRequest.request_id;
 		var request = node[request_id];
+
+		// Map final url to request data (redirects can have occured)
+		request.response_url = HTTPRequest.responseURL || request.request_url;
+
+		// Cleanup – no need to carry full HTTPRequest around
 		delete request.HTTPRequest;
 
 

@@ -1,8 +1,10 @@
 u.googlemaps = new function() {
 
 
+	this.api_loading = false;
 	this.api_loaded = false;
-
+	this.api_load_queue = [];
+	
 	// center and map required
 	this.map = function(map, center, _options) {
 
@@ -12,8 +14,8 @@ u.googlemaps = new function() {
 		map._maps_zoom = 10;
 		map._center_latitude = center[0];
 		map._center_longitude = center[1];
-		
-
+		map._styles = false;
+		map._disable_ui = false;
 
 		if(obj(_options)) {
 			var _argument;
@@ -23,6 +25,8 @@ u.googlemaps = new function() {
 					case "zoom"           : map._maps_zoom               = _options[_argument]; break;
 					case "scrollwheel"    : map._maps_scrollwheel        = _options[_argument]; break;
 					case "streetview"     : map._maps_streetview         = _options[_argument]; break;
+					case "styles"         : map._styles                  = _options[_argument]; break;
+					case "disableUI"      : map._disable_ui              = _options[_argument]; break;
 				}
 
 			}
@@ -30,32 +34,56 @@ u.googlemaps = new function() {
 
 
 		var map_key = u.randomString(8);
-		
-		(window[map_key] = function() {
+		window[map_key] = function() {
 
-//			u.bug("center:" + center[0] + "," + map._center_longitude + "," + map._maps_zoom)
-			var mapOptions = {center: new google.maps.LatLng(center[0], center[1]), zoom: map._maps_zoom, scrollwheel: map._maps_scrollwheel, streetViewControl: map._maps_streetview, zoomControlOptions: {position: google.maps.ControlPosition.LEFT_TOP}};
-			map.g_map = new google.maps.Map(map, mapOptions);
+			u.googlemaps.api_loaded = true;
 
-			if(fun(map.APIloaded)) {
-				map.APIloaded();
+			var map;
+			while(u.googlemaps.api_load_queue.length) {
+				map = u.googlemaps.api_load_queue.shift();
+				map.init();
 			}
 
-			google.maps.event.addListener(map.g_map, 'tilesloaded', function() {
-				if(fun(map.loaded)) {
-					map.loaded();
+		}
+		
+		map.init = function() {
+
+		//	u.bug(map_key);
+//			u.bug("center:" + center[0] + "," + map._center_longitude + "," + map._maps_zoom)
+			var mapOptions = {center: new google.maps.LatLng(center[0], center[1]), zoom: this._maps_zoom, scrollwheel: this._maps_scrollwheel, streetViewControl: this._maps_streetview, zoomControlOptions: {position: google.maps.ControlPosition.LEFT_TOP}, styles: this._styles, disableDefaultUI: this._disable_ui};
+			this.g_map = new google.maps.Map(this, mapOptions);
+			this.g_map.m_map = this
+
+			
+			if(fun(this.APIloaded)) {
+				this.APIloaded();
+			}
+
+			google.maps.event.addListener(this.g_map, 'tilesloaded', function() {
+				if(fun(this.m_map.tilesloaded)) {
+					this.m_map.tilesloaded();
 				}
 			});
 
-		});
+			google.maps.event.addListenerOnce(this.g_map, 'tilesloaded', function() {
+				if(fun(this.m_map.loaded)) {
+					this.m_map.loaded();
+				}
+			});
+
+		}
 
 		// load api?
-		if(!this.api_loaded) {
+		if(!this.api_loaded && !this.api_loading) {
 			u.ae(document.head, "script", {"src":"https://maps.googleapis.com/maps/api/js?callback="+map_key+(u.gapi_key ? "&key="+u.gapi_key : "")});
-			this.api_loaded = true;
+			this.api_loading = true;
+			this.api_load_queue.push(map);
+		}
+		else if(this.api_loading) {
+			this.api_load_queue.push(map);
 		}
 		else {
-			window[map_key]();
+			map.init();
 		}
 
 	}
@@ -64,24 +92,26 @@ u.googlemaps = new function() {
 	this.addMarker = function(map, coords, _options) {
 //		u.bug("addMarker:" + coords + ", " + map)
 
-		var _info = false;
+		var _icon;
+		var _label = null;
 
 		if(obj(_options)) {
 			var _argument;
 			for(_argument in _options) {
 
 				switch(_argument) {
-					case "info"           : _info               = _options[_argument]; break;
+					case "icon"           : _icon               = _options[_argument]; break;
+					case "label"          : _label              = _options[_argument]; break;
 				}
 
 			}
 		}
 
 
-		var marker = new google.maps.Marker({position: new google.maps.LatLng(coords[0], coords[1]), animation:google.maps.Animation.DROP, InfoWindow: {content:"hest"}});
-		marker.setMap(map);
+		var marker = new google.maps.Marker({position: new google.maps.LatLng(coords[0], coords[1]), animation:google.maps.Animation.DROP, icon: _icon, label: _label});
+		marker.setMap(map.g_map);
 
-		marker.g_map = map;
+		marker.g_map = map.g_map;
 
 		google.maps.event.addListener(marker, 'click', function() {
 			if(fun(this.clicked)) {

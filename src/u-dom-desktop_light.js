@@ -1,3 +1,92 @@
+// set classname on element, replacing all others
+Util.setClass = u.sc = function(node, classname, dom_update) {
+
+	// save old classname
+	var old_class;
+
+	// Special case for SVGs
+	if(typeof(SVGElement) !== "undefined" && node instanceof SVGElement) {
+		old_class = node.className.baseVal;
+		node.className.baseVal = classname;
+	}
+	// HTML
+	else {
+		old_class = node.className;
+		node.className = classname;
+	}
+
+	// force dom update (performance killer, but will make rendering more detailed)
+	dom_update = (!dom_update) || (node.offsetTop);
+	
+	// return replaced classname
+	return old_class;
+}
+
+// Element has classname
+Util.hasClass = u.hc = function(node, classname) {
+
+	var regexp = new RegExp("(^|\\s)(" + classname + ")(\\s|$)");
+	// Special case for SVGs
+	if(typeof(SVGElement) !== "undefined" && node instanceof SVGElement) {
+		if(regexp.test(node.className.baseVal)) {
+			return true;
+		}
+	}
+	// HTML
+	else {
+		if(regexp.test(node.className)) {
+			return true;
+		}
+	}
+
+	// return false on error
+	return false;
+}
+
+// Add classname to element if it is not already there
+Util.addClass = u.ac = function(node, classname, dom_update) {
+
+	var regexp = new RegExp("(^|\\s)" + classname + "(\\s|$)");
+	if(typeof(SVGElement) !== "undefined" && node instanceof SVGElement) {
+		if(!regexp.test(node.className.baseVal)) {
+			node.className.baseVal += node.className.baseVal ? " " + classname : classname;
+		}
+	}
+	else {
+		if(!regexp.test(node.className)) {
+			node.className += node.className ? " " + classname : classname;
+		}
+	}
+	// force dom update (performance killer, but will make rendering more detailed)
+	dom_update = (!dom_update) || (node.offsetTop);
+
+	// return updated classname
+	return node.className;
+}
+
+// Remove all instances of classname from element
+Util.removeClass = u.rc = function(node, classname, dom_update) {
+
+	var regexp = new RegExp("(^|\\s)(" + classname + ")(?=[\\s]|$)", "g");
+
+	// Replace pattern and fix any doublespaces
+	// Special case for SVGs
+	if(typeof(SVGElement) !== "undefined" && node instanceof SVGElement) {
+		node.className.baseVal = node.className.baseVal.replace(regexp, " ").trim().replace(/[\s]{2}/g, " ");
+	}
+	// HTML
+	else {
+		node.className = node.className.replace(regexp, " ").trim().replace(/[\s]{2}/g, " ");
+	}
+
+	// force dom update (performance killer, but will make rendering more detailed)
+	dom_update = (!dom_update) || (node.offsetTop);
+
+	// return updated classname
+	return node.className;
+}
+
+
 if(typeof(document.defaultView) == "undefined") {
 
 	// Get elements computed style value for css attribute
@@ -49,12 +138,11 @@ if(typeof(document.defaultView) == "undefined") {
 // only punish older IEs
 if(document.all && document.addEventListener == undefined) {
 
-
 	// IE attribute bug - will not apply class unless set as node.className
 	Util.appendElement = u.ae = function(_parent, node_type, attributes) {
 		try {
 			// is node_type already DOM node
-			var node = (obj(node_type)) ? node_type : document.createElement(node_type);
+			var node = (obj(node_type)) ? node_type : (node_type == "svg" && typeof(SVGElement) !== "undefined" ? document.createElementNS("http://www.w3.org/2000/svg", node_type) : document.createElement(node_type));
 
 			if(attributes) {
 				var attribute;
@@ -125,12 +213,10 @@ if(document.all && document.addEventListener == undefined) {
 
 	}
 
-
-
 	// IE attribute bug - will not apply class unless set as node.className
 	Util.insertElement = u.ie = function(_parent, node_type, attributes) {
 		try {
-			var node = (obj(node_type)) ? node_type : document.createElement(node_type);
+			var node = (obj(node_type)) ? node_type : (node_type == "svg" && typeof(SVGElement) !== "undefined" ? document.createElementNS("http://www.w3.org/2000/svg", node_type) : document.createElement(node_type));
 
 			if(attributes) {
 				var attribute;
@@ -199,7 +285,6 @@ if(document.all && document.addEventListener == undefined) {
 		}
 	}
 
-
 	// insert element in wrap-element and return wrapper
 	Util.wrapElement = u.we = function(node, node_type, attributes) {
 		try {
@@ -258,6 +343,7 @@ if(document.all && document.addEventListener == undefined) {
 
 }
 
+
 // get node textcontent shorthand (basically this is not needed for newer browsers, but required to align syntax for older browsers)
 // function could be made as prototype, but IE 7+6 does not support Object.defineProperty
 if(typeof(document.textContent) == "undefined") {
@@ -277,19 +363,15 @@ if(typeof(document.textContent) == "undefined") {
 
 }
 
+
 // is node within scope - Node.contains didn't exist pre Fx 9, Ch ? 
 // Polyfill
-// TODO: nodeWithin is DEPRECATED in favor of u.contains
-u.contains = Util.nodeWithin = u.nw = function(node, scope) {
+if(typeof(document.contains) == "undefined") {
 
-	if(scope != node) {
+	u.contains = function(scope, node) {
 
-		if(fun(scope.contains)) {
-			if(scope.contains(node)) {
-				return true
-			}
-		}
-		else {
+		if(scope != node) {
+
 			while(node != null) {
 				if(node == scope) {
 					return true;
@@ -297,8 +379,9 @@ u.contains = Util.nodeWithin = u.nw = function(node, scope) {
 				node = node.parentNode;
 			}
 		}
+
+		return false;
 	}
-	return false;
 
 }
 
