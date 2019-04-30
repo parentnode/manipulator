@@ -1,6 +1,9 @@
 // only punish older IEs <= 10
 // Cannot set value properties directly
-if(/*@cc_on!@*/false && document.documentMode <= 10) {
+
+
+if(document.documentMode && document.documentMode <= 10 && document.documentMode >= 8) {
+	// alert("<= 10");
 
 	// IE attribute bug - will not apply value for checkboxes
 	Util.appendElement = u.ae = function(_parent, node_type, attributes) {
@@ -81,7 +84,8 @@ if(/*@cc_on!@*/false && document.documentMode <= 10) {
 
 
 // Cannot use classList on SVGs
-if(document.documentMode <= 11 && ((/*@cc_on!@*/false) || ("-ms-scroll-limit" in document.documentElement.style && "-ms-ime-align" in document.documentElement.style))) {
+if(document.documentMode && document.documentMode <= 11 && document.documentMode >= 8) {
+	// alert("<= 11");
 
 	// Element has classname
 	Util.hasClass = u.hc = function(node, classname) {
