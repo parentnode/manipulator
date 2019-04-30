@@ -441,6 +441,11 @@ u.e._drag = function(event) {
 //	u.bug("this.current_xps:" + this.current_xps + " x " + "this.current_yps:" + this.current_yps)
 
 
+	// Get an idea of the direction, even when acceleration has stopped
+	this.last_x_distance_travelled = (this.current_xps) ? this.current_x - this.move_last_x : this.last_x_distance_travelled;
+	this.last_y_distance_travelled = (this.current_yps) ? this.current_y - this.move_last_y : this.last_y_distance_travelled;
+	// u.bug("last_x_distance_travelled:" + this.last_x_distance_travelled, "last_y_distance_travelled:" + this.last_y_distance_travelled);
+
 	// remember current move time for next event
 	this.move_timestamp = event.timeStamp;
 	this.move_last_x = this.current_x;
@@ -465,12 +470,13 @@ u.e._drag = function(event) {
 //	u.bug("locked:" + this.locked + ", " + this.only_horizontal + ", " + this.only_vertical);
 
 	if(this.e_swipe) {
-//		u.bug("swiping:" + this.locked + ", " + this.only_horizontal + ", " + this.only_vertical + ", " + Math.abs(this.current_xps) + ":" + Math.abs(this.current_yps));
+		// u.bug("swiping:" + this.locked + ", " + this.only_horizontal + ", " + this.only_vertical + ", " + Math.abs(this.current_xps) + ":" + Math.abs(this.current_yps));
+		// u.bug(this, this.current_x, this.current_xps, this.move_last_x);
 
 		if(this.only_horizontal) {
 
 //			u.bug("only_horizontal")
-			if(this.current_xps < 0 || this.current_xps === 0 && this.current_x < 0) {
+			if(this.current_xps < 0 || this.current_xps === 0 && this.last_x_distance_travelled < 0) {
 				this.swiped = "left";
 //				u.bug("id swiped left")
 			}
@@ -482,7 +488,7 @@ u.e._drag = function(event) {
 		}
 		else if(this.only_vertical) {
 
-			if(this.current_yps < 0 || this.current_yps === 0 && this.current_y < 0) {
+			if(this.current_yps < 0 || this.current_yps === 0 && this.last_y_distance_travelled < 0) {
 				this.swiped = "up";
 //				u.bug("id swiped up")
 			}
