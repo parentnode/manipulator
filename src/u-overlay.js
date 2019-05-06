@@ -5,8 +5,10 @@
 *
 * @param _options JSON object with options for overlay creation
 *  - headline: Overlay headline
+*  - drag: Enable or disable drag (default 'true')
 *  - width: Overlay width in pixels (default 400)
 *  - height: Overlay height in pixels (default 400)
+*  - update: Update sizing (for calculated sizing) 
 *  - class: Additional classname to add to overlay 
 *
 * @return Node reference to overlay div
@@ -21,9 +23,10 @@
 u.overlay = function (_options) {
 
 	var title = "Overlay";
-
+	var drag = true;
 	var width = 400;
 	var height = 400;
+	var content_scroll = false;
 	var classname = "";
 
 
@@ -32,12 +35,14 @@ u.overlay = function (_options) {
 		var _argument;
 		for(_argument in _options) {
 			switch(_argument) {
-				case "title"       : title       = _options[_argument]; break;
+				case "title"       : title          = _options[_argument]; break;
+				case "drag"        : drag           = _options[_argument]; break;
 
 				case "class"       : classname      = _options[_argument]; break;
 
 				case "width"       : width          = _options[_argument]; break;
 				case "height"      : height         = _options[_argument]; break;
+				case "content_scroll" : content_scroll    = _options[_argument]; break;
 			}
 		}
 	}
@@ -49,7 +54,11 @@ u.overlay = function (_options) {
 	else {
 		classname = " small " + classname;
 	}
-
+	
+	// Enable overflow:scroll on overlay.div_content
+	if (content_scroll) {
+		classname += "content_scroll"
+	}
 
 	// Create overlay div (with tabindex -1 to make div focusable for keyevents)
 	var overlay = u.ae(document.body, "div", {"class": "overlay" + classname, "tabindex":"-1"});
@@ -60,7 +69,6 @@ u.overlay = function (_options) {
 		"left": ((u.browserW() - width) / 2) + "px",
 		"top": ((u.browserH() - height) / 2) + "px",
 	});
-
 
 	// Add overlay "protection" div to cover the main page
 	overlay.protection = u.ae(document.body, "div", {"class": "overlay_protection"});
@@ -89,8 +97,8 @@ u.overlay = function (_options) {
 
 		// reposition overlay on screen
 		u.ass(this, {
-			"left": ((u.browserW() - this.offsetWidth) / 2) + "px",
-			"top": ((u.browserH() - this.offsetHeight) / 2) + "px",
+			"left": ((u.browserW() - this.w) / 2) + "px",
+			"top": ((u.browserH() - this.h) / 2) + "px",
 		});
 
 
@@ -124,24 +132,29 @@ u.overlay = function (_options) {
 	overlay.div_footer = u.ae(overlay, "div", {class: "footer"});
 	overlay.div_footer.overlay = overlay;
 
+	// Add width and height
+	overlay.w = width;
+	overlay.h = height;
 
 
-
-	// make overlay header draggable 
-	u.e.drag(overlay.div_header, overlay.div_header);
-	overlay._x = 0;
-	overlay._y = 0;
-	overlay.div_header.moved = function (event) {
-		var new_x = this.overlay._x + this.current_x;
-		var new_y = this.overlay._y + this.current_y;
-		u.ass(this.overlay, {
-			"transform": "translate(" + new_x + "px, " + new_y + "px)",
-		});
+	// make overlay header draggable
+	if (drag) {
+		u.e.drag(overlay.div_header, overlay.div_header);
+		overlay._x = 0;
+		overlay._y = 0;
+		overlay.div_header.moved = function (event) {
+			var new_x = this.overlay._x + this.current_x;
+			var new_y = this.overlay._y + this.current_y;
+			u.ass(this.overlay, {
+				"transform": "translate(" + new_x + "px, " + new_y + "px)",
+			});
+		}
+		overlay.div_header.dropped = function (event) {
+			this.overlay._x += this.current_x;
+			this.overlay._y += this.current_y;
+		}
 	}
-	overlay.div_header.dropped = function (event) {
-		this.overlay._x += this.current_x;
-		this.overlay._y += this.current_y;
-	}
+
 
 
 	// Close overlay and make callback to overlay.closed
