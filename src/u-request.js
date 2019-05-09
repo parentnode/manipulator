@@ -70,10 +70,6 @@ Util.request = function(node, url, _options) {
 		node[request_id].HTTPRequest.node = node;
 		node[request_id].HTTPRequest.request_id = request_id;
 
-		// set specific responseType for request
-		if(node[request_id].response_type) {
-			node[request_id].HTTPRequest.responseType = node[request_id].response_type;
-		}
 
 		// listen for async request state change
 		if(node[request_id].request_async) {
@@ -108,6 +104,11 @@ Util.request = function(node, url, _options) {
 				node[request_id].request_url += params ? ((!node[request_id].request_url.match(/\?/g) ? "?" : "&") + params) : "";
 
 				node[request_id].HTTPRequest.open(node[request_id].request_method, node[request_id].request_url, node[request_id].request_async);
+
+				// set specific responseType for request
+				if(node[request_id].response_type) {
+					node[request_id].HTTPRequest.responseType = node[request_id].response_type;
+				}
 
 				// set timeout?
 				if(node[request_id].request_timeout) {
@@ -157,6 +158,11 @@ Util.request = function(node, url, _options) {
 
 				// open connection
 				node[request_id].HTTPRequest.open(node[request_id].request_method, node[request_id].request_url, node[request_id].request_async);
+
+				// set specific responseType for request
+				if(node[request_id].response_type) {
+					node[request_id].HTTPRequest.responseType = node[request_id].response_type;
+				}
 
 				// set timeout?
 				if(node[request_id].request_timeout) {
@@ -397,7 +403,7 @@ Util.validateResponse = function(HTTPRequest){
 		}
 		catch(exception) {
 			request.exception = exception;
-//			u.bug("HTTPRequest exection:" + exception);
+			// u.bug("HTTPRequest exection:", exception);
 		}
 	}
 	// invalid response - should not be possible, but anyway ... in case it happens, console will give you a hint
@@ -405,7 +411,7 @@ Util.validateResponse = function(HTTPRequest){
 		console.log("Lost track of this request. There is no way of routing it back to requestee.")
 		return;
 	}
-//	u.bug("object:" + object);
+	// u.bug("object:", object);
 
 	// did validation yield usable object
 	if(object !== false) {
