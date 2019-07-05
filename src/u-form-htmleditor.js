@@ -2649,7 +2649,7 @@ u.f.textEditor = function(field) {
 
 //				u.bug("found external video node")
 
-				field.addExternalVideoTag(node.className.match(field.ext_video_allowed.join("|")), node);
+				field.addExternalVideoTag(node.className.match(field.ext_video_allowed.join("|")[0]), node);
 			}
 
 			// FILE
