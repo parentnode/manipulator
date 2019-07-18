@@ -4,28 +4,28 @@
 
 
 // initializer
-Util.Form.customInit["location"] = function(_form, field) {
+Util.Form.customInit["location"] = function(field) {
 
 	// location, latitude and longitude
 
 	// get all inputs
-	field._inputs = u.qsa("input", field);
+	field.inputs = u.qsa("input", field);
 
 	// use first input as field input 
-	field._input = field._inputs[0];
+	field.input = field.inputs[0];
 
-	for(j = 0; j < field._inputs.length; j++) {
-		input = field._inputs[j];
+	for(j = 0; j < field.inputs.length; j++) {
+		input = field.inputs[j];
 
+		// form is a reserved property, so we use _form
+		input._form = field._form;
+		// Get associated label
+		input.label = u.qs("label[for='"+input.id+"']", field);
+		// Let it know it's field
 		input.field = field;
-		input._form = _form;
 
-		// add input to fields array
-		_form.fields[input.name] = input;
-
-		// get input label
-		input._label = u.qs("label[for='"+input.id+"']", field);
-
+		// add input to inputs array
+		field._form.inputs[input.name] = input;
 
 		// get/set value function
 		input.val = u.f._value;
@@ -34,10 +34,10 @@ Util.Form.customInit["location"] = function(_form, field) {
 		u.e.addEvent(input, "keyup", u.f._updated);
 		u.e.addEvent(input, "change", u.f._changed);
 
-		// submit on enter (checks for autocomplete etc)
+		// submit on enter
 		u.f.inputOnEnter(input);
 
-		// activate input
+		// Add additional standard event listeners and labelstyle
 		u.f.activateInput(input);
 	}
 
@@ -50,8 +50,6 @@ Util.Form.customInit["location"] = function(_form, field) {
 
 	}
 
-	// validate field now
-	u.f.validate(field._input);
 }
 
 // validator
@@ -62,7 +60,7 @@ Util.Form.customValidate["location"] = function(iN) {
 	var loc_fields = 0;
 
 	// location input
-	if(iN.field._input) {
+	if(iN.field.input) {
 
 		loc_fields++;
 
@@ -70,13 +68,13 @@ Util.Form.customValidate["location"] = function(iN) {
 		max = 255;
 
 		if(
-			iN.field._input.val().length >= min &&
-			iN.field._input.val().length <= max
+			iN.field.input.val().length >= min &&
+			iN.field.input.val().length <= max
 		) {
-			u.f.fieldCorrect(iN.field._input);
+			u.f.inputIsCorrect(iN.field.input);
 		}
 		else {
-			u.f.fieldError(iN.field._input);
+			u.f.inputHasError(iN.field.input);
 		}
 	}
 
@@ -93,10 +91,10 @@ Util.Form.customValidate["location"] = function(iN) {
 			iN.field.lat_input.val() >= min && 
 			iN.field.lat_input.val() <= max
 		) {
-			u.f.fieldCorrect(iN.field.lat_input);
+			u.f.inputIsCorrect(iN.field.lat_input);
 		}
 		else {
-			u.f.fieldError(iN.field.lat_input);
+			u.f.inputHasError(iN.field.lat_input);
 		}
 	}
 
@@ -113,10 +111,10 @@ Util.Form.customValidate["location"] = function(iN) {
 			iN.field.lon_input.val() >= min && 
 			iN.field.lon_input.val() <= max
 		) {
-			u.f.fieldCorrect(iN.field.lon_input);
+			u.f.inputIsCorrect(iN.field.lon_input);
 		}
 		else {
-			u.f.fieldError(iN.field.lon_input);
+			u.f.inputHasError(iN.field.lon_input);
 		}
 	}
 

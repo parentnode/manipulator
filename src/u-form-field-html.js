@@ -4,26 +4,22 @@
 
 
 // initializer
-Util.Form.customInit["html"] = function(_form, field) {
+Util.Form.customInit["html"] = function(field) {
 
-	field._input = u.qs("textarea", field);
-	field._input._form = _form;
-	field._input.field = field;
-
-	// add input to fields array
-	_form.fields[field._input.name] = field._input;
-
-	// get input label
-	field._input._label = u.qs("label[for='"+field._input.id+"']", field);
+	// Get primary input
+	field.input = u.qs("textarea", field);
+	// form is a reserved property, so we use _form
+	field.input._form = field._form;
+	// Get associated label
+	field.input.label = u.qs("label[for='"+field.input.id+"']", field);
+	// Let it know it's field
+	field.input.field = field;
 
 	// get/set value function
-	field._input.val = u.f._value;
+	field.input.val = u.f._value;
 
 	// create textEditor interface
 	u.f.textEditor(field);
-
-	// validate field now
-	u.f.validate(field._input);
 
 }
 
@@ -43,11 +39,25 @@ Util.Form.customValidate["html"] = function(iN) {
 		u.text(iN.field._viewer).length <= max && 
 		(!pattern || iN.val().match("^"+pattern+"$"))
 	) {
-		u.f.fieldCorrect(iN);
+		u.f.inputIsCorrect(iN);
 	}
 	else {
-		u.f.fieldError(iN);
+		u.f.inputHasError(iN);
 	}
+
+}
+
+
+Util.Form.customHintPosition["html"] = function(field) {
+	// u.bug("customHintPosition html", field);
+
+	// Default positioning
+	var input_middle = field._editor.offsetTop + (field._editor.offsetHeight / 2);
+	var help_top = input_middle - field.help.offsetHeight / 2;
+
+	u.ass(field.help, {
+		"top": help_top + "px"
+	});
 
 }
 
@@ -181,7 +191,7 @@ u.f.textEditor = function(field) {
 	// could be in form action (last fragment of url)
 	// TODO: should be extended to look in other places
 	field.item_id;
-	var item_id_match = field._input._form.action.match(/\/([0-9]+)(\/|$)/);
+	var item_id_match = field._form.action.match(/\/([0-9]+)(\/|$)/);
 	if(item_id_match) {
 		field.item_id = item_id_match[1];
 	}
@@ -210,15 +220,15 @@ u.f.textEditor = function(field) {
 
 
 		// allow to toggle raw HTML view
-		this.bn_show_raw = u.ae(this._input._label, "span", {"html":"(RAW HTML)"});
+		this.bn_show_raw = u.ae(this.input.label, "span", {"html":"(RAW HTML)"});
 		this.bn_show_raw.field = this;
 		u.ce(this.bn_show_raw);
 		this.bn_show_raw.clicked = function() {
-			if(u.hc(this.field._input, "show")) {
-				u.rc(this.field._input, "show");
+			if(u.hc(this.field.input, "show")) {
+				u.rc(this.field.input, "show");
 			}
 			else {
-				u.ac(this.field._input, "show");
+				u.ac(this.field.input, "show");
 			}
 		}
 
@@ -343,22 +353,22 @@ u.f.textEditor = function(field) {
 
 		// callback to field updated
 		if(fun(this.updated)) {
-			this.updated(this._input);
+			this.updated(this.input);
 		}
 
 		// callback to field changed
 		if(fun(this.changed)) {
-			this.changed(this._input);
+			this.changed(this.input);
 		}
 
 		// callback to form updated
-		if(this._input._form && fun(this._input._form.updated)) {
-			this._input._form.updated(this._input);
+		if(this.input._form && fun(this.input._form.updated)) {
+			this.input._form.updated(this.input);
 		}
 
 		// callback to form changed
-		if(this._input._form && fun(this._input._form.changed)) {
-			this._input._form.changed(this._input);
+		if(this.input._form && fun(this.input._form.changed)) {
+			this.input._form.changed(this.input);
 		}
 	}
 
@@ -444,7 +454,7 @@ u.f.textEditor = function(field) {
 		var tags = u.qsa("div.tag", this);
 
 		// update actual textarea to be saved
-		this._input.val("");
+		this.input.val("");
 
 		var i, node, tag, type, value, j, html = "";
 
@@ -509,7 +519,7 @@ u.f.textEditor = function(field) {
 		}
 
 		// save HTML in textarea
-		this._input.val(html);
+		this.input.val(html);
 
 	}
 
@@ -590,7 +600,7 @@ u.f.textEditor = function(field) {
 			this.update();
 
 			// save - new state (delete is permanent)
-			this._input._form.submit();
+			this._form.submit();
 
 		}
 
@@ -846,7 +856,7 @@ u.f.textEditor = function(field) {
 		tag._input = u.ae(tag, "div", {"class":"text"});
 		tag._input.tag = tag;
 		tag._input.field = this;
-		tag._input._form = this._input._form;
+		tag._input._form = this._form;
 
 
 		// if we have media info
@@ -904,7 +914,7 @@ u.f.textEditor = function(field) {
 			tag._input = u.ae(tag._text, "input", {"type":"file", "name":"htmleditor_media[]"});
 			tag._input.tag = tag;
 			tag._input.field = this;
-			tag._input._form = this._input._form;
+			tag._input._form = this._form;
 
 			// declare get/set value funtion
 			tag._input.val = function(value) {return false;}
@@ -937,7 +947,7 @@ u.f.textEditor = function(field) {
 		var form_data = new FormData();
 
 		// append relevant data
-		form_data.append("csrf-token", this._input._form.fields["csrf-token"].val());
+		form_data.append("csrf-token", this._form.fields["csrf-token"].val());
 
 		// request response handler
 		tag.response = function(response) {
@@ -1023,7 +1033,7 @@ u.f.textEditor = function(field) {
 				this.tag.field.update();
 
 				// save after upload is complete
-				this.tag.field._input._form.submit();
+				this.tag.field._form.submit();
 			}
 		}
 		u.request(this, this.field.media_add_action+"/"+this.field.item_id, {"method":"post", "params":form_data});
@@ -1058,7 +1068,7 @@ u.f.textEditor = function(field) {
 		tag._input = u.ae(tag, "div", {"class":"text"});
 		tag._input.tag = tag;
 		tag._input.field = this;
-		tag._input._form = this._input._form;
+		tag._input._form = this._form;
 
 
 		// if we have file info
@@ -1109,7 +1119,7 @@ u.f.textEditor = function(field) {
 			tag._input = u.ae(tag._text, "input", {"type":"file", "name":"htmleditor_file"});
 			tag._input.tag = tag;
 			tag._input.field = this;
-			tag._input._form = this._input._form;
+			tag._input._form = this._form;
 
 			// declare get/set value funtion
 			tag._input.val = function(value) {return false;}
@@ -1141,7 +1151,7 @@ u.f.textEditor = function(field) {
 		var form_data = new FormData();
 
 		// append relevant data
-		form_data.append("csrf-token", this._input._form.fields["csrf-token"].val());
+		form_data.append("csrf-token", this._form.fields["csrf-token"].val());
 
 		// request response handler
 		tag.response = function(response) {
@@ -1221,7 +1231,7 @@ u.f.textEditor = function(field) {
 				this.tag.field.update();
 
 				// save after upload is complete
-				this.tag.field._input._form.submit();
+				this.tag.field._form.submit();
 			}
 		}
 		u.request(this, this.field.file_add_action+"/"+this.field.item_id, {"method":"post", "params":form_data});
@@ -1255,7 +1265,7 @@ u.f.textEditor = function(field) {
 		tag._input = u.ae(tag, "div", {"class":"text", "contentEditable":true});
 		tag._input.tag = tag;
 		tag._input.field = this;
-		tag._input._form = this._input._form;
+		tag._input._form = this._form;
 
 		// declare get/set value funtion
 		tag._input.val = function(value) {
@@ -1499,7 +1509,7 @@ u.f.textEditor = function(field) {
 		li._input.li = li;
 		li._input.tag = tag;
 		li._input.field = this;
-		li._input._form = this._input._form;
+		li._input._form = this._form;
 
 		// declare get/set value funtion
 		li._input.val = function(value) {
@@ -1553,7 +1563,7 @@ u.f.textEditor = function(field) {
 		tag._input = u.ae(tag, "div", {"class":"text", "contentEditable":true});
 		tag._input.tag = tag;
 		tag._input.field = this;
-		tag._input._form = this._input._form;
+		tag._input._form = this._form;
 
 		// declare get/set value funtion
 		tag._input.val = function(value) {
@@ -1857,7 +1867,7 @@ u.f.textEditor = function(field) {
 		u.ac(this.field, "focus");
 
 		// make sure field goes all the way in front - hint/error must be seen
-		u.as(this.field, "zIndex", this.field._input._form._focus_z_index);
+		u.as(this.field, "zIndex", this.field._form._focus_z_index);
 
 		// position hint in case there is an error
 		u.f.positionHint(this.field);
@@ -2526,7 +2536,7 @@ u.f.textEditor = function(field) {
 	// INDEX EXISTING CONTENT 
 
 	// inject value into viewer div, to be able to inspect for DOM content on initialization
-	field._viewer.innerHTML = field._input.val();
+	field._viewer.innerHTML = field.input.val();
 
 
 	// TODO: Consider 

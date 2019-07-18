@@ -1,49 +1,64 @@
-// COMPATIBILITY FUNCTIONS
+// EXTENSIONS EXAMPLES
 
+// example Fix field HTML - is run on form init
+// Util.Form.fixFieldHTML = function(field) {
+//
+// 	if(field.indicator && field.label) {
+// 		// move indicator to label
+// 		u.ae(field.label, field.indicator);
+// 	}
+// }
 
-// Simple_form converter
-// Method to correct HTML output from other systems
-// can be adapted locally for greater flexibility
-Util.Form.fixFieldHTML = function(field) {
+// example initializer – matches field with "example" class
+Util.Form.customInit["example"] = function(field) {
 
-	// remove requirement indicators (simple_form)
-	var abbr = u.qs("abbr", field);
-	if(abbr) {
-		abbr.parentNode.removeChild(abbr);
-	}
+	// Get primary input
+	field.input = u.qs("input", field);
+	// form is a reserved property, so we use _form
+	field.input._form = field._form;
+	// Get associated label
+	field.input.label = u.qs("label[for='"+field.input.id+"']", field);
+	// Let it know it's field
+	field.input.field = field;
 
-	// optional messages in data-error and data-hint attributes
-	var error_message = field.getAttribute("data-error");
-	var hint_message = field.getAttribute("data-hint");
-	if(error_message || hint_message) {
-		if(!field._help) {
-			field._help = u.ae(field, "div", {"class":"help"});
-		}
-	}
-	if(hint_message) {
-		if(!field._hint) {
-			field._hint = u.ae(field._help, "div", {"class":"hint", "html":hint_message})
-		}
-		else {
-			field._hint.innerHTML = hint_message
-		}
-	}
-	if(error_message) {
-		if(!field._error) {
-			field._error = u.ae(field._help, "div", {"class":"error", "html":error_message})
-		}
-		else {
-			field._error.innerHTML = error_message
-		}
-	}
+	// get/set value function
+	field.input.val = u.f._value;
+
+	// Add additional standard event listeners and labelstyle
+	u.f.activateInput(field.input);
 
 }
 
-// custom send types
-// SAP JAVA Platform
-Util.Form.customSend["jdata"] = function(params) {
-
-	object = u.f.convertNamesToJsonObject(params);
-	return "jdata=" + escape(JSON.stringify(object));
+// example validator - matches field with "example" class
+Util.Form.customValidate["example"] = function(iN) {
+	if(iN.val()) {
+		u.f.inputIsCorrect(iN);
+	}
+	else {
+		u.f.inputHasError(iN);
+	}
 }
 
+// example hint positioner - matches field with "example" class
+Util.Form.customHintPosition["example"] = function(field) {
+
+	// Default positioning
+	var input_middle = field.input.offsetTop + (field.input.offsetHeight / 2);
+	var help_top = input_middle - field.help.offsetHeight / 2;
+
+	u.ass(field.help, {
+		"top": help_top + "px"
+	});
+
+}
+
+// example label style - will be applied to all inputs if classname labelstyle:example exists on form
+Util.Form.customLabelStyle["example"] = function(iN) {
+	u.ae(iN.field, iN.label);
+}
+
+
+// example data parser - hooked into u.f.getData()
+Util.Form.customDataFormat["example"] = function(data) {
+	return JSON.strigify(data);
+}

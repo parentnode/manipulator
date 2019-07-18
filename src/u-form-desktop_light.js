@@ -53,7 +53,7 @@ Util.Form = u.f = new function() {
 		_form._validation = true;
 
 		// u.bug list form.fields and form.actions
-		_form._debug_init = false;
+		_form._debug = false;
 
 		// additional info passed to function as JSON object
 		if(obj(_options)) {
@@ -64,7 +64,7 @@ Util.Form = u.f = new function() {
 					case "validation"       : _form._validation      = _options[_argument]; break;
 					case "focus_z"          : _form._focus_z_index   = _options[_argument]; break;
 
-					case "debug"            : _form._debug_init      = _options[_argument]; break;
+					case "debug"            : _form._debug      = _options[_argument]; break;
 				}
 			}
 		}
@@ -82,6 +82,7 @@ Util.Form = u.f = new function() {
 		// we'll do all validation internally
 		_form.native_form.setAttribute("novalidate", "novalidate");
 
+
 		// set submit reference to internal submit handler
 		// but keep reference to DOM submit
 		_form.DOMsubmit = _form.native_form.submit;
@@ -96,14 +97,19 @@ Util.Form = u.f = new function() {
 
 		// objects for fields and actions
 		// all named fields and buttons can be accessed through this objects
-		_form.fields = {};
+		_form.inputs = {};
 		_form.actions = {};
+
+
+
+		_form.fields = _form.inputs;
 		_form.error_fields = {};
+
 
 		// Label styles - defines special handling of label values
 		// specified via form classname as labelstyle:inject
 		// Currently implemented: none or inject
-		_form.labelstyle = u.cv(_form, "labelstyle");
+		_form._labelstyle = u.cv(_form, "labelstyle");
 
 
 		// get all fields
@@ -118,10 +124,17 @@ Util.Form = u.f = new function() {
 
 
 			// find help (hints and errors)
-			field._help = u.qs(".help", field);
-			field._hint = u.qs(".hint", field);
-			field._error = u.qs(".error", field);
+			field.help = u.qs(".help", field);
+			field.hint = u.qs(".hint", field);
+			field.error = u.qs(".error", field);
 
+
+			// choose first label as primary field label
+			field.label = u.qs("label", field);
+
+
+			// Add required indicator (for showing icons)
+			field.indicator = u.ae(field.label, "span", {"class":"indicator", "html":"&nbsp;*"});
 
 
 			// Implementing support for non-manipulator system HTML output
@@ -132,7 +145,7 @@ Util.Form = u.f = new function() {
 
 
 			// setup field status
-			field._initialized = false;
+			field._custom_initialized = false;
 
 
 			// check for custom inits
@@ -141,90 +154,90 @@ Util.Form = u.f = new function() {
 			for(custom_init in this.customInit) {
 				if(u.hc(field, custom_init)) {
 					this.customInit[custom_init](_form, field);
-					field._initialized = true;
+					field._custom_initialized = true;
 				}
 			}
 
 
 			// do not perform other inits if custom init was executed
-			if(!field._initialized) {
+			if(!field._custom_initialized) {
 
 
 				// regular inputs initialization
 				if(u.hc(field, "string|email|tel|number|integer|password|date|datetime")) {
 
-					field._input = u.qs("input", field);
-					field._input._form = _form;
-					field._input.field = field;
+					field.input = u.qs("input", field);
+					field.input._form = _form;
+					field.input.field = field;
 
 					// add input to fields array
-					_form.fields[field._input.name] = field._input;
+					_form.fields[field.input.name] = field.input;
 
 					// get input label
-					field._input._label = u.qs("label[for='"+field._input.id+"']", field);
+					field.input.label = u.qs("label[for='"+field.input.id+"']", field);
 
 					// get/set value function
-					field._input.val = this._value;
+					field.input.val = this._value;
 
 					// change/update events
-					u.e.addEvent(field._input, "keyup", this._updated);
-					u.e.addEvent(field._input, "change", this._changed);
+					u.e.addEvent(field.input, "keyup", this._updated);
+					u.e.addEvent(field.input, "change", this._changed);
 
 					// submit on enter (checks for autocomplete etc)
-					this.inputOnEnter(field._input);
+					this.inputOnEnter(field.input);
 
 					// activate input
-					this.activateInput(field._input);
+					this.activateInput(field.input);
 
 					// validate field now
-					this.validate(field._input);
+					this.validate(field.input);
 				}
 
 				// textarea initialization
 				else if(u.hc(field, "text")) {
 
-					field._input = u.qs("textarea", field);
-					field._input._form = _form;
-					field._input.field = field;
+					field.input = u.qs("textarea", field);
+					field.input._form = _form;
+					field.input.field = field;
 
 					// add input to fields array
-					_form.fields[field._input.name] = field._input;
+					_form.fields[field.input.name] = field.input;
 
 					// get input label
-					field._input._label = u.qs("label[for='"+field._input.id+"']", field);
+					field.input.label = u.qs("label[for='"+field.input.id+"']", field);
 
 					// get/set value function
-					field._input.val = this._value;
+					field.input.val = this._value;
 
 					// resize textarea while typing
 					if(u.hc(field, "autoexpand")) {
 
 						// no scrollbars on auto expanded fields
-						var current_height = parseInt(u.gcs(field._input, "height"));
+						var current_height = parseInt(u.gcs(field.input, "height"));
 //						u.bug("AE current_height:" + current_height + "," + iN.scrollHeight);
 
 						// save current value while calculating height offset
-						var current_value = field._input.val();
+						var current_value = field.input.val();
 
-						field._input.value = "";
-						u.as(field._input, "overflow", "hidden");
+						field.input.value = "";
+						u.as(field.input, "overflow", "hidden");
 				//		u.bug(current_height + "," + iN.scrollHeight);
 
 						// get textarea height value offset - webkit and IE/Opera scrollHeight differs from height
 						// implenting different solutions is the only way to achive similar behaviour across browsers
 						// fallback support is Mozilla 
 
-						field._input.autoexpand_offset = 0;
-						if(parseInt(u.gcs(field._input, "height")) != field._input.scrollHeight) {
-							field._input.autoexpand_offset = field._input.scrollHeight - parseInt(u.gcs(field._input, "height"));
+						field.input.autoexpand_offset = 0;
+						if(parseInt(u.gcs(field.input, "height")) != field.input.scrollHeight) {
+							field.input.autoexpand_offset = field.input.scrollHeight - parseInt(u.gcs(field.input, "height"));
 						}
 
 						// set existing value again
-						field._input.value = current_value;
+						field.input.value = current_value;
 
 						// set correct height
-						field._input.setHeight = function() {
-//							u.bug("field._input.setHeight:" + u.nodeId(this) + ", this.scrollHeight:" + this.scrollHeight + ", " + this.autoexpand_offset + ", " + this.scrollWidth + ", " + this.scrollTop);
+						field.input.setHeight = function() {
+//							u.bug("field.input.setHeight:" + u.nodeId(this) + ", this.scrollHeight:" + this.scrollHeight + ", " + this.autoexpand_offset + ", " + this.scrollWidth + ", " + this.scrollTop);
 
 							var textarea_height = parseInt(u.gcs(this, "height"));
 
@@ -250,76 +263,76 @@ Util.Form = u.f = new function() {
 							}
 						}
 
-						u.e.addEvent(field._input, "keyup", field._input.setHeight);
+						u.e.addEvent(field.input, "keyup", field.input.setHeight);
 
-						field._input.setHeight();
+						field.input.setHeight();
 
-//						this.autoExpand(field._input);
+//						this.autoExpand(field.input);
 					}
 
 					// change/update events
-					u.e.addEvent(field._input, "keyup", this._updated);
-					u.e.addEvent(field._input, "change", this._changed);
+					u.e.addEvent(field.input, "keyup", this._updated);
+					u.e.addEvent(field.input, "change", this._changed);
 
 					// activate input
-					this.activateInput(field._input);
+					this.activateInput(field.input);
 
 					// validate field now
-					this.validate(field._input);
+					this.validate(field.input);
 
 				}
 
 				// select initialization
 				else if(u.hc(field, "select")) {
 
-					field._input = u.qs("select", field);
-					field._input._form = _form;
-					field._input.field = field;
+					field.input = u.qs("select", field);
+					field.input._form = _form;
+					field.input.field = field;
 
 					// add input to fields array
-					_form.fields[field._input.name] = field._input;
+					_form.fields[field.input.name] = field.input;
 
 					// get input label
-					field._input._label = u.qs("label[for='"+field._input.id+"']", field);
+					field.input.label = u.qs("label[for='"+field.input.id+"']", field);
 
 					// get/set value function
-					field._input.val = this._value_select;
+					field.input.val = this._value_select;
 
 					// change/update events
-					u.e.addEvent(field._input, "change", this._updated);
-					u.e.addEvent(field._input, "keyup", this._updated);
-					u.e.addEvent(field._input, "change", this._changed);
+					u.e.addEvent(field.input, "change", this._updated);
+					u.e.addEvent(field.input, "keyup", this._updated);
+					u.e.addEvent(field.input, "change", this._changed);
 
 					// activate input
-					this.activateInput(field._input);
+					this.activateInput(field.input);
 
 					// validate field now
-					this.validate(field._input);
+					this.validate(field.input);
 				}
 
 				// checkbox/boolean (also checkbox) initialization
 				else if(u.hc(field, "checkbox|boolean")) {
 
-					field._input = u.qs("input[type=checkbox]", field);
-					field._input._form = _form;
-					field._input.field = field;
+					field.input = u.qs("input[type=checkbox]", field);
+					field.input._form = _form;
+					field.input.field = field;
 
 					// get input label
-					field._input._label = u.qs("label[for='"+field._input.id+"']", field);
+					field.input.label = u.qs("label[for='"+field.input.id+"']", field);
 
 					// add input to fields array
-					_form.fields[field._input.name] = field._input;
+					_form.fields[field.input.name] = field.input;
 
 					// get/set value function
-					field._input.val = this._value_checkbox;
+					field.input.val = this._value_checkbox;
 
 					// special setting for IE8 and less (bad onchange handler)
 					if(u.browser("explorer", "<=8")) {
-						field._input.pre_state = field._input.checked;
-						field._input._changed = this._changed;
-						field._input._updated = this._updated;
-						field._input._update_checkbox_field = this._update_checkbox_field;
-						field._input._clicked = function(event) {
+						field.input.pre_state = field.input.checked;
+						field.input._changed = this._changed;
+						field.input._updated = this._updated;
+						field.input._update_checkbox_field = this._update_checkbox_field;
+						field.input._clicked = function(event) {
 							if(this.checked != this.pre_state) {
 								this._changed(window.event);
 								this._updated(window.event);
@@ -327,24 +340,24 @@ Util.Form = u.f = new function() {
 							}
 							this.pre_state = this.checked;
 						}
-						u.e.addEvent(field._input, "click", field._input._clicked);
+						u.e.addEvent(field.input, "click", field.input._clicked);
 
 					}
 					else {
 						// opposite order of elsewhere to ensure instant validation
-						u.e.addEvent(field._input, "change", this._changed);
-						u.e.addEvent(field._input, "change", this._updated);
-						u.e.addEvent(field._input, "change", this._update_checkbox_field);
+						u.e.addEvent(field.input, "change", this._changed);
+						u.e.addEvent(field.input, "change", this._updated);
+						u.e.addEvent(field.input, "change", this._update_checkbox_field);
 					}
 
 					// submit on enter (checks for autocomplete etc)
-					this.inputOnEnter(field._input);
+					this.inputOnEnter(field.input);
 
 					// activate input
-					this.activateInput(field._input);
+					this.activateInput(field.input);
 
 					// validate field now
-					this.validate(field._input);
+					this.validate(field.input);
 				}
 
 				// radio button initialization
@@ -355,22 +368,22 @@ Util.Form = u.f = new function() {
 					// Requires some extra checks, which are built into all event handlers
 
 					// get all inputs
-					field._inputs = u.qsa("input", field);
+					field.inputs = u.qsa("input", field);
 
 					// use first input as field input 
-					field._input = field._inputs[0];
+					field.input = field.inputs[0];
 
 					// add first input to fields array (radios all have same name)
-					_form.fields[field._input.name] = field._input;
+					_form.fields[field.input.name] = field.input;
 
 					// initalize individual radio buttons
-					for(j = 0; j < field._inputs.length; j++) {
-						input = field._inputs[j];
+					for(j = 0; j < field.inputs.length; j++) {
+						input = field.inputs[j];
 						input.field = field;
 						input._form = _form;
 
 						// get input label
-						input._label = u.qs("label[for='"+input.id+"']", field);
+						input.label = u.qs("label[for='"+input.id+"']", field);
 
 						// get/set value function
 						input.val = this._value_radiobutton;
@@ -387,8 +400,8 @@ Util.Form = u.f = new function() {
 									this._updated(window.event);
 								}
 								// update prestates for all radios in set
-								for(i = 0; i < this.field._input.length; i++) {
-									input = this.field._input[i];
+								for(i = 0; i < this.field.input.length; i++) {
+									input = this.field.input[i];
 
 									input.pre_state = input.checked;
 								}
@@ -408,50 +421,50 @@ Util.Form = u.f = new function() {
 					}
 
 					// validate field now
-					this.validate(field._input);
+					this.validate(field.input);
 				}
 
 				// file input initialization
 				else if(u.hc(field, "files")) {
 
-					field._input = u.qs("input", field);
-					field._input._form = _form;
-					field._input.field = field;
+					field.input = u.qs("input", field);
+					field.input._form = _form;
+					field.input.field = field;
 
 					// add input to fields array
-					_form.fields[field._input.name] = field._input;
+					_form.fields[field.input.name] = field.input;
 
 					// get input label
-					field._input._label = u.qs("label[for='"+field._input.id+"']", field);
+					field.input.label = u.qs("label[for='"+field.input.id+"']", field);
 
 					// change and update event
-					u.e.addEvent(field._input, "change", this._updated);
-					u.e.addEvent(field._input, "change", this._changed);
+					u.e.addEvent(field.input, "change", this._updated);
+					u.e.addEvent(field.input, "change", this._changed);
 
 
 
 
 					// add focus and blur event handlers
-					u.e.addEvent(field._input, "focus", this._focus);
-					u.e.addEvent(field._input, "blur", this._blur);
+					u.e.addEvent(field.input, "focus", this._focus);
+					u.e.addEvent(field.input, "blur", this._blur);
 
 					// activate input mouse/drag interaction
 					if(u.e.event_pref == "mouse") {
-						u.e.addEvent(field._input, "dragenter", this._focus);
-						u.e.addEvent(field._input, "dragleave", this._blur);
+						u.e.addEvent(field.input, "dragenter", this._focus);
+						u.e.addEvent(field.input, "dragleave", this._blur);
 
-						u.e.addEvent(field._input, "mouseenter", this._mouseenter);
-						u.e.addEvent(field._input, "mouseleave", this._mouseleave);
+						u.e.addEvent(field.input, "mouseenter", this._mouseenter);
+						u.e.addEvent(field.input, "mouseleave", this._mouseleave);
 					}
 
 					// validate on field blur
-					u.e.addEvent(field._input, "blur", this._validate);
+					u.e.addEvent(field.input, "blur", this._validate);
 
 					// get/set value function
-					field._input.val = this._value_file;
+					field.input.val = this._value_file;
 
 					// validate field now
-					this.validate(field._input);
+					this.validate(field.input);
 
 				}
 
@@ -463,31 +476,31 @@ Util.Form = u.f = new function() {
 				// currently identical to string - but keep separate for customization
 				else if(u.hc(field, "tags")) {
 
-					field._input = u.qs("input", field);
-					field._input._form = _form;
-					field._input.field = field;
+					field.input = u.qs("input", field);
+					field.input._form = _form;
+					field.input.field = field;
 
 					// add input to fields array
-					_form.fields[field._input.name] = field._input;
+					_form.fields[field.input.name] = field.input;
 
 					// get input label
-					field._input._label = u.qs("label[for='"+field._input.id+"']", field);
+					field.input.label = u.qs("label[for='"+field.input.id+"']", field);
 
 					// get/set value function
-					field._input.val = this._value;
+					field.input.val = this._value;
 
 					// change/update events
-					u.e.addEvent(field._input, "keyup", this._updated);
-					u.e.addEvent(field._input, "change", this._changed);
+					u.e.addEvent(field.input, "keyup", this._updated);
+					u.e.addEvent(field.input, "change", this._changed);
 
 					// submit on enter (checks for autocomplete etc)
-					this.inputOnEnter(field._input);
+					this.inputOnEnter(field.input);
 
 					// activate input
-					this.activateInput(field._input);
+					this.activateInput(field.input);
 
 					// validate field now
-					this.validate(field._input);
+					this.validate(field.input);
 				}
 
 
@@ -495,31 +508,31 @@ Util.Form = u.f = new function() {
 				// currently identical to string - but keep separate for customization
 				else if(u.hc(field, "prices")) {
 
-					field._input = u.qs("input", field);
-					field._input._form = _form;
-					field._input.field = field;
+					field.input = u.qs("input", field);
+					field.input._form = _form;
+					field.input.field = field;
 
 					// add input to fields array
-					_form.fields[field._input.name] = field._input;
+					_form.fields[field.input.name] = field.input;
 
 					// get input label
-					field._input._label = u.qs("label[for='"+field._input.id+"']", field);
+					field.input.label = u.qs("label[for='"+field.input.id+"']", field);
 
 					// get/set value function
-					field._input.val = this._value;
+					field.input.val = this._value;
 
 					// change/update events
-					u.e.addEvent(field._input, "keyup", this._updated);
-					u.e.addEvent(field._input, "change", this._changed);
+					u.e.addEvent(field.input, "keyup", this._updated);
+					u.e.addEvent(field.input, "change", this._changed);
 
 					// submit on enter (checks for autocomplete etc)
-					this.inputOnEnter(field._input);
+					this.inputOnEnter(field.input);
 
 					// activate input
-					this.activateInput(field._input);
+					this.activateInput(field.input);
 
 					// validate field now
-					this.validate(field._input);
+					this.validate(field.input);
 				}
 
 
@@ -531,8 +544,6 @@ Util.Form = u.f = new function() {
 
 			}
 
-			// Add required indicator (for showing icons)
-			field._indicator = u.ae(field._input._label, "span", {"class":"indicator", "html":"&nbsp;*"});
 		}
 
 
@@ -570,7 +581,7 @@ Util.Form = u.f = new function() {
 
 
 		// u.bug list of fields and actions
-		if(_form._debug_init) {
+		if(_form._debug) {
 			u.bug(u.nodeId(_form) + ", fields:");
 			u.xInObject(_form.fields);
 			u.bug(u.nodeId(_form) + ", actions:");
@@ -592,7 +603,7 @@ Util.Form = u.f = new function() {
 			if (this.fields[name] && this.fields[name].field && this.fields[name].type != "hidden" && !this.fields[name].getAttribute("readonly")) {
 
 //				u.bug("reset:" + name);
-				this.fields[name].used = false;
+				this.fields[name]._used = false;
 				this.fields[name].val("");
 
 			}
@@ -614,7 +625,7 @@ Util.Form = u.f = new function() {
 			if(this.fields[name] && this.fields[name].field && fun(this.fields[name].val)) {
 //				u.bug("field:" + name);
 				// change used state for input
-				this.fields[name].used = true;
+				this.fields[name]._used = true;
 				// validate
 //				u.bug("validate from _submit")
 				u.f.validate(this.fields[name]);
@@ -697,8 +708,8 @@ Util.Form = u.f = new function() {
 		if(value !== undefined) {
 
 			// find option with matching value
-			for(i = 0; i < this.field._inputs.length; i++) {
-				option = this.field._inputs[i];
+			for(i = 0; i < this.field.inputs.length; i++) {
+				option = this.field.inputs[i];
 
 				// finding it not unlikely that radio value could be strings "true"/"false"
 				// compensate for forgetting the string aspect of true/false
@@ -717,8 +728,8 @@ Util.Form = u.f = new function() {
 		}
 		// find checked option
 		else {
-			for(i = 0; i < this.field._inputs.length; i++) {
-				option = this.field._inputs[i];
+			for(i = 0; i < this.field.inputs.length; i++) {
+				option = this.field.inputs[i];
 
 				if(option.checked) {
 					return option.value;
@@ -936,8 +947,8 @@ Util.Form = u.f = new function() {
 		}
 		// certain fields with multiple input will have callback declared on first input only
 		// like radio buttons
-		else if(this.field._input && fun(this.field._input.changed)) {
-			this.field._input.changed(this);
+		else if(this.field.input && fun(this.field.input.changed)) {
+			this.field.input.changed(this);
 		}
 
 		// does field have callback declared
@@ -972,8 +983,8 @@ Util.Form = u.f = new function() {
 			}
 			// certain fields with multiple input will have callback declared on first input only
 			// like radio buttons
-			else if(this.field._input && fun(this.field._input.updated)) {
-				this.field._input.updated(this);
+			else if(this.field.input && fun(this.field.input.updated)) {
+				this.field.input.updated(this);
 			}
 
 			// does field have callback declared
@@ -1012,7 +1023,7 @@ Util.Form = u.f = new function() {
 		u.ac(this, "hover");
 
 		// in case of overlapping hint/errors, make sure this one is on top
-		u.as(this.field, "zIndex", this.field._input._form._hover_z_index);
+		u.as(this.field, "zIndex", this.field.input._form._hover_z_index);
 
 		// is help element available, then position it appropriately to input
 		u.f.positionHint(this.field);
@@ -1033,7 +1044,7 @@ Util.Form = u.f = new function() {
 
 	// internal focus handler - attatched to inputs
 	this._focus = function(event) {
-//		u.bug("this._focus:" + u.nodeId(this) + ", " + typeof(this.focused) +","+ typeof(this.field._input.focused))
+//		u.bug("this._focus:" + u.nodeId(this) + ", " + typeof(this.focused) +","+ typeof(this.field.input.focused))
 
 		this.field.is_focused = true;
 		this.is_focused = true;
@@ -1056,8 +1067,8 @@ Util.Form = u.f = new function() {
 		}
 		// certain fields with multiple input will have callback declared on first input only
 		// like radio buttons
-		else if(this.field._input && fun(this.field._input.focused)) {
-			this.field._input.focused(this);
+		else if(this.field.input && fun(this.field.input.focused)) {
+			this.field.input.focused(this);
 		}
 
 		// does form have callback declared
@@ -1093,8 +1104,8 @@ Util.Form = u.f = new function() {
 		}
 		// certain fields with multiple input will have callback declared on first input only
 		// like radio buttons
-		else if(this.field._input && fun(this.field._input.blurred)) {
-			this.field._input.blurred(this);
+		else if(this.field.input && fun(this.field.input.blurred)) {
+			this.field.input.blurred(this);
 		}
 
 		// does form have callback declared
@@ -1152,7 +1163,7 @@ Util.Form = u.f = new function() {
 	this.positionHint = function(field) {
 
 		// is help element available, then position it appropriately to input
-		if(field._help) {
+		if(field.help) {
 			
 			// check for custom hint position
 			// allows to overwrite any field type hint position
@@ -1302,7 +1313,7 @@ Util.Form = u.f = new function() {
 	}
 
 	// field has error - decide whether it is reasonable to show it or not
-	this.fieldError = function(iN) {
+	this.inputHasError = function(iN) {
 
 		u.rc(iN, "correct");
 		u.rc(iN.field, "correct");
@@ -1326,7 +1337,7 @@ Util.Form = u.f = new function() {
 // 			}
 //
 // 			if(fun(iN._form.validationFailed)) {
-// //				u.bug("fieldError validation failed")
+// //				u.bug("inputHasError validation failed")
 // 				iN._form.validationFailed(iN._form.error_fields);
 // 			}
 
@@ -1334,7 +1345,7 @@ Util.Form = u.f = new function() {
 	}
 
 	// field is correct - decide whether to show it or not
-	this.fieldCorrect = function(iN) {
+	this.inputIsCorrect = function(iN) {
 
 		// does field have value? Non-required fields can be empty - but should not have visual validation
 		if(iN.val() !== "") {
@@ -1458,14 +1469,14 @@ Util.Form = u.f = new function() {
 		if(!u.hc(iN.field, "required") && iN.val() === "") {
 //			u.bug("valid empty:" + u.nodeId(iN))
 
-			this.fieldCorrect(iN);
+			this.inputIsCorrect(iN);
 			return true;
 		}
 		// required, and empty
 		else if(u.hc(iN.field, "required") && iN.val() === "") {
 //			u.bug("invalid empty:" + u.nodeId(iN) + ", " + iN.val() + ", " + (iN.val() === ""))
 
-			this.fieldError(iN);
+			this.inputHasError(iN);
 			return false;
 		}
 
@@ -1497,10 +1508,10 @@ Util.Form = u.f = new function() {
 					iN.val().length <= max && 
 					(!pattern || iN.val().match("^"+pattern+"$"))
 				) {
-					this.fieldCorrect(iN);
+					this.inputIsCorrect(iN);
 				}
 				else {
-					this.fieldError(iN);
+					this.inputHasError(iN);
 				}
 			}
 
@@ -1520,10 +1531,10 @@ Util.Form = u.f = new function() {
 					iN.val() <= max && 
 					(!pattern || iN.val().match("^"+pattern+"$"))
 				) {
-					this.fieldCorrect(iN);
+					this.inputIsCorrect(iN);
 				}
 				else {
-					this.fieldError(iN);
+					this.inputHasError(iN);
 				}
 			}
 
@@ -1544,10 +1555,10 @@ Util.Form = u.f = new function() {
 					iN.val() <= max && 
 					(!pattern || iN.val().match("^"+pattern+"$"))
 				) {
-					this.fieldCorrect(iN);
+					this.inputIsCorrect(iN);
 				}
 				else {
-					this.fieldError(iN);
+					this.inputHasError(iN);
 				}
 			}
 
@@ -1560,10 +1571,10 @@ Util.Form = u.f = new function() {
 					!pattern && iN.val().match(/^([\+0-9\-\.\s\(\)]){5,18}$/) ||
 					(pattern && iN.val().match("^"+pattern+"$"))
 				) {
-					this.fieldCorrect(iN);
+					this.inputIsCorrect(iN);
 				}
 				else {
-					this.fieldError(iN);
+					this.inputHasError(iN);
 				}
 			}
 
@@ -1573,10 +1584,10 @@ Util.Form = u.f = new function() {
 					!pattern && iN.val().match(/^([^<>\\\/%$])+\@([^<>\\\/%$])+\.([^<>\\\/%$]{2,20})$/) ||
 					(pattern && iN.val().match("^"+pattern+"$"))
 				) {
-					this.fieldCorrect(iN);
+					this.inputIsCorrect(iN);
 				}
 				else {
-					this.fieldError(iN);
+					this.inputHasError(iN);
 				}
 			}
 
@@ -1595,10 +1606,10 @@ Util.Form = u.f = new function() {
 					iN.val().length <= max && 
 					(!pattern || iN.val().match("^"+pattern+"$"))
 				) {
-					this.fieldCorrect(iN);
+					this.inputIsCorrect(iN);
 				}
 				else {
-					this.fieldError(iN);
+					this.inputHasError(iN);
 				}
 			}
 
@@ -1611,10 +1622,10 @@ Util.Form = u.f = new function() {
 					!pattern && iN.val().match(/^([\d]{4}[\-\/\ ]{1}[\d]{2}[\-\/\ ][\d]{2})$/) ||
 					(pattern && iN.val().match("^"+pattern+"$"))
 				) {
-					this.fieldCorrect(iN);
+					this.inputIsCorrect(iN);
 				}
 				else {
-					this.fieldError(iN);
+					this.inputHasError(iN);
 				}
 			}
 
@@ -1627,10 +1638,10 @@ Util.Form = u.f = new function() {
 					!pattern && iN.val().match(/^([\d]{4}[\-\/\ ]{1}[\d]{2}[\-\/\ ][\d]{2} [\d]{2}[\-\/\ \:]{1}[\d]{2}[\-\/\ \:]{0,1}[\d]{0,2})$/) ||
 					(pattern && iN.val().match(pattern))
 				) {
-					this.fieldCorrect(iN);
+					this.inputIsCorrect(iN);
 				}
 				else {
-					this.fieldError(iN);
+					this.inputHasError(iN);
 				}
 			}
 
@@ -1647,10 +1658,10 @@ Util.Form = u.f = new function() {
 					(iN.val().length >= min && 
 					iN.val().length <= max)
 				) {
-					this.fieldCorrect(iN);
+					this.inputIsCorrect(iN);
 				}
 				else {
-					this.fieldError(iN);
+					this.inputHasError(iN);
 				}
 			}
 
@@ -1662,10 +1673,10 @@ Util.Form = u.f = new function() {
 			else if(u.hc(iN.field, "select")) {
 
 				if(iN.val() !== "") {
-					this.fieldCorrect(iN);
+					this.inputIsCorrect(iN);
 				}
 				else {
-					this.fieldError(iN);
+					this.inputHasError(iN);
 				}
 			}
 
@@ -1674,10 +1685,10 @@ Util.Form = u.f = new function() {
 			else if(u.hc(iN.field, "checkbox|boolean|radiobuttons")) {
 
 				if(iN.val() !== "") {
-					this.fieldCorrect(iN);
+					this.inputIsCorrect(iN);
 				}
 				else {
-					this.fieldError(iN);
+					this.inputHasError(iN);
 				}
 			}
 
@@ -1698,38 +1709,10 @@ Util.Form = u.f = new function() {
 					iN.val().length <= max && 
 					(!pattern || iN.val().match("^"+pattern+"$"))
 				) {
-					this.fieldCorrect(iN);
+					this.inputIsCorrect(iN);
 				}
 				else {
-					this.fieldError(iN);
-				}
-			}
-
-
-			// TODO: move to custom inputs
-			// tags validation
-			else if(u.hc(iN.field, "tags")) {
-				if(
-					!pattern && iN.val().match(/\:/) ||
-					(pattern && iN.val().match("^"+pattern+"$"))
-				) {
-					this.fieldCorrect(iN);
-				}
-				else {
-					this.fieldError(iN);
-				}
-			}
-
-			// TODO: move to custom inputs
-			// prices validation
-			else if(u.hc(iN.field, "prices")) {
-				if(
-					!isNaN(iN.val())
-				) {
-					this.fieldCorrect(iN);
-				}
-				else {
-					this.fieldError(iN);
+					this.inputHasError(iN);
 				}
 			}
 
@@ -1783,7 +1766,7 @@ u.f.getParams = function(_form, _options) {
 	var i, input, select, textarea, param, params;
 
 	// Object for found inputs/selects/textareas
-	// iOS treats FormData as object
+	// iOS <= 9 treats FormData as object
 	if(send_as == "formdata" && (fun(window.FormData) || obj(window.FormData))) {
 		params = new FormData();
 
