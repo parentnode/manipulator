@@ -66,8 +66,8 @@ u.e.removeWindowEvent = function(node, type, id) {
 
 	// remove callback references
 //	window["_OnWindowEvent_node_"+id]["_OnWindowEvent_callback_"+id] = null;
-	window["_OnWindowEvent_node_"+id] = null;
-	window["_OnWindowEvent_callback_"+id] = null;
+	delete window["_OnWindowEvent_node_"+id];
+	delete window["_OnWindowEvent_callback_"+id];
 }
 
 
@@ -94,9 +94,9 @@ u.e.removeWindowStartEvent = function(node, id) {
 	u.e.removeStartEvent(window, window["_Onstart_callback_"+id]);
 
 	// remove callback references
-	window["_Onstart_node_"+id]["_Onstart_callback_"+id] = null;
-	window["_Onstart_node_"+id] = null;
-	window["_Onstart_callback_"+id] = null;
+	delete window["_Onstart_node_"+id]["_Onstart_callback_"+id];
+	delete window["_Onstart_node_"+id];
+	delete window["_Onstart_callback_"+id];
 }
 
 
@@ -124,9 +124,9 @@ u.e.removeWindowMoveEvent = function(node, id) {
 	u.e.removeMoveEvent(window, window["_Onmove_callback_" + id]);
 
 	// remove callback references
-	window["_Onmove_node_"+ id]["_Onmove_callback_"+id] = null;
-	window["_Onmove_node_"+ id] = null;
-	window["_Onmove_callback_"+ id] = null;
+	delete window["_Onmove_node_"+ id]["_Onmove_callback_"+id];
+	delete window["_Onmove_node_"+ id];
+	delete window["_Onmove_callback_"+ id];
 }
 
 
@@ -154,7 +154,7 @@ u.e.removeWindowEndEvent = function(node, id) {
 	u.e.removeEndEvent(window, window["_Onend_callback_" + id]);
 
 	// remove callback references
-	window["_Onend_node_"+ id]["_Onend_callback_"+id] = null;
-	window["_Onend_node_"+ id] = null;
-	window["_Onend_callback_"+ id] = null;
+	delete window["_Onend_node_"+ id]["_Onend_callback_"+id];
+	delete window["_Onend_node_"+ id];
+	delete window["_Onend_callback_"+ id];
 }
