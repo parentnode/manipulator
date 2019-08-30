@@ -650,7 +650,11 @@ u.containsOrIs = function(scope, node) {
 	return false;
 }
 
-
+// Does selector match element
+u.elementMatches = u.em = function(node, selector) {
+	return node.matches(selector);
+	
+}
 
 
 // FOR CONSIDERATION

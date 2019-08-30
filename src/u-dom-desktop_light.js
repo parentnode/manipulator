@@ -387,6 +387,14 @@ if(typeof(document.contains) == "undefined") {
 
 
 
+if(!Element.prototype.matches) {
+	Element.prototype.matches = Element.prototype.matchesSelector || Element.prototype.mozMatchesSelector || Element.prototype.msMatchesSelector || Element.prototype.oMatchesSelector || Element.prototype.webkitMatchesSelector || function(selector) {
+		var matches = (this.parentNode || this.document || this.ownerDocument).querySelectorAll(selector),
+		return u.nodeInList(this, matches);
+	};
+}
+
+
 
 if(document.querySelector == undefined) {
 
