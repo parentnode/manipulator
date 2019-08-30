@@ -1,23 +1,21 @@
-
-
-
-// Sorts draggable nodes within a scope
+// Make nodes sortable within a scope
 
 u.sortable = function(scope, _options) {
+	// u.bug("u.sortable init: ", scope);
 
-//	u.bug("u.sortable init: " + u.nodeId(scope))
+	scope._callback_picked = "picked";
+	scope._callback_moved = "moved";
+	scope._callback_dropped = "dropped";
 
-	scope.callback_picked = "picked";
-	scope.callback_moved = "moved";
-	scope.callback_dropped = "dropped";
+	scope._draggable_selector;
+	scope._target_selector;
 
-	scope.draggables;	// class on draggable nodes
-	scope.targets;	// target nodes which can received drops
+	scope._layout;
+	scope._allow_clickpick = false;
+	scope._allow_nesting = false;
+	scope._sorting_disabled = false;
 
-//	var sources;
-
-	scope.layout;
-	scope.allow_nesting = false;
+	scope._distance_to_pick = 2;
 
 	// additional info passed to function as JSON object
 	if(obj(_options)) {
@@ -25,18 +23,18 @@ u.sortable = function(scope, _options) {
 		for(_argument in _options) {
 
 			switch(_argument) {
-				case "picked"				: scope.callback_picked		= _options[_argument]; break;
-				case "moved"				: scope.callback_moved		= _options[_argument]; break;
-				case "dropped"				: scope.callback_dropped	= _options[_argument]; break;
+				case "picked"				: scope._callback_picked		= _options[_argument]; break;
+				case "moved"				: scope._callback_moved			= _options[_argument]; break;
+				case "dropped"				: scope._callback_dropped		= _options[_argument]; break;
 
-				case "draggables"			: scope.draggables			= _options[_argument]; break;
-				case "targets"				: scope.targets				= _options[_argument]; break;
+				case "draggables"			: scope._draggable_selector		= _options[_argument]; break;
+				case "targets"				: scope._target_selector		= _options[_argument]; break;
 
-//				case "sources"				: sources					= _options[_argument]; break;
-
-				case "layout"				: scope.layout				= _options[_argument]; break;
-
-				case "allow_nesting"		: scope.allow_nesting		= _options[_argument]; break;
+				case "layout"				: scope._layout					= _options[_argument]; break;
+				case "allow_clickpick"		: scope._allow_clickpick			= _options[_argument]; break;
+				case "allow_nesting"		: scope._allow_nesting			= _options[_argument]; break;
+				case "sorting_disabled"		: scope._sorting_disabled		= _options[_argument]; break;
+				case "distance_to_pick"		: scope._distance_to_pick		= _options[_argument]; break;
 			}
 
 		}
@@ -44,110 +42,225 @@ u.sortable = function(scope, _options) {
 
 
 
+	// Only declare helper functions on scope if needed
+	if(!fun(scope.resetSortableEvents)) {
 
 
-	// node picked - attached to draggable node (could be drag element inside draggable)
-	scope._sortablepick = function(event) {
 
-//		u.bug("pick:" + u.nodeId(this) + "; "+ u.nodeId(this.d_node) + ";" + u.nodeId(this.d_node.scope));
+		// EVENT RECEIVERS
 
-		// only pick if sorting is not disabled
-		if(!this.d_node.scope._sorting_disabled) {
+		// Will be applied to draggable nodes
 
 
-			u.e.kill(event);
+		// Receive first input, in order to make pick speed dependent
+		scope._sortableInputStart = function(event) {
+			// u.bug("_sortableInputStart:", this, event);
+
+			// only pick if sorting is not disabled
+			if(!this.draggable_node.scope._sorting_disabled) {
+
+				// used to handle dblclick timeout event forwarding
+				// get event positions relative to screen
+				this.draggable_node._start_event_x = u.eventX(event);
+				this.draggable_node._start_event_y = u.eventY(event);
+
+				// reset speed
+				this.draggable_node.current_xps = 0;
+				this.draggable_node.current_yps = 0;
+
+				// reset move calculation values
+				this.draggable_node._move_timestamp = event.timeStamp;
+				this.draggable_node._move_last_x = 0;
+				this.draggable_node._move_last_y = 0;
 
 
-			// don't pick unless last element was correctly dropped
-			if(!this.d_node.scope._dragged) {
-
-				// dragging has begun - redirect from drag event to actual draggable element
-				// this just makes sure we get the right node regardless of which node catches the first event
-				var d_node = this.d_node.scope._dragged = this.d_node;
+				// Add eventhandlers for move and end events, we only pick if move is confirmed by speed
+				u.e.addMoveEvent(this.draggable_node, this.draggable_node.scope._sortablePick);
+				u.e.addEndEvent(this.draggable_node, this.draggable_node.scope._cancelSortablePick);
 
 
-				// dragged element start settings
-				d_node.start_opacity = u.gcs(d_node, "opacity");
-				d_node.start_position = u.gcs(d_node, "position");
-				d_node.start_width = u.gcs(d_node, "width");
-				d_node.start_height = u.gcs(d_node, "height");
 
-				// drag target - create node based on dragged node
-				if(!d_node.scope.tN) {
-					d_node.scope.tN = document.createElement(d_node.nodeName);
+				// Take care out mouseout event, only when needed
+				if(event.type.match(/mouse/)) {
+		 			u.e.addOutEvent(this.draggable_node.drag, this.draggable_node.scope._sortableOut);
 				}
 
-				u.sc(d_node.scope.tN, "target " + d_node.className);
-				u.as(d_node.scope.tN, "height", u.actualHeight(d_node)+"px");
-				u.as(d_node.scope.tN, "width", u.actualWidth(d_node)+"px");
-				u.as(d_node.scope.tN, "opacity", d_node.start_opacity - 0.5);
+				// Disable user-select while dragging
+				// this.draggable_node.scope._org_css_user_select = u.gcs(document.body, "user-select");
+				this.draggable_node.scope._org_css_user_select = document.body.style.userSelect;
+				u.ass(document.body, {
+					"user-select": "none"
+				});
 
-				// replicate current content in target node
-				d_node.scope.tN.innerHTML = d_node.innerHTML;
+			}
 
-	
-				// set fixed dragged element width and lower opacity
-				u.as(d_node, "width", u.actualWidth(d_node) + "px");
-				u.as(d_node, "opacity", d_node.start_opacity - 0.3);
+		}
+
+		// Cancel pick
+		scope._cancelSortablePick = function(event) {
+			// u.bug("_cancelSortablePick", this, event);
+
+			// Allow click to pick and drop
+			if(!this.scope._allow_clickpick) {
+
+				// Reset all event handlers
+				this.scope.resetSortableEvents(this);
+
+				// Restore original user-select state
+				u.ass(document.body, {
+					"user-select": this.scope._org_css_user_select
+				});
+
+			}
+
+		}
+
+		// Handle mouseout while picking (fast moves)
+		scope._sortableOut = function(event) {
+			// u.bug("_sortableOut:", this.draggable_node, event);
+
+			// Get/set event id for later removal
+			var edoi = this.draggable_node._event_drop_out_id = u.randomString();
+
+			// Remember node in global scope
+			document["_DroppedOutNode" + edoi] = this.draggable_node;
+
+
+			// Mouseout happened – What happens next decides the response
+
+			// mousemove on document, means mouse has left drag-handle (fast move), forward event to pick
+			eval('document["_DroppedOutMove' + edoi + '"] = function(event) {document["_DroppedOutNode' + edoi + '"].scope._sortablePick.bind(document["_DroppedOutNode' + edoi + '"])(event);}');
+			u.e.addEvent(document, "mousemove", document["_DroppedOutMove" + edoi]);
+
+			// over on draggable node, means out happended on child node, we should prepare for another mouseout
+			// and remove extended mouseout events to avoid doubles
+			eval('document["_DroppedOutOver' + edoi + '"] = function(event) {document["_DroppedOutNode' + edoi + '"].scope.resetSortableOutEvents(document["_DroppedOutNode' + edoi + '"]);}');
+			u.e.addEvent(this.draggable_node, "mouseover", document["_DroppedOutOver" + edoi]);
+
+			// nouse up on document, means mouse has left the drag-handle, forward to cancel pick
+			eval('document["_DroppedOutEnd' + edoi + '"] = function(event) {u.bug("### up save");document["_DroppedOutNode' + edoi + '"].scope._cancelSortablePick.bind(document["_DroppedOutNode' + edoi + '"])(event);}');
+			u.e.addEvent(document, "mouseup", document["_DroppedOutEnd" + edoi]);
+
+		}
+
+		// Detect when node picked
+		scope._sortablePick = function(event) {
+			// u.bug("_sortablePick:", event, this.draggable_node);
+
+			var event_x = u.eventX(event);
+			var event_y = u.eventY(event);
+
+			this.current_x = event_x - this._start_event_x;
+			this.current_y = event_y - this._start_event_y;
+
+			// Calculate moved distance
+			var init_distance_x = Math.abs(this.current_x);
+			var init_distance_y = Math.abs(this.current_y);
+
+			if((init_distance_x > this.scope._distance_to_pick || init_distance_y > this.scope._distance_to_pick)) {
+
+				// New pick confirmed – reset all events on this node
+				this.scope.resetNestedSortableEvents(this);
+
+				// Prevent event bubbling
+				u.e.kill(event);
+
+				// dragging has begun
+				this.scope._dragged_node = this;
+
 
 
 				// dragged element mouse offsets
-				d_node.mouse_ox = u.eventX(event) - u.absX(d_node);
-				d_node.mouse_oy = u.eventY(event) - u.absY(d_node);
+				this._mouse_ox = event_x - u.absX(this);
+				this._mouse_oy = event_y - u.absY(this);
 
 
-				// when everything is set up, position absolute to start dragging node
-				u.as(d_node, "position", "absolute");
-				u.as(d_node, "left", (u.eventX(event) - d_node.rel_ox) - d_node.mouse_ox+"px");
-				u.as(d_node, "top", (u.eventY(event) - d_node.rel_oy) - d_node.mouse_oy+"px");
-				u.ac(d_node, "dragged");
+				// calculate speed
+				// current speed per second
+				this.current_xps = Math.round(((this.current_x - this._move_last_x) / (event.timeStamp - this._move_timestamp)) * 1000);
+				this.current_yps = Math.round(((this.current_y - this._move_last_y) / (event.timeStamp - this._move_timestamp)) * 1000);
+
+
+				// remember current move time for next event
+				this._move_timestamp = event.timeStamp;
+				this._move_last_x = this.current_x;
+				this._move_last_y = this.current_y;
+
+
+
+				// drag shadow node - create node based on dragged node for shadow injection in list
+				this.scope._shadow_node = u.ae(this.parentNode, this.cloneNode(true));
+				// Insert shadow node correctly before calculation relative offset
+				this.parentNode.insertBefore(this.scope._shadow_node, this);
+				u.ac(this.scope._shadow_node, "shadow");
+
+				// get relative offset coords for li in case some positioning is involved in list structure
+				this.scope._recalculateRelativeShadowOffset();
+
+				// Get width to maintain correct width on drag (shadow element will be positioned absolute)
+				var _start_width = u.gcs(this, "width");
+
+				// Get shadow node ready for takeoff
+				u.ass(this.scope._shadow_node, {
+					width: _start_width,
+					position: "absolute",
+					left: ((event_x - this.scope._shadow_node._rel_ox) - this._mouse_ox) + "px",
+					top: ((event_y - this.scope._shadow_node.rel_oy) - this._mouse_oy) + "px",
+				});
+
+
+				// Mark dragged node
+				u.ac(this, "dragged");
 
 
 				// set drag and end events on body, to make sure events are captured even when away from list
-				d_node._event_move_id = u.e.addWindowMoveEvent(d_node, d_node.scope._sortabledrag);
-				d_node._event_end_id = u.e.addWindowEndEvent(d_node, d_node.scope._sortabledrop);
-				// and insert target
-				d_node.parentNode.insertBefore(d_node.scope.tN, d_node);
+				this._event_move_id = u.e.addWindowMoveEvent(this, this.scope._sortableDrag);
+				this._event_end_id = u.e.addWindowEndEvent(this, this.scope._sortableDrop);
 
 
 				// notify picked
-				if(fun(d_node.scope[d_node.scope.callback_picked])) {
-					d_node.scope[d_node.scope.callback_picked](event);
+				if(fun(this.scope[this.scope._callback_picked])) {
+					this.scope[this.scope._callback_picked](this);
 				}
+
 			}
+
 		}
 
-	}
+		// Drag node element and inject according to overlaps
+		// Event listener on window
+		scope._sortableDrag = function(event) {
+			// u.bug("_sortableDrag:", this, event);
 
-	// drag element
-	// event handling on document.body
-	// this = dragged node (scope._dragged)
-	scope._sortabledrag = function(event) {
+			var i, node;
 
-//		u.bug("drag:" + u.nodeId(event.target) + ", " + u.nodeId(this))
-
-
-		u.e.kill(event);
-
-		var i, node;
-
-		var event_x = u.eventX(event);
-		var event_y = u.eventY(event);
-
-		// if(this.list.t_scroller) {
-		// 	u.t.resetTimer(this.list.t_scroller);
-		// 	this.list.scroll_speed = 0;
-		// }
-
-//		u.bug(c_node + ", " + c_node.scope)
-
-		// only execute drag if dragged flag is set
-		if(this.scope._dragged == this) {
-
+			var event_x = u.eventX(event);
+			var event_y = u.eventY(event);
 
 			// pre-calculate vars for better performance
-			this.d_left = event_x - this.mouse_ox;
-			this.d_top = event_y - this.mouse_oy;
+			var d_left = event_x - this._mouse_ox;
+			var d_top = event_y - this._mouse_oy;
+
+			// current postiion
+			this.current_x = event_x - this._start_event_x;
+			this.current_y = event_y - this._start_event_y;
+
+			// calculate speed
+			// current pixel per second
+			this.current_xps = Math.round(((this.current_x - this._move_last_x) / (event.timeStamp - this._move_timestamp)) * 1000);
+			this.current_yps = Math.round(((this.current_y - this._move_last_y) / (event.timeStamp - this._move_timestamp)) * 1000);
+
+			// remember current move time for next event
+			this._move_timestamp = event.timeStamp;
+			this._move_last_x = this.current_x;
+			this._move_last_y = this.current_y;
+
+
+
+			// if(this.list.t_scroller) {
+			// 	u.t.resetTimer(this.list.t_scroller);
+			// 	this.list.scroll_speed = 0;
+			// }
 
 
 			// TODO - scrolling - some wrong offset
@@ -160,7 +273,7 @@ u.sortable = function(scope, _options) {
 			//
 			// 		// set dragged element properties
 			// 		u.as(this.scope.dragged, "position", "fixed");
-			// 		u.as(this.scope.dragged, "left", d_left - this.list.dragged.rel_ox+"px");
+			// 		u.as(this.scope.dragged, "left", d_left - this.list.dragged._rel_ox+"px");
 			// 		u.as(this.scope.dragged, "top", 0);
 			// 		u.as(this.scope.dragged, "bottom", "auto");
 			//
@@ -179,7 +292,7 @@ u.sortable = function(scope, _options) {
 			//
 			// 		// set dragged element properties
 			// 		u.as(this.scope.dragged, "position", "fixed");
-			// 		u.as(this.scope.dragged, "left", d_left - this.scope.dragged.rel_ox+"px");
+			// 		u.as(this.scope.dragged, "left", d_left - this.scope.dragged._rel_ox+"px");
 			// 		u.as(this.scope.dragged, "top", "auto");
 			// 		u.as(this.scope.dragged, "bottom", 0);
 			//
@@ -193,408 +306,750 @@ u.sortable = function(scope, _options) {
 			// // regular move if everything is within scope
 			// else {
 
-				u.as(this, "position", "absolute");
-				u.as(this, "left", this.d_left - this.rel_ox+"px");
-				u.as(this, "top", this.d_top - this.rel_oy+"px");
-				u.as(this, "bottom", "auto");
 
+			// Inject before positioning shadow node (because injection might change it's relative offset)
+			this.scope._detectAndInject(event_x, event_y);
 
-				this.scope.detectAndInject(event_x, event_y);
+			// Position shadow node
+			u.ass(this.scope._shadow_node, {
+				"position": "absolute",
+				"left": (d_left - this.scope._shadow_node._rel_ox)+"px",
+				"top": (d_top - this.scope._shadow_node._rel_oy)+"px",
+				"bottom": "auto"
+			});
+
 
 //			}
 
 
+			// notify dragged
+			if(fun(this.scope[this.scope._callback_moved])) {
+				this.scope[this.scope._callback_moved](this);
+			}
 
 		}
 
-		// notify dragged
-		if(fun(this.scope[this.scope.callback_moved])) {
-			this.scope[this.scope.callback_moved](event);
+		// Handle drop
+		// Event listener on window
+		scope._sortableDrop = function(event) {
+			// u.bug("_sortableDrop", this, event);
+
+			// Prevent event bubbling
+			u.e.kill(event);
+
+
+			// Reset drag event listeners
+			this.scope.resetSortableEvents(this);
+
+
+			// Remove shadow element
+			this.scope._shadow_node.parentNode.removeChild(this.scope._shadow_node);
+			delete this.scope._shadow_node;
+
+
+			// Leave dragged state
+			u.rc(this, "dragged");
+
+
+			// reset dragged reference
+			this.scope._dragged_node = false;
+
+
+			// reset speed
+			this.current_xps = 0;
+			this.current_yps = 0;
+
+			// reset move calculation values
+			this._move_timestamp = event.timeStamp;
+			this._move_last_x = 0;
+			this._move_last_y = 0;
+
+
+			// update nodes list
+			this.scope.updateDraggables();
+
+
+			// stop scroller
+			// u.t.resetTimer(this.list.t_scroller);
+			// this.list.scroll_speed = 0;
+
+
+			// Restore original user-select value
+			u.ass(document.body, {
+				"user-select": this.scope._org_css_user_select
+			});
+
+
+			// notify dropped
+			if(fun(this.scope[this.scope._callback_dropped])) {
+				this.scope[this.scope._callback_dropped](this);
+			}
+
 		}
-		
-	}
-
-	// element is dropped
-	// event handling on document.body
-	// this = dragged node (scope._dragged)
-	scope._sortabledrop = function(event) {
-
-		// u.bug("event.target: " + u.nodeId(event.target, true));
-		// u.bug("event.target.d_node: " + u.nodeId(event.target.d_node));
-		// u.bug("this: " + u.nodeId(this));
-		// u.bug("this.d_node: " + u.nodeId(this.d_node));
-
-		u.e.kill(event);
-
-
-		// remove events handlers
-		u.e.removeWindowMoveEvent(this, this._event_move_id);
-		u.e.removeWindowEndEvent(this, this._event_end_id);
-
-
-		// replace target with dragged element
-		this.scope.tN = this.scope.tN.parentNode.replaceChild(this, this.scope.tN);
-
-		// reset dragged element
-		u.as(this, "position", this.start_position);
-		u.as(this, "opacity", this.start_opacity);
-		u.as(this, "left", "");
-		u.as(this, "top", "");
-		u.as(this, "bottom", "");
-		u.as(this, "width", "");
-
-		// reset list
-		u.as(this.scope, "width", "");
-		u.as(this.scope, "height", "");
 
 
 
-		// stop scroller
-		// u.t.resetTimer(this.list.t_scroller);
-		// this.list.scroll_speed = 0;
+		// HELPER FUNCTIONS
 
-		// update nodes list
-		if(!this.scope.draggables) {
-			this.scope.draggable_nodes = u.qsa("li", this.scope);
-		}
-		else {
-			this.scope.draggable_nodes = u.qsa("."+this.scope.draggables, this.scope);
+
+		// Recalculate relative offset for shadow node - this might change when draggables are moved around
+		// Separated into function to run as specific/rarely as possible (heavy on performance)
+		scope._recalculateRelativeShadowOffset = function() {
+
+			if(this._shadow_node) {
+				this._shadow_node._rel_ox = u.absX(this._shadow_node) - u.relX(this._shadow_node);
+				this._shadow_node._rel_oy = u.absY(this._shadow_node) - u.relY(this._shadow_node);
+			}
+
 		}
 
-		// notify dropped
-		if(fun(this.scope[this.scope.callback_dropped])) {
-			this.scope[this.scope.callback_dropped](event);
-		}
+		// Detect overlap based on mouse position and inject into target accordingly
+		scope._detectAndInject = function(event_x, event_y) {
+			// u.bug("_detectAndInject, ex: " + event_x + ", ey: " + event_y);
 
+			// loop through backwards to check children first
+			for(i = this.draggable_nodes.length-1; i >= 0; i--) {
+				node = this.draggable_nodes[i];
+				// u.bug("node:", node);
 
-		// reset dragged reference
-		// after callback to be sure _dragged reference is still available
-		this.rel_ox = u.absX(this) - u.relX(this);
-		this.rel_oy = u.absY(this) - u.relY(this);
+				// make sure parent UL is included in target_nodes
+				if(this.target_nodes.indexOf(node.parentNode) !== -1) {
 
-		u.rc(this, "dragged");
-		this.scope._dragged = false;
+					// Decide what to do
 
-	}
+					// multiline list - use both X and Y coordinates
+					if(node.parentNode._layout == "multiline") {
+						// u.bug("multiline list", node);
 
+						var o_left = u.absX(node);
+						var o_top = u.absY(node);
+						var o_width = node.offsetWidth;
+						var o_height = node.offsetHeight;
 
+						// overlap with element
+					 	if(event_x > o_left && event_x < o_left + o_width && event_y > o_top && event_y < o_top + o_height) {
 
-	// detect overlap based on mouse position and inject target accordingly
-	scope.detectAndInject = function(event_x, event_y) {
-		
-		// check for overlap
-//		for(i = 0; node = this.draggable_nodes[i]; i++) {
+							if(node !== this._dragged_node) {
 
-		// loop through backwards to check children first 
-		for(i = this.draggable_nodes.length-1; i >= 0; i--) {
-			node = this.draggable_nodes[i];
-
-			// do not check current node or target node for overlap and parent UL is included in targets
-			if(node != this._dragged && node != this.tN && (!this.targets || u.hc(node.parentNode, this.targets))) {
-
-
-				// vertical list - use Y coords for calculation
-				if(this.layout == "vertical") {
-
-//					u.bug("vertical list")
-
-					// pre-calculate vars for better performance
-					var o_top = u.absY(node);
-//					var o_height = node.offsetHeight;
-					var o_height = this.draggable_node_height;
-//					u.bug("o_height:" + o_height);
-
-					// overlap with element
-				 	if(event_y > o_top && event_y < o_top + o_height) {
-
-						// Nested structure (order and indenting)
-						if(this.allow_nesting) {
-
-							var no_nesting_offset = o_height/3 > 7 ? 7 : o_height/3;
-
-							// top third
-							if(i === 0 && event_y > o_top && event_y < o_top + no_nesting_offset) {
-								node.parentNode.insertBefore(this.tN, node);
-							}
-							// bottom third
-							else
-							if(event_y > o_top && event_y > (o_top + o_height) - ((no_nesting_offset)*2)) {
-								// look for next element
-								var next = u.ns(node);
-								if(next) {
-									// insert before next element
-									node.parentNode.insertBefore(this.tN, next);
+								// left half
+								if(event_x < o_left + o_width/2) {
+									node.parentNode.insertBefore(this._dragged_node, node);
 								}
+								// right half
 								else {
-									// append to the end of the list
-									node.parentNode.appendChild(this.tN);
+									// look for next element
+									var next = u.ns(node, {exclude: ".target,.dragged"});
+									if(next) {
+										// insert before next element
+										node.parentNode.insertBefore(this._dragged_node, next);
+									}
+									else {
+										// append to the end of the list
+										node.parentNode.appendChild(this._dragged_node);
+									}
 								}
-							}
-							// middle third - append as child
-							else {
 
-								var sub_nodes = u.qs("ul" + this.targets ? ("."+this.targets) : "", node);
-								if(!sub_nodes) {
-									sub_nodes = u.ae(node, "ul", {"class":this.targets});
-								}
-
-								sub_nodes.appendChild(this.tN);
+								this._recalculateRelativeShadowOffset();
+								break;
 
 							}
-							// end loop on overlap
-							break;
-
-						}
-						// Flat structure (only order)
-						else {
-
-							// top half
-							if(event_y > o_top && event_y < o_top + o_height/2) {
-								node.parentNode.insertBefore(this.tN, node);
-							}
-							// bottom half
-							else {
-								// look for next element
-								var next = u.ns(node);
-								if(next) {
-									// insert before next element
-									node.parentNode.insertBefore(this.tN, next);
-								}
-								else {
-									// append to the end of the list
-									node.parentNode.appendChild(this.tN);
-								}
-							}
-							// end loop on overlap
-							break;
 
 						}
 
 					}
-				}
 
+					// horizontal list
+					// Only look a x-coordinates
+					else if(node.parentNode._layout == "horizontal") {
+						// u.bug("horizontal list", node);
 
-				// TODO: Update horizontal as vertical
+						var o_left = u.absX(node);
+						var o_width = node.offsetWidth;
 
+						// overlap with element
+					 	if(event_x > o_left && event_x < o_left + o_width) {
 
-				// horizontal list - use both X and Y coordinates 
-				else {
-//							u.bug("horizontal list")
-					var o_left = u.absX(node);
-					var o_top = u.absY(node);
-					var o_width = node.offsetWidth;
-					var o_height = node.offsetHeight;
+							if(node !== this._dragged_node && !u.pn(node, {include:".dragged"})) {
 
-					// overlap with element
-				 	if(event_x > o_left && event_x < o_left + o_width && event_y > o_top && event_y < o_top + o_height) {
+								// left half
+								if(event_x < o_left + o_width/2) {
+									node.parentNode.insertBefore(this._dragged_node, node);
+								}
+								// right half
+								else {
+									// look for next element
+									var next = u.ns(node, {exclude: ".target,.dragged"});
+									if(next) {
+										// insert before next element
+										node.parentNode.insertBefore(this._dragged_node, next);
+									}
+									else {
+										// append to the end of the list
+										node.parentNode.appendChild(this._dragged_node);
+									}
+								}
 
-//				 	if(o_left < d_center_x && (o_left + o_width) > d_center_x && o_top < d_center_y && (o_top + o_height) > d_center_y) {
-						// left half
-						if(event_x > o_left && event_x < o_left + o_width/2) {
-//						if(o_left < d_center_x && o_left + (o_width/2) > d_center_x) {
-							node.parentNode.insertBefore(this.tN, node);
-						}
-						// right half
-						else {
-							// look for next element
-							var next = u.ns(node);
-							if(next) {
-								// insert before next element
-								node.parentNode.insertBefore(this.tN, next);
 							}
-							else {
-								// append to the end of the list
-								node.parentNode.appendChild(this.tN);
-							}
+
+							this._recalculateRelativeShadowOffset();
+							break;
 						}
-						break;
+
 					}
+
+					// default
+					// vertical list - use Y coords for calculation
+					else {
+						// u.bug("vertical list", node);
+
+						// Get correct top and height values
+						var o_top, o_height;
+						if(this._allow_nesting) {
+							o_top = u.absY(node) - node._extra_height_top;
+							o_height = node._top_node_height + node._extra_height_top + node._extra_height_bottom;
+						}
+						else {
+							o_top = u.absY(node);
+							o_height = node._top_node_height;
+						}
+
+
+						// overlap with element
+					 	if(event_y >= o_top && event_y <= o_top + o_height) {
+
+							if(node !== this._dragged_node && !u.pn(node, {include:".dragged"})) {
+
+								// Nested structure (order and indenting)
+								if(this._allow_nesting) {
+
+									// top third, unless there are populated sub_targets and movement is downwards
+									if(event_y < o_top + (o_height / 3) && (!node.sub_target || !node.sub_target.childNodes.length || this._dragged_node.current_yps < 0)) {
+										// u.bug("top third");
+
+										node.parentNode.insertBefore(this._dragged_node, node);
+									}
+									// bottom third, or top movement with sub_target and downwards movement
+									else if(event_y > o_top + ((o_height / 3) * 2)) {
+										// u.bug("bottom third");
+
+										// look for next element
+										var next = u.ns(node, {exclude:".target,.dragged"});
+										if(next) {
+											// insert before next element
+											node.parentNode.insertBefore(this._dragged_node, next);
+										}
+										else {
+											// append to the end of the list
+											node.parentNode.appendChild(this._dragged_node);
+										}
+									}
+									// middle third - append as child
+									else {
+										// u.bug("middle third");
+
+										if(!node.sub_target) {
+											node.sub_target = u.ae(node, "ul", {"class":this._target_selector.replace(/([a-z]*.?)/, "").replace(/\./g, " ")});
+											this.target_nodes.push(node.sub_target);
+										}
+
+										node.sub_target.insertBefore(this._dragged_node, node.sub_target.firstChild);
+									}
+
+								}
+								// Flat structure (only order)
+								else {
+
+
+									// top half
+									// if(event_y > o_top && event_y < o_top + o_height/2) {
+									if(event_y < o_top + o_height/2) {
+										node.parentNode.insertBefore(this._dragged_node, node);
+									}
+									// bottom half
+									else {
+										// look for next element
+										var next = u.ns(node);
+										if(next) {
+											// insert before next element
+											node.parentNode.insertBefore(this._dragged_node, next);
+										}
+										else {
+											// append to the end of the list
+											node.parentNode.appendChild(this._dragged_node);
+										}
+									}
+
+								}
+
+								this._recalculateRelativeShadowOffset();
+								// end loop on overlap
+								break;
+
+							}
+
+							// end loop on overlap
+							else {
+
+								break;
+								
+							}
+
+						}
+
+					}
+
 				}
 			}
 		}
-	}
 
+		// Reset all events (only _sortableInputStart remains)
+		scope.resetSortableEvents = function(node) {
+			// u.bug("resetSortableEvents", node);
 
-	// get current structure
-	scope.getStructure = function() {
+			// remove events handlers
+			u.e.removeMoveEvent(node, this._sortablePick);
+			u.e.removeEndEvent(node, this._cancelSortablePick);
 
-		// update draggable nodes first
-		if(!this.draggables) {
-			this.draggable_nodes = u.qsa("li", this);
-		}
-		else {
-			this.draggable_nodes = u.qsa("."+this.draggables, this);
-		}
+			u.e.removeOverEvent(node, this._sortableOver);
 
+			if(node._event_move_id) {
+				u.e.removeWindowMoveEvent(node, node._event_move_id);
+				delete node._event_move_id;
+			}
+			if(node._event_end_id) {
+				u.e.removeWindowEndEvent(node, node._event_end_id);
+				delete node._event_end_id;
+			}
 
-		var structure = [];
-		var i, node, id, relation, position;
-		for(i = 0; i < this.draggable_nodes.length; i++) {
-			node = this.draggable_nodes[i];
+			// Reset special mouse out event
+			u.e.removeOutEvent(node.drag, this._sortableOut);
 
-//			u.bug("struct:" + u.nodeId(node));
-
-			id = u.cv(node, "item_id");
-			relation = this.getRelation(node);
-			position = this.getPositionInList(node);
-
-			structure.push({"id":id, "relation":relation, "position":position});
+			// Reset extended mouse out events
+			this.resetSortableOutEvents(node);
 		}
 
-		return structure;
-	}
-	
-	// get position of node in list
-	scope.getPositionInList = function(node) {
+		// Reset extended mouse out events – these are applied by mouseout event
+		scope.resetSortableOutEvents = function(node) {
+			// u.bug("resetSortableOutEvents", node._event_drop_out_id);
 
-		var pos = 1;
-		var test_node = node;
-		while(u.ps(test_node)) {
-			test_node = u.ps(test_node);
-			pos++;
+			if(node._event_drop_out_id) {
+				u.e.removeEvent(document, "mousemove", document["_DroppedOutMove" + node._event_drop_out_id]);
+				u.e.removeEvent(node, "mouseover", document["_DroppedOutOver" + node._event_drop_out_id]);
+				u.e.removeEvent(document, "mouseup", document["_DroppedOutEnd" + node._event_drop_out_id]);
+
+				// Also clean up placeholders
+				delete document["_DroppedOutMove" + node._event_drop_out_id];
+				delete document["_DroppedOutOver" + node._event_drop_out_id];
+				delete document["_DroppedOutEnd" + node._event_drop_out_id];
+				delete document["_DroppedOutNode" + node._event_drop_out_id];
+
+				delete node._event_drop_out_id;
+			}
 		}
-		return pos;
 
-	}
+		// Reset nested elements to avoid picking more than one element in nested scenarios
+		scope.resetNestedSortableEvents = function(node) {
+			// u.bug("resetNestedSortableEvents:", node);
 
-	// get relation of node in list
-	scope.getRelation = function(node) {
+			while(node && node != this) {
+				if(node.drag) {
+					this.resetSortableEvents(node);
+				}
+				node = node.parentNode;
+			}
 
-		// is this node
-		if(!node.parentNode.relation_id) {
-			var li_relation = u.pn(node, {"include":"li"});
-			if(u.inNodeList(li_relation, this.draggable_nodes)) {
-				node.parentNode.relation_id = u.cv(li_relation, "item_id");
+		}
+
+
+
+		// GET INFORMATION
+
+		// Get array of ordered ids or nodes
+		scope.getNodeOrder = function(_options) {
+
+			var class_var = "item_id";
+
+			if(obj(_options)) {
+				var _argument;
+				for(_argument in _options) {
+
+					switch(_argument) {
+						case "class_var"			: class_var 		= _options[_argument]; break;
+					}
+
+				}
+			}
+
+
+			// update draggable nodes first
+			this.updateDraggables();
+
+			var order = [];
+			var i, node, id;
+			for(i = 0; i < this.draggable_nodes.length; i++) {
+
+				node = this.draggable_nodes[i];
+
+				id = u.cv(node, class_var);
+
+				if(id) {
+					order.push(id);
+				}
+				else {
+					order.push(node);
+				}
+
+			}
+
+			return order;
+		}
+
+		// Get current nested relations
+		scope.getNodeRelations = function(_options) {
+
+			var class_var = "item_id";
+
+			if(obj(_options)) {
+				var _argument;
+				for(_argument in _options) {
+
+					switch(_argument) {
+						case "class_var"			: class_var 		= _options[_argument]; break;
+					}
+
+				}
+			}
+
+			// update draggable nodes first
+			this.updateDraggables();
+
+			var structure = [];
+			var i, node, id, relation, position;
+			for(i = 0; i < this.draggable_nodes.length; i++) {
+
+				node = this.draggable_nodes[i];
+
+				id = u.cv(node, class_var);
+				relation = this.getNodeRelation(node);
+				position = this.getNodePositionInList(node);
+
+				if(id) {
+					structure.push({"id": id, "relation": relation, "position": position});
+				}
+				else {
+					structure.push({"node": node, "relation": relation, "position": position});
+				}
+
+			}
+
+			return structure;
+		}
+
+		// Get position of node in list
+		scope.getNodePositionInList = function(node) {
+
+			var pos = 1;
+			var test_node = node;
+			while(u.ps(test_node)) {
+				test_node = u.ps(test_node);
+				pos++;
+			}
+			return pos;
+
+		}
+
+		// Get relation of node in list
+		scope.getNodeRelation = function(node) {
+
+			var relation = 0;
+			var relation_node = u.pn(node, {"include":(this._draggable_selector ? this._draggable_selector : "li")});
+
+			if(u.inNodeList(relation_node, this.draggable_nodes)) {
+
+				var id = u.cv(relation_node, "item_id");
+				if(id) {
+					relation = id;
+				}
+				else {
+					relation = relation_node;
+				}
+			}
+
+			return relation;
+		}
+
+
+
+		// INITIALISERS / UPDATERS
+
+		// Detect layout based on draggable_nodes layout
+		scope.detectSortableLayout = function() {
+
+			var i, target;
+			for(i = 0; i < this.target_nodes.length; i++) {
+				target = this.target_nodes[i];
+
+				// if node-tops or node-bottoms are all the same
+				// - and more than one child (otherwise how to compare positions)
+				// - or only one element with display other than block (block indicates vertical list)
+				if((target._n_top || target._n_bottom) && (u.cn(target).length > 1 || target._n_display != "block")) {
+					target._layout = "horizontal";
+				}
+				// If node-left or node-right are all the same
+				else if(target._n_left || target._n_right) {
+					target._layout = "vertical";
+				}
+				// It's all different – must be multiline
+				else {
+					target._layout = "multiline";
+				}
+
+				// u.bug("_layout:" + target._layout, target);
+			}
+
+		}
+
+		// Update collection of draggable nodes and apply/remove event listeners
+		// (they might have changed order, some might even have disappeared)
+		scope.updateDraggables = function() {
+			// u.bug("updateDraggables", this);
+
+			var i, target, draggable_node;
+
+
+			// RESET OLD DRAGGABLES
+
+			if(this.draggable_nodes && this.draggable_nodes.length) {
+				// u.bug("reset this.draggable_nodes", this.draggable_nodes);
+
+				for(i = 0; i < this.draggable_nodes.length; i++) {
+					draggable_node = this.draggable_nodes[i];
+
+					if(draggable_node && draggable_node.drag) {
+
+						this.resetSortableEvents(draggable_node);
+						u.e.removeStartEvent(draggable_node.drag, this._sortableInputStart);
+						u.e.removeOverEvent(draggable_node, this._sortableOver);
+
+						delete draggable_node.drag;
+						delete draggable_node.sub_target;
+						
+						delete draggable_node.draggable_node;
+					}
+				}
+			}
+
+			// Clean slate
+			delete scope.draggable_nodes;
+
+
+
+			// UPDATE LIST OF DRAGGABLES
+
+			// defined selector for draggable element
+			if(this._draggable_selector) {
+
+				// Make sure draggable nodes are always returned as array
+				this.draggable_nodes = Array.prototype.slice.call(u.qsa(this._draggable_selector, this));
+			}
+			// or just all li's (but only direct children)
+			else {
+
+				// applied directly to list – get only li-children of target
+				if(this.nodeName.toLowerCase() === "ul") {
+					this.draggable_nodes = u.cn(this, {include:"li"});
+				}
+				// Get direct li-children of each target
+				else {
+					this.draggable_nodes = [];
+
+					for(i = 0; i < this.target_nodes.length; i++) {
+						target = this.target_nodes[i];
+						this.draggable_nodes = this.draggable_nodes.concat(u.cn(target, {include:"li"}));
+					}
+				}
+
+			}
+
+			// u.bug("this.draggable_nodes:", this.draggable_nodes);
+
+
+
+			// INITIALIZE DRAGGABLE NODES
+
+			// set up dragables
+			for(i = 0; i < this.draggable_nodes.length; i++) {
+
+				draggable_node = this.draggable_nodes[i];
+				// u.bug("draggable_node:", draggable_node);
+
+				// remember wrapper
+				draggable_node.scope = this;
+
+				// check for "drag handle"
+				draggable_node.drag = u.qs(".drag", draggable_node);
+				// if no drag area
+				if(!draggable_node.drag) {
+					// use entire node
+					draggable_node.drag = draggable_node;
+
+				}
+				// Let "drag handle" know about draggable node
+				draggable_node.drag.draggable_node = draggable_node;
+
+				// Make sure that both "drag handle" and draggable node can use same reference
+				draggable_node.draggable_node = draggable_node;
+
+
+
+				// Get calculation values
+				var _top = draggable_node.offsetTop;
+				var _height = draggable_node.offsetHeight;
+				var _left = draggable_node.offsetLeft;
+				var _width = draggable_node.offsetWidth;
+				var _display = u.gcs(draggable_node, "display");
+
+				// Get values for layout autodetection
+				// Identify fixed properties – set to false if value is different from siblings
+				draggable_node.parentNode._n_top = draggable_node.parentNode._n_top === undefined ? _top : (draggable_node.parentNode._n_top == _top ? draggable_node.parentNode._n_top : false);
+				draggable_node.parentNode._n_left = draggable_node.parentNode._n_left === undefined ? _left : (draggable_node.parentNode._n_left == _left ? draggable_node.parentNode._n_left : false);
+				draggable_node.parentNode._n_bottom = draggable_node.parentNode._n_bottom === undefined ? _top + _height : (draggable_node.parentNode._n_bottom == _top + _height ? draggable_node.parentNode._n_bottom : false);
+				draggable_node.parentNode._n_right = draggable_node.parentNode._n_right === undefined ? _left + _width : (draggable_node.parentNode._n_right == _left + _width ? draggable_node.parentNode._n_right : false);
+				draggable_node.parentNode._n_display = draggable_node.parentNode._n_display === undefined ? _display : (draggable_node.parentNode._n_display == _display ? draggable_node.parentNode._n_display : false);
+
+
+				// Special calculations for nested lists
+				if(this._allow_nesting) {
+					draggable_node.sub_target = u.qs(this._target_selector, draggable_node);
+
+					
+					if(draggable_node.sub_target) {
+
+						var _position = u.gcs(draggable_node, "position");
+
+						// Get node height excluding sub target
+						var node_height = _height - draggable_node.sub_target.offsetHeight;
+
+						if(_position !== "static") {
+							draggable_node._top_node_height = node_height - (node_height - draggable_node.sub_target.offsetTop);
+						}
+						else {
+							draggable_node._top_node_height = node_height - (node_height - (draggable_node.sub_target.offsetTop - _top));
+						}
+
+						// u.bug("nth:" + draggable_node._top_node_height +", pos:"+ _position +", stot:"+ draggable_node.sub_target.offsetTop + ", _top:" + _top, draggable_node);
+						
+					}
+					// Top height equals height, when no subtarget is present
+					else {
+
+						draggable_node._top_node_height = _height;
+					}
+
+
+					// Pre-Calculate extra height based on margins and borders (if content-box)
+					var _margin_top = parseInt(u.gcs(draggable_node, "margin-top"));
+					var _margin_bottom = parseInt(u.gcs(draggable_node, "margin-bottom"));
+
+					var _box_sizing = u.gcs(draggable_node, "box-sizing");
+					if(_box_sizing == "content-box") {
+
+						var _border_top_width = parseInt(u.gcs(draggable_node, "border-top-width"));
+						var _border_bottom_width = parseInt(u.gcs(draggable_node, "border-bottom-width"));
+
+						draggable_node._extra_height_top = _margin_top + _border_top_width;
+						draggable_node._extra_height_bottom = _margin_bottom + _border_bottom_width;
+					}
+					else {
+						draggable_node._extra_height_top = _start_margin_top;
+						draggable_node._extra_height_bottom = _start_margin_bottom;
+					}
+
+					// u.bug("draggable_node._extra_height_top:" + draggable_node._extra_height_top, "draggable_node._extra_height_bottom:" + draggable_node._extra_height_bottom);
+
+				}
+				// Set top_node_height for non-nested lists
+				else {
+
+					draggable_node._top_node_height = _height;
+				}
+
+
+				// set start drag event handler
+				u.e.addStartEvent(draggable_node.drag, this._sortableInputStart);
+
+			}
+
+		}
+
+		// Update collection of targets
+		scope.updateTargets = function() {
+
+			// Get target nodes
+			// defined _target_selector to drop on, current ul or just all ul's in scope
+			if(this._target_selector) {
+
+				// Make sure target_nodes are always stored as Array
+				this.target_nodes = Array.prototype.slice.call(u.qsa(this._target_selector, this));
+
+				// include scope if it matches
+				if(u.elementMatches(this, this._target_selector)) {
+					this.target_nodes.unshift(this);
+				}
+
 			}
 			else {
-				node.parentNode.relation_id = 0;
+
+				// Scope is list – use only top level list as target
+				if(this.nodeName.toLowerCase() === "ul") {
+					this.target_nodes = [this];
+				}
+				else {
+					var i, target, target_nodes, parent_ul;
+					this.target_nodes = [];
+
+					target_nodes = u.qsa("ul", this);
+					for(i = 0; i < target_nodes.length; i++) {
+						target = target_nodes[i];
+
+						if(this._allow_nesting) {
+							this.target_nodes.push(target);
+						}
+					// Only include first level list
+						else {
+							parent_ul = u.pn(target, {include:"ul"});
+							// if list doesn't have parent list - or parent list is outside of scope
+							if(!parent_ul || !u.contains(this, parent_ul)) {
+								this.target_nodes.push(target);
+							}
+						}
+					}
+
+				}
+
 			}
+
 		}
 
-		return node.parentNode.relation_id;
 	}
 
-	// remove drag start event from node
-	// if a node is no longer active in drag structure
-	scope.disableNodeDrag = function(node) {
-		u.bug("disableNodeDrag:" + u.nodeId(node))
-		u.e.removeStartEvent(node.drag, this._sortablepick);
-	}
-
-	// base initialization of targets and draggables
-	var i, j, d_node;
 
 
-	// defined draggable element or just all li's
-	if(!scope.draggables) {
-		scope.draggable_nodes = u.qsa("li", scope);
-	}
-	else {
-		scope.draggable_nodes = u.qsa("."+scope.draggables, scope);
-	}
+	// Get updated list of targets
+	scope.updateTargets();
 
+	// Get updated list of draggable nodes
+	scope.updateDraggables();
+
+	// Update layout values
+	scope.detectSortableLayout();
+
+
+	// Precaution
 	// no draggable nodes found, sorting is impossible
-	if(!scope.draggable_nodes.length) {
+	if(!scope.draggable_nodes.length || !scope.target_nodes.length) {
+		u.bug("Nothing to sort in this scope", scope, scope.draggable_nodes.length, scope.target_nodes.length);
 		return;
-	}
-
-	// save global node height
-	scope.draggable_node_height = scope.draggable_nodes[0].offsetHeight;
-
-
-	// defined targets to drop on or just all ul's
-	if(!scope.targets) {
-		scope.target_nodes = u.qsa("ul", scope);
-	}
-	else {
-		scope.target_nodes = u.qsa("."+scope.targets, scope);
-	}
-
-	// add scope to target_nodes if it is valid
-	//if(scope.nodeName == "UL" && (!scope.targets || u.hc(scope, scope.targets))) {
-	if((!scope.targets || u.hc(scope, scope.targets))) {
-		if(scope.target_nodes.length) {
-			var temp_scope = scope.target_nodes;
-			scope.target_nodes = [scope];
-			var target_node;
-			for(i = 0; i < temp_scope.length; i++) {
-				target_node = temp_scope[i];
-
-				scope.target_nodes.push(target_node);
-			} 
-		}
-		else {
-			scope.target_nodes = [scope];
-		}
-	}
-
-//	u.bug("node.draggable_nodes:" + scope.draggable_nodes.length);
-//	u.bug("node.target_nodes_b:" + scope.target_nodes.length);
-
-
-
-	// TODO: list type should be set for each target 
-	// what type of list do we have - floated indicates horizontal list
-
-	// if node
-	if(!scope.layout && scope.draggable_nodes.length) {
-		
-		// TODO
-		// if list is higher and wider than its content - mixed list ?
-		// if list is higher than its content - vertical list
-		// if list is wider than its content - horizontal list
-		scope.layout = scope.offsetWidth < scope.draggable_nodes[0].offsetWidth*2 ? "vertical" : "horizontal";
-	}
-
-
-
-	// set up dragables
-	for(i = 0; i < scope.draggable_nodes.length; i++) {
-		d_node = scope.draggable_nodes[i];
-
-//		u.bug("d_node:" + u.nodeId(d_node));
-
-		// remember wrapper
-		d_node.scope = scope;
-
-		// uniquely identify element as target
-		d_node.dragme = true;
-
-
-		// get relative offset coords for li in case some positioning is involved
-		d_node.rel_ox = u.absX(d_node) - u.relX(d_node);
-		d_node.rel_oy = u.absY(d_node) - u.relY(d_node);
-//		u.bug(u.nodeId(node) + ":node.rel_ox = " + node.rel_ox + ", node.rel_oy = " + node.rel_oy)
-
-
-		// check for drag handle
-		d_node.drag = u.qs(".drag", d_node);
-		// if no drag area, use entire node
-		if(!d_node.drag) {
-			d_node.drag = d_node;
-		}
-
-
-		// reference node from drag handle
-		d_node.drag.d_node = d_node;
-		// cross-reference all drag children, so every event.target knows node
-		var drag_children = u.qsa("*", d_node.drag);
-		if(drag_children) {
-			for(j = 0; j < drag_children.length; j++) {
-				child = drag_children[j];
-
-				child.d_node = d_node;
-//				u.bug("set d_node:" + u.nodeId(child) + ", " + u.nodeId(d_node))
-
-			}
-		}
-
-		// remove existing start handler (to be able to reinitialize scope without double events)
-		u.e.removeStartEvent(d_node.drag, scope._sortablepick);
-
-		// set start drag event handler
-		u.e.addStartEvent(d_node.drag, scope._sortablepick);
-
 	}
 
 
