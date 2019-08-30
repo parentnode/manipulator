@@ -233,7 +233,7 @@ u.e.drag = function(node, boundaries, _options) {
 
 	// notify of movement
 	if(fun(node[node.callback_ready])) {
-		node[node.callback_ready](event);
+		node[node.callback_ready]();
 	}
 }
 
