@@ -33,7 +33,7 @@ Util.Animation = u.a = new function() {
 	* Apply CSS transition to node
 	*/
 	this.transition = function(node, transition, callback) {
-//		u.bug("add transition:" + u.nodeId(node) + ", " + transition + ", " + callback);
+		u.bug("add transition:", node, transition, callback);
 
 		try {
 
@@ -67,7 +67,7 @@ Util.Animation = u.a = new function() {
 							else if(fun(this[callback])) {
 //								u.bug("callback to: " + callback + ", " + this[callback])
 								this[callback](event);
-//								this[callback] = null;
+								// this[callback] = null;
 							}
 
 
@@ -133,9 +133,7 @@ Util.Animation = u.a = new function() {
 	// transition end handler
 	// not for chained transitions - will reset node.transitioned and remove transition
 	this._transitioned = function(event) {
-
-//		u.bug("default transitioned:" + u.nodeId(this))
-//		u.bug("transitioned: " + u.nodeId(event.target) + ", " + u.nodeId(this) + ", " + typeof(this.transitioned))
+		// u.bug("default transitioned:", this);
 
 		// Do not remove event listener and transition unless callback stems from correct node
 		if(event.target == this) {
@@ -148,34 +146,18 @@ Util.Animation = u.a = new function() {
 
 			// only do callback to correct targets
 			if(fun(this.transitioned)) {
-
 				this.transitioned_before = this.transitioned;
 
 				this.transitioned(event);
 
 				// Unless transition callback has changed
 				if(this.transitioned === this.transitioned_before) {
-					this.transitioned = null;
+					delete this.transitioned;
 				}
 
 			}
 
 		}
-
-		// // remove event listener - it's job is done
-		// u.e.removeEvent(event.target, u.a.transitionEndEventName(), u.a._transitioned);
-		//
-		// // transition should be removed here to be cleared before callback
-		// u.a.transition(event.target, "none");
-		//
-		// // only do callback to correct targets
-		// if(event.target == this && fun(this.transitioned)) {
-		//
-		// 	this.transitioned(event);
-		//
-		// 	this.transitioned = null;
-		//
-		// }
 
 	}
 
