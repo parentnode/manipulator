@@ -224,7 +224,7 @@ Util.request = function(node, url, _options) {
 				delete this.timedOut;
 				delete this.t_timeout;
 
-				Util.validateResponse({node: requestee.node, request_id: requestee.request_id});
+				Util.validateResponse({node: requestee.node, request_id: requestee.request_id, status:this.status});
 			}
 			node[request_id].t_timeout = u.t.setTimer(node[request_id], "timedOut", node[request_id].request_timeout, {node: node, request_id: request_id});
 		}
@@ -346,8 +346,7 @@ Util.evaluateResponseText = function(responseText) {
 // Simple validation of responseText
 // Makes callback to appropriate notifier
 Util.validateResponse = function(HTTPRequest){
-	// u.bug("validateResponse:");
-	// console.log(HTTPRequest);
+	// u.bug("validateResponse:", HTTPRequest);
 
 	var object = false;
 
