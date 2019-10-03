@@ -594,7 +594,7 @@ u.f.textEditor = function(field) {
 			tag.parentNode.removeChild(tag);
 
 			// enable dragging of html-tags
-			u.sortable(this._editor, {"draggables":"tag", "targets":"editor"});
+			u.sortable(this._editor, {"draggables":".tag", "targets":".editor"});
 
 			// global update
 			this.update();
@@ -821,7 +821,7 @@ u.f.textEditor = function(field) {
 		u.e.addEvent(tag._input, "blur", tag.field._blurred_content);
 
 		// enable dragging of html-tags
-		u.sortable(this._editor, {"draggables":"tag", "targets":"editor"});
+		u.sortable(this._editor, {"draggables":".tag", "targets":".editor"});
 
 		return tag;
 		
@@ -934,7 +934,7 @@ u.f.textEditor = function(field) {
 		}
 
 		// enable dragging of html-tags
-		u.sortable(this._editor, {"draggables":"tag", "targets":"editor"});
+		u.sortable(this._editor, {"draggables":".tag", "targets":".editor"});
 
 		return tag;
 		
@@ -1139,7 +1139,7 @@ u.f.textEditor = function(field) {
 		}
 
 		// enable dragging of html-tags
-		u.sortable(this._editor, {"draggables":"tag", "targets":"editor"});
+		u.sortable(this._editor, {"draggables":".tag", "targets":".editor"});
 
 		return tag;
 	}
@@ -1306,7 +1306,7 @@ u.f.textEditor = function(field) {
 		}
 
 		// enable dragging of html-tags
-		u.sortable(this._editor, {"draggables":"tag", "targets":"editor"});
+		u.sortable(this._editor, {"draggables":".tag", "targets":".editor"});
 
 		return tag;
 	}
@@ -1409,7 +1409,7 @@ u.f.textEditor = function(field) {
 
 
 				// enable dragging of html-tags
-				u.sortable(this.field._editor, {"draggables":"tag", "targets":"editor"});
+				u.sortable(this.field._editor, {"draggables":".tag", "targets":".editor"});
 
 
 			}
@@ -1492,7 +1492,7 @@ u.f.textEditor = function(field) {
 
 
 		// enable dragging of html-tags
-		u.sortable(this._editor, {"draggables":"tag", "targets":"editor"});
+		u.sortable(this._editor, {"draggables":".tag", "targets":".editor"});
 
 		return tag;
 	}
@@ -1605,7 +1605,7 @@ u.f.textEditor = function(field) {
 		}
 
 		// enable dragging of html-tags
-		u.sortable(this._editor, {"draggables":"tag", "targets":"editor"});
+		u.sortable(this._editor, {"draggables":".tag", "targets":".editor"});
 
 		return tag;
 	}
@@ -1762,7 +1762,7 @@ u.f.textEditor = function(field) {
 
 
 				// enable dragging of html-tags
-				u.sortable(this.field._editor, {"draggables":"tag", "targets":"editor"});
+				u.sortable(this.field._editor, {"draggables":".tag", "targets":".editor"});
 
 				// set focus on prev element
 				if(prev) {
@@ -2730,7 +2730,7 @@ u.f.textEditor = function(field) {
 
 
 	// enable dragging of html-tags
-	u.sortable(field._editor, {"draggables":"tag", "targets":"editor"});
+	u.sortable(field._editor, {"draggables":".tag", "targets":".editor"});
 
 	// update viewer after indexing
 	field.updateViewer();
