@@ -1048,7 +1048,7 @@ u.sortable = function(scope, _options) {
 	// Precaution
 	// no draggable nodes found, sorting is impossible
 	if(!scope.draggable_nodes.length || !scope.target_nodes.length) {
-		u.bug("Nothing to sort in this scope", scope, scope.draggable_nodes.length, scope.target_nodes.length);
+		// u.bug("Nothing to sort in this scope", scope, scope.draggable_nodes.length, scope.target_nodes.length);
 		return;
 	}
 
