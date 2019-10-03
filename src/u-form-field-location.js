@@ -198,6 +198,9 @@ Util.Form.geoLocation = function(field) {
 			window._mapsiframe.doc.open();
 			window._mapsiframe.doc.write(html);
 			window._mapsiframe.doc.close();
+			window._mapsiframe.doc.field = this;
+			
+			u.e.addEvent(window._mapsiframe.doc, "focus", function() {u.t.resetTimer(this.field.t_hide_map)});
 
 		}
 		else {
@@ -289,7 +292,7 @@ Util.Form.geoLocation = function(field) {
 	}
 	// hide map when lat/long fields loose focus
 	field.lat_input.blurred = field.lon_input.blurred = function() {
-//			this.field.t_hide_map = u.t.setTimer(this.field, this.field.hideMap, 800);
+		this.field.t_hide_map = u.t.setTimer(this.field, this.field.hideMap, 800);
 	}
 
 
