@@ -23,58 +23,74 @@ Util.Objects["oneButtonForm"] = new function() {
 					form_options["target"] = form_target;
 				}
 
-				node.form = u.f.addForm(node, form_options);
-				node.form.node = node;
+				node._ob_form = u.f.addForm(node, form_options);
+				node._ob_form._ob_node = node;
 				// add csrf token
-				u.ae(node.form, "input", {"type":"hidden","name":"csrf-token", "value":csrf_token});
+				u.ae(node._ob_form, "input", {"type":"hidden","name":"csrf-token", "value":csrf_token});
 
 				// add additional hidden inputs
 				if(inputs) {
 					for(input_name in inputs) {
-						u.ae(node.form, "input", {"type":"hidden","name":input_name, "value":inputs[input_name]});
+						u.ae(node._ob_form, "input", {"type":"hidden","name":input_name, "value":inputs[input_name]});
 					}
 				}
 
 				// add action
-				u.f.addAction(node.form, {"value":button_value, "class":"button" + (button_class ? " "+button_class : ""), "name":u.stringOr(button_name, "save")});
+				u.f.addAction(node._ob_form, {"value":button_value, "class":"button" + (button_class ? " "+button_class : ""), "name":u.stringOr(button_name, "save")});
 			}
 		}
 		// look for valid forms
 		else {
-			node.form = u.qs("form", node);
+			
+			// Is node form
+			if(node.nodeName.toLowerCase() === "form") {
+				node._ob_form = node;
+			}
+			// Look for form inside node
+			else {
+				node._ob_form = u.qs("form", node);
+			}
 		}
 
 		// init if form is available
-		if(node.form) {
-			u.f.init(node.form);
+		if(node._ob_form) {
+			// u.bug("valid form");
 
-			node.form.node = node;
-			//node.form.confirm_submit_button = node.form.actions[u.stringOr(button_name, "confirm")];
-			node.form.confirm_submit_button = u.qs("input[type=submit]", node.form);
+			u.f.init(node._ob_form);
 
-			node.form.confirm_submit_button.org_value = node.form.confirm_submit_button.value;
-			node.form.confirm_submit_button.confirm_value = node.getAttribute("data-confirm-value");
-			node.form.confirm_submit_button.wait_value = node.getAttribute("data-wait-value");
+			node._ob_form._ob_node = node;
 
-			node.form.success_function = node.getAttribute("data-success-function");
-			node.form.success_location = node.getAttribute("data-success-location");
+			//node._ob_form.confirm_submit_button = node._ob_form.actions[u.stringOr(button_name, "confirm")];
+			node._ob_form.confirm_submit_button = u.qs("input[type=submit]", node._ob_form);
 
-			node.form.dom_submit = node.getAttribute("data-dom-submit");
-			node.form._download = node.getAttribute("data-download");
+			node._ob_form.confirm_submit_button.org_value = node._ob_form.confirm_submit_button.value;
+			node._ob_form.confirm_submit_button.confirm_value = node.getAttribute("data-confirm-value");
+			node._ob_form.confirm_submit_button.wait_value = node.getAttribute("data-wait-value");
 
-//				node.form.cancel_url = bn_cancel.href;
+			node._ob_form.success_function = node.getAttribute("data-success-function");
+			node._ob_form.success_location = node.getAttribute("data-success-location");
 
-			node.form.restore = function(event) {
+			node._ob_form.error_function = node.getAttribute("data-error-function");
+
+
+			node._ob_form.dom_submit = node.getAttribute("data-dom-submit");
+			node._ob_form._download = node.getAttribute("data-download");
+
+//				node._ob_form.cancel_url = bn_cancel.href;
+
+			// Restore original state after timeout
+			node._ob_form.restore = function(event) {
 				u.t.resetTimer(this.t_confirm);
 
 				this.confirm_submit_button.value = this.confirm_submit_button.org_value;
 				u.rc(this.confirm_submit_button, "confirm");
 			}
 
-			node.form.submitted = function() {
-				u.bug("submitted");
+			// Handle submit event
+			node._ob_form.submitted = function() {
+				// u.bug("onebuttonsubmitted");
 
-				// first click
+				// first click and confirm state enabled
 				if(!u.hc(this.confirm_submit_button, "confirm") && this.confirm_submit_button.confirm_value) {
 
 					u.ac(this.confirm_submit_button, "confirm");
@@ -82,15 +98,15 @@ Util.Objects["oneButtonForm"] = new function() {
 					this.t_confirm = u.t.setTimer(this, this.restore, 3000);
 
 				}
-				// confirm click
+				// confirmed click
 				else {
 					u.t.resetTimer(this.t_confirm);
 
 					// Make callback to oneButtonForm node
-					if(fun(this.node.submitted)) {
-						u.bug("oneButtonForm");
-						this.node.submitted();
-					}
+					// if(fun(this._ob_node.submitted)) {
+					// 	u.bug("oneButtonForm");
+					// 	this._ob_node.submitted();
+					// }
 
 					this.response = function(response) {
 
@@ -116,7 +132,7 @@ Util.Objects["oneButtonForm"] = new function() {
 							else {
 
 								if(this.success_location) {
-									u.bug("location:" + this.success_location);
+									u.bug("success location:" + this.success_location);
 
 									u.ass(this.confirm_submit_button, {
 										"display": "none"
@@ -125,15 +141,15 @@ Util.Objects["oneButtonForm"] = new function() {
 									location.href = this.success_location;
 								}
 								else if(this.success_function) {
-									u.bug("function:" + this.success_function);
-									if(fun(this.node[this.success_function])) {
-										this.node[this.success_function](response);
+									u.bug("success function:" + this.success_function);
+									if(fun(this._ob_node[this.success_function])) {
+										this._ob_node[this.success_function](response);
 									}
 								}
 								// does default callback exist
-								else if(fun(this.node.confirmed)) {
+								else if(fun(this._ob_node.confirmed)) {
 									u.bug("confirmed");
-									this.node.confirmed(response);
+									this._ob_node.confirmed(response);
 								}
 								else {
 									u.bug("default return handling" + this.success_location)
@@ -144,11 +160,18 @@ Util.Objects["oneButtonForm"] = new function() {
 							}
 						}
 						else {
+
+							if(this.error_function) {
+								u.bug("error function:" + this.error_function);
+								if(fun(this._ob_node[this.error_function])) {
+									this._ob_node[this.error_function](response);
+								}
+							}
 							
 							// does default callback exist
-							if(fun(this.node.confirmedError)) {
+							else if(fun(this._ob_node.confirmedError)) {
 								u.bug("confirmedError");
-								this.node.confirmedError(response);
+								this._ob_node.confirmedError(response);
 							}
 							
 						}
