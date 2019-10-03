@@ -333,6 +333,9 @@ Util.Form = u.f = new function() {
 			// regular inputs initialization
 			if(u.hc(field, "string|email|tel|number|integer|password|date|datetime")) {
 
+				// Register field type
+				field.type = field.className.match(/(?:^|\b)(string|email|tel|number|integer|password|date|datetime)(?:\b|$)/)[0];
+
 				// Get primary input
 				field.input = u.qs("input", field);
 				// form is a reserved property, so we use _form
@@ -359,6 +362,9 @@ Util.Form = u.f = new function() {
 
 			// textarea initialization
 			else if(u.hc(field, "text")) {
+
+				// Register field type
+				field.type = "text";
 
 				// Get primary input
 				field.input = u.qs("textarea", field);
@@ -458,6 +464,9 @@ Util.Form = u.f = new function() {
 			// select initialization
 			else if(u.hc(field, "select")) {
 
+				// Register field type
+				field.type = "select";
+
 				// Get primary input
 				field.input = u.qs("select", field);
 				// form is a reserved property, so we use _form
@@ -482,6 +491,9 @@ Util.Form = u.f = new function() {
 			// checkbox/boolean (also checkbox) initialization
 			else if(u.hc(field, "checkbox|boolean")) {
 
+				// Register field type
+				field.type = field.className.match(/(?:^|\b)(checkbox|boolean)(?:\b|$)/)[0];
+
 				// Get primary input
 				field.input = u.qs("input[type=checkbox]", field);
 				// form is a reserved property, so we use _form
@@ -493,6 +505,10 @@ Util.Form = u.f = new function() {
 
 				// get/set value function
 				field.input.val = this._value_checkbox;
+
+				// Update checkbox field classname whenever value is changed
+				u.f._update_checkbox_field.bind(field.input)();
+
 
 				// opposite order of elsewhere to ensure instant validation
 				u.e.addEvent(field.input, "change", this._changed);
@@ -513,6 +529,9 @@ Util.Form = u.f = new function() {
 				// Radio buttons are tricky, because there are multiple inputs but only one name
 				// field input reference points to first radio button
 				// Requires some extra checks, which are built into all event handlers
+
+				// Register field type
+				field.type = "radiobuttons";
 
 				// get all inputs
 				field.inputs = u.qsa("input", field);
@@ -550,6 +569,9 @@ Util.Form = u.f = new function() {
 			// file input initialization
 			else if(u.hc(field, "files")) {
 
+				// Register field type
+				field.type = "files";
+
 				// Get primary input
 				field.input = u.qs("input", field);
 				// form is a reserved property, so we use _form
@@ -561,11 +583,23 @@ Util.Form = u.f = new function() {
 
 				// get/set value function
 				field.input.val = this._value_file;
-				field.input.addFile = this._add_file;
-				field.input.removeFile = this._remove_file;
 
-				// Add filelist for visual file selection feedback
-				field.filelist = u.ae(field, "ul", {"class":"filelist"});
+				// Find or Add filelist for visual file selection feedback
+				field.filelist = u.qs("ul.filelist", field);
+				if(!field.filelist) {
+					field.filelist = u.ae(field, "ul", {"class":"filelist"});
+					// position list correctly in field (before help)
+					field.insertBefore(field.help, field.filelist);
+				}
+				// Let filelist know about it's field
+				field.filelist.field = field;
+				// Get already uploaded files
+				// field.uploaded_files = u.qsa("li", field.filelist);
+				field.uploaded_files = u.qsa("li.uploaded", field.filelist);
+
+				// Update filelist now
+				this._update_filelist.bind(field.input)();
+
 
 				// change and update event
 				u.e.addEvent(field.input, "change", this._updated);
@@ -575,7 +609,11 @@ Util.Form = u.f = new function() {
 				if(u.e.event_support != "touch") {
 					u.e.addEvent(field.input, "dragenter", this._focus);
 					u.e.addEvent(field.input, "dragleave", this._blur);
+					u.e.addEvent(field.input, "drop", this._blur);
 				}
+
+				// Update filelist whenever value is changed
+				u.e.addEvent(field.input, "change", this._update_filelist);
 
 				// Add additional standard event listeners and labelstyle
 				this.activateInput(field.input);
@@ -801,12 +839,13 @@ Util.Form = u.f = new function() {
 		if(value !== undefined) {
 			if(value) {
 				this.checked = true
-				u.ac(this.field, "checked");
 			}
 			else {
 				this.checked = false;
-				u.rc(this.field, "checked");
 			}
+
+			// Update checkbox field classname whenever value is changed
+			u.f._update_checkbox_field.bind(this)();
 
 			// validate after setting value
 			u.f.validate(this);
@@ -863,12 +902,17 @@ Util.Form = u.f = new function() {
 
 		// Set value? (value could be false or 0)
 		if(value !== undefined) {
-			u.bug('ADDING VALUES MANUALLY TO INPUT type="file" IS NOT SUPPORTED');
 
-			// resetting like this is not crossbrowser safe, but works most places
-			if (value === "") {
+			// resetting like this is not 100% crossbrowser safe, but works most places
+			if(value === "") {
 				this.value = null;
 			}
+			else {
+				// Let it be known – developer help :-)
+				u.bug('ADDING VALUES MANUALLY TO INPUT type="file" IS NOT SUPPORTED IN JAVASCRIPT');
+			}
+			// Update filelist whenever value is changed
+			u.f._update_filelist.bind(this)();
 
 			// validate after setting value
 			u.f.validate(this);
@@ -891,7 +935,7 @@ Util.Form = u.f = new function() {
 			return this.value;
 		}
 		// File was already uploaded – custom return value
-		else if(u.hc(this, "uploaded")){
+		else if(this.field.uploaded_files && this.field.uploaded_files.length){
 			return true;
 		}
 
@@ -969,6 +1013,63 @@ Util.Form = u.f = new function() {
 			u.rc(this.field, "checked");
 		}
 	}
+	// internal - filelist is changed - update visual filelisting
+	this._update_filelist = function(event) {
+		// u.bug("_update_filelist", this);
+
+		var i;
+		var files = this.val();
+
+		// Clear list
+		this.field.filelist.innerHTML = "";
+
+		// Add hint or label as visual
+		u.ae(this.field.filelist, "li", {html:this.field.hint ? u.text(this.field.hint) : u.text(this.label), class:"label"})
+
+		// Selected new files for upload
+		if(files && files.length) {
+			// u.bug("new files exist:" + this.name);
+
+			u.ac(this.field, "has_new_files");
+
+			var i;
+
+			// Add files to list
+			for(i = 0; i < files.length; i++) {
+				u.ae(this.field.filelist, "li", {html:files[i].name, class:"new"})
+			}
+
+			// Keep uploaded files in list for multiple file inputs
+			if(this.multiple) {
+				for(i = 0; i < this.field.uploaded_files.length; i++) {
+					u.ae(this.field.filelist, this.field.uploaded_files[i]);
+				}
+			}
+			
+
+		}
+		// Already uploaded files
+		else if(this.field.uploaded_files && this.field.uploaded_files.length) {
+			// u.bug("old files exist:" + this.name);
+
+			u.rc(this.field, "has_new_files");
+
+			var i;
+			// add already uploaded files
+			for(i = 0; i < this.field.uploaded_files.length; i++) {
+				u.ae(this.field.filelist, this.field.uploaded_files[i]);
+			}
+
+		}
+		// No files
+		else {
+			// u.bug("no files exist:" + this.name);
+
+			u.rc(this.field, "has_new_files");
+
+		}
+
+	}
 
 	// internal - mouseenter handler - attatched to inputs
 	this._mouseenter = function(event) {
@@ -1002,7 +1103,7 @@ Util.Form = u.f = new function() {
 
 	// internal focus handler - attatched to inputs
 	this._focus = function(event) {
-		// u.bug("this._focus:", this);
+		// u.bug("this._focus:", this, event);
 
 		this.field.is_focused = true;
 		this.is_focused = true;
@@ -1037,7 +1138,7 @@ Util.Form = u.f = new function() {
 	}
 	// internal blur handler - attatched to inputs
 	this._blur = function(event) {
-		// u.bug("this._blur:", this);
+		// u.bug("this._blur:", this, event);
 
 		this.field.is_focused = false;
 		this.is_focused = false;
@@ -1263,7 +1364,8 @@ Util.Form = u.f = new function() {
 
 			// default handling - can be overwritten in local implementation
 			action.clicked = function(event) {
-				u.e.kill(event);
+				// TODO: some uncertainty about the need for this kill
+				// u.e.kill(event);
 
 				// don't execute if button is disabled
 				if(!u.hc(this, "disabled")) {
@@ -1361,6 +1463,100 @@ Util.Form = u.f = new function() {
 
 	}
 
+	// Update filelist based on server response
+	this.updateFilelistStatus = function(form, response) {
+
+		// Do we have valid form and response
+		if(form && form.inputs && response && response.cms_status == "success" && response.cms_object && response.cms_object.mediae) {
+
+			// clone response mediae
+			var mediae = JSON.parse(JSON.stringify(response.cms_object.mediae));
+
+			// Get all filelists
+			var filelists = u.qsa("div.field.files ul.filelist", form);
+
+
+			var i, j, k, filelist, old_files, old_file, new_files, new_files;
+			for(i = 0; i < filelists.length; i++) {
+				filelist = filelists[i];
+
+				// Get new files from filelist
+				new_files = u.qsa("li.new", filelist);
+
+				// only do anything if filelist contains new files
+				if(new_files.length) {
+
+					// First filter out any "old" files first (to make matching safer)
+
+					// Get old files from filelist
+					old_files = u.qsa("li.uploaded", filelist);
+					if(old_files.length) {
+
+						// Loop through mediae to compare with old files
+						for(j in mediae) {
+
+							media = mediae[j];
+
+							// media matches this filelist
+							if(media.variant.match("^" + filelist.field.input.name.replace(/\[\]$/, "") + "(\-|$)")) {
+
+								// Find this media in old files of this filelist
+								for(k = 0; k < old_files.length; k++) {
+									old_file = old_files[k];
+
+									// If id matches, then remove media from collection (it's not a new file)
+									if(u.cv(old_file, "media_id") == media.id) {
+
+										// Don't bother with this media anymore
+										delete mediae[j];
+									}
+								}
+							}
+						}
+					}
+
+					// No need to continue if no more media exists (whatever is left must be new files)
+					if(Object.keys(mediae).length) {
+
+						// Loop through remaining mediae to compare with new files
+						for(j in mediae) {
+
+							media = mediae[j];
+
+							// media matches this filelist
+							if(media.variant.match("^"+filelist.field.input.name.replace(/\[\]$/, "")+"(\-|$)")) {
+
+								// Loop through new files to find the matching media
+								for(k = 0; k < new_files.length; k++) {
+									new_file = new_files[k];
+
+									// We only have name to compare with 
+									// (which leaves a small risk of mis-identification)
+									if(u.text(new_file) == media.name || u.text(new_file)+".zip" == media.name) {
+
+										new_file.innerHTML = media.name;
+
+										// Update classname
+										u.rc(new_file, "new");
+										u.ac(new_file, "uploaded media_id:"+media.id+" variant:"+media.variant+" format:"+media.format+" width:"+media.width+" height:"+media.height);
+
+										// Don't bother with this media anymore
+										delete mediae[j];
+									}
+								}
+							}
+						}
+					}
+				}
+
+				filelist.field.uploaded_files = u.qsa("li.uploaded", filelist);
+
+			}
+
+		}
+
+	}
+
 
 
 	// Validation helpers
@@ -1413,8 +1609,9 @@ Util.Form = u.f = new function() {
 		}
 		// remove visual validation on resat fields
 		// reset – remove error indications which should no longer be shown
-		else if(iN.has_error && !iN._used) {
-			// u.bug("ONLY ON RESET");
+		// also used by compare to validations, where we might validate a second field before it being used
+		// else if(iN.has_error && !iN._used) {
+		else if(!iN._used) {
 
 			// delete error from error list
 			delete iN._form._error_inputs[iN.name];
@@ -1612,13 +1809,16 @@ Util.Form = u.f = new function() {
 		}
 
 
-		var min, max, pattern, compare_to;
+		var min, max, pattern;
 		var validated = false;
+
+		// Get compare_to value if it exists
+		var compare_to = iN.getAttribute("data-compare-to");
 
 
 		// start by checking if value is empty or default_value
 		// not required, and empty (should still be validated if it has content)
-		if(!u.hc(iN.field, "required") && iN.val() === "") {
+		if(!u.hc(iN.field, "required") && iN.val() === "" && (!compare_to || iN._form.inputs[compare_to].val() === "")) {
 			// u.bug("valid empty:", iN);
 
 			this.inputIsCorrect(iN);
@@ -1655,7 +1855,6 @@ Util.Form = u.f = new function() {
 				min = min ? min : 8;
 				max = max ? max : 255;
 				pattern = iN.getAttribute("pattern");
-				compare_to = iN.getAttribute("data-compare-to");
 
 				if(
 					iN.val().length >= min && 
@@ -1664,9 +1863,15 @@ Util.Form = u.f = new function() {
 					(!compare_to || iN.val() == iN._form.inputs[compare_to].val())
 				) {
 					this.inputIsCorrect(iN);
+					if(compare_to) {
+						this.inputIsCorrect(iN._form.inputs[compare_to]);
+					}
 				}
 				else {
 					this.inputHasError(iN);
+					if(compare_to) {
+						this.inputHasError(iN._form.inputs[compare_to]);
+					}
 				}
 			}
 
@@ -1721,7 +1926,6 @@ Util.Form = u.f = new function() {
 			else if(u.hc(iN.field, "tel")) {
 
 				pattern = iN.getAttribute("pattern");
-				compare_to = iN.getAttribute("data-compare-to");
 
 				if(
 					(
@@ -1742,7 +1946,6 @@ Util.Form = u.f = new function() {
 			// email validation
 			else if(u.hc(iN.field, "email")) {
 
-				compare_to = iN.getAttribute("data-compare-to");
 				pattern = iN.getAttribute("pattern");
 
 				if(
@@ -1786,11 +1989,17 @@ Util.Form = u.f = new function() {
 			// date validation
 			else if(u.hc(iN.field, "date")) {
 
+				min = u.cv(iN.field, "min");
+				max = u.cv(iN.field, "max");
 				pattern = iN.getAttribute("pattern");
 
 				if(
-					!pattern && iN.val().match(/^([\d]{4}[\-\/\ ]{1}[\d]{2}[\-\/\ ][\d]{2})$/) ||
-					(pattern && iN.val().match("^"+pattern+"$"))
+					(!min || new Date(decodeURIComponent(min)) <= new Date(iN.val())) &&
+					(!max || new Date(decodeURIComponent(max)) >= new Date(iN.val())) &&
+					(
+						(!pattern && iN.val().match(/^([\d]{4}[\-\/\ ]{1}[\d]{2}[\-\/\ ][\d]{2})$/)) ||
+						(pattern && iN.val().match("^"+pattern+"$"))
+					)
 				) {
 					this.inputIsCorrect(iN);
 				}
@@ -1802,11 +2011,17 @@ Util.Form = u.f = new function() {
 			// datetime validation
 			else if(u.hc(iN.field, "datetime")) {
 
+				min = u.cv(iN.field, "min");
+				max = u.cv(iN.field, "max");
 				pattern = iN.getAttribute("pattern");
 
 				if(
-					!pattern && iN.val().match(/^([\d]{4}[\-\/\ ]{1}[\d]{2}[\-\/\ ][\d]{2} [\d]{2}[\-\/\ \:]{1}[\d]{2}[\-\/\ \:]{0,1}[\d]{0,2})$/) ||
-					(pattern && iN.val().match(pattern))
+					(!min || new Date(decodeURIComponent(min)) <= new Date(iN.val())) &&
+					(!max || new Date(decodeURIComponent(max)) >= new Date(iN.val())) &&
+					(
+						(!pattern && iN.val().match(/^([\d]{4}[\-\/\ ]{1}[\d]{2}[\-\/\ ][\d]{2} [\d]{2}[\-\/\ \:]{1}[\d]{2}[\-\/\ \:]{0,1}[\d]{0,2})$/)) ||
+						(pattern && iN.val().match(pattern))
+					)
 				) {
 					this.inputIsCorrect(iN);
 				}
@@ -1823,10 +2038,27 @@ Util.Form = u.f = new function() {
 				max = Number(u.cv(iN.field, "max"));
 				min = min ? min : 1;
 				max = max ? max : 10000000;
+
+				// Acceptable file types
+				pattern = iN.getAttribute("accept").split(",");
+
+				// collect list of added and already uploaded files
+				var i, value = iN.val(), files = [];
+				if(iN.field.uploaded_files && iN.field.uploaded_files.length) {
+					for(i = 0; i < iN.field.uploaded_files.length; i++) {
+						files.push("." + u.cv(iN.field.uploaded_files[i], "format").toLowerCase());
+					}
+				}
+				if(value && value.length) {
+					for(i = 0; i < value.length; i++) {
+						files.push(value[i].name.substring(value[i].name.lastIndexOf(".")));
+					}
+				}
+
 				if(
-					u.hc(iN, "uploaded") ||
-					(iN.val().length >= min && 
-					iN.val().length <= max)
+					(files.length >= min && files.length <= max)
+					&&
+					(!pattern || files.every(function(v) {return pattern.indexOf(v) !== -1}))
 				) {
 					this.inputIsCorrect(iN);
 				}
@@ -1859,7 +2091,7 @@ Util.Form = u.f = new function() {
 
 
 
-			// string validation (has been known to exist on other types, 
+			// string validation (classname has been known to exist on other types, 
 			// leave it last to give other types precedence
 			else if(u.hc(iN.field, "string")) {
 
@@ -1874,16 +2106,25 @@ Util.Form = u.f = new function() {
 					iN.val().length >= min &&
 					iN.val().length <= max && 
 					(!pattern || iN.val().match("^"+pattern+"$"))
+					&&
+					(!compare_to || iN.val() == iN._form.inputs[compare_to].val())
 				) {
 					this.inputIsCorrect(iN);
+
+					if(compare_to) {
+						this.inputIsCorrect(iN._form.inputs[compare_to]);
+					}
 				}
 				else {
 					this.inputHasError(iN);
+
+					if(compare_to) {
+						this.inputHasError(iN._form.inputs[compare_to]);
+					}
 				}
 			}
 
 		}
-
 
 
 		// did validation result in error?
@@ -1905,9 +2146,9 @@ Util.Form = u.f = new function() {
 	*
 	* Optional parameters as object
 	* - format - any defined type.
-	* 	- params - regular parameter string (default)
+	* 	- formdata - Formdata object (default)
+	* 	- params - regular parameter string
 	* 	- object - JS object with key value pairs
-	* 	- formdata - Formdata object
 	* 	- optional local extension via u.f.customDataFormat
 	* - ignore_inputs - input classnames to identify inputs to ignore, multiple classes can be | seperated (string is used as regular expression)
 	*/
@@ -1916,7 +2157,7 @@ Util.Form = u.f = new function() {
 
 
 		// default values
-		var format = "params";
+		var format = "formdata";
 		var ignore_inputs = "ignoreinput";
 
 

@@ -6,6 +6,10 @@
 // initializer
 Util.Form.customInit["html"] = function(field) {
 
+	// Register field type
+	field.type = "html";
+
+
 	// Get primary input
 	field.input = u.qs("textarea", field);
 	// form is a reserved property, so we use _form
@@ -208,6 +212,8 @@ u.f.textEditor = function(field) {
 	// The actual HTML editor interface
 	field._editor = u.ae(field, "div", {"class":"editor"});
 	field._editor.field = field;
+
+	u.ae(field._editor, field.indicator);
 
 	// callback after sorting list
 	field._editor.dropped = function() {
@@ -428,7 +434,7 @@ u.f.textEditor = function(field) {
 			else if(u.hc(tag, "file") && tag._variant) {
 
 				// add div with <p> and <a>
-				div = u.ae(this._viewer, "div", {"class":"file item_id:"+tag._item_id+" variant:"+tag._variant+" name:"+tag._name + " filesize:"+tag._filesize});
+				div = u.ae(this._viewer, "div", {"class":"file item_id:"+tag._item_id+" variant:"+tag._variant+" name:"+encodeURIComponent(tag._name)+" filesize:"+tag._filesize});
 				p = u.ae(div, "p");
 				a = u.ae(p, "a", {"href":"/download/"+tag._item_id+"/"+tag._variant+"/"+tag._name, "html":tag._input.val()});
 			}
@@ -437,7 +443,7 @@ u.f.textEditor = function(field) {
 			else if(u.hc(tag, "media") && tag._variant) {
 
 				// add div with <p> and <a>
-				div = u.ae(this._viewer, "div", {"class":"media item_id:"+tag._item_id+" variant:"+tag._variant+" name:"+tag._name + " filesize:"+tag._filesize + " format:"+tag._format});
+				div = u.ae(this._viewer, "div", {"class":"media item_id:"+tag._item_id+" variant:"+tag._variant+" name:"+encodeURIComponent(tag._name)+" filesize:"+tag._filesize + " format:"+tag._format});
 				p = u.ae(div, "p");
 				a = u.ae(p, "a", {"href":"/images/"+tag._item_id+"/"+tag._variant+"/480x."+tag._format, "html":tag._input.val()});
 			}
@@ -503,7 +509,7 @@ u.f.textEditor = function(field) {
 			// media node
 			else if(u.hc(tag, "media") && tag._variant) {
 
-				html += '<div class="media item_id:'+tag._item_id+' variant:'+tag._variant+' name:'+tag._name+' filesize:'+tag._filesize+' format:'+tag._format+' width:'+tag._width+' height:'+tag._height+'">'+"\n";
+				html += '<div class="media item_id:'+tag._item_id+' variant:'+tag._variant+' name:'+encodeURIComponent(tag._name)+' filesize:'+tag._filesize+' format:'+tag._format+' width:'+tag._width+' height:'+tag._height+'">'+"\n";
 				html += '\t<p><a href="/images/'+tag._item_id+'/'+tag._variant+'/480x.'+tag._format+'">'+tag._input.val()+"</a></p>";
 				html += "</div>\n";
 			}
@@ -511,7 +517,7 @@ u.f.textEditor = function(field) {
 			// file node
 			else if(u.hc(tag, "file") && tag._variant) {
 
-				html += '<div class="file item_id:'+tag._item_id+' variant:'+tag._variant+' name:'+tag._name+' filesize:'+tag._filesize+'">'+"\n";
+				html += '<div class="file item_id:'+tag._item_id+' variant:'+tag._variant+' name:'+encodeURIComponent(tag._name)+' filesize:'+tag._filesize+'">'+"\n";
 				html += '\t<p><a href="/download/'+tag._item_id+'/'+tag._variant+'/'+tag._name+'">'+tag._input.val()+"</a></p>";
 				html += "</div>\n";
 			}
@@ -909,6 +915,7 @@ u.f.textEditor = function(field) {
 			tag._text.tag = tag;
 			tag._text.field = this;
 
+
 			// create upload input
 			tag._label = u.ae(tag._text, "label", {"html":"Drag media here"});
 			tag._input = u.ae(tag._text, "input", {"type":"file", "name":"htmleditor_media[]"});
@@ -947,7 +954,7 @@ u.f.textEditor = function(field) {
 		var form_data = new FormData();
 
 		// append relevant data
-		form_data.append("csrf-token", this._form.fields["csrf-token"].val());
+		form_data.append("csrf-token", this._form.inputs["csrf-token"].val());
 
 		// request response handler
 		tag.response = function(response) {
@@ -976,7 +983,10 @@ u.f.textEditor = function(field) {
 
 		// append relevant data
 		form_data.append(this.name, this.files[0], this.value);
-		form_data.append("csrf-token", this._form.fields["csrf-token"].val());
+		form_data.append("csrf-token", this._form.inputs["csrf-token"].val());
+
+		// Tell backend about field relation, to be able to add input name to media variant
+		form_data.append("input-name", this.tag.field.input.name);
 
 		// response handler
 		this.response = function(response) {
@@ -1116,7 +1126,7 @@ u.f.textEditor = function(field) {
 
 			// create upload input
 			tag._label = u.ae(tag._text, "label", {"html":"Drag file here"});
-			tag._input = u.ae(tag._text, "input", {"type":"file", "name":"htmleditor_file"});
+			tag._input = u.ae(tag._text, "input", {"type":"file", "name":"htmleditor_file[]"});
 			tag._input.tag = tag;
 			tag._input.field = this;
 			tag._input._form = this._form;
@@ -1151,7 +1161,7 @@ u.f.textEditor = function(field) {
 		var form_data = new FormData();
 
 		// append relevant data
-		form_data.append("csrf-token", this._form.fields["csrf-token"].val());
+		form_data.append("csrf-token", this._form.inputs["csrf-token"].val());
 
 		// request response handler
 		tag.response = function(response) {
@@ -1174,15 +1184,17 @@ u.f.textEditor = function(field) {
 
 	// attached to tag._input node for file-tags
 	field._file_updated = function(event) {
-
-		u.bug("file:", this);
+		// u.bug("file:", this);
 
 		// create data form object to upload file
 		var form_data = new FormData();
 
 		// append relevant data
 		form_data.append(this.name, this.files[0], this.value);
-		form_data.append("csrf-token", this._form.fields["csrf-token"].val());
+		form_data.append("csrf-token", this._form.inputs["csrf-token"].val());
+
+		// Tell backend about field relation, to be able to add input name to media variant
+		form_data.append("input-name", this.tag.field.input.name);
 
 		// response handler
 		this.response = function(response) {
@@ -2341,14 +2353,14 @@ u.f.textEditor = function(field) {
 
 		form.submitted = function() {
 
-			if(this.fields["url"].val()) {
-				this.a.href = this.fields["url"].val();
+			if(this.inputs["url"].val()) {
+				this.a.href = this.inputs["url"].val();
 			}
 			else {
 				this.a.removeAttribute("href");
 			}
 
-			if(this.fields["target"].val()) {
+			if(this.inputs["target"].val()) {
 				this.a.target = "_blank";
 			}
 			else {
@@ -2517,8 +2529,8 @@ u.f.textEditor = function(field) {
 
 		form.submitted = function() {
 
-			if(this.fields["classname"].val()) {
-				this.span.className = this.fields["classname"].val();
+			if(this.inputs["classname"].val()) {
+				this.span.className = this.inputs["classname"].val();
 			}
 			else {
 				this.span.removeAttribute("class");

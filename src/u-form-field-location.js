@@ -6,6 +6,9 @@
 // initializer
 Util.Form.customInit["location"] = function(field) {
 
+	// Register field type
+	field.type = "location";
+
 	// location, latitude and longitude
 
 	// get all inputs
@@ -334,13 +337,24 @@ Util.Form.geoLocation = function(field) {
 			window._geoLocationField.updateMap();
 		}
 
-		// Location error
+		// Location error (Could be non SSL site or no access to Location service)
 		window._noLocation = function() {
+
+			// Use Copenhagen as starting point
+			window._geoLocationField.lat_input.val(55.676098);
+			window._geoLocationField.lon_input.val(12.568337);
+			// trigger validation
+			window._geoLocationField.lat_input.focus();
+			window._geoLocationField.lon_input.focus();
 
 			u.a.transition(window._geoLocationField.bn_geolocation, "none");
 			u.a.scale(window._geoLocationField.bn_geolocation, 1);
 
-			alert('Could not find location');
+			// show map
+			window._geoLocationField.showMap();
+
+			// update map
+			window._geoLocationField.updateMap();
 		}
 
 		navigator.geolocation.getCurrentPosition(window._foundLocation, window._noLocation);
