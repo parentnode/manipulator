@@ -1929,7 +1929,7 @@ Util.Form = u.f = new function() {
 
 				if(
 					(
-						!pattern && iN.val().match(/^([\+0-9\-\.\s\(\)]){5,18}$/)
+						(!pattern && iN.val().match(/^([\+0-9\-\.\s\(\)]){5,18}$/))
 						||
 						(pattern && iN.val().match("^"+pattern+"$"))
 					)
@@ -1937,9 +1937,15 @@ Util.Form = u.f = new function() {
 					(!compare_to || iN.val() == iN._form.inputs[compare_to].val())
 				) {
 					this.inputIsCorrect(iN);
+					if(compare_to) {
+						this.inputIsCorrect(iN._form.inputs[compare_to]);
+					}
 				}
 				else {
 					this.inputHasError(iN);
+					if(compare_to) {
+						this.inputHasError(iN._form.inputs[compare_to]);
+					}
 				}
 			}
 
@@ -1950,17 +1956,23 @@ Util.Form = u.f = new function() {
 
 				if(
 					(
-						!pattern && iN.val().match(/^([^<>\\\/%$])+\@([^<>\\\/%$])+\.([^<>\\\/%$]{2,20})$/)
-						 ||
+						(!pattern && iN.val().match(/^([^<>\\\/%$])+\@([^<>\\\/%$])+\.([^<>\\\/%$]{2,20})$/))
+						||
 						(pattern && iN.val().match("^"+pattern+"$"))
 					)
 					&&
 					(!compare_to || iN.val() == iN._form.inputs[compare_to].val())
 				) {
 					this.inputIsCorrect(iN);
+					if(compare_to) {
+						this.inputIsCorrect(iN._form.inputs[compare_to]);
+					}
 				}
 				else {
 					this.inputHasError(iN);
+					if(compare_to) {
+						this.inputHasError(iN._form.inputs[compare_to]);
+					}
 				}
 			}
 
@@ -1997,7 +2009,8 @@ Util.Form = u.f = new function() {
 					(!min || new Date(decodeURIComponent(min)) <= new Date(iN.val())) &&
 					(!max || new Date(decodeURIComponent(max)) >= new Date(iN.val())) &&
 					(
-						(!pattern && iN.val().match(/^([\d]{4}[\-\/\ ]{1}[\d]{2}[\-\/\ ][\d]{2})$/)) ||
+						(!pattern && iN.val().match(/^([\d]{4}[\-\/\ ]{1}[\d]{2}[\-\/\ ][\d]{2})$/))
+						||
 						(pattern && iN.val().match("^"+pattern+"$"))
 					)
 				) {
@@ -2019,7 +2032,8 @@ Util.Form = u.f = new function() {
 					(!min || new Date(decodeURIComponent(min)) <= new Date(iN.val())) &&
 					(!max || new Date(decodeURIComponent(max)) >= new Date(iN.val())) &&
 					(
-						(!pattern && iN.val().match(/^([\d]{4}[\-\/\ ]{1}[\d]{2}[\-\/\ ][\d]{2} [\d]{2}[\-\/\ \:]{1}[\d]{2}[\-\/\ \:]{0,1}[\d]{0,2})$/)) ||
+						(!pattern && iN.val().match(/^([\d]{4}[\-\/\ ]{1}[\d]{2}[\-\/\ ][\d]{2} [\d]{2}[\-\/\ \:]{1}[\d]{2}[\-\/\ \:]{0,1}[\d]{0,2})$/))
+						||
 						(pattern && iN.val().match(pattern))
 					)
 				) {
@@ -2040,7 +2054,7 @@ Util.Form = u.f = new function() {
 				max = max ? max : 10000000;
 
 				// Acceptable file types
-				pattern = iN.getAttribute("accept").split(",");
+				pattern = iN.getAttribute("accept");
 
 				// collect list of added and already uploaded files
 				var i, value = iN.val(), files = [];
@@ -2058,7 +2072,7 @@ Util.Form = u.f = new function() {
 				if(
 					(files.length >= min && files.length <= max)
 					&&
-					(!pattern || files.every(function(v) {return pattern.indexOf(v) !== -1}))
+					(!pattern || files.every(function(v) {return pattern.split(",").indexOf(v) !== -1}))
 				) {
 					this.inputIsCorrect(iN);
 				}
@@ -2089,8 +2103,6 @@ Util.Form = u.f = new function() {
 				}
 			}
 
-
-
 			// string validation (classname has been known to exist on other types, 
 			// leave it last to give other types precedence
 			else if(u.hc(iN.field, "string")) {
@@ -2110,14 +2122,12 @@ Util.Form = u.f = new function() {
 					(!compare_to || iN.val() == iN._form.inputs[compare_to].val())
 				) {
 					this.inputIsCorrect(iN);
-
 					if(compare_to) {
 						this.inputIsCorrect(iN._form.inputs[compare_to]);
 					}
 				}
 				else {
 					this.inputHasError(iN);
-
 					if(compare_to) {
 						this.inputHasError(iN._form.inputs[compare_to]);
 					}
@@ -2259,6 +2269,7 @@ Util.Form = u.f = new function() {
 				// if anything but buttons and radio/checkboxes
 				// - hidden, text, html5 input-types
 				else if(!input.type.match(/button|submit|reset|file|checkbox|radio/i)) {
+
 					// Manipulator initiated input
 					if(fun(input.val)) {
 						params.append(input.name, input.val());
