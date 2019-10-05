@@ -54,7 +54,7 @@ Util.Form = u.f = new function() {
 
 		}
 
-		// form is actual form elemant
+		// form is actual form element
 		else {
 
 			// make sure native_form can be used
@@ -194,6 +194,7 @@ Util.Form = u.f = new function() {
 			hidden_input = hidden_inputs[i];
 
 			// do not overwrite inputs index with hidden input
+			// (fx frequently checkboxes has a shadow input to ensure checked state is sent)
 			if(!_form.inputs[hidden_input.name]) {
 				_form.inputs[hidden_input.name] = hidden_input;
 
@@ -218,7 +219,8 @@ Util.Form = u.f = new function() {
 
 
 		// Set up asynchronous initial bulk validation 
-		// (to allow declaration of callback methods, which can only be mapped to inputs after u.f.init, 
+		// To receive one single callback on first validation
+		// (also to allow declaration of callback methods, which can only be mapped to inputs after u.f.init, 
 		// so by delaying validation, main thread is allowed to continue before validate is envoked) 
 		u.t.setTimer(_form, function() {
 
@@ -352,7 +354,7 @@ Util.Form = u.f = new function() {
 				u.e.addEvent(field.input, "keyup", this._updated);
 				u.e.addEvent(field.input, "change", this._changed);
 
-				// submit on enter
+				// submit on enter (checks for autocomplete etc)
 				this.inputOnEnter(field.input);
 
 				// Add additional standard event listeners and labelstyle
@@ -675,7 +677,6 @@ Util.Form = u.f = new function() {
 	this._reset = function(event, iN) {
 		// u.bug("RESET:", iN);
 
-
 		// update value of all fields (except hidden or readonly fields)
 		for (name in this.inputs) {
 			if (this.inputs[name] && this.inputs[name].field && this.inputs[name].type != "hidden" && !this.inputs[name].getAttribute("readonly")) {
@@ -719,7 +720,6 @@ Util.Form = u.f = new function() {
 
 				// change used state for input
 				this.inputs[name]._used = true;
-				// this._used = true;
 
 				// validate
 				validate_inputs.push(this.inputs[name]);
@@ -1192,6 +1192,7 @@ Util.Form = u.f = new function() {
 		if(fun(this._form[this._form._callback_focused])) {
 			this._form[this._form._callback_focused](this);
 		}
+
 	}
 	// internal blur handler - attatched to buttons
 	this._button_blur = function(event) {
@@ -1208,6 +1209,7 @@ Util.Form = u.f = new function() {
 		if(fun(this._form[this._form._callback_blurred])) {
 			this._form[this._form._callback_blurred](this);
 		}
+
 	}
 
 
@@ -1565,12 +1567,10 @@ Util.Form = u.f = new function() {
 	this.inputHasError = function(iN) {
 		// u.bug("inputHasError", "used:" + iN._used);
 
-
 		// Leave correct state
 		u.rc(iN, "correct");
 		u.rc(iN.field, "correct");
 		delete iN.is_correct;
-
 
 		// do not add visual feedback until field has been used by user - or if it contains value (reloads)
 		if(iN.val() !== "") {
@@ -1629,7 +1629,7 @@ Util.Form = u.f = new function() {
 
 	}
 
-	// field is correct - decide whether to show it or not
+	// input is correct - decide whether to show it or not
 	this.inputIsCorrect = function(iN) {
 		// u.bug("inputIsCorrect", "used:" + iN._used);
 
