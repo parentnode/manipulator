@@ -27,9 +27,6 @@ Util.Form.customInit["location"] = function(field) {
 		// Let it know it's field
 		input.field = field;
 
-		// add input to inputs array
-		field._form.inputs[input.name] = input;
-
 		// get/set value function
 		input.val = u.f._value;
 
@@ -48,7 +45,7 @@ Util.Form.customInit["location"] = function(field) {
 	if(navigator.geolocation) {
 
 
-		u.f.geoLocation(field);
+		u.f.location(field);
 
 
 	}
@@ -139,7 +136,7 @@ Util.Form.customValidate["location"] = function(iN) {
 
 // inject GeoLocation button in location field
 // Extended geolocation interface
-Util.Form.geoLocation = function(field) {
+Util.Form.location = function(field) {
 
 	u.ac(field, "geolocation");
 
@@ -317,47 +314,47 @@ Util.Form.geoLocation = function(field) {
 		}
 		this.transitioned();
 
-		window._geoLocationField = this.field;
+		window._locationField = this.field;
 
 		window._foundLocation = function(position) {
 			var lat = position.coords.latitude;
 			var lon = position.coords.longitude;
 
-			window._geoLocationField.lat_input.val(u.round(lat, 6));
-			window._geoLocationField.lon_input.val(u.round(lon, 6));
+			window._locationField.lat_input.val(u.round(lat, 6));
+			window._locationField.lon_input.val(u.round(lon, 6));
 			// trigger validation
-			window._geoLocationField.lat_input.focus();
-			window._geoLocationField.lon_input.focus();
+			window._locationField.lat_input.focus();
+			window._locationField.lon_input.focus();
 
 			// end process animation
-			u.a.transition(window._geoLocationField.bn_geolocation, "none");
-			u.a.scale(window._geoLocationField.bn_geolocation, 1);
+			u.a.transition(window._locationField.bn_geolocation, "none");
+			u.a.scale(window._locationField.bn_geolocation, 1);
 
 			// show map
-			window._geoLocationField.showMap();
+			window._locationField.showMap();
 
 			// update map
-			window._geoLocationField.updateMap();
+			window._locationField.updateMap();
 		}
 
 		// Location error (Could be non SSL site or no access to Location service)
 		window._noLocation = function() {
 
 			// Use Copenhagen as starting point
-			window._geoLocationField.lat_input.val(55.676098);
-			window._geoLocationField.lon_input.val(12.568337);
+			window._locationField.lat_input.val(55.676098);
+			window._locationField.lon_input.val(12.568337);
 			// trigger validation
-			window._geoLocationField.lat_input.focus();
-			window._geoLocationField.lon_input.focus();
+			window._locationField.lat_input.focus();
+			window._locationField.lon_input.focus();
 
-			u.a.transition(window._geoLocationField.bn_geolocation, "none");
-			u.a.scale(window._geoLocationField.bn_geolocation, 1);
+			u.a.transition(window._locationField.bn_geolocation, "none");
+			u.a.scale(window._locationField.bn_geolocation, 1);
 
 			// show map
-			window._geoLocationField.showMap();
+			window._locationField.showMap();
 
 			// update map
-			window._geoLocationField.updateMap();
+			window._locationField.updateMap();
 		}
 
 		navigator.geolocation.getCurrentPosition(window._foundLocation, window._noLocation);
