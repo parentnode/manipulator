@@ -7,6 +7,7 @@
 Util.Form.customInit["location"] = function(field) {
 
 	// location, latitude and longitude
+	var i, input;
 
 	// get all inputs
 	field.inputs = u.qsa("input", field);
@@ -14,8 +15,8 @@ Util.Form.customInit["location"] = function(field) {
 	// use first input as field input 
 	field.input = field.inputs[0];
 
-	for(j = 0; j < field.inputs.length; j++) {
-		input = field.inputs[j];
+	for(i = 0; i < field.inputs.length; i++) {
+		input = field.inputs[i];
 
 		// form is a reserved property, so we use _form
 		input._form = field._form;
@@ -23,9 +24,6 @@ Util.Form.customInit["location"] = function(field) {
 		input.label = u.qs("label[for='"+input.id+"']", field);
 		// Let it know it's field
 		input.field = field;
-
-		// add input to inputs array
-		field._form.inputs[input.name] = input;
 
 		// get/set value function
 		input.val = u.f._value;
@@ -37,8 +35,8 @@ Util.Form.customInit["location"] = function(field) {
 		// submit on enter
 		u.f.inputOnEnter(input);
 
-		// Add additional standard event listeners and labelstyle
-		u.f.activateInput(input, field._form._labelstyle);
+		// Add additional standard event listeners
+		u.f.activateInput(input);
 	}
 
 }
