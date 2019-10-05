@@ -383,74 +383,25 @@ Util.Form = u.f = new function() {
 				// resize textarea while typing
 				if(u.hc(field, "autoexpand")) {
 
-					// no scrollbars on auto expanded fields
-					var current_height = parseInt(u.gcs(field.input, "height"));
-					// u.bug("AE current_height:" + current_height + "," + iN.scrollHeight);
-
-					// save current value while calculating height offset
-					var current_value = field.input.value;
-
-					field.input.value = "";
-					u.as(field.input, "overflow", "hidden");
-					// u.bug(current_height + "," + iN.scrollHeight);
-
-					// get textarea height value offset - webkit and IE/Opera scrollHeight differs from height
-					// implenting different solutions is the only way to achive similar behaviour across browsers
-					// fallback support is Mozilla 
-
-					field.input.autoexpand_offset = 0;
-					if(parseInt(u.gcs(field.input, "height")) != field.input.scrollHeight) {
-						field.input.autoexpand_offset = field.input.scrollHeight - parseInt(u.gcs(field.input, "height"));
-					}
-
-					// set existing value again
-					field.input.value = current_value;
+					// Remove scrollbars
+					u.ass(field.input, {
+						"overflow": "hidden"
+					});
 
 					// set correct height
 					field.input.setHeight = function() {
-						// u.bug("field.input.setHeight:", this);
-						// u.bug("this.scrollHeight:" + this.scrollHeight + ", " + this.autoexpand_offset + ", " + this.scrollWidth + ", " + this.scrollTop);
 
-						var textarea_height = parseInt(u.gcs(this, "height"));
+						u.ass(this, {
+							height: "auto"
+						});
 
-						// u.bug("browser:" + u.browser());
+						u.ass(this, {
+							height: (this.scrollHeight) + "px"
+						});
 
-						// Use val function if declared, which it isn't on initial run
-						if(this.val()) {
-
-							// Figure out right time to apply height
-							if(u.browser("webkit") || u.browser("firefox", ">=29")) {
-								// u.bug("webkit model");
-								if(this.scrollHeight - this.autoexpand_offset > textarea_height) {
-
-									u.ass(this, {
-										"height":this.scrollHeight + "px"
-									});
-
-								}
-							}
-							else if(u.browser("opera") || u.browser("explorer")) {
-								// u.bug("opera model");
-								if(this.scrollHeight > textarea_height) {
-
-									u.ass(this, {
-										"height":this.scrollHeight + "px"
-									});
-
-								}
-							}
-							else {
-								// u.bug("fallback model");
-
-								u.ass(this, {
-									"height":this.scrollHeight + "px"
-								});
-
-							}
-						}
 					}
-
-					u.e.addEvent(field.input, "keyup", field.input.setHeight);
+					// Listen for input
+					u.e.addEvent(field.input, "input", field.input.setHeight);
 					field.input.setHeight();
 				}
 
