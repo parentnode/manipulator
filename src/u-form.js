@@ -91,8 +91,6 @@ Util.Form = u.f = new function() {
 		_form._callback_blurred = "blurred";
 		_form._callback_focused = "focused";
 
-		_form._callback_input_validation_failed = "inputValidationFailed";
-		_form._callback_input_validation_passed = "inputValidationPassed";
 		_form._callback_validation_failed = "validationFailed";
 		_form._callback_validation_passed = "validationPassed";
 
@@ -120,8 +118,6 @@ Util.Form = u.f = new function() {
 					case "callback_blurred"         : _form._callback_blurred          = _options[_argument]; break;
 					case "callback_focused"         : _form._callback_focused          = _options[_argument]; break;
 
-					case "callback_input_validation_failed"   : _form._callback_input_validation_failed    = _options[_argument]; break;
-					case "callback_input_validation_passed"   : _form._callback_input_validation_passed    = _options[_argument]; break;
 					case "callback_validation_failed"         : _form._callback_validation_failed          = _options[_argument]; break;
 					case "callback_validation_passed"         : _form._callback_validation_passed          = _options[_argument]; break;
 
@@ -1072,7 +1068,7 @@ Util.Form = u.f = new function() {
 		// callbacks
 		// does input have callback
 		if(fun(this[this._form._callback_focused])) {
-			this[this._form._callback_focused]();
+			this[this._form._callback_focused](this);
 		}
 		// certain fields with multiple input will have callback declared on first input only
 		// like radio buttons
@@ -1112,7 +1108,7 @@ Util.Form = u.f = new function() {
 		// callbacks
 		// does input have callback
 		if(fun(this[this._form._callback_blurred])) {
-			this[this._form._callback_blurred]();
+			this[this._form._callback_blurred](this);
 		}
 		// certain fields with multiple input will have callback declared on first input only
 		// like radio buttons
@@ -1136,7 +1132,7 @@ Util.Form = u.f = new function() {
 		// callbacks
 		// does button have callback
 		if(fun(this[this._form._callback_focused])) {
-			this[this._form._callback_focused]();
+			this[this._form._callback_focused](this);
 		}
 
 		// does form have callback
@@ -1153,7 +1149,7 @@ Util.Form = u.f = new function() {
 		// callbacks
 		// does button have callback
 		if(fun(this[this._form._callback_blurred])) {
-			this[this._form._callback_blurred]();
+			this[this._form._callback_blurred](this);
 		}
 
 		// does form have callback
@@ -1636,13 +1632,13 @@ Util.Form = u.f = new function() {
 		// u.bug("updateInputValidationState:" + iN.name + "," + iN.has_error + "," + iN.is_correct);
 
 		// validation failed – callback if needed
-		if(iN.has_error && fun(iN[iN._form._callback_input_validation_failed])) {
-			iN[iN._form._callback_input_validation_failed]();
+		if(iN.has_error && fun(iN[iN._form._callback_validation_failed])) {
+			iN[iN._form._callback_validation_failed]();
 		}
 
 		// validation passed – callback if needed
-		else if(iN.is_correct && fun(iN[iN._form._callback_input_validation_passed])) {
-			iN[iN._form._callback_input_validation_passed]();
+		else if(iN.is_correct && fun(iN[iN._form._callback_validation_passed])) {
+			iN[iN._form._callback_validation_passed]();
 		}
 
 		// Update form validation state (if needed)
