@@ -208,7 +208,7 @@ Util.Form = u.f = new function() {
 		for(i = 0; i < actions.length; i++) {
 			action = actions[i];
 
-			// u.bug("button found:", action);
+			// u.bug("button found:", action, _form);
 			this.initButton(_form, action);
 
 		}
