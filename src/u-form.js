@@ -2012,7 +2012,7 @@ Util.Form = u.f = new function() {
 				}
 				if(value && value.length) {
 					for(i = 0; i < value.length; i++) {
-						files.push(value[i].name.substring(value[i].name.lastIndexOf(".")));
+						files.push(value[i].name.substring(value[i].name.lastIndexOf(".")).toLowerCase());
 					}
 				}
 
