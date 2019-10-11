@@ -33,7 +33,7 @@ Util.Animation = u.a = new function() {
 	* Apply CSS transition to node
 	*/
 	this.transition = function(node, transition, callback) {
-		u.bug("add transition:", node, transition, callback);
+		// u.bug("add transition:", node, transition, callback);
 
 		try {
 
