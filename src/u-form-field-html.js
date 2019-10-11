@@ -2351,7 +2351,7 @@ u.f.textEditor = function(field) {
 			"label":"url", 
 			"name":"url", 
 			"value":a.href.replace(location.protocol + "//" + document.domain, ""), 
-			"pattern":"((http[s]?:\\/)?\\/|mailto:|tel:)[^$]+",
+			"pattern":"(http[s]?:\\/\\/|mailto:|tel:)[^$]+|\/[^$]*",
 			"error_message":"Must start with /, http:// or https://, mailto: or tel:"
 		});
 
