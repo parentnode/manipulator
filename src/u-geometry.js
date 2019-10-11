@@ -83,11 +83,11 @@ Util.htmlHeight = u.htmlH = function() {
 }
 
 
-// scroll offset
+// scroll offset X
 Util.pageScrollX = u.scrollX = function() {
 	return window.pageXOffset;
 }
-// Get browser viewable height - inside browser including body margin, excluding scrollbars
+// scroll offset Y
 Util.pageScrollY = u.scrollY = function() {
 	return window.pageYOffset;
 }
