@@ -1,7 +1,7 @@
 u.scrollTo = function(node, _options) {
 
 	node._callback_scroll_to = "scrolledTo";
-	node._callback_scroll_cancelled = "scrolledToCancelled";
+	node._callback_scroll_cancelled = "scrollToCancelled";
 
 	var offset_y = 0;
 	var offset_x = 0;
