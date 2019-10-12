@@ -1,6 +1,6 @@
 if(!u || !Util) {
 	var u, Util = u = new function() {};
-	u.version = "0.9.2";
+	u.version = "0.9.3";
 
 	// handle bug requests if debug module is not included
 	u.bug = u.nodeId = u.exception = function() {};
