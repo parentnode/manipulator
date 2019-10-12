@@ -119,7 +119,7 @@ u.notifier = function(node) {
 				u.ae(login, "input", {"type":"hidden", "name":"ajaxlogin", "value":"true"})
 				u.f.init(login);
 
-				login.fields["username"].focus();
+				login.inputs["username"].focus();
 
 				login.submitted = function() {
 					this.response = function(response) {
@@ -176,8 +176,8 @@ u.notifier = function(node) {
 						// login form returned (some error occured)
 						else {
 
-							this.fields["username"].focus();
-							this.fields["password"].val("");
+							this.inputs["username"].focus();
+							this.inputs["password"].val("");
 							
 							var error_message = u.qs(".errormessage", response);
 							if(error_message) {
@@ -192,7 +192,7 @@ u.notifier = function(node) {
 						}
 //						alert(u.qs("[data-csrf-token]")["data-csrf-token"]);
 					}
-					u.request(this, this.action, {"method":this.method, "params":u.f.getParams(this)});
+					u.request(this, this.action, {"method":this.method, "data":this.getData()});
 //					alert("handle it")
 				}
 			}
