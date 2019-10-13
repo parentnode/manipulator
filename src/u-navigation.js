@@ -28,20 +28,20 @@ u.navigation = function(_options) {
 	}
 
 
-//	u.bug("apply navigation:" + u.nodeId(navigation_node) + ", " + callback_navigate)
 
 
 	// default starting path
 	window._man_nav_path = window._man_nav_path ? window._man_nav_path : u.h.getCleanUrl(location.href, 1);
 
+	// u.bug("apply navigation:", navigation_node, callback_navigate, window._man_nav_path);
 
 	// internal urlchange/hashchange distribution for navigation node
 	// forwarding callback to appropriate node depending on url fragment change
 	// #content or .scene level
 	navigation_node._navigate = function(url) {
-//		u.bug(u.nodeId(this)+"._navigate (u.navigation):" + url)
+		// u.bug(this, "_navigate (u.navigation):" + url);
 
-		url = u.h.getCleanUrl(url);
+		var clean_url = u.h.getCleanUrl(url);
 
 
 		// stats
@@ -61,7 +61,7 @@ u.navigation = function(_options) {
 
 			// forward navigation event to #content
 			if(this.cN && fun(this.cN.navigate)) {
-				this.cN.navigate(url);
+				this.cN.navigate(clean_url, url);
 			}
 
 		}
@@ -71,11 +71,11 @@ u.navigation = function(_options) {
 
 			// forward navigation event to .scene if it has navigate function
 			if(this.cN.scene && this.cN.scene.parentNode && fun(this.cN.scene.navigate)) {
-				this.cN.scene.navigate(url);
+				this.cN.scene.navigate(clean_url, url);
 			}
 			// else forward to content
 			else if(this.cN && fun(this.cN.navigate)) {
-				this.cN.navigate(url);
+				this.cN.navigate(clean_url, url);
 			}
 
 		}
@@ -105,7 +105,7 @@ u.navigation = function(_options) {
 
 	// Legacy hash/url translation (for supporting shared links)
 	if(!this.is_initialized) {
-//		u.bug("legacy url/hash translation");
+		// u.bug("legacy url/hash translation:" + location.hash);
 
 		this.is_initialized = true;
 
@@ -158,7 +158,7 @@ u.navigation = function(_options) {
 
 			// if HASH exists and different from url, translate to url (could be a bookmark shared from HASH enabled browser)
 			if(u.h.getCleanHash(location.hash) != u.h.getCleanUrl(location.href) && location.hash.match(/^#\//)) {
-//				u.bug("existing hash detected")
+				// u.bug("existing hash detected", location.hash, u.h.getCleanHash(location.hash), u.h.getCleanUrl(location.href));
 
 				// update internal value, so navigation doesn't mess up
 				window._man_nav_path = u.h.getCleanHash(location.hash);
