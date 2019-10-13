@@ -293,7 +293,7 @@ Util.Form.location = function(field) {
 	}
 
 
-	field.bn_geolocation = u.ae(field, "div", {"class":"geolocation"});
+	field.bn_geolocation = u.ae(field, "div", {"class":"geolocation", "title":"Select current location"});
 	field.bn_geolocation.field = field;
 	u.ce(field.bn_geolocation);
 
