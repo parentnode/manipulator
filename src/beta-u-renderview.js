@@ -173,6 +173,7 @@ u.renderView = function(_options) {
 
 	}
 
+
 	container._stateChanged = function() {
 		u.bug("_stateChanged", this._rv_template, this._rv_data);
 
