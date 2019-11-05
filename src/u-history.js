@@ -10,23 +10,34 @@ Util.History = u.h = new function() {
 	// create central navigate function
 	// update hash/url
 	this.navigate = function(url, node, silent) {
-//		u.bug("u.h.navigate:" + url + ", " + (node ? u.nodeId(node) : "no node"))
+		// u.bug("u.h.navigate:" + url, node);
 
 		silent = silent || false;
 
-		// popstate handling
-		if(this.popstate) {
-			history.pushState({}, url, url);
-			if(!silent) {
-				this.callback(url);
+		// Don't navigate external links
+		if((!url.match(/^http[s]?\:\/\//) || url.match(document.domain)) && (!node || !node._a || !node._a.target)) {
+			// popstate handling
+			if(this.popstate) {
+				history.pushState({}, url, url);
+				if(!silent) {
+					this.callback(url);
+				}
+			}
+			// hash handling
+			else {
+				if(silent) {
+					this.next_hash_is_silent = true;
+				}
+				location.hash = u.h.getCleanUrl(url);
 			}
 		}
-		// hash handling
 		else {
-			if(silent) {
-				this.next_hash_is_silent = true;
+			if(!node || !node._a || !node._a.target) {
+				location.href = url;
 			}
-			location.hash = u.h.getCleanUrl(url);
+			else {
+				window.open(this.url);
+			}
 		}
 
 	}
@@ -205,7 +216,7 @@ Util.History = u.h = new function() {
 //		u.bug("getCleanUrl:" + string + " = " + (string ? string.replace(location.protocol+"//"+document.domain, "").match(/[^#$]+/) : "#error#"));
 
 		// remove hash and domain from string before
-		string = string.replace(location.protocol+"//"+document.domain, "").match(/[^#$]+/)[0];
+		string = string.replace(location.protocol+"//"+document.domain, "") ? string.replace(location.protocol+"//"+document.domain, "").match(/[^#$]+/)[0] : "/";
 
 		if(!levels) {
 			return string;
