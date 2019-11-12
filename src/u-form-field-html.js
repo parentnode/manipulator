@@ -632,12 +632,15 @@ u.f.textEditor = function(field) {
 			input_classname.tag = tag;
 			u.ac(tag.bn_classname, "open");
 			u.f.init(form);
-			input_classname._input.focus();
+			input_classname.input.focus();
 
-			input_classname._input.blurred = function() {
+			input_classname.input.blurred = function() {
 				this.field.tag._classname = this.val();
 				this.field.tag.bn_classname.removeChild(this._form);
 				u.rc(this.field.tag.bn_classname, "open");
+
+				// Update HTML
+				this.field.tag.field.update();
 			}
 		}
 
