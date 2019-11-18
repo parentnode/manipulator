@@ -1,3 +1,19 @@
+
+/**
+ * renderView
+ * 
+ * @param {Object} _options - Object litteral of parameters
+ * @param {string} _options.template - HTML reference of template
+ * @param {string} _options.template_path - The path from which templates for template_url are located
+ * @param {Object} _options.template_url - Object of templates to load from template_path
+ * @param {string} _options.template_url.url - Template name to load from template_path
+ * @param {{}} _options.data - Object of data to be merged with template placeholders
+ * @param {string} _options.data_url - External source of data
+ * @param _options.target - Element to append view onto
+ * @param _options.initializer - Attach an initializer to view
+ * @param _options.callback_rendered - Callback rendered
+ * @returns view
+*/
 u.renderView = function(_options) {
 
 	u.bug("u.renderView", _options);
@@ -26,11 +42,11 @@ u.renderView = function(_options) {
 		for(_argument in _options) {
 			switch(_argument) {
 
-				case "template_path"     : template_path       = _options[_argument]; break;
-				case "type"              : type                = _options[_argument]; break;
-
 				case "template"          : template            = _options[_argument]; break;
+				case "template_path"     : template_path       = _options[_argument]; break;
+
 				case "template_url"      : template_url        = _options[_argument]; break;
+				case "type"              : type                = _options[_argument]; break;
 
 				case "data"              : data                = _options[_argument]; break;
 				case "data_url"          : data_url            = _options[_argument]; break;
@@ -46,33 +62,33 @@ u.renderView = function(_options) {
 	}
 
 
-	var container;
+	var view;
 
 	if(target) {
 
-		container = u.ae(target, "div", {class:"loading"});
+		view = u.ae(target, "div", {class:"view loading"});
 
 	}
 	else {
 
-		container = document.createElement("div");
-		u.ac(container, "loading");
+		view = document.createElement("div");
+		u.ac(view, "view loading");
 
 	}
 
 
 	// Map base properties
-	container._rv_template_path = template_path;
-	container._rv_type = type;
+	view._rv_template_path = template_path;
+	view._rv_type = type;
 
-	container._rv_template_url = template_url;
-	container._rv_data_url = data_url;
+	view._rv_template_url = template_url;
+	view._rv_data_url = data_url;
 
-	container._rv_initializer = initializer;
+	view._rv_initializer = initializer;
 
 
 
-	container.update = function(_options) {
+	view.update = function(_options) {
 		u.bug("update", _options, this._rv_data, this._rv_template);
 
 		// Clean up template
@@ -128,7 +144,7 @@ u.renderView = function(_options) {
 	}
 
 
-	container.loadTemplate = function() {
+	view.loadTemplate = function() {
 		u.bug("loadTemplate", this._rv_template_path + this._rv_template_url.url)
 
 		this._rv_template = false;
@@ -154,7 +170,7 @@ u.renderView = function(_options) {
 	}
 
 
-	container.loadData = function(_options) {
+	view.loadData = function(_options) {
 	
 		this._rv_data = false;
 
@@ -174,12 +190,21 @@ u.renderView = function(_options) {
 	}
 
 
-	container._stateChanged = function() {
+	view._stateChanged = function() {
 		u.bug("_stateChanged", this._rv_template, this._rv_data);
 
 		if(this._rv_template && this._rv_data) {
 
+			// Merge data with template and append the resulting "rendered template" to the view
 			var template = u.template(this._rv_template, this._rv_data, {append: this});
+
+			console.log(template)
+
+			// Reference to rendered template on view
+			this.template = this.firstChild;
+
+			// Reference to view on rendered template
+			this.firstChild.view = this;
 
 			// Init the initializer on template
 			if (this._rv_initializer) {
@@ -193,14 +218,12 @@ u.renderView = function(_options) {
 
 
 			u.rc(this, "loading");
-
 		}
-
 	}
 
 
-	container.update(_options);
+	view.update(_options);
 
 
-	return container;
+	return view;
 }
