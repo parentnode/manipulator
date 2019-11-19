@@ -6,17 +6,19 @@
  * @param {string} _options.template - HTML reference of template
  * @param {string} _options.template_path - The path from which templates for template_url are located
  * @param {Object} _options.template_url - Object of templates to load from template_path
- * @param {string} _options.template_url.url - Template name to load from template_path
+ * @param {string} _options.template_url.url - Template url to load from template_path
+ * @param {string} _options.template_url.method - Request method
+ * @param {{}} _options.template_url.data - Data to be merged with requested template
  * @param {{}} _options.data - Object of data to be merged with template placeholders
  * @param {string} _options.data_url - External source of data
  * @param _options.target - Element to append view onto
- * @param _options.initializer - Attach an initializer to view
+ * @param _options.initializer - Attach an initializer to rendered template
  * @param _options.callback_rendered - Callback rendered
  * @returns view
 */
 u.renderView = function(_options) {
 
-	u.bug("u.renderView", _options);
+	// u.bug("u.renderView", _options);
 
 
 	var template = false;
@@ -86,8 +88,6 @@ u.renderView = function(_options) {
 
 	view._rv_initializer = initializer;
 
-
-
 	view.update = function(_options) {
 		u.bug("update", _options, this._rv_data, this._rv_template);
 
@@ -129,7 +129,7 @@ u.renderView = function(_options) {
 
 
 		if(data) {
-			u.bug("data", data);
+			// u.bug("data", data);
 
 			this._rv_data = data;
 			this._stateChanged();
@@ -145,13 +145,13 @@ u.renderView = function(_options) {
 
 
 	view.loadTemplate = function() {
-		u.bug("loadTemplate", this._rv_template_path + this._rv_template_url.url)
+		// u.bug("loadTemplate", this._rv_template_path + this._rv_template_url.url)
 
 		this._rv_template = false;
 
 		// Once template has been received (response = template)
 		this._templateLoaded = function(response) {
-			u.bug("response", response)
+			// u.bug("response", response)
 
 			this._rv_template = response.children[0];
 
@@ -191,24 +191,32 @@ u.renderView = function(_options) {
 
 
 	view._stateChanged = function() {
-		u.bug("_stateChanged", this._rv_template, this._rv_data);
+		// u.bug("_stateChanged", this._rv_template, this._rv_data);
 
 		if(this._rv_template && this._rv_data) {
 
 			// Merge data with template and append the resulting "rendered template" to the view
 			var template = u.template(this._rv_template, this._rv_data, {append: this});
 
-			console.log(template)
+			// console.log("template: ", template)
 
 			// Reference to rendered template on view
-			this.template = this.firstChild;
+			this.template = template[0];
 
 			// Reference to view on rendered template
-			this.firstChild.view = this;
+			this.template.view = this;
 
 			// Init the initializer on template
-			if (this._rv_initializer) {
-				Util.Objects[this._rv_initializer].init(this.firstChild);
+			// if (this._rv_initializer) {
+			// 	// Util.Objects[this._rv_initializer].init(this.template);
+			// }
+
+			// Only load initializer once
+			if (!this._initialized && this._rv_initializer) {
+					console.log("View init: ", this);
+					this._initialized = true;
+
+					Util.Objects[view._rv_initializer].init(this);
 			}
 
 
