@@ -220,8 +220,8 @@ u.renderView = function(_options) {
 			}
 
 
-			if(this["templateRendered"]) {
-				this["templateRendered"]();
+			if(this[callback_rendered]) {
+				this[callback_rendered]();
 			}
 
 
