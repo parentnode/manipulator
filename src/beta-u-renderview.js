@@ -213,12 +213,14 @@ u.renderView = function(_options) {
 
 			// Only load initializer once
 			if (!this._initialized && this._rv_initializer) {
-					console.log("View init: ", this);
-					this._initialized = true;
+				console.log("View init: ", this);
+				this._initialized = true;
 
-					Util.Objects[view._rv_initializer].init(this);
+				Util.Objects[view._rv_initializer].init(this);
 			}
 
+			// Init any i:{init} present in view
+			u.init(this);
 
 			if(this[callback_rendered]) {
 				this[callback_rendered]();
