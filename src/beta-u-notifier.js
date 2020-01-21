@@ -15,8 +15,8 @@
 
 u.notifier = function(node) {
 	
-	u.bug_force = true;
-	u.bug("enable notifier");
+	// u.bug_force = true;
+	// u.bug("enable notifier");
 
 	var notifications = u.qs("div.notifications", node);
 	if(!notifications) {
