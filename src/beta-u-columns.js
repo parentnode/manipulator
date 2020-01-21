@@ -1,13 +1,21 @@
 
-u.columns = function(node, _columns) {
+u.columns = function(node, _columns, insert) {
 
 	var current_node = node;
+	insert = insert || false;
 
 	// Create column reference if it doesn't exist
 	if(!node._tree) {
-		node._tree = u.ae(node, "div", {
-			"class":"c"
-		})
+		if(insert) {
+			node._tree = u.ie(node, "div", {
+				"class":"c"
+			})
+		}
+		else {
+			node._tree = u.ae(node, "div", {
+				"class":"c"
+			})
+		}
 		node._tree.node = node;
 		current_node = node._tree;
 
