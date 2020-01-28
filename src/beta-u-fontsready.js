@@ -100,7 +100,7 @@ u.fontsReady = function(node, fonts, _options) {
 		font.size = font.size || "16px";
 		font.status = "waiting";
 
-		font.id = u.normalize(font.family+font.style+font.weight);
+		font.id = u.superNormalize(font.family+font.style+font.weight);
 
 		// add to global stack (to avoid loading a font that was previously loaded)
 		if(!window["_man_fonts_"].fonts[font.id]) {
@@ -119,8 +119,8 @@ u.fontsReady = function(node, fonts, _options) {
 		else {
 
 			// add reference base font with given weight+style, if it does not already exist
-			if(!window["_man_fonts_"+loadkey].basenodes[u.normalize(font.style+font.weight)]) {
-				window["_man_fonts_"+loadkey].basenodes[u.normalize(font.style+font.weight)] = u.ae(window["_man_fonts_"+loadkey], "span", {"html":"I'm waiting for your fonts to load!","style":"font-family: Times !important; font-style: "+font.style+" !important; font-weight: "+font.weight+" !important; font-size: "+font.size+" !important; line-height: 1em !important; opacity: 0 !important;"});
+			if(!window["_man_fonts_"+loadkey].basenodes[u.superNormalize(font.style+font.weight)]) {
+				window["_man_fonts_"+loadkey].basenodes[u.superNormalize(font.style+font.weight)] = u.ae(window["_man_fonts_"+loadkey], "span", {"html":"I'm waiting for your fonts to load!","style":"font-family: Times !important; font-style: "+font.style+" !important; font-weight: "+font.weight+" !important; font-size: "+font.size+" !important; line-height: 1em !important; opacity: 0 !important;"});
 			}
 
 			// add font node font information and for testing this variant
@@ -198,7 +198,7 @@ u.fontsReady = function(node, fonts, _options) {
 			node = this.nodes[i];
 
 			// find basenode for comparison
-			basenode = this.basenodes[u.normalize(node.font_style+node.font_weight)];
+			basenode = this.basenodes[u.superNormalize(node.font_style+node.font_weight)];
 
 			// check node sizes -  when node changes size, then it is loaded
 			if(node.offsetWidth != basenode.offsetWidth || node.offsetHeight != basenode.offsetHeight) {
