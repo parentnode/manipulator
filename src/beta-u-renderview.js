@@ -89,7 +89,7 @@ u.renderView = function(_options) {
 	view._rv_initializer = initializer;
 
 	view.update = function(_options) {
-		u.bug("update", _options, this._rv_data, this._rv_template);
+		// u.bug("update", _options, this._rv_data, this._rv_template);
 
 		// Clean up template
 		this.innerHTML = "";
@@ -213,7 +213,7 @@ u.renderView = function(_options) {
 
 			// Only load initializer once
 			if (!this._initialized && this._rv_initializer) {
-				console.log("View init: ", this);
+				// console.log("View init: ", this);
 				this._initialized = true;
 
 				Util.Objects[view._rv_initializer].init(this);
