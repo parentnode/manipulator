@@ -8,13 +8,13 @@
  * @param {Object} _options.template_url - Object of templates to load from template_path
  * @param {string} _options.template_url.url - Template url to load from template_path
  * @param {string} _options.template_url.method - Request method
- * @param {{}} _options.template_url.data - Data to be merged with requested template
- * @param {{}} _options.data - Object of data to be merged with template placeholders
+ * @param {Object} _options.template_url.data - Data to send with request
+ * @param {{}} _options.data - Object where key->value represents {placeholder} template variables to be merged with
  * @param {string} _options.data_url - External source of data
  * @param _options.target - Element to append view onto
  * @param _options.initializer - Attach an initializer to rendered template
  * @param _options.callback_rendered - Callback rendered
- * @returns view
+ * @returns node - view
 */
 u.renderView = function(_options) {
 
