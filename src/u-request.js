@@ -133,13 +133,16 @@ Util.request = function(node, url, _options) {
 					}
 				}
 
+				// Standard request stamp
+				node[request_id].HTTPRequest.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+
 				// send info
 				// some older browser (Firefox 3 in paticular) requires a parameter for send - an empty string is enough
 				node[request_id].HTTPRequest.send("");
 
 			}
 			// perform POST, PUT or PATCH request
-			else if(node[request_id].request_method.match(/POST|PUT|PATCH/i)) {
+			else if(node[request_id].request_method.match(/POST|PUT|PATCH|DELETE/i)) {
 //				u.bug("POST|PUT|PATCH request");
 
 				// stringify possible JSON object
@@ -193,7 +196,8 @@ Util.request = function(node, url, _options) {
 					}
 				}
 
-
+				// Standard request stamp
+				node[request_id].HTTPRequest.setRequestHeader("X-Requested-With", "XMLHttpRequest");
 
 				// send params
 				node[request_id].HTTPRequest.send(params);
