@@ -96,8 +96,104 @@ Util.lowerCaseFirst = u.lcfirst = function(string) {
 // Normalizes, lowercases and replaces unknown chars with - (hyphen)
 Util.normalize = function(string) {
 
+	var table = {
+		'À':'A',  'à':'a',
+		'Á':'A',  'á':'a',
+		'Â':'A',  'â':'a',
+		'Ã':'A',  'ã':'a',
+		'Ä':'A',  'ä':'a',
+		'Å':'Aa', 'å':'aa',
+		'Æ':'Ae', 'æ':'ae',
+
+		'Ç':'C',  'ç':'c',
+		'Č':'C',  'ć':'c',
+		'Ć':'C',  'č':'c',
+
+		'Đ':'D',  'đ':'d',  'ð':'d',
+
+		'È':'E',  'è':'e',
+		'É':'E',  'é':'e',
+		'Ê':'E',  'ê':'e',
+		'Ë':'E',  'ë':'e',
+
+		'Ģ':'G',  'ģ':'g',
+		'Ğ':'G',  'ğ':'g',
+
+		'Ì':'I',  'ì':'i',
+		'Í':'I',  'í':'i',
+		'Î':'I',  'î':'i',
+		'Ï':'I',  'ï':'i',
+		'Ī':'I',  'ī':'i',
+
+		'Ķ':'K',  'ķ':'k',
+		'Ļ':'L',  'ļ':'l',
+
+		'Ñ':'N',  'ñ':'n',
+		'Ņ':'N',  'ņ':'n',
+
+		'Ò':'O',  'ò':'o',
+		'Ó':'O',  'ó':'o',
+		'Ô':'O',  'ô':'o',
+		'Õ':'O',  'õ':'o',
+		'Ö':'O',  'ö':'o',
+		'Ō':'O',  'ō':'o',
+		'Ø':'Oe', 'ø':'oe',
+
+		'Ŕ':'R',  'ŕ':'r',
+		'Š':'S',  'š':'s',
+		'Ş':'S',  'ş':'s',
+		'Ṩ':'S',  'ṩ':'s',
+
+		'Ù':'U',  'ù':'u',
+		'Ú':'U',  'ú':'u',
+		'Û':'U',  'û':'u',
+		'Ü':'U',  'ü':'u',
+		'Ū':'U',  'ū':'u',
+		'Ų':'U',  'ų':'u',
+		'Ŭ':'U',  'ŭ':'u',
+
+		'Ý':'Y',  'ý':'y',
+		'Ÿ':'Y',  'ÿ':'y',
+
+		'Ž':'Z',  'ž':'z',
+
+		'Þ':'B',  'þ':'b',
+
+		'ß':'Ss',
+		'@':' at ',
+		'&':'and',
+		'%':' percent',
+		'\\$':'USD',
+		'¥':'JPY',
+		'€':'EUR',
+		'£':'GBP',
+		'™':'trademark',
+		'©':'copyright',
+		'§':'s',
+		'\\*':'x',
+		'×':'x'
+	}
+
+	var char, regex;
+	for(char in table) {
+		regex = new RegExp(char, "g");
+		string = string.replace(regex, table[char]);
+	}
+
+	return string;
+}
+
+
+// Normalizes, lowercases and replaces unknown chars with - (hyphen)
+Util.superNormalize = function(string) {
+
+	string = u.normalize(string);
+
 	// lowercase
 	string = string.toLowerCase();
+
+	// String tags
+	string = u.stripTags(string);
 
 	// replace all specialchars with hyphens
 	string = string.replace(/[^a-z0-9\_]/g, '-');
@@ -109,6 +205,13 @@ Util.normalize = function(string) {
 	string = string.replace(/^-|-$/g, '');
 
 	return string;
+}
+
+// Strip tags from string
+Util.stripTags = function(string) {
+	var node = document.createElement("div");
+	node.innerHTML = string;
+	return u.text(node);
 }
 
 // select correct form, based on count

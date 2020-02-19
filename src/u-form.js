@@ -543,12 +543,13 @@ Util.Form = u.f = new function() {
 				// Let filelist know about it's field
 				field.filelist.field = field;
 				// Get already uploaded files
-				// field.uploaded_files = u.qsa("li", field.filelist);
 				field.uploaded_files = u.qsa("li.uploaded", field.filelist);
 
 				// Update filelist now
 				this._update_filelist.bind(field.input)();
 
+				// Update filelist whenever value is changed (and before callback to application)
+				u.e.addEvent(field.input, "change", this._update_filelist);
 
 				// change and update event
 				u.e.addEvent(field.input, "change", this._updated);
@@ -561,8 +562,6 @@ Util.Form = u.f = new function() {
 					u.e.addEvent(field.input, "drop", this._blur);
 				}
 
-				// Update filelist whenever value is changed
-				u.e.addEvent(field.input, "change", this._update_filelist);
 
 				// Add additional standard event listeners and labelstyle
 				this.activateInput(field.input);
@@ -992,7 +991,12 @@ Util.Form = u.f = new function() {
 					u.ae(this.field.filelist, this.field.uploaded_files[i]);
 				}
 			}
-			
+			// one file only – reset uploaded files
+			else {
+
+				this.field.uploaded_files = [];
+
+			}
 
 		}
 		// Already uploaded files
@@ -1367,7 +1371,7 @@ Util.Form = u.f = new function() {
 		}
 
 		// add to actions index if button has an unused identifier (button name or normalized classname or value)
-		var action_name = action.name ? action.name : (action.parentNode.className ? u.normalize(action.parentNode.className) : (action.value ? u.normalize(action.value) : u.normalize(u.text(action))));
+		var action_name = action.name ? action.name : (action.parentNode.className ? u.superNormalize(action.parentNode.className) : (action.value ? u.superNormalize(action.value) : u.superNormalize(u.text(action))));
 		if(action_name && !action._form.actions[action_name]) {
 			action._form.actions[action_name] = action;
 		}
