@@ -1,6 +1,6 @@
 
 /**
- * renderView
+ * createView
  * 
  * @param {Object} _options - Object litteral of parameters
  * @param {string} _options.template - HTML reference of template
@@ -16,9 +16,9 @@
  * @param _options.callback_rendered - Callback rendered
  * @returns node - view
 */
-u.renderView = function(_options) {
+u.createView = function(_options) {
 
-	// u.bug("u.renderView", _options);
+	// u.bug("u.createView", _options);
 
 
 	var template = false;
