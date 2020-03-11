@@ -1,4 +1,4 @@
-Util.Objects["tabs"] = new function() {
+Util.Modules["tabs"] = new function() {
 	this.init = function(tabset) {
 		var i, tab, pane;
 

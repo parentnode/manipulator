@@ -208,7 +208,7 @@ u.renderView = function(_options) {
 
 			// Init the initializer on template
 			// if (this._rv_initializer) {
-			// 	// Util.Objects[this._rv_initializer].init(this.template);
+			// 	// Util.Modules[this._rv_initializer].init(this.template);
 			// }
 
 			// Only load initializer once
@@ -216,7 +216,7 @@ u.renderView = function(_options) {
 				// console.log("View init: ", this);
 				this._initialized = true;
 
-				Util.Objects[view._rv_initializer].init(this);
+				Util.Modules[view._rv_initializer].init(this);
 			}
 
 			// Init any i:{init} present in view
