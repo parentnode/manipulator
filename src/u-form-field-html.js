@@ -66,71 +66,7 @@ Util.Form.customHintPosition["html"] = function(field) {
 
 // inject HTML editor
 u.f.textEditor = function(field) {
-
-//	u.bug("init custom editor")
-
-	// show help?
-	var hint_has_been_shown = u.getCookie("html-editor-hint-v1", {"path":"/"});
-	if(!hint_has_been_shown) {
-
-		// editor help info
-		var editor_hint = u.ie(field, "div", {"class":"html_editor_hint"});
-
-		var editor_hint_open = u.ae(editor_hint, "div", {"class":"open", "html":"I'd like to know more about the Editor"});
-		var editor_hint_content = u.ae(editor_hint, "div", {"class":"html_editor_hint_content"});
-
-		editor_hint_open.editor_hint_content = editor_hint_content;
-		u.ce(editor_hint_open);
-		editor_hint_open.clicked = function() {
-			if(this.editor_hint_content.is_shown) {
-				this.innerHTML = "I'd like to know more about the Editor";
-				u.as(editor_hint_content, "display", "none");
-				this.editor_hint_content.is_shown = false;
-			}
-			else {
-				this.innerHTML = "Hide help for now";
-				u.as(editor_hint_content, "display", "block");
-				this.editor_hint_content.is_shown = true;
-			}
-		}
-
-
-		u.ae(editor_hint_content, "p", {"html":"If you are new to using the Janitor HTML editor here are a few tips to working better with the editor."});
-		u.ae(editor_hint_content, "p", {"html":"This HTML editor has been developed to maintain a strict control of the design - therefore it looks different from other HTML editors. The features available are aligned with the design of the specific page, and the Editor might not have the same features available in every context."});
-
-		u.ae(editor_hint_content, "h4", {"html":"General use:"});
-		u.ae(editor_hint_content, "p", {"html":"All HTML nodes can be deleted using the Trashcan in the Right side. The Editor always requires one node to exist and you cannot delete the last remaining node."});
-		u.ae(editor_hint_content, "p", {"html":"HTML nodes can be re-ordered by dragging the bubble in the Left side."});
-		u.ae(editor_hint_content, "p", {"html":"You can add new nodes by clicking on the + below the editor. The options availble are the ones allowed for the current content type."});
-
-		u.ae(editor_hint_content, "h4", {"html":"Text nodes:"});
-		u.ae(editor_hint_content, "p", {"html":"&lt;H1&gt;,&lt;H2&gt;,&lt;H3&gt;,&lt;H4&gt;,&lt;H5&gt;,&lt;H6&gt;,&lt;P&gt;,&lt;CODE&gt;"});
-		u.ae(editor_hint_content, "p", {"html":"Text nodes are for headlines and paragraphs - regular text."});
-		u.ae(editor_hint_content, "p", {"html":"You can activate the inline formatting tool by selecting text in your Text node."});
-		u.ae(editor_hint_content, "p", {"html":"If you press ENTER inside a Text node, a new Text node will be created below the current one."});
-		u.ae(editor_hint_content, "p", {"html":"If you press BACKSPACE twice inside an empty Text node it will be deleted"});
-
-		u.ae(editor_hint_content, "h4", {"html":"List nodes:"});
-		u.ae(editor_hint_content, "p", {"html":"&lt;UL&gt;,&lt;OL&gt;"});
-		u.ae(editor_hint_content, "p", {"html":"There are two types of list nodes: Unordered lists (UL w/ bullets) and Ordered lists (OL w/ numbers). Each of them can have one or many List items."});
-		u.ae(editor_hint_content, "p", {"html":"You can activate the inline formatting tool by selecting text in your List item."});
-		u.ae(editor_hint_content, "p", {"html":"If you press ENTER inside a List item, a new List item will be created below the current one."});
-		u.ae(editor_hint_content, "p", {"html":"If you press BACKSPACE twice inside an empty List item it will be deleted. If it is the last List item in the List node, the List node will be deleted as well."});
-
-		u.ae(editor_hint_content, "h4", {"html":"File nodes:"});
-		u.ae(editor_hint_content, "p", {"html":"Drag you file to the node or click the node to select your file."});
-		u.ae(editor_hint_content, "p", {"html":"If you add other file-types than PDF's, the file will be zipped on the server and made availble for download as ZIP file."});
-
-		var editor_hint_close = u.ae(editor_hint_content, "div", {"class":"close", "html":"I got it, don't tell me again"});
-
-		u.ce(editor_hint_close);
-		editor_hint_close.editor_hint = editor_hint;
-		editor_hint_close.clicked = function() {
-			u.saveCookie("html-editor-hint-v1", 1, {"path":"/"});
-			this.editor_hint.parentNode.removeChild(this.editor_hint);
-		}
-
-	}
+	// u.bug("init custom editor");
 
 
 	// Editor support specs
