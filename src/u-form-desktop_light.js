@@ -1040,7 +1040,7 @@ Util.Form = u.f = new function() {
 		this.field.filelist.innerHTML = "";
 
 		// Add hint or label as visual
-		u.ae(this.field.filelist, "li", {html:this.field.hint ? u.text(this.field.hint) : u.text(this.label), class:"label"})
+		u.ae(this.field.filelist, "li", {"html":this.field.hint ? u.text(this.field.hint) : u.text(this.label), "class":"label"})
 
 		// Selected new files for upload
 		if(files && files.length) {
@@ -1052,7 +1052,7 @@ Util.Form = u.f = new function() {
 
 			// Add files to list
 			for(i = 0; i < files.length; i++) {
-				u.ae(this.field.filelist, "li", {html:files[i].name, class:"new"})
+				u.ae(this.field.filelist, "li", {"html":files[i].name, "class":"new"})
 			}
 
 			// Keep uploaded files in list for multiple file inputs
