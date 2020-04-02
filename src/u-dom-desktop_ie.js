@@ -111,17 +111,23 @@ if(document.documentMode && document.documentMode <= 11 && document.documentMode
 	// Add classname to element if it is not already there
 	Util.addClass = u.ac = function(node, classname, dom_update) {
 
-		var regexp = new RegExp("(^|\\s)" + classname + "(\\s|$)");
-		if(node instanceof SVGElement) {
-			if(!regexp.test(node.className.baseVal)) {
-				node.className.baseVal += node.className.baseVal ? " " + classname : classname;
+		var classnames = classname.split(" ");
+		while(classnames.length) {
+			classname = classnames.shift();
+
+			var regexp = new RegExp("(^|\\s)" + classname + "(\\s|$)");
+			if(node instanceof SVGElement) {
+				if(!regexp.test(node.className.baseVal)) {
+					node.className.baseVal += node.className.baseVal ? " " + classname : classname;
+				}
+			}
+			else {
+				if(!regexp.test(node.className)) {
+					node.className += node.className ? " " + classname : classname;
+				}
 			}
 		}
-		else {
-			if(!regexp.test(node.className)) {
-				node.className += node.className ? " " + classname : classname;
-			}
-		}
+
 		// force dom update (performance killer, but will make rendering more detailed)
 		dom_update = (!dom_update) || (node.offsetTop);
 

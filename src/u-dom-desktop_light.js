@@ -46,17 +46,24 @@ Util.hasClass = u.hc = function(node, classname) {
 // Add classname to element if it is not already there
 Util.addClass = u.ac = function(node, classname, dom_update) {
 
-	var regexp = new RegExp("(^|\\s)" + classname + "(\\s|$)");
-	if(typeof(SVGElement) !== "undefined" && node instanceof SVGElement) {
-		if(!regexp.test(node.className.baseVal)) {
-			node.className.baseVal += node.className.baseVal ? " " + classname : classname;
+	var classnames = classname.split(" ");
+	while(classnames.length) {
+		classname = classnames.shift();
+
+		var regexp = new RegExp("(^|\\s)" + classname + "(\\s|$)");
+		u.bug(classname, regexp.test(node.className));
+		if(typeof(SVGElement) !== "undefined" && node instanceof SVGElement) {
+			if(!regexp.test(node.className.baseVal)) {
+				node.className.baseVal += node.className.baseVal ? " " + classname : classname;
+			}
+		}
+		else {
+			if(!regexp.test(node.className)) {
+				node.className += node.className ? " " + classname : classname;
+			}
 		}
 	}
-	else {
-		if(!regexp.test(node.className)) {
-			node.className += node.className ? " " + classname : classname;
-		}
-	}
+
 	// force dom update (performance killer, but will make rendering more detailed)
 	dom_update = (!dom_update) || (node.offsetTop);
 
@@ -386,11 +393,12 @@ if(typeof(document.contains) == "undefined") {
 }
 
 
-
 if(!Element.prototype.matches) {
 	Element.prototype.matches = Element.prototype.matchesSelector || Element.prototype.mozMatchesSelector || Element.prototype.msMatchesSelector || Element.prototype.oMatchesSelector || Element.prototype.webkitMatchesSelector || function(selector) {
-		var matches = (this.parentNode || this.document || this.ownerDocument).querySelectorAll(selector);
-		return u.nodeInList(this, matches);
+		var matches = (this.document || this.ownerDocument).querySelectorAll(selector);
+		var i = matches.length;
+		while (--i >= 0 && matches.item(i) !== this) {}
+		return i > -1;
 	};
 }
 
