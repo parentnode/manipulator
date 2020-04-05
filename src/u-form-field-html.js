@@ -933,7 +933,7 @@ u.f.textEditor = function(field) {
 				this.field.update();
 			}
 		}
-		u.request(tag, this.file_delete_action+"/"+tag._item_id+"/"+tag._variant, {"method":"post", "params":form_data});
+		u.request(tag, this.file_delete_action+"/"+tag._item_id+"/"+tag._variant, {"method":"post", "data":form_data});
 
 	}
 
@@ -1008,7 +1008,7 @@ u.f.textEditor = function(field) {
 				this.tag.field._form.submit();
 			}
 		}
-		u.request(this, this.field.media_add_action+"/"+this.field.item_id, {"method":"post", "params":form_data});
+		u.request(this, this.field.media_add_action+"/"+this.field.item_id, {"method":"post", "data":form_data});
 
 	}
 
@@ -1140,7 +1140,7 @@ u.f.textEditor = function(field) {
 				this.field.update();
 			}
 		}
-		u.request(tag, this.file_delete_action+"/"+tag._item_id+"/"+tag._variant, {"method":"post", "params":form_data});
+		u.request(tag, this.file_delete_action+"/"+tag._item_id+"/"+tag._variant, {"method":"post", "data":form_data});
 
 	}
 
@@ -1208,7 +1208,7 @@ u.f.textEditor = function(field) {
 				this.tag.field._form.submit();
 			}
 		}
-		u.request(this, this.field.file_add_action+"/"+this.field.item_id, {"method":"post", "params":form_data});
+		u.request(this, this.field.file_add_action+"/"+this.field.item_id, {"method":"post", "data":form_data});
 
 	}
 
