@@ -64,6 +64,7 @@ u.overlay = function (_options) {
 	var overlay = u.ae(document.body, "div", {"class": "overlay" + classname, "tabindex":"-1"});
 	// Set width and height and center on screen
 	u.ass(overlay, {
+		"opacity": 0,
 		"width": width + "px",
 		"height": height + "px",
 		"left": ((u.browserW() - width) / 2) + "px",
@@ -84,6 +85,11 @@ u.overlay = function (_options) {
 	// update overlay stack
 	window._overlay_stack_index = Number(u.gcs(overlay, "z-index")) + 2;
 
+	// Fade up
+	u.ass(overlay, {
+		"transition": "all .4s ease-in-out",
+		"opacity": 1,
+	});
 
 
 	// Prevent body scroll
