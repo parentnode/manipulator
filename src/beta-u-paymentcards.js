@@ -1,11 +1,11 @@
 u.paymentCards = new function() {
 
-	//var default_format = /(\d{1,4})/g
+	//var default_format = /([\d]{1,4})([\d]{1,4})?([\d]{1,4})?([\d]{1,4})?/
 	this.payment_cards = [
 		{
 			"type": 'maestro',
 			"patterns": [5018, 502, 503, 506, 56, 58, 639, 6220, 67],
-			"format": /(\d{1,4})/g,
+			"format": /([\d]{1,4})([\d]{1,4})?([\d]{1,4})?([\d]{1,4})?([\d]{1,4})?/,
 			"card_length": [12,13,14,15,16,17,18,19],
 			"cvc_length": [3],
 			"luhn": true
@@ -13,7 +13,7 @@ u.paymentCards = new function() {
 		{
 			"type": 'forbrugsforeningen',
 			"patterns": [600],
-			"format": /(\d{1,4})/g,
+			"format": /([\d]{1,4})([\d]{1,4})?([\d]{1,4})?([\d]{1,4})?/,
 			"card_length": [16],
 			"cvc_length": [3],
 			"luhn": true,
@@ -21,7 +21,7 @@ u.paymentCards = new function() {
 		{
 			"type": 'dankort',
 			"patterns": [5019],
-			"format": /(\d{1,4})/g,
+			"format": /([\d]{1,4})([\d]{1,4})?([\d]{1,4})?([\d]{1,4})?/,
 			"card_length": [16],
 			"cvc_length": [3],
 			"luhn": true
@@ -37,7 +37,7 @@ u.paymentCards = new function() {
 		{
 			"type": 'mastercard',
 			"patterns": [51, 52, 53, 54, 55, 22, 23, 24, 25, 26, 27],
-			"format": /(\d{1,4})/g,
+			"format": /([\d]{1,4})([\d]{1,4})?([\d]{1,4})?([\d]{1,4})?/,
 			"card_length": [16],
 			"cvc_length": [3],
 			"luhn": true
@@ -158,18 +158,17 @@ u.paymentCards = new function() {
 
 	// format card number according to card type 
 	this.formatCardNumber = function(card_number) {
-
 		var card = this.getCardTypeFromNumber(card_number);
 		if(card) {
 			var matches = card_number.match(card.format);
 			if(matches) {
-				if(matches.length > 1 && matches[0] == card_number) {
-					matches.shift();
-					card_number = matches.join(" ").trim();
-				}
-				else {
-					card_number = matches.join(" ");
-				}
+				var matched_text = matches[0];
+				matches.shift(); //leave only the regex groups
+
+				var unmatched_suffix = card_number.slice(matched_text.length);
+				matches.push(unmatched_suffix);
+
+				card_number = matches.join(" ").trim().replace(/ +/g, " ");
 			}
 		}
 		return card_number;
