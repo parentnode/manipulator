@@ -2089,7 +2089,7 @@ u.f.textEditor = function(field) {
 		}
 
 		// EM option
-		this.selection_options._em = u.ae(ul, "li", {"class":"em", "html":"Itallic"});
+		this.selection_options._em = u.ae(ul, "li", {"class":"em", "html":"Italic"});
 		this.selection_options._em.field = this;
 		this.selection_options._em.tag = node;
 		this.selection_options._em.selection = selection;
