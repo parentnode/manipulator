@@ -83,6 +83,7 @@ Util.Form = u.f = new function() {
 		// Callbacks
 		_form._callback_ready = "ready";
 		_form._callback_submitted = "submitted";
+		_form._callback_submit_failed = "submitFailed";
 		_form._callback_pre_submitted = "preSubmitted";
 		_form._callback_resat = "resat";
 
@@ -110,6 +111,7 @@ Util.Form = u.f = new function() {
 
 					case "callback_ready"           : _form._callback_ready            = _options[_argument]; break;
 					case "callback_submitted"       : _form._callback_submitted        = _options[_argument]; break;
+					case "callback_submit_failed"   : _form._callback_submit_failed    = _options[_argument]; break;
 					case "callback_pre_submitted"   : _form._callback_pre_submitted    = _options[_argument]; break;
 					case "callback_resat"           : _form._callback_resat            = _options[_argument]; break;
 
@@ -712,6 +714,14 @@ Util.Form = u.f = new function() {
 				// u.bug("this is where I should cut the rope, 2004");
 				this.DOMsubmit();
 			}
+		}
+		else {
+
+			// has callback handler been declared
+			if(fun(this[this._callback_submit_failed])) {
+				this[this._callback_submit_failed](iN);
+			}
+
 		}
 	}
 
