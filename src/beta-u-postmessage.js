@@ -93,10 +93,10 @@ u.postMessage = new function () {
 //			u.bug("event.data.request_id:" + data.request_id);
 
 			// do we have listener for this request id?
-			if(this.post_message_listeners[data.RequestId]) {
+			if(this.post_message_listeners[data.request_id]) {
 
 				// get recipient object
-				var recipient = this.post_message_listeners[data.RequestId];
+				var recipient = this.post_message_listeners[data.request_id];
 
 				// make callback
 				if(recipient.node && fun (recipient.node[recipient.callback])) {
@@ -106,7 +106,7 @@ u.postMessage = new function () {
 
 				// delete recipient if it is not permanent
 				if(!recipient.permanent) {
-					this.removeListener(data.RequestId);
+					this.removeListener(data.request_id);
 				}
 		
 			}
