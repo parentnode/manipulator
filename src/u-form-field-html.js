@@ -3,7 +3,7 @@
 
 // initializer
 Util.Form.customInit["html"] = function(field) {
-
+	u.bug("html field", field);
 	// Register field type
 	field.type = "html";
 
@@ -142,12 +142,19 @@ u.f.textEditor = function(field) {
 	// at this point purely used for inspecting the generated HTML for debugging
 	// could be used as a preview pane at a later point
 	field._viewer = u.ae(field, "div", {"class":"viewer"});
+	field.insertBefore(field._viewer, field.help)
+	field._viewer.field = field;
 
 	// The actual HTML editor interface
 	field._editor = u.ae(field, "div", {"class":"editor"});
+	field.insertBefore(field._editor, field.help)
 	field._editor.field = field;
 
-	u.ae(field._editor, field.indicator);
+
+	if(!fun(u.f.fixFieldHTML)) {
+		// Unless fixFieldHTML is declared, move indicator to editor view
+		u.ae(field._editor, field.indicator);
+	}
 
 	// callback after sorting list
 	field._editor.dropped = function() {
@@ -156,8 +163,7 @@ u.f.textEditor = function(field) {
 	}
 
 	// Create add options panel
-	field.addOptions = function() {
-
+	field.addRawHTMLButton = function() {
 
 		// allow to toggle raw HTML view
 		this.bn_show_raw = u.ae(this.input.label, "span", {"html":"(RAW HTML)"});
@@ -170,122 +176,6 @@ u.f.textEditor = function(field) {
 			else {
 				u.ac(this.field.input, "show");
 			}
-		}
-
-
-		// Add list for actions
-		this.options = u.ae(this, "ul", {"class":"options"});
-
-
-		// "Add" button
-		this.bn_add = u.ae(this.options, "li", {"class":"add", "html":"+"});
-		this.bn_add.field = field;
-		u.ce(this.bn_add);
-
-		u.ce(this.options);
-		this.options.inputStarted = function(event) {
-			u.e.kill(event);
-		}
-		this.bn_add.clicked = function(event) {
-			if(u.hc(this.field.options, "show")) {
-				u.rc(this.field.options, "show");
-				u.rc(this.field, "optionsshown");
-
-				if(this.start_event_id) {
-					u.e.removeWindowStartEvent(this, this.start_event_id);
-					delete this.start_event_id;
-				}
-			}
-			else {
-				u.ac(this.field.options, "show");
-				u.ac(this.field, "optionsshown");
-
-				this.start_event_id = u.e.addWindowStartEvent(this, this.clicked);
-			}
-		}
-
-		// Add text tag option (if allowed)
-		if(this.text_allowed.length) {
-
-			this.bn_add_text = u.ae(this.options, "li", {"class":"text", "html":"Text ("+this.text_allowed.join(", ")+")"});
-			this.bn_add_text.field = this;
-			u.ce(this.bn_add_text);
-			this.bn_add_text.clicked = function(event) {
-				this.field.addTextTag(this.field.text_allowed[0]);
-				this.field.bn_add.clicked();
-			}
-		}
-
-
-		// Add list tag option (if allowed)
-		if(this.list_allowed.length) {
-
-			this.bn_add_list = u.ae(this.options, "li", {"class":"list", "html":"List ("+this.list_allowed.join(", ")+")"});
-			this.bn_add_list.field = this;
-			u.ce(this.bn_add_list);
-			this.bn_add_list.clicked = function(event) {
-				this.field.addListTag(this.field.list_allowed[0]);
-				this.field.bn_add.clicked();
-			}
-		}
-
-
-		// Add code tag option (if allowed)
-		if(this.code_allowed.length) {
-
-			this.bn_add_code = u.ae(this.options, "li", {"class":"code", "html":"Code"});
-			this.bn_add_code.field = this;
-			u.ce(this.bn_add_code);
-			this.bn_add_code.clicked = function(event) {
-				this.field.addCodeTag(this.field.code_allowed[0]);
-				this.field.bn_add.clicked();
-			}
-		}
-
-
-		// Add media tag option (if allowed)
-		if(this.media_allowed.length && this.item_id && this.media_add_action && this.media_delete_action && !u.browser("IE", "<=9")) {
-
-			this.bn_add_media = u.ae(this.options, "li", {"class":"list", "html":"Media ("+this.media_allowed.join(", ")+")"});
-			this.bn_add_media.field = this;
-			u.ce(this.bn_add_media);
-			this.bn_add_media.clicked = function(event) {
-				this.field.addMediaTag();
-				this.field.bn_add.clicked();
-			}
-		}
-		else if(this.media_allowed.length) {
-			u.bug("some information is missing to support media upload:\nitem_id="+this.item_id+"\nmedia_add_action="+this.media_add_action+"\nmedia_delete_action="+this.media_delete_action);
-		}
-
-
-		// Add external video tag option (if allowed)
-		if(this.ext_video_allowed.length) {
-
-			this.bn_add_ext_video = u.ae(this.options, "li", {"class":"video", "html":"External video ("+this.ext_video_allowed.join(", ")+")"});
-			this.bn_add_ext_video.field = this;
-			u.ce(this.bn_add_ext_video);
-			this.bn_add_ext_video.clicked = function(event) {
-				this.field.addExternalVideoTag(this.field.ext_video_allowed[0]);
-				this.field.bn_add.clicked();
-			}
-		}
-
-
-		// Add file tag option (if allowed)
-		if(this.file_allowed.length && this.item_id && this.file_add_action && this.file_delete_action && !u.browser("IE", "<=9")) {
-
-			this.bn_add_file = u.ae(this.options, "li", {"class":"file", "html":"Downloadable file"});
-			this.bn_add_file.field = this;
-			u.ce(this.bn_add_file);
-			this.bn_add_file.clicked = function(event) {
-				this.field.addFileTag();
-				this.field.bn_add.clicked();
-			}
-		}
-
-		else if(this.file_allowed.length) {
-			u.bug("some information is missing to support file upload:\nitem_id="+this.item_id+"\nfile_add_action="+this.file_add_action+"\nfile_delete_action="+this.file_delete_action);
 		}
 
 	}
@@ -480,7 +370,7 @@ u.f.textEditor = function(field) {
 	// EDITOR FUNCTIONALity
 
 	// Create empty tag (with drag, type selector and remove-tag elements)
-	field.createTag = function(allowed_tags, type) {
+	field.createTag = function(allowed_tags, type, className) {
 
 		// create tag node
 		var tag = u.ae(this._editor, "div", {"class":"tag"});
@@ -498,28 +388,13 @@ u.f.textEditor = function(field) {
 		// select current type
 		tag._type.val(type);
 
-
-		// add remove button
-		tag.bn_remove = u.ae(tag, "div", {"class":"remove"});
-		tag.bn_remove.field = this;
-		tag.bn_remove.tag = tag;
-		u.ce(tag.bn_remove);
-		tag.bn_remove.clicked = function() {
-			this.field.deleteTag(this.tag);
+		// remember classname if present
+		if(className) {
+			tag._classname = className;
 		}
 
-		if(u.hc(tag, this.list_allowed.join("|")) || u.hc(tag, this.text_allowed.join("|")) || u.hc(tag, this.code_allowed.join("|"))) {
-
-			// add CSS button
-			tag.bn_classname = u.ae(tag, "div", {"class":"classname"});
-			u.ae(tag.bn_classname, "span", {"html":"CSS"});
-			tag.bn_classname.field = this;
-			tag.bn_classname.tag = tag;
-			u.ce(tag.bn_classname);
-			tag.bn_classname.clicked = function() {
-				this.field.classnameTag(this.tag);
-			}
-		}
+		// add additional tag option
+		this.addTagOptions(tag);
 
 		return tag;
 	}
@@ -564,12 +439,13 @@ u.f.textEditor = function(field) {
 	field.classnameTag = function(tag) {
 
 		if(!u.hc(tag.bn_classname, "open")) {
-
 			var form = u.f.addForm(tag.bn_classname, {"class":"labelstyle:inject"});
 			var fieldset = u.f.addFieldset(form);
 			var input_classname = u.f.addField(fieldset, {"label":"classname", "name":"classname", "error_message":"", "value":tag._classname});
 			input_classname.tag = tag;
 			u.ac(tag.bn_classname, "open");
+			u.ac(tag, "classname_open");
+
 			u.f.init(form);
 			input_classname.input.focus();
 
@@ -577,6 +453,19 @@ u.f.textEditor = function(field) {
 				this.field.tag._classname = this.val();
 				this.field.tag.bn_classname.removeChild(this._form);
 				u.rc(this.field.tag.bn_classname, "open");
+				u.rc(this.field.tag, "classname_open");
+
+				if(!this.field.tag.mirror) {
+					this.field.tag.mirror = u.ae(this.field.tag, "span", {"class":"classname"});
+				}
+
+				if(this.field.tag._classname && this.field.tag._classname != "") {
+					this.field.tag.mirror.innerHTML = this.field.tag._classname;
+				}
+				else {
+					this.field.tag.mirror.parentNode.removeChild(this.field.tag.mirror);
+					delete this.field.tag.mirror;
+				}
 
 				// Update HTML
 				this.field.tag.field.update();
@@ -660,6 +549,13 @@ u.f.textEditor = function(field) {
 
 
 			u.ce(tag._type);
+			// avoid taking focus from current field
+			tag._type.inputStarted = function(event) {
+				var selection = window.getSelection();
+				if(selection && selection.type && u.contains(this.tag, selection.anchorNode)) {
+					u.e.kill(event);
+				}
+			}
 			tag._type.clicked = function(event) {
 				// u.bug("select clicked", this, this.tag, this.field);
 
@@ -746,6 +642,219 @@ u.f.textEditor = function(field) {
 
 	}
 
+	// add css, delete and new tag options to tag
+	field.addTagOptions = function(tag) {
+		
+		// add remove button
+		tag.ul_tag_options = u.ae(tag, "ul", {"class":"tag_options"});
+
+
+		// add option selector
+		// don't do this anyway as that would require an extra click to delete, which will be annoying
+		// tag.bn_show_option = u.ae(tag.ul_tag_options, "li", {"class":"show"});
+		// u.ae(tag.bn_show_option, "span", {"class":"dot1"});
+		// u.ae(tag.bn_show_option, "span", {"class":"dot2"});
+		// u.ae(tag.bn_show_option, "span", {"class":"dot3"});
+
+
+		// "Add" button
+		tag.bn_add = u.ae(tag.ul_tag_options, "li", {"class":"add", "html":"+"});
+		tag.bn_add.field = field;
+		tag.bn_add.tag = tag;
+		u.ce(tag.bn_add);
+
+		u.ce(tag.ul_tag_options);
+		tag.ul_tag_options.inputStarted = function(event) {
+			u.e.kill(event);
+		}
+		tag.bn_add.clicked = function(event) {
+			this.cleanupOptions = function(event) {
+				if(this.field.ul_new_tag_options) {
+					u.bug("remove options");
+
+					this.field.ul_new_tag_options.parentNode.removeChild(this.field.ul_new_tag_options);
+					delete this.field.ul_new_tag_options;
+
+					if(this.start_event_id) {
+						u.e.removeWindowStartEvent(this, this.start_event_id);
+						delete this.start_event_id;
+					}
+
+				}
+			}
+			// if(u.hc(this.field.options, "show")) {
+			// 	u.rc(this.field.options, "show");
+			// 	u.rc(this.field, "optionsshown");
+			//
+			// 	if(this.start_event_id) {
+			// 		u.e.removeWindowStartEvent(this, this.start_event_id);
+			// 		delete this.start_event_id;
+			// 	}
+			// }
+			// else {
+			// 	u.ac(this.field.options, "show");
+			// 	u.ac(this.field, "optionsshown");
+			//
+				this.start_event_id = u.e.addWindowStartEvent(this, this.cleanupOptions);
+			// }
+
+			// Add list for actions
+			this.field.ul_new_tag_options = u.ae(this.field._editor, "ul", {"class":"new_tag_options"});
+			u.ia(this.field.ul_new_tag_options, this.tag);
+
+
+			// Add text tag option (if allowed)
+			if(this.field.text_allowed.length) {
+
+				this.bn_add_text = u.ae(this.field.ul_new_tag_options, "li", {"class":"text", "html":"Text ("+this.field.text_allowed.join(", ")+")"});
+				this.bn_add_text.field = this.field;
+				this.bn_add_text.tag = this.tag;
+				u.ce(this.bn_add_text);
+				this.bn_add_text.inputStarted = function(event) {
+					u.e.kill(event);
+				}
+				this.bn_add_text.clicked = function(event) {
+					var tag = this.field.addTextTag(this.field.text_allowed[0]);
+					u.ia(tag, this.tag);
+					this.tag.bn_add.cleanupOptions();
+					tag._input.focus();
+				}
+			}
+
+
+			// Add list tag option (if allowed)
+			if(this.field.list_allowed.length) {
+
+				this.bn_add_list = u.ae(this.field.ul_new_tag_options, "li", {"class":"list", "html":"List ("+this.field.list_allowed.join(", ")+")"});
+				this.bn_add_list.field = this.field;
+				this.bn_add_list.tag = this.tag;
+				u.ce(this.bn_add_list);
+				this.bn_add_list.inputStarted = function(event) {
+					u.e.kill(event);
+				}
+				this.bn_add_list.clicked = function(event) {
+					var tag = this.field.addListTag(this.field.list_allowed[0]);
+					u.ia(tag, this.tag);
+					this.tag.bn_add.cleanupOptions();
+					tag._input.focus();
+				}
+			}
+
+
+			// Add code tag option (if allowed)
+			if(this.field.code_allowed.length) {
+
+				this.bn_add_code = u.ae(this.field.ul_new_tag_options, "li", {"class":"code", "html":"Code"});
+				this.bn_add_code.field = this.field;
+				this.bn_add_code.tag = this.tag;
+				u.ce(this.bn_add_code);
+				this.bn_add_code.inputStarted = function(event) {
+					u.e.kill(event);
+				}
+				this.bn_add_code.clicked = function(event) {
+					var tag = this.field.addCodeTag(this.field.code_allowed[0]);
+					u.ia(tag, this.tag);
+					this.tag.bn_add.cleanupOptions();
+					tag._input.focus();
+				}
+			}
+
+
+			// Add media tag option (if allowed)
+			if(this.field.media_allowed.length && this.field.item_id && this.field.media_add_action && this.field.media_delete_action && !u.browser("IE", "<=9")) {
+
+				this.bn_add_media = u.ae(this.field.ul_new_tag_options, "li", {"class":"list", "html":"Media ("+this.field.media_allowed.join(", ")+")"});
+				this.bn_add_media.field = this.field;
+				this.bn_add_media.tag = this.tag;
+				u.ce(this.bn_add_media);
+				this.bn_add_media.inputStarted = function(event) {
+					u.e.kill(event);
+				}
+				this.bn_add_media.clicked = function(event) {
+					var tag = this.field.addMediaTag();
+					u.ia(tag, this.tag);
+					this.tag.bn_add.cleanupOptions();
+					tag._input.focus();
+				}
+			}
+			else if(this.field.media_allowed.length) {
+				u.bug("some information is missing to support media upload:\nitem_id="+this.field.item_id+"\nmedia_add_action="+this.field.media_add_action+"\nmedia_delete_action="+this.field.media_delete_action);
+			}
+
+
+			// Add external video tag option (if allowed)
+			if(this.field.ext_video_allowed.length) {
+
+				this.bn_add_ext_video = u.ae(this.field.ul_new_tag_options, "li", {"class":"video", "html":"External video ("+this.field.ext_video_allowed.join(", ")+")"});
+				this.bn_add_ext_video.field = this.field;
+				this.bn_add_ext_video.tag = this.tag;
+				u.ce(this.bn_add_ext_video);
+				this.bn_add_ext_video.inputStarted = function(event) {
+					u.e.kill(event);
+				}
+				this.bn_add_ext_video.clicked = function(event) {
+					var tag = this.field.addExternalVideoTag(this.field.ext_video_allowed[0]);
+					u.ia(tag, this.tag);
+					this.tag.bn_add.cleanupOptions();
+					tag._input.focus();
+				}
+			}
+
+
+			// Add file tag option (if allowed)
+			if(this.field.file_allowed.length && this.field.item_id && this.field.file_add_action && this.field.file_delete_action && !u.browser("IE", "<=9")) {
+
+				this.bn_add_file = u.ae(this.field.ul_new_tag_options, "li", {"class":"file", "html":"Downloadable file"});
+				this.bn_add_file.field = this.field;
+				this.bn_add_file.tag = this.tag;
+				u.ce(this.bn_add_file);
+				this.bn_add_file.inputStarted = function(event) {
+					u.e.kill(event);
+				}
+				this.bn_add_file.clicked = function(event) {
+					var tag = this.field.addFileTag();
+					u.ia(tag, this.tag);
+					this.tag.bn_add.cleanupOptions();
+					tag._input.focus();
+				}
+			}
+
+			else if(this.field.file_allowed.length) {
+				u.bug("some information is missing to support file upload:\nitem_id="+this.field.item_id+"\nfile_add_action="+this.field.file_add_action+"\nfile_delete_action="+this.field.file_delete_action);
+			}
+
+
+		}
+
+
+
+		// add remove button
+		tag.bn_remove = u.ae(tag.ul_tag_options, "li", {"class":"remove"});
+		tag.bn_remove.field = this;
+		tag.bn_remove.tag = tag;
+		u.ce(tag.bn_remove);
+		tag.bn_remove.clicked = function() {
+			this.field.deleteTag(this.tag);
+		}
+
+		// add CSS button
+		tag.bn_classname = u.ae(tag.ul_tag_options, "li", {"class":"classname"});
+		u.ae(tag.bn_classname, "span", {"html":"CSS"});
+		tag.bn_classname.field = this;
+		tag.bn_classname.tag = tag;
+		u.ce(tag.bn_classname);
+		tag.bn_classname.clicked = function() {
+			this.field.classnameTag(this.tag);
+		}
+
+		// Add classname mirror
+		if(tag._classname) {
+			if(!tag.mirror) {
+				tag.mirror = u.ae(tag, "span", {"class":"classname", "html":tag._classname});
+			}
+		}
+
+	}
 
 
 
@@ -1240,9 +1349,9 @@ u.f.textEditor = function(field) {
 	// CODE TAG
 
 	// add new code node
-	field.addCodeTag = function(type, value) {
+	field.addCodeTag = function(type, value, className) {
 
-		var tag = this.createTag(this.code_allowed, type);
+		var tag = this.createTag(this.code_allowed, type, className);
 
 		// text input
 		tag._input = u.ae(tag, "div", {"class":"text", "contentEditable":true});
@@ -1470,9 +1579,9 @@ u.f.textEditor = function(field) {
 
 
 	// add new list node
-	field.addListTag = function(type, value) {
+	field.addListTag = function(type, value, className) {
 
-		var tag = this.createTag(this.list_allowed, type);
+		var tag = this.createTag(this.list_allowed, type, className);
 		// tag.list = u.ae(tag, "div", {"class":"list"});
 
 		this.addListItem(tag, value);
@@ -1557,9 +1666,9 @@ u.f.textEditor = function(field) {
 
 
 	// add new text node
-	field.addTextTag = function(type, value) {
+	field.addTextTag = function(type, value, className) {
 
-		var tag = this.createTag(this.text_allowed, type);
+		var tag = this.createTag(this.text_allowed, type, className);
 
 		// text input
 		tag._input = u.ae(tag, "div", {"class":"text", "contentEditable":true});
@@ -2616,10 +2725,11 @@ u.f.textEditor = function(field) {
 				value = node.innerHTML.trim().replace(/(<br>|<br \/>)$/, "").replace(/\n\r|\n|\r/g, "<br>"); // .replace(/\<br[\/]?\>/g, "\n");
 
 				// add new text node to editor
-				tag = field.addTextTag(node.nodeName.toLowerCase(), value);
-				if(node.className) {
-					tag._classname = node.className;
-				}
+				tag = field.addTextTag(node.nodeName.toLowerCase(), value, node.className);
+				// u.bug("node.className", node.className, tag);
+				// if(node.className) {
+				// 	tag._classname = node.className;
+				// }
 				
 				field.activateInlineFormatting(tag._input, tag);
 
@@ -2630,10 +2740,10 @@ u.f.textEditor = function(field) {
 				//				u.bug("found code node:", node, field.code_allowed.join("|"));
 
 				// // add new text node to editor
-				tag = field.addCodeTag(node.nodeName.toLowerCase(), node.innerHTML);
-				if(node.className) {
-					tag._classname = node.className;
-				}
+				tag = field.addCodeTag(node.nodeName.toLowerCase(), node.innerHTML, node.className);
+				// if(node.className) {
+				// 	tag._classname = node.className;
+				// }
 
 				field.activateInlineFormatting(tag._input, tag);
 
@@ -2650,10 +2760,10 @@ u.f.textEditor = function(field) {
 				value = lis[0].innerHTML.trim().replace(/(<br>|<br \/>)$/, "").replace(/\n\r|\n|\r/g, "<br>");
 
 				// add new list node, and first li to editor
-				tag = field.addListTag(node.nodeName.toLowerCase(), value);
-				if(node.className) {
-					tag._classname = node.className;
-				}
+				tag = field.addListTag(node.nodeName.toLowerCase(), value, node.className);
+				// if(node.className) {
+				// 	tag._classname = node.className;
+				// }
 
 				// activate Inline
 				var li = u.qs("div.li", tag);
@@ -2751,6 +2861,7 @@ u.f.textEditor = function(field) {
 
 	field._editor.updateTargets();
 	field._editor.updateDraggables();
+	field._editor.detectSortableLayout();
 
 
 
@@ -2758,7 +2869,7 @@ u.f.textEditor = function(field) {
 	field.updateViewer();
 
 	// add extra editor actions
-	field.addOptions();
+	field.addRawHTMLButton();
 
 }
 
