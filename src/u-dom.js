@@ -164,9 +164,8 @@ Util.nextSibling = u.ns = function(node, _options) {
 	var exclude_nodes = exclude ? u.qsa(exclude, node.parentNode) : [];
 	var include_nodes = include ? u.qsa(include, node.parentNode) : [];
 
-	// get previousSibling using standard JS
+	// get nextSibling using standard JS
 	node = node.nextSibling;
-
 	// compare and keep iterating if not valid match
 	// ignore comment and text nodes
 	while(node && (node.nodeType == 3 || node.nodeType == 8 || (exclude && (u.inNodeList(node, exclude_nodes))) || (include && (!u.inNodeList(node, include_nodes))))) {

@@ -31,7 +31,7 @@ u.sortable = function(scope, _options) {
 				case "targets"				: scope._target_selector		= _options[_argument]; break;
 
 				case "layout"				: scope._layout					= _options[_argument]; break;
-				case "allow_clickpick"		: scope._allow_clickpick			= _options[_argument]; break;
+				case "allow_clickpick"		: scope._allow_clickpick		= _options[_argument]; break;
 				case "allow_nesting"		: scope._allow_nesting			= _options[_argument]; break;
 				case "sorting_disabled"		: scope._sorting_disabled		= _options[_argument]; break;
 				case "distance_to_pick"		: scope._distance_to_pick		= _options[_argument]; break;
@@ -789,20 +789,28 @@ u.sortable = function(scope, _options) {
 			for(i = 0; i < this.target_nodes.length; i++) {
 				target = this.target_nodes[i];
 
-				// if node-tops or node-bottoms are all the same
-				// - and more than one child (otherwise how to compare positions)
-				// - or only one element with display other than block (block indicates vertical list)
-				if((target._n_top || target._n_bottom) && (u.cn(target).length > 1 || target._n_display != "block")) {
-					target._layout = "horizontal";
-				}
-				// If node-left or node-right are all the same
-				else if(target._n_left || target._n_right) {
-					target._layout = "vertical";
-				}
-				// It's all different – must be multiline
-				else {
-					target._layout = "multiline";
-				}
+				// if(this._layout) {
+				// 	target._layout = this._layout;
+				// }
+				// else {
+
+					// if node-tops or node-bottoms are all the same
+					// - and more than one child (otherwise how to compare positions)
+					// - or only one element with display other than block (block indicates vertical list)
+					if((target._n_top || target._n_bottom) && (u.cn(target).length > 1 || target._n_display != "block")) {
+						target._layout = "horizontal";
+					}
+					// If node-left or node-right are all the same
+					else if(target._n_left || target._n_right) {
+						target._layout = "vertical";
+					}
+					// It's all different – must be multiline
+					else {
+						target._layout = "multiline";
+					}
+
+				// }
+
 
 				// u.bug("_layout:" + target._layout, target);
 			}
@@ -991,6 +999,7 @@ u.sortable = function(scope, _options) {
 
 				// Make sure target_nodes are always stored as Array
 				this.target_nodes = Array.prototype.slice.call(u.qsa(this._target_selector, this));
+				// u.bug("this.target_nodes", this.target_nodes, this._target_selector, this);
 
 				// include scope if it matches
 				if(u.elementMatches(this, this._target_selector)) {

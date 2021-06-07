@@ -545,7 +545,10 @@ u.f.textEditor = function(field) {
 			tag.parentNode.removeChild(tag);
 
 			// enable dragging of html-tags
-			u.sortable(this._editor, {"draggables":".tag", "targets":".editor"});
+			// u.sortable(this._editor, {"draggables":".tag", "targets":".editor"});
+			this._editor.updateTargets();
+			this._editor.updateDraggables();
+
 
 			// global update
 			this.update();
@@ -789,7 +792,9 @@ u.f.textEditor = function(field) {
 		u.e.addEvent(tag._input, "blur", tag.field._blurred_content);
 
 		// enable dragging of html-tags
-		u.sortable(this._editor, {"draggables":".tag", "targets":".editor"});
+		// u.sortable(this._editor, {"draggables":".tag", "targets":".editor"});
+		this._editor.updateTargets();
+		this._editor.updateDraggables();
 
 		return tag;
 		
@@ -903,7 +908,9 @@ u.f.textEditor = function(field) {
 		}
 
 		// enable dragging of html-tags
-		u.sortable(this._editor, {"draggables":".tag", "targets":".editor"});
+		// u.sortable(this._editor, {"draggables":".tag", "targets":".editor"});
+		this._editor.updateTargets();
+		this._editor.updateDraggables();
 
 		return tag;
 		
@@ -1111,7 +1118,9 @@ u.f.textEditor = function(field) {
 		}
 
 		// enable dragging of html-tags
-		u.sortable(this._editor, {"draggables":".tag", "targets":".editor"});
+		// u.sortable(this._editor, {"draggables":".tag", "targets":".editor"});
+		this._editor.updateTargets();
+		this._editor.updateDraggables();
 
 		return tag;
 	}
@@ -1280,7 +1289,9 @@ u.f.textEditor = function(field) {
 		}
 
 		// enable dragging of html-tags
-		u.sortable(this._editor, {"draggables":".tag", "targets":".editor"});
+		// u.sortable(this._editor, {"draggables":".tag", "targets":".editor"});
+		this._editor.updateTargets();
+		this._editor.updateDraggables();
 
 		return tag;
 	}
@@ -1382,7 +1393,9 @@ u.f.textEditor = function(field) {
 
 
 				// enable dragging of html-tags
-				u.sortable(this.field._editor, {"draggables":".tag", "targets":".editor"});
+				// u.sortable(this.field._editor, {"draggables":".tag", "targets":".editor"});
+				this.field._editor.updateTargets();
+				this.field._editor.updateDraggables();
 
 
 			}
@@ -1460,12 +1473,15 @@ u.f.textEditor = function(field) {
 	field.addListTag = function(type, value) {
 
 		var tag = this.createTag(this.list_allowed, type);
+		// tag.list = u.ae(tag, "div", {"class":"list"});
 
 		this.addListItem(tag, value);
 
 
 		// enable dragging of html-tags
-		u.sortable(this._editor, {"draggables":".tag", "targets":".editor"});
+		// u.sortable(this._editor, {"draggables":".tag", "targets":".editor"});
+		this._editor.updateTargets();
+		this._editor.updateDraggables();
 
 		return tag;
 	}
@@ -1474,8 +1490,16 @@ u.f.textEditor = function(field) {
 	field.addListItem = function(tag, value) {
 
 		var li = u.ae(tag, "div", {"class":"li"});
+		// var li = u.ae(tag.list, "div", {"class":"li"});
 		li.tag = tag;
 		li.field = this;
+		// li.list = tag.list;
+
+		// add drag handle
+		// li._drag = u.ae(tag, "div", {"class":"drag"});
+		// li._drag.field = this;
+		// li._drag.tag = li;
+
 
 		// text input
 		li._input = u.ae(li, "div", {"class":"text", "contentEditable":true});
@@ -1516,6 +1540,11 @@ u.f.textEditor = function(field) {
 
 		// add paste event handler
 		u.e.addEvent(li._input, "paste", this._pasted_content);
+
+		// enable dragging of html-tags
+		// u.sortable(li, {"draggables":".li", "targets":".editor,div.list"});
+		this._editor.updateTargets();
+		this._editor.updateDraggables();
 
 		return li;
 	}
@@ -1578,7 +1607,9 @@ u.f.textEditor = function(field) {
 		}
 
 		// enable dragging of html-tags
-		u.sortable(this._editor, {"draggables":".tag", "targets":".editor"});
+		// u.sortable(this._editor, {"draggables":".tag", "targets":".editor"});
+		this._editor.updateTargets();
+		this._editor.updateDraggables();
 
 		return tag;
 	}
@@ -1734,7 +1765,9 @@ u.f.textEditor = function(field) {
 
 
 				// enable dragging of html-tags
-				u.sortable(this.field._editor, {"draggables":".tag", "targets":".editor"});
+				// u.sortable(this.field._editor, {"draggables":".tag", "targets":".editor"});
+				this.field._editor.updateTargets();
+				this.field._editor.updateDraggables();
 
 				// set focus on prev element
 				if(prev) {
@@ -1889,7 +1922,9 @@ u.f.textEditor = function(field) {
 		u.e.kill(event);
 
 		var i, node;
+
 		var paste_content = event.clipboardData.getData("text/plain");
+		// u.bug("paste_content", paste_content);
 
 		// u.bug("paste_content:", paste_content, "yes");
 		// only do anything if paste content is not empty
@@ -1908,36 +1943,47 @@ u.f.textEditor = function(field) {
 			// add break tags for newlines
 			// split string by newlines
 			var paste_parts = paste_content.trim().split(/\n\r|\n|\r/g);
-//			alert(paste_parts.join(","))
-			var text_nodes = [];
-			for(i = 0; i < paste_parts.length; i++) {
-				text = paste_parts[i];
+			// if(paste_parts.length > 1) {
+			//
+			// 	console.log("formatting");
+			//
+			// }
+			// else {
+			//
+			// 	console.log("no formatting");
 
-				text_nodes.push(document.createTextNode(text));
+				var text_nodes = [];
+				for(i = 0; i < paste_parts.length; i++) {
+					text = paste_parts[i];
+					u.bug("text part", text);
+					text_nodes.push(document.createTextNode(text));
 
-				// only insert br-tag if there is more than one paste-part and not after the last one
-				if(paste_parts.length && i < paste_parts.length-1) {
-					text_nodes.push(document.createElement("br"));
+					// only insert br-tag if there is more than one paste-part and not after the last one
+					if(paste_parts.length && i < paste_parts.length-1) {
+						text_nodes.push(document.createElement("br"));
+					}
 				}
-			}
 
-			// loop through nodes in opposite order
-			// webkit collapses space after selection if I don't 
-			for(i = text_nodes.length-1; i >= 0; i--) {
-				node = text_nodes[i];
+				// loop through nodes in opposite order
+				// webkit collapses space after selection if I don't 
+				for(i = text_nodes.length-1; i >= 0; i--) {
+					node = text_nodes[i];
 
-				// get current range
-				var range = selection.getRangeAt(0);
-				// insert new node
-				range.insertNode(node);
+					// get current range
+					var range = selection.getRangeAt(0);
+					// insert new node
+					range.insertNode(node);
 
-				// add range to to selection
-				selection.addRange(range);
+					// add range to to selection
+					selection.addRange(range);
 
-			}
+				}
 
-			// now collapse selection to end, to have cursor after selection
-			selection.collapseToEnd();
+				// now collapse selection to end, to have cursor after selection
+				selection.collapseToEnd();
+
+			// }
+//			alert(paste_parts.join(","))
 
 		}
 	}
@@ -2510,6 +2556,11 @@ u.f.textEditor = function(field) {
 	field._viewer.innerHTML = field.input.val();
 
 
+	// enable dragging of html-tags
+	// u.sortable(field._editor, {"draggables":"div.tag,div.li", "targets":"div.editor,div.list", "layout": "vertical"});
+	u.sortable(field._editor, {"draggables":"div.tag", "targets":"div.editor"});
+
+
 	// TODO: Consider 
 	// if value of textarea is not HTML formatted
 	// change double linebreak to </p><p> (or fitting) once you are sure text is wrapped in node
@@ -2698,9 +2749,10 @@ u.f.textEditor = function(field) {
 
 	// TODO: put a note here about why I don't update the textarea right away - because I don't remember
 
+	field._editor.updateTargets();
+	field._editor.updateDraggables();
 
-	// enable dragging of html-tags
-	u.sortable(field._editor, {"draggables":".tag", "targets":".editor"});
+
 
 	// update viewer after indexing
 	field.updateViewer();
