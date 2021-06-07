@@ -200,12 +200,26 @@ u.sortable = function(scope, _options) {
 				// Get width to maintain correct width on drag (shadow element will be positioned absolute)
 				var _start_width = u.gcs(this, "width");
 
+
+				var _z_index;
+				if(this._z_index != "auto") {
+					_z_index = this._z_index + 1;
+				}
+				// Default z-index works with form elements (with automatic zIndexing on hovers)
+				else {
+					_z_index = 55;
+				}
+
+
 				// Get shadow node ready for takeoff
 				u.ass(this.scope._shadow_node, {
 					width: _start_width,
 					position: "absolute",
 					left: ((event_x - this.scope._shadow_node._rel_ox) - this._mouse_ox) + "px",
 					top: ((event_y - this.scope._shadow_node.rel_oy) - this._mouse_oy) + "px",
+					
+					// Make sure it is raised above the other elements
+					"z-index": _z_index,
 				});
 
 
@@ -333,6 +347,7 @@ u.sortable = function(scope, _options) {
 		// Event listener on window
 		scope._sortableDrop = function(event) {
 			// u.bug("_sortableDrop", this, event);
+
 
 			// Prevent event bubbling
 			u.e.kill(event);
@@ -784,11 +799,13 @@ u.sortable = function(scope, _options) {
 
 		// Detect layout based on draggable_nodes layout
 		scope.detectSortableLayout = function() {
+			// u.bug("detectSortableLayout", this);
 
 			var i, target;
 			for(i = 0; i < this.target_nodes.length; i++) {
 				target = this.target_nodes[i];
 
+				// u.bug("target", target, target._n_left);
 				// if(this._layout) {
 				// 	target._layout = this._layout;
 				// }
@@ -917,6 +934,8 @@ u.sortable = function(scope, _options) {
 				var _width = draggable_node.offsetWidth;
 				var _display = u.gcs(draggable_node, "display");
 
+				// u.bug("left", draggable_node, _left)
+
 				// Get values for layout autodetection
 				// Identify fixed properties – set to false if value is different from siblings
 				draggable_node.parentNode._n_top = draggable_node.parentNode._n_top === undefined ? _top : (draggable_node.parentNode._n_top == _top ? draggable_node.parentNode._n_top : false);
@@ -924,6 +943,10 @@ u.sortable = function(scope, _options) {
 				draggable_node.parentNode._n_bottom = draggable_node.parentNode._n_bottom === undefined ? _top + _height : (draggable_node.parentNode._n_bottom == _top + _height ? draggable_node.parentNode._n_bottom : false);
 				draggable_node.parentNode._n_right = draggable_node.parentNode._n_right === undefined ? _left + _width : (draggable_node.parentNode._n_right == _left + _width ? draggable_node.parentNode._n_right : false);
 				draggable_node.parentNode._n_display = draggable_node.parentNode._n_display === undefined ? _display : (draggable_node.parentNode._n_display == _display ? draggable_node.parentNode._n_display : false);
+
+
+				// Remeber current z-index
+				draggable_node._z_index = u.gcs(draggable_node, "zIndex");
 
 
 				// Special calculations for nested lists
@@ -992,6 +1015,7 @@ u.sortable = function(scope, _options) {
 
 		// Update collection of targets
 		scope.updateTargets = function() {
+			// u.bug("updateTargets", this);
 
 			// Get target nodes
 			// defined _target_selector to drop on, current ul or just all ul's in scope
