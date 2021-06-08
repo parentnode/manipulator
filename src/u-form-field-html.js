@@ -429,7 +429,8 @@ u.f.textEditor = function(field) {
 			this.update();
 
 			// save - new state (delete is permanent)
-			this._form.submit();
+			// Don't save, not always meaningful
+			// this._form.submit();
 
 		}
 
@@ -1751,7 +1752,7 @@ u.f.textEditor = function(field) {
 
 	// attached to tag._input node for text-tags and list-tags
 	field._changed_content = function(event) {
-		// u.bug("_changed_content:", this, "val:" + this.val() + ", key: " + event.keyCode);
+		// u.bug("_changed_content:", this, "val:" + this.val() + ", key: " + event.keyCode, event);
 
 		// do we have a valid window event listener
 		if(this._selection_event_id) {
@@ -1916,16 +1917,13 @@ u.f.textEditor = function(field) {
 		// hide existing options
 		this.field.hideSelectionOptions();
 
-
+		
 		// new selection
 		if(selection && !selection.isCollapsed) {
 
-			u.bug("selection:", this);
 			// check if
 			var node = selection.anchorNode;
-
-			// u.bug("node:", node);
-			
+		
 			// test u.nodeWithin for this purpose
 
 			while(node != this) {
@@ -1935,7 +1933,7 @@ u.f.textEditor = function(field) {
 				node = node.parentNode;
 
 				// u.bug("node:", node);
-				
+			
 			}
 
 			// Text has been selected, show selection options
@@ -1944,6 +1942,12 @@ u.f.textEditor = function(field) {
 			}
 
 		}
+		else {
+			this.field.hideSelectionOptions();
+		
+		}
+
+
 
 		// no selection
 		// check if cursor is inside injected node and show options if it is a link
@@ -2016,7 +2020,7 @@ u.f.textEditor = function(field) {
 		u.f.positionHint(this.field);
 
 		// hide options (will not be hidden if they are needed)
-		this.field.hideSelectionOptions();
+		// this.field.hideSelectionOptions();
 	}
 
 
@@ -2214,39 +2218,47 @@ u.f.textEditor = function(field) {
 
 	// show options for selection
 	field.showSelectionOptions = function(node, selection) {
+		// u.bug("showSelectionOptions", node, node.field);
+
+		// Hide any open options panel
+		this.hideSelectionOptions();
+		this.hideDeleteOrEditOptions();
 
 		// position of node
-		var x = u.absX(node);
-		var y = u.absY(node);
+		// var x = u.absX(node);
+		// var y = u.absY(node);
 
 		// create options div
-		this.selection_options = u.ae(document.body, "div", {"id":"selection_options"});
+		// this.selection_options = u.ae(document.body, "div", {"id":"selection_options"});
+		this.selection_options = u.ae(node.field._editor, "div", {"class":"selection_options"});
+		node.field._editor.insertBefore(this.selection_options, node.tag);
 
 		// position options pane according to field
-		u.as(this.selection_options, "top", y+"px");
-		u.as(this.selection_options, "left", (x + node.offsetWidth) +"px");
+		// u.as(this.selection_options, "top", y+"px");
+		// u.as(this.selection_options, "left", (x + node.offsetWidth) +"px");
 
 		var ul = u.ae(this.selection_options, "ul", {"class":"options"});
 
 		// link option
 		this.selection_options._link = u.ae(ul, "li", {"class":"link", "html":"Link"});
 		this.selection_options._link.field = this;
-		this.selection_options._link.tag = node;
+		this.selection_options._link.tag = node.tag;
 		this.selection_options._link.selection = selection;
 		u.ce(this.selection_options._link);
 		this.selection_options._link.inputStarted = function(event) {
 			u.e.kill(event);
-			this.field.selection_options.is_active = true;
+			// this.field.selection_options.is_active = true;
 		}
 		this.selection_options._link.clicked = function(event) {
 			u.e.kill(event);
 			this.field.addAnchorTag(this.selection, this.tag);
+			// this.field.editAnchorTag(this.selection, this.tag);
 		}
 
 		// EM option
 		this.selection_options._em = u.ae(ul, "li", {"class":"em", "html":"Italic"});
 		this.selection_options._em.field = this;
-		this.selection_options._em.tag = node;
+		this.selection_options._em.tag = node.tag;
 		this.selection_options._em.selection = selection;
 		u.ce(this.selection_options._em);
 		this.selection_options._em.inputStarted = function(event) {
@@ -2260,7 +2272,7 @@ u.f.textEditor = function(field) {
 		// STRONG option
 		this.selection_options._strong = u.ae(ul, "li", {"class":"strong", "html":"Bold"});
 		this.selection_options._strong.field = this;
-		this.selection_options._strong.tag = node;
+		this.selection_options._strong.tag = node.tag;
 		this.selection_options._strong.selection = selection;
 		u.ce(this.selection_options._strong);
 		this.selection_options._strong.inputStarted = function(event) {
@@ -2274,7 +2286,7 @@ u.f.textEditor = function(field) {
 		// SUP option
 		this.selection_options._sup = u.ae(ul, "li", {"class":"sup", "html":"Superscript"});
 		this.selection_options._sup.field = this;
-		this.selection_options._sup.tag = node;
+		this.selection_options._sup.tag = node.tag;
 		this.selection_options._sup.selection = selection;
 		u.ce(this.selection_options._sup);
 		this.selection_options._sup.inputStarted = function(event) {
@@ -2288,12 +2300,12 @@ u.f.textEditor = function(field) {
 		// SPAN option
 		this.selection_options._span = u.ae(ul, "li", {"class":"span", "html":"CSS class"});
 		this.selection_options._span.field = this;
-		this.selection_options._span.tag = node;
+		this.selection_options._span.tag = node.tag;
 		this.selection_options._span.selection = selection;
 		u.ce(this.selection_options._span);
 		this.selection_options._span.inputStarted = function(event) {
 			u.e.kill(event);
-			this.field.selection_options.is_active = true;
+			// this.field.selection_options.is_active = true;
 		}
 		this.selection_options._span.clicked = function(event) {
 			u.e.kill(event);
@@ -2302,11 +2314,26 @@ u.f.textEditor = function(field) {
 
 	}
 
+	field.hideDeleteOrEditOptions = function(node) {
+		
+		var options = u.qsa(".delete_selection, .edit_selection");
+		var i, option;
+		for(i = 0; i < options.length; i++) {
+			option = options[i];
+			
+			if(!node || option.node !== node) {
+				option.node.out();
+			}
+		}
+	}
 
 	// add mouseover delete option to injected tags
 	field.deleteOrEditOption = function(node) {
 
 		node.over = function(event) {
+
+			// Remove over
+			this.field.hideDeleteOrEditOptions(this);
 
 			if(!this.bn_delete) {
 
@@ -2383,7 +2410,7 @@ u.f.textEditor = function(field) {
 			}
 		}
 
-		u.e.hover(node, {"delay":1000});
+		u.e.hover(node, {"delay":500});
 	}
 
 
@@ -2398,7 +2425,15 @@ u.f.textEditor = function(field) {
 
 			node.field = input.field;
 			node.tag = tag;
-			this.deleteOrEditOption(node);
+
+			// Remove empty nodes – keep HTML clean
+			if(!u.text(node)) {
+				node.parentNode.removeChild(node);
+			}
+			// Add editing options
+			else {
+				this.deleteOrEditOption(node);
+			}
 		}
 	}
 
@@ -2424,10 +2459,12 @@ u.f.textEditor = function(field) {
 			range.surroundContents(a);
 			selection.removeAllRanges();
 
-			this.anchorOptions(a);
+			// this.anchorOptions(a);
+			this.editAnchorTag(a);
 			this.deleteOrEditOption(a);
 		}
 		catch(exception) {
+			u.bug("exception", exception)
 			selection.removeAllRanges();
 			this.hideSelectionOptions();
 
@@ -2439,7 +2476,7 @@ u.f.textEditor = function(field) {
 	field.anchorOptions = function(a) {
 
 		var form = u.f.addForm(this.selection_options, {"class":"labelstyle:inject"});
-		u.ae(form, "h3", {"html":"Link options"});
+		// u.ae(form, "h3", {"html":"Link options"});
 		var fieldset = u.f.addFieldset(form);
 		var input_url = u.f.addField(fieldset, {
 			"label":"url", 
@@ -2489,18 +2526,24 @@ u.f.textEditor = function(field) {
 	// edit span tag
 	field.editAnchorTag = function(a) {
 
+		// this.selection_options.is_active = false;
 		this.hideSelectionOptions();
+		this.hideDeleteOrEditOptions();
 
 		// position of node
-		var x = u.absX(a.tag);
-		var y = u.absY(a.tag);
+		// var x = u.absX(a.tag);
+		// var y = u.absY(a.tag);
 
 		// create options div
-		this.selection_options = u.ae(document.body, "div", {"id":"selection_options"});
+		// u.bug(a, a.field, a.tag);
+		// this.selection_options = u.ae(document.body, "div", {"id":"selection_options"});
+		this.selection_options = u.ae(a.field._editor, "div", {"class":"selection_options"});
+		a.field._editor.insertBefore(this.selection_options, a.tag);
 
+		// return;
 		// position options pane according to field
-		u.as(this.selection_options, "top", y+"px");
-		u.as(this.selection_options, "left", (x + a.tag.offsetWidth) +"px");
+		// u.as(this.selection_options, "top", y+"px");
+		// u.as(this.selection_options, "left", (x + a.tag.offsetWidth) +"px");
 
 		this.selection_options.is_active = false;
 
@@ -2594,7 +2637,8 @@ u.f.textEditor = function(field) {
 			range.surroundContents(span);
 			selection.removeAllRanges();
 
-			this.spanOptions(span);
+			// this.spanOptions(span);
+			this.editSpanTag(span);
 			this.deleteOrEditOption(span);
 		}
 		catch(exception) {
@@ -2609,19 +2653,24 @@ u.f.textEditor = function(field) {
 	field.editSpanTag = function(span) {
 
 		this.hideSelectionOptions();
+		this.hideDeleteOrEditOptions();
 
 		// position of node
-		var x = u.absX(span.tag);
-		var y = u.absY(span.tag);
+		// var x = u.absX(span.tag);
+		// var y = u.absY(span.tag);
 
 		// create options div
-		this.selection_options = u.ae(document.body, "div", {"id":"selection_options"});
+		// this.selection_options = u.ae(document.body, "div", {"id":"selection_options"});
+
+		this.selection_options = u.ae(span.field._editor, "div", {"class":"selection_options"});
+		span.field._editor.insertBefore(this.selection_options, span.tag);
+
 
 		// position options pane according to field
-		u.as(this.selection_options, "top", y+"px");
-		u.as(this.selection_options, "left", (x + span.tag.offsetWidth) +"px");
+		// u.as(this.selection_options, "top", y+"px");
+		// u.as(this.selection_options, "left", (x + span.tag.offsetWidth) +"px");
 
-		this.selection_options.is_active = false;
+		// this.selection_options.is_active = false;
 
 		this.spanOptions(span);
 	}
@@ -2630,9 +2679,9 @@ u.f.textEditor = function(field) {
 	field.spanOptions = function(span) {
 
 		var form = u.f.addForm(this.selection_options, {"class":"labelstyle:inject"});
-		u.ae(form, "h3", {"html":"CSS class"});
+		// u.ae(form, "h3", {"html":"CSS class"});
 		var fieldset = u.f.addFieldset(form);
-		var input_classname = u.f.addField(fieldset, {"label":"classname", "name":"classname", "value":span.className, "error_message":""});
+		var input_classname = u.f.addField(fieldset, {"label":"CSS class", "name":"classname", "value":span.className, "error_message":""});
 
 		var bn_save = u.f.addAction(form, {"value":"Save class", "class":"button"});
 		u.f.init(form);
@@ -2867,6 +2916,7 @@ u.f.textEditor = function(field) {
 
 	// update viewer after indexing
 	field.updateViewer();
+	field.updateContent();
 
 	// add extra editor actions
 	field.addRawHTMLButton();
