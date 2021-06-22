@@ -509,7 +509,7 @@ Util.Events = u.e = new function() {
 		// u.bug("_held:", this);
 
 		// track event
-		this.e_hold_options.event = event;
+		this.e_hold_options.event = this.e_hold_options.event || "hold";
 		u.stats.event(this, this.e_hold_options);
 
 		//remove event up/end
@@ -541,7 +541,7 @@ Util.Events = u.e = new function() {
 		// (holding for 750ms or clicking twice withing 400ms)
 		if(this.e_click_options) {
 			// track event
-			this.e_click_options.event = event;
+			this.e_click_options.event = this.e_click_options.event || "click";
 			u.stats.event(this, this.e_click_options);
 		}
 
@@ -577,7 +577,7 @@ Util.Events = u.e = new function() {
 		// (holding for 750ms or clicking twice withing 400ms)
 		if(this.e_rightclick_options) {
 			// track event
-			this.e_rightclick_options.event = event;
+			this.e_rightclick_options.event = this.e_rightclick_options.event || "rightclick";
 			u.stats.event(this, this.e_rightclick_options);
 		}
 
@@ -610,7 +610,7 @@ Util.Events = u.e = new function() {
 		if(u.t.valid(this.t_clicked) && event) {
 
 			// track event
-			this.e_dblclick_options.event = event;
+			this.e_dblclick_options.event = this.e_dblclick_options.event || "doubleclick";
 			u.stats.event(this, this.e_dblclick_options);
 
 			// remove up/end event

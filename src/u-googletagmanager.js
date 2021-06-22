@@ -1,29 +1,27 @@
-u.includeGoogleAnalytics = function() {
-	if(typeof(ga) !== "function") {
+u.includeGoogleTagManager = function() {
+	if(typeof(gtag) !== "function") {
 
-		u.bug("includeGoogleAnalytics");
+		window.dataLayer = window.dataLayer || [];
+		dataLayer.push({'gtm.start': new Date().getTime()});
+		dataLayer.push({'event': 'gtm.js'});
 
-	    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-	    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-	    m=s.getElementsByTagName(o)[0];a.async=1;a.defer=true;a.src=g;m.parentNode.insertBefore(a,m)
-	    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+		u.ae(document.head, "script", {src: "https://www.googletagmanager.com/gtm.js?id="+u.gtm_account, async: true})
 
-		// track page view for initial load
-	    ga('create', u.ga_account, u.ga_domain);
-	    ga('send', 'pageview');
-		
+		// u.bug("includeGoogleTagManager");
 
 		u.stats = new function() {
 
 			// track regurlar page view
 			this.pageView = function(url) {
-				ga('send', 'pageview', url);
+				window.dataLayer.push({
+					'event': 'pageview'
+				});
 			}
 
 
 			// track event
 			this.event = function(node, _options) {
-
+				u.bug("options", _options);
 				// default values
 				var event = false;
 				var eventCategory = "Uncategorized";
@@ -59,21 +57,27 @@ u.includeGoogleAnalytics = function() {
 				else if(!eventAction && event) {
 					eventAction = event;
 				}
- 				else if(!eventAction) {
+				else if(!eventAction) {
 					eventAction = "Unknown";
 				}
 
 				// Set missing eventLabel (if possible)
-				if(!eventLabel && event && event.currentTarget && event.currentTarget.url) {
-					eventLabel = event.currentTarget.url;
-				}
-				else if(!eventLabel) {
+				// if(!eventLabel && event && event.currentTarget && event.currentTarget.url) {
+				// 	eventLabel = event.currentTarget.url;
+				// }
+				// else
+				if(!eventLabel) {
 					eventLabel = this.nodeSnippet(node);
+				}
+
+				if(!event) {
+					event = eventLabel + " " + eventAction;
 				}
 
 
 				//ga('send', 'event', [eventCategory], [eventAction], [eventLabel], [eventValue], [fieldsObject]);
-				ga('send', 'event', {
+				window.dataLayer.push({
+					"event": event,
 					"eventCategory": eventCategory, 
 					"eventAction": eventAction,
 					"eventLabel": eventLabel,
@@ -84,18 +88,7 @@ u.includeGoogleAnalytics = function() {
 
 			}
 
-			// LEGACY
-			// this.customVar = function(slot, name, value, scope) {
-			//
-			//
-			// 	// _gaq.push(['_setCustomVar',
-			// 	//       slot,		// This custom var is set to slot #1.  Required parameter.
-			// 	//       name,		// The name of the custom variable.  Required parameter.
-			// 	//       value,	// The value of the custom variable.  Required parameter.
-			// 	//       scope		// Sets the scope to visitor-level.  Optional parameter.
-			// 	//  ]);
-			//
-			// }
+
 
 			// Simple label generator
 			this.nodeSnippet = function(node) {
@@ -124,7 +117,7 @@ u.includeGoogleAnalytics = function() {
 
 }
 
-if(u.ga_account && !u.cookies_disallowed) {
-	// u.bug("includeGoogleAnalytics allowed");
-	u.includeGoogleAnalytics();
+if(u.gtm_account && !u.cookies_disallowed) {
+	u.bug("includeGoogleTagManager allowed");
+	u.includeGoogleTagManager();
 }
