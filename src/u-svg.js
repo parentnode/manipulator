@@ -90,6 +90,9 @@ Util.svg = function(svg_object) {
 	if(svg_object.id) {
 		svg.setAttributeNS(null, "id", svg_object.id);
 	}
+	if(svg_object.viewBox) {
+		svg.setAttributeNS(null, "viewBox", svg_object.viewBox);
+	}
 	if(svg_object.node) {
 		svg.node = svg_object.node;
 	}
