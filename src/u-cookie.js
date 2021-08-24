@@ -6,6 +6,7 @@ Util.saveCookie = function(name, value, _options) {
 
 	var expires = true;
 	var path = false;
+	var samesite = "lax";
 
 	// force oldschool cookie
 	var force = false;
@@ -18,6 +19,7 @@ Util.saveCookie = function(name, value, _options) {
 			switch(_argument) {
 				case "expires"	: expires	= _options[_argument]; break;
 				case "path"		: path		= _options[_argument]; break;
+				case "samesite"	: samesite	= _options[_argument]; break;
 
 				case "force"	: force		= _options[_argument]; break;
 			}
@@ -57,7 +59,10 @@ Util.saveCookie = function(name, value, _options) {
 		path = "";
 	}
 
-	document.cookie = encodeURIComponent(name) + "=" + encodeURIComponent(value) + path + expires;
+	// Create samesite value
+	samesite = ";samesite="+samesite;
+
+	document.cookie = encodeURIComponent(name) + "=" + encodeURIComponent(value) + path + expires + samesite;
 }
 
 // Get cookie
