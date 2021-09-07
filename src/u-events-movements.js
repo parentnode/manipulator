@@ -41,8 +41,8 @@ u.e.resetDragEvents = function(node) {
 	//	this.removeEvent(node, "mouseout", this._drop);
 	//	this.removeEvent(node, "mouseout", this._drop_mouse);
 
-	this.removeEvent(node, "mouseup", this._cancelPick);
-	this.removeEvent(node, "touchend", this._cancelPick);
+	this.removeWindowEvent(node, "mouseup", this._cancelPick);
+	this.removeWindowEvent(node, "touchend", this._cancelPick);
 
 
 	this.removeEvent(node, "mouseout", this._dropOut);
