@@ -58,6 +58,9 @@ u.f.updateDefaultState = function(iN) {
 
 		// leave default state
 		u.rc(iN, "default");
+		if(obj(iN.field.virtual_input)) {
+			u.rc(iN.field.virtual_input, "default");
+		}
 
 		// remove default value if field does not have value
 		if(iN.val() === "") {
@@ -73,6 +76,9 @@ u.f.updateDefaultState = function(iN) {
 
 			// add class to indicate default value
 			u.ac(iN, "default");
+			if(obj(iN.field.virtual_input)) {
+				u.ac(iN.field.virtual_input, "default");
+			}
 			iN.val(iN.default_value);
 
 		}
