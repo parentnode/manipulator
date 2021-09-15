@@ -51,7 +51,7 @@ Util.History = u.h = new function() {
 			recipient = this.callbacks[i];
 
 			if(fun(recipient.node[recipient.callback])) {
-//				u.bug("callback: " + u.nodeId(recipient.node) + ", " + recipient.callback);
+				// u.bug("callback: ", recipient.node, recipient.callback);
 				recipient.node[recipient.callback](url);
 			}
 		}
@@ -136,7 +136,7 @@ Util.History = u.h = new function() {
 
 		}
 
-//		u.bug("add urlchange callback: " + u.nodeId(node) + ", callback:" + callback_urlchange)
+//		u.bug("add urlchange callback: ", node, " callback:", callback_urlchange)
 
 		// add node and callback to callback stack
 		this.callbacks.push({"node":node, "callback":callback_urlchange});
@@ -149,9 +149,7 @@ Util.History = u.h = new function() {
 	this._urlChanged = function(event) {
 
 		var url = u.h.getCleanUrl(location.href);
-		// u.bug("popstate changed:" + url + ", " + event.state)
-		// u.xInObject(event);
-		// u.xInObject(event.state);
+		// u.bug("popstate changed:" + url + ", " + event.state, event)
 
 		// Broken Safari triggers popstate event on load
 		// 

@@ -377,8 +377,8 @@ Util.validateResponse = function(HTTPRequest){
 
 		// console.log(HTTPRequest.responseText);
 
-		// u.bug("response:" + HTTPRequest + ":" + u.nodeId(HTTPRequest.node) + ":" + HTTPRequest.status)
-		// u.bug("status:" + HTTPRequest.status + ":" + u.nodeId(HTTPRequest.node));
+		// u.bug("response:" + HTTPRequest, HTTPRequest.node, HTTPRequest.status)
+		// u.bug("status:" + HTTPRequest.status, HTTPRequest.node);
 		// u.bug("responseText:" + HTTPRequest.responseText);
 
 		try {

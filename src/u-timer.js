@@ -7,7 +7,7 @@ Util.Timer = u.t = new function() {
 
 	// Add new timer to object
 	this.setTimer = function(node, action, timeout, param) {
-//		u.bug("setTimer:"+u.nodeId(node)+", "+typeof(action) +", "+timeout + ", " + typeof(timeout))
+		// u.bug("setTimer:", node, typeof(action), timeout, typeof(timeout));
 
 		var id = this._timers.length;
 		param = param ? param : {"target":node, "type":"timeout"};
@@ -18,8 +18,7 @@ Util.Timer = u.t = new function() {
 
 	// Reset timer
 	this.resetTimer = function(id) {
-//		u.bug("resetTimer:" + id);
-//		u.xInObject(this._timers[id]);
+		// u.bug("resetTimer:", id, this._timers[id]);
 
 		if(this._timers[id]) {
 			clearTimeout(this._timers[id]._t);
@@ -29,7 +28,7 @@ Util.Timer = u.t = new function() {
 
 	// execute added function on onTimeout
 	this._executeTimer = function(id) {
-//		u.bug("executeTimer:" + typeof(this._timers[id]._a) + ", " + this._timers[id]._n)
+		// u.bug("executeTimer:", id, this._timers[id]);
 
 		var timer = this._timers[id];
 

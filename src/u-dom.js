@@ -97,7 +97,7 @@ Util.parentNode = u.pn = function(node, _options) {
 // excludes nodes matched by exclude=css selector
 // includes nodes matched by include=css selector
 Util.previousSibling = u.ps = function(node, _options) {
-//	u.bug("ps:" + u.nodeId(node));
+	// u.bug("ps:", node);
 
 	var exclude = "";
 	var include = "";
@@ -139,7 +139,7 @@ Util.previousSibling = u.ps = function(node, _options) {
 // excludes nodes matched by exclude=css selector
 // includes nodes matched by include=css selector
 Util.nextSibling = u.ns = function(node, _options) {
-//	u.bug("ns:" + u.nodeId(node));
+	// u.bug("ns:", node);
 
 	var exclude = "";
 	var include = "";
@@ -403,7 +403,7 @@ Util.clickableElement = u.ce = function(node, _options) {
 
 // Get JSS class value
 Util.classVar = u.cv = function(node, var_name) {
-//	u.bug(u.nodeId(node) + ":" + node.className);
+	// u.bug(node, var_name, node.className);
 	try {
 		var regexp = new RegExp("(\^| )" + var_name + ":[?=\\w/\\#~:.,?+=?&%@!\\-]*");
 		var match = node.className.match(regexp);
