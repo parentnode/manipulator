@@ -10,7 +10,7 @@ Util.Timer = u.t = new function() {
 		// u.bug("setTimer:", node, typeof(action), timeout, typeof(timeout));
 
 		var id = this._timers.length;
-		param = param ? param : {"target":node, "type":"timeout"};
+		param = param != undefined ? param : {"target":node, "type":"timeout"};
 
 		this._timers[id] = {"_a":action, "_n":node, "_p":param, "_t":setTimeout("u.t._executeTimer("+id+")", timeout)};
 		return id;
