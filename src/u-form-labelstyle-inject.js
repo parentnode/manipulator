@@ -1,6 +1,6 @@
 
 Util.Form.customLabelStyle["inject"] = function(iN) {
-	// u.bug("customLabelStyle:inject", iN);
+	// u.bug("customLabelStyle:inject", iN, iN.type);
 
 	// some inputs cannot have labels injected
 	// textarea has no type
@@ -12,6 +12,7 @@ Util.Form.customLabelStyle["inject"] = function(iN) {
 		// add default handlers to focus and blur events
 		u.e.addEvent(iN, "focus", u.f._changed_state);
 		u.e.addEvent(iN, "blur", u.f._changed_state);
+		u.e.addEvent(iN, "change", u.f._changed_state);
 
 
 		// Create psydo label for inputs that can't easily show label value
@@ -58,7 +59,7 @@ u.f.updateDefaultState = function(iN) {
 
 		// leave default state
 		u.rc(iN, "default");
-		if(obj(iN.field.virtual_input)) {
+		if(iN.field.virtual_input) {
 			u.rc(iN.field.virtual_input, "default");
 		}
 
