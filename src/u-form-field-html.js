@@ -677,7 +677,7 @@ u.f.textEditor = function(field) {
 					delete this.field.ul_new_tag_options;
 
 					if(this.start_event_id) {
-						u.e.removeWindowStartEvent(this, this.start_event_id);
+						u.e.removeWindowStartEvent(this.start_event_id);
 						delete this.start_event_id;
 					}
 
@@ -1433,7 +1433,7 @@ u.f.textEditor = function(field) {
 
 		// do we have a valid window event listener
 		if(this._selection_event_id) {
-			u.e.removeWindowEndEvent(this, this._selection_event_id);
+			u.e.removeWindowEndEvent(this._selection_event_id);
 			delete this._selection_event_id;
 		}
 
@@ -1756,7 +1756,7 @@ u.f.textEditor = function(field) {
 
 		// do we have a valid window event listener
 		if(this._selection_event_id) {
-			u.e.removeWindowEndEvent(this, this._selection_event_id);
+			u.e.removeWindowEndEvent(this._selection_event_id);
 			delete this._selection_event_id;
 		}
 

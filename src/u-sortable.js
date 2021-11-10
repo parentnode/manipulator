@@ -628,11 +628,11 @@ u.sortable = function(scope, _options) {
 			u.e.removeOverEvent(node, this._sortableOver);
 
 			if(node._event_move_id) {
-				u.e.removeWindowMoveEvent(node, node._event_move_id);
+				u.e.removeWindowMoveEvent(node._event_move_id);
 				delete node._event_move_id;
 			}
 			if(node._event_end_id) {
-				u.e.removeWindowEndEvent(node, node._event_end_id);
+				u.e.removeWindowEndEvent(node._event_end_id);
 				delete node._event_end_id;
 			}
 

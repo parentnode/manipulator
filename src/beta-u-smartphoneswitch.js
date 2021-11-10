@@ -68,7 +68,7 @@ u.smartphoneSwitch = new function() {
 
 			u.e.click(bn_hide);
 			bn_hide.clicked = function() {
-				u.e.removeWindowEvent(u.smartphoneSwitch, "resize", u.smartphoneSwitch.event_id);
+				u.e.removeWindowEvent(u.smartphoneSwitch.event_id);
 				u.smartphoneSwitch.switchOff();
 			}
 
