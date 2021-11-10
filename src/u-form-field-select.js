@@ -1,4 +1,5 @@
 Util.Form.customInit["select"] = function(field) {
+	// u.bug("init select", field);
 
 	// Register field type
 	field.type = "select";
@@ -62,13 +63,41 @@ Util.Form.customInit["select"] = function(field) {
 	var virtual_input_wrapper = u.ae(field, "div", {"class": "virtual"});
 	field.insertBefore(virtual_input_wrapper, field.input);
 
-	field.virtual_input = u.ae(virtual_input_wrapper, "div", {"class": "input", "tabindex": 1});
+	field.virtual_input = u.ae(virtual_input_wrapper, "div", {"class": "input"});
 	// map relevant references
 	field.virtual_input._form = field._form;
 	field.virtual_input.field = field;
 
 	// inject option selector button
 	field.bn_select = u.ae(virtual_input_wrapper, "div", {"class": "button"});
+
+	// inject arrow
+	field.bn_select.arrow = u.svg({
+		"name":"arrow",
+		"node":field.bn_select,
+		"class":"arrow",
+		"width":30,
+		"height":30,
+		"viewBox": "0 0 30 30",
+		"shapes":[
+			{
+				"type": "line",
+				"x1": 8,
+				"y1": 12,
+				"x2": 15,
+				"y2": 19
+			},
+			{
+				"type": "line",
+				"x1": 22,
+				"y1": 12,
+				"x2": 15,
+				"y2": 19
+			}
+		]
+	});
+
+
 	// map relevant references
 	field.bn_select._form = field._form;
 	field.bn_select.field = field;
@@ -100,8 +129,10 @@ Util.Form.customInit["select"] = function(field) {
 				}
 			}
 
-			u.f._updated.call(this.field.input, {"type":"update", "target":this.field.input});
-			u.f._changed.call(this.field.input, {"type":"update", "target":this.field.input});
+			// this.field.input.dispatchEvent(new Event("update"));
+			this.field.input.dispatchEvent(new Event("change"));
+			// u.f._updated.call(this.field.input, {"type":"update", "target":this.field.input});
+			// u.f._changed.call(this.field.input, {"type":"change", "target":this.field.input});
 
 			return;
 
@@ -120,6 +151,10 @@ Util.Form.customInit["select"] = function(field) {
 	// map special val() function to dropdown field
 	field.virtual_input.val = field._value_virtual;
 
+	if(u.e.event_support != "touch") {
+		u.e.addEvent(field.virtual_input, "mouseenter", u.f._mouseenter);
+		u.e.addEvent(field.virtual_input, "mouseleave", u.f._mouseleave);
+	}
 
 
 	// change/update events
@@ -128,49 +163,58 @@ Util.Form.customInit["select"] = function(field) {
 	u.e.addEvent(field.input, "change", u.f._changed);
 
 
+	field.windowClick = function() {
+		// Hide options if shown
+		// u.bug("windowClick", this);
+		
+		this.optionsHidden = function() {
+			this.virtual_input.blur();
+			delete this.optionsHidden;
 
+		}
+		this.hideOptions();
+
+	}
 	// internal focus handler - attatched to inputs
 	field.virtual_input._focus = function(event) {
-		// u.bug("this._focus:", this);
+		u.bug("this._focus:", this);
 
 		if(!this.is_focused) {
-			this.field.blur_event_id = u.e.addWindowStartEvent(this, this._blur);
+			this.blur_event_id = u.e.addWindowEndEvent(this.field, this.field.windowClick);
+
+
+			this.field.is_focused = true;
+			this.is_focused = true;
+
+			u.ac(this.field, "focus");
+			u.ac(this, "focus");
+
+			// make sure field goes all the way in front - hint/error must be seen
+			u.as(this.field, "zIndex", this._form._focus_z_index);
+
+			// is help element available, then position it appropriately to input
+			u.f.positionHint(this.field);
+
+			// callbacks
+			// does input have callback
+			if(this.field.input && typeof(this.field.input.focused) == "function") {
+				this.field.input.focused(this);
+			}
+
+			// does form have callback declared
+			if(typeof(this._form.focused) == "function") {
+				this._form.focused(this);
+			}
 		}
 
-		this.field.is_focused = true;
-		this.is_focused = true;
-
-		u.ac(this.field, "focus");
-		u.ac(this, "focus");
-
-		// make sure field goes all the way in front - hint/error must be seen
-		u.as(this.field, "zIndex", this._form._focus_z_index);
-
-		// Show options
-		u.ass(this.field.select_options, {
-			transition: "all 0.3s ease-in-out",
-			height: this.field.select_options_list.offsetHeight + "px"
-		});
-
-
-		// callbacks
-		// does input have callback
-		if(this.field.input && typeof(this.field.input.focused) == "function") {
-			this.field.input.focused(this);
-		}
-
-		// does form have callback declared
-		if(typeof(this._form.focused) == "function") {
-			this._form.focused(this);
-		}
 	}
 
 	// internal blur handler - attatched to inputs
-	field.virtual_input._blur = function(event) {
-		// u.bug("this._blur:", this, event.target, this.field.blur_event_id);
+	field.virtual_input.blur = function() {
+		u.bug("this.blur:", this, this.blur_event_id);
 
-		u.e.removeWindowStartEvent(this, this.field.blur_event_id);
 
+		u.e.removeWindowEndEvent(this.blur_event_id);
 
 		u.rc(this.field, "focus");
 		u.rc(this, "focus");
@@ -185,22 +229,14 @@ Util.Form.customInit["select"] = function(field) {
 		// field has been interacted with (content can now be validated)
 		this.field.input._used = true;
 
-		// Show options
-		this.field.select_options.transitioned = function() {
-			this.field.is_focused = false;
-			this.field.virtual_input.is_focused = false;
-
-			// drop back to base z-index
-			u.as(this.field, "zIndex", this.field._base_z_index);
-
-		}
-		u.ass(this.field.select_options, {
-			transition: "all 0.2s ease-in-out",
-			height: "0px"
-		});
-
 		// validate on blur
 		u.f.validate(this.field.input);
+
+		this.is_focused = false;
+		this.field.is_focused = false;
+
+		// drop back to base z-index
+		u.as(this.field, "zIndex", this.field._base_z_index);
 
 
 		// callbacks
@@ -217,54 +253,59 @@ Util.Form.customInit["select"] = function(field) {
 
 	// add focus and blur event handlers to virtual input
 	u.e.addEvent(field.virtual_input, "focus", field.virtual_input._focus);
-	u.e.addEvent(field.virtual_input, "blur", field.virtual_input._blur);
 
 
-
-	// handle all keyevent on virtual taxonomy input
 	field.virtual_input.preKeyEvent = function (event) {
-		// u.bug("key:" + event.keyCode);
+		// u.bug("preKeyEvent key:" + event.keyCode);
 
 		// [ESC] - clean up virtual dropdown input and re-activate cursor
 		if (event.keyCode == 27) {
 			u.e.kill(event);
-			this.blur();
+			this.field.hideOptions();
+			// this.blur();
 		}
 		// [ENTER] - select highlighted_option if it extist - otherwise ignore
 		else if (event.keyCode == 13) {
-
 			u.e.kill(event);
 
-			// if tag is selected in tags list
-			if (this.field.highlighted_option) {
 
+			if (this.field.highlighted_option && this.field.is_expanded) {
 				this.field.selectOption(this.field.highlighted_option);
-				this.blur();
+			}
+			// if tag is selected in tags list
+			else if(this.field.is_expanded) {
+				this.field.hideOptions();
+			}
+			else if(!this.field.is_expanded) {
+				this._form.submit();
 			}
 
 		}
 		// [TAB] - select highlighted_option if it extist - otherwise it is just a space
-		// I shiftKey is pressed it is just a backwards tab
-		else if (event.keyCode == 9 && !event.shiftKey) {
+		else if (event.keyCode == 9) {
 
 			// if tag is selected in tags list
 			if (this.field.highlighted_option) {
-				u.e.kill(event);
-
 				this.field.selectOption(this.field.highlighted_option);
-				this.blur();
 			}
+			else {
+				this.field.hideOptions();
+			}
+			this.blur();
 
 		}
 		// [SPACE] - select highlighted_option if it extist - otherwise it is just a space
 		else if (event.keyCode == 32) {
 
+			if (!this.field.is_expanded) {
+				this.field.showOptions();
+			}
 			// if tag is selected in tags list
-			if (this.field.highlighted_option) {
-				u.e.kill(event);
-
+			else if (this.field.highlighted_option) {
 				this.field.selectOption(this.field.highlighted_option);
-				this.blur();
+			}
+			else {
+				this.field.hideOptions();
 			}
 
 		}
@@ -272,20 +313,86 @@ Util.Form.customInit["select"] = function(field) {
 		else if (event.keyCode == 38) {
 			u.e.kill(event);
 
-			this.field.selectPreviousOption();
+			if (!this.field.is_expanded) {
+				this.field.showOptions();
+			}
+			else {
+				this.field.highlightPreviousOption();
+			}
 		}
 		// [ARROW DOWN] - look for next option
 		else if (event.keyCode == 40) {
 			u.e.kill(event);
 
-			this.field.selectNextOption();
+			if (!this.field.is_expanded) {
+				this.field.showOptions();
+			}
+			else {
+				this.field.highlightNextOption();
+			}
 		}
 	}
 	u.e.addEvent(field.virtual_input, "keydown", field.virtual_input.preKeyEvent);
 
 
+	// Toggle options view when clicking on input area
+	u.ce(field.virtual_input);
+	field.virtual_input.clicked = function(event) {
+		// u.bug("field.virtual_input.clicked", this, event);
+
+		u.e.kill(event);
+
+		if(this.field.is_expanded) {
+			this.field.hideOptions();
+		}
+		else {
+			this.field.showOptions();
+		}
+	}
+
+	// u.f.inputOnEnter(field.virtual_input);
+
+	// Show options
+	field.showOptions = function() {
+		// u.bug("showOptions:" + field);
+
+		if(!this.is_expanded) {
+			// Show options
+			u.ass(this.select_options, {
+				transition: "all 0.3s ease-in-out",
+				height: this.select_options_list.offsetHeight + "px"
+			});
+
+			this.is_expanded = true;
+		}
+
+	}
+
+	// Hide options
+	field.hideOptions = function() {
+
+		if(this.is_expanded) {
+			this.select_options.transitioned = function() {
+				if(fun(this.field.optionsHidden)) {
+					this.field.optionsHidden();
+				}
+			}
+
+			u.ass(this.select_options, {
+				transition: "all 0.2s ease-in-out",
+				height: "0px"
+			});
+
+			this.is_expanded = false;
+		}
+		else if(fun(this.optionsHidden)) {
+			this.optionsHidden();
+		}
+
+	}
+
 	// find next available option
-	field.selectNextOption = function() {
+	field.highlightNextOption = function() {
 		// u.bug("next option:" + field.highlighted_option);
 	
 		var node;
@@ -313,7 +420,7 @@ Util.Form.customInit["select"] = function(field) {
 	}
 
 	// find previous available option
-	field.selectPreviousOption = function() {
+	field.highlightPreviousOption = function() {
 		// u.bug("prev option:" + field.highlighted_option);
 
 		var node;
@@ -337,7 +444,6 @@ Util.Form.customInit["select"] = function(field) {
 	}
 
 
-
 	// add option to dropdown
 	field.addOption = function (node) {
 		// u.bug("addOption", node, node.text);
@@ -352,15 +458,16 @@ Util.Form.customInit["select"] = function(field) {
 
 			// add click handler to list element
 			u.ce(li);
-			li.inputStarted = function (event) {
+			li.clicked = function (event) {
 				u.e.kill(event);
 				// select this option
 				this.field.selectOption(this);
-				this.field.virtual_input.blur();
+				// this.field.virtual_input.blur();
 			}
 
+			u.e.hover(li);
 			// handlers for mouseover and mouseout
-			li.mouseover = function (event) {
+			li.over = function (event) {
 
 				if(this.field.highlighted_option) {
 					u.rc(this.field.highlighted_option, "hover");
@@ -369,14 +476,14 @@ Util.Form.customInit["select"] = function(field) {
 				u.ac(this, "hover");
 				this.field.highlighted_option = this;
 			}
-			u.e.addEvent(li, "mouseover", li.mouseover);
+			// u.e.addEvent(li, "mouseover", li.mouseover);
 
-			li.mouseout = function (event) {
+			li.out = function (event) {
 
 				u.rc(this, "hover");
 				this.field.highlighted_option = false;
 			}
-			u.e.addEvent(li, "mouseout", li.mouseout);
+			// u.e.addEvent(li, "mouseout", li.mouseout);
 
 		}
 
@@ -388,14 +495,23 @@ Util.Form.customInit["select"] = function(field) {
 
 		// update search text
 		this.input.val(li.option_value);
+		this.hideOptions();
 
 	}
 
 	// open dropdown – unless already open
-	field.bn_select.clicked = function() {
-		if(!this.field.is_focused) {
-			this.field.virtual_input.focus();
+	field.bn_select.clicked = function(event) {
+		u.e.kill(event);
+
+		this.field.virtual_input.focus();
+
+ 		if(this.field.is_expanded) {
+			this.field.hideOptions();
 		}
+		else {
+			this.field.showOptions();
+		}
+
 	}
 	u.e.click(field.bn_select);
 
@@ -427,7 +543,7 @@ Util.Form.customInit["select"] = function(field) {
 
 }
 
-// example validator - matches field with "example" class
+// Validator
 Util.Form.customValidate["select"] = function(iN) {
 
 	if(iN.val()) {
