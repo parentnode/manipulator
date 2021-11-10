@@ -172,8 +172,6 @@ Util.Form = u.f = new function() {
 		// internal error bookkeeper
 		_form._error_inputs = {};
 
-
-
 		// Index proper fields (in correct markup) first – the have presedence over hidden inputs
 		// get all fields
 		var fields = u.qsa(".field", _form);
@@ -184,6 +182,7 @@ Util.Form = u.f = new function() {
 			u.f.initField(_form, field);
 
 		}
+
 
 
 		// reference hidden fields to allow accessing them through form fields array
@@ -215,6 +214,7 @@ Util.Form = u.f = new function() {
 
 		}
 
+		
 
 		// Set up asynchronous initial bulk validation 
 		// To receive one single callback on first validation
@@ -592,6 +592,15 @@ Util.Form = u.f = new function() {
 
 		}
 
+		// Experimental tabindex fix for virtual inputs without contentEditable (select)
+		// u.bug("field.input.virtual_input", field.virtual_input);
+		if(field.virtual_input && !field.virtual_input.tabindex) {
+			field.virtual_input.setAttribute("tabindex", 0);
+			field.input.setAttribute("tabindex", 0);
+		}
+		else if(!field.input.tabindex) {
+			field.input.setAttribute("tabindex", 0);
+		}
 	}
 
 
@@ -602,6 +611,9 @@ Util.Form = u.f = new function() {
 
 		// make sure even a.buttons knows form
 		action._form = _form;
+
+		// Include buttons in tabindex
+		action.setAttribute("tabindex", 0);
 
 		// handle [ENTER] on button
 		this.buttonOnEnter(action);
