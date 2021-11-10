@@ -123,9 +123,11 @@ Util.svg = function(svg_object) {
 */
 Util.svgShape = function(svg, svg_object) {
 
+	var detail, svg_shape;
+
 	// create svg shape
 	svg_shape = document.createElementNS("http://www.w3.org/2000/svg", svg_object["type"]);
-	svg_object["type"] = null;
+	// svg_object["type"] = null;
 	delete svg_object["type"];
 
 	// loop through the remaining details of shapes
