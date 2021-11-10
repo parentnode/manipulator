@@ -357,8 +357,14 @@ Util.clickableElement = u.ce = function(node, _options) {
 		// only set url, if a has href attribute
 		if(a.getAttribute("href") !== null) {
 			node.url = a.href;
-			a.removeAttribute("href");
-
+			a.url = a.href;
+			// a.href = node.url;
+			// Experimental – keeps hrefs for better accesibility (user can see/copy links)
+			// a.removeAttribute("href");
+			// And then prevent href from hijacking click
+			node.onclick = function(event) {
+				event.preventDefault();
+			}
 			node._a = a;
 		}
 	}
