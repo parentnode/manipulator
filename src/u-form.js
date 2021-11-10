@@ -920,6 +920,8 @@ Util.Form = u.f = new function() {
 	this._changed = function(event) {
 		// u.bug("_changed:", this.name, event.type);
 
+		u.f.positionHint(this.field);
+
 		// callbacks
 		// does input have callback
 		if(fun(this[this._form._callback_changed])) {
@@ -1152,6 +1154,7 @@ Util.Form = u.f = new function() {
 
 	// internal blur handler - attatched to buttons
 	this._button_focus = function(event) {
+		// u.bug("_button_focus", this);
 
 		u.ac(this, "focus");
 
@@ -1427,8 +1430,14 @@ Util.Form = u.f = new function() {
 
 
 			// Default positioning
-			var input_middle = field.input.offsetTop + (field.input.offsetHeight / 2);
-			var help_top = input_middle - field.help.offsetHeight / 2;
+			var input_middle, help_top;
+			if(field.virtual_input) {
+				input_middle = field.virtual_input.parentNode.offsetTop + (field.virtual_input.parentNode.offsetHeight / 2);
+			}
+			else {
+				input_middle = field.input.offsetTop + (field.input.offsetHeight / 2);
+			}
+			help_top = input_middle - field.help.offsetHeight / 2;
 
 			u.ass(field.help, {
 				"top": help_top + "px"
@@ -1649,6 +1658,9 @@ Util.Form = u.f = new function() {
 			this.updateInputValidationState(iN);
 
 		}
+
+		// if help element is available
+		this.positionHint(iN.field);
 
 	}
 
