@@ -218,6 +218,7 @@ u._queueLoader = function() {
 				else {
 					
 				}
+				// Add fallbak where no extension is found – make http request and check response content type and then load
 
 			}
 			else {
