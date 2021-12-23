@@ -35,14 +35,14 @@ u.overlay = function (_options) {
 		var _argument;
 		for(_argument in _options) {
 			switch(_argument) {
-				case "title"       : title          = _options[_argument]; break;
-				case "drag"        : drag           = _options[_argument]; break;
+				case "title"            : title             = _options[_argument]; break;
+				case "drag"             : drag              = _options[_argument]; break;
 
-				case "class"       : classname      = _options[_argument]; break;
+				case "class"            : classname         = _options[_argument]; break;
 
-				case "width"       : width          = _options[_argument]; break;
-				case "height"      : height         = _options[_argument]; break;
-				case "content_scroll" : content_scroll    = _options[_argument]; break;
+				case "width"            : width             = _options[_argument]; break;
+				case "height"           : height            = _options[_argument]; break;
+				case "content_scroll"   : content_scroll    = _options[_argument]; break;
 			}
 		}
 	}
@@ -56,12 +56,23 @@ u.overlay = function (_options) {
 	}
 	
 	// Enable overflow:scroll on overlay.div_content
-	if (content_scroll) {
+	if(content_scroll) {
 		classname += "content_scroll"
 	}
 
+
 	// Create overlay div (with tabindex -1 to make div focusable for keyevents)
-	var overlay = u.ae(document.body, "div", {"class": "overlay" + classname, "tabindex":"-1"});
+	var overlay = u.ae(document.body, "div", {
+		"class": "overlay" + classname, 
+		"tabindex": "-1"
+	});
+
+	// Add overlay "protection" div to cover the main page
+	overlay.protection = u.ae(document.body, "div", {
+		"class": "overlay_protection"
+	});
+
+
 	// Set width and height and center on screen
 	u.ass(overlay, {
 		"opacity": 0,
@@ -71,8 +82,10 @@ u.overlay = function (_options) {
 		"top": ((u.browserH() - height) / 2) + "px",
 	});
 
-	// Add overlay "protection" div to cover the main page
-	overlay.protection = u.ae(document.body, "div", {"class": "overlay_protection"});
+
+	// Add width and height
+	overlay.w = width;
+	overlay.h = height;
 
 
 	// handle multiple overlay stacked correctly (last opened on top)
@@ -84,12 +97,6 @@ u.overlay = function (_options) {
 
 	// update overlay stack
 	window._overlay_stack_index = Number(u.gcs(overlay, "z-index")) + 2;
-
-	// Fade up
-	u.ass(overlay, {
-		"transition": "all .4s ease-in-out",
-		"opacity": 1,
-	});
 
 
 	// Prevent body scroll
@@ -110,7 +117,8 @@ u.overlay = function (_options) {
 
 		// set height of options div
 		u.ass(this.div_content, {
-			"height": ((this.offsetHeight - this.div_header.offsetHeight) - this.div_footer.offsetHeight) + "px"
+			"height": ((this.offsetHeight - this.div_header.offsetHeight) - this.div_footer.offsetHeight - parseInt(u.gcs(this, "border-bottom")) - parseInt(u.gcs(this, "border-top"))) + "px"
+			// "height": ((this.offsetHeight - this.div_header.offsetHeight) - this.div_footer.offsetHeight) + "px"
 		});
 
 
@@ -140,10 +148,6 @@ u.overlay = function (_options) {
 	overlay.div_footer = u.ae(overlay, "div", {class: "footer"});
 	overlay.div_footer.overlay = overlay;
 
-	// Add width and height
-	overlay.w = width;
-	overlay.h = height;
-
 
 	// make overlay header draggable
 	if (drag) {
@@ -168,13 +172,14 @@ u.overlay = function (_options) {
 	// Close overlay and make callback to overlay.closed
 	overlay.close = function (event) {
 
+
 		// restore original state
 		u.as(document.body, "overflow", "auto");
 		document.body.removeChild(this);
 		document.body.removeChild(this.protection);
 
 		// callback to invoker to notify about closing
-		if (fun (this.closed)) {
+		if(fun(this.closed)) {
 			this.closed(event);
 		}
 
@@ -194,6 +199,13 @@ u.overlay = function (_options) {
 	}
 
 	overlay._resized();
+
+
+	// Fade up
+	u.ass(overlay, {
+		"transition": "all .4s ease-in-out .1s",
+		"opacity": 1,
+	});
 
 
 	// return overlay
