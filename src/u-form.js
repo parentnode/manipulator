@@ -598,6 +598,9 @@ Util.Form = u.f = new function() {
 			field.virtual_input.setAttribute("tabindex", 0);
 			field.input.setAttribute("tabindex", 0);
 		}
+		else if(field.input.getAttribute("readonly")) {
+			field.input.setAttribute("tabindex", -1);
+		}
 		else if(!field.input.tabindex) {
 			field.input.setAttribute("tabindex", 0);
 		}
