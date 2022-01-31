@@ -8,25 +8,36 @@ u.googlemaps = new function() {
 	// center and map required
 	this.map = function(map, center, _options) {
 
-		map._maps_streetview = false;
-		map._maps_zoom = 10;
-		map._maps_scrollwheel = true;
-		map._maps_zoom = 10;
 		map._center_latitude = center[0];
 		map._center_longitude = center[1];
+
+		map._zoom = 10;
+
+		map._streetview = false;
+		map._scrollwheel = true;
 		map._styles = false;
 		map._disable_ui = false;
+		map._fullscreenControl = false;
+		map._zoomControl = true;
+		map._zoomControlOptions = false;
+		map._keyboardShortcuts = false;
+
 
 		if(obj(_options)) {
 			var _argument;
 			for(_argument in _options) {
 
 				switch(_argument) {
-					case "zoom"           : map._maps_zoom               = _options[_argument]; break;
-					case "scrollwheel"    : map._maps_scrollwheel        = _options[_argument]; break;
-					case "streetview"     : map._maps_streetview         = _options[_argument]; break;
-					case "styles"         : map._styles                  = _options[_argument]; break;
-					case "disableUI"      : map._disable_ui              = _options[_argument]; break;
+					case "zoom"                  : map._zoom                    = _options[_argument]; break;
+
+					case "scrollwheel"           : map._scrollwheel             = _options[_argument]; break;
+					case "streetview"            : map._streetview              = _options[_argument]; break;
+					case "styles"                : map._styles                  = _options[_argument]; break;
+					case "disableUI"             : map._disable_ui              = _options[_argument]; break;
+					case "fullscreenControl"     : map._fullscreenControl       = _options[_argument]; break;
+					case "zoomControl"           : map._zoomControl             = _options[_argument]; break;
+					case "zoomControlOptions"    : map._zoomControlOptions      = _options[_argument]; break;
+					case "keyboardShortcuts"     : map._keyboardShortcuts       = _options[_argument]; break;
 				}
 
 			}
@@ -37,6 +48,7 @@ u.googlemaps = new function() {
 		window[map_key] = function() {
 
 			u.googlemaps.api_loaded = true;
+			u.googlemaps.api_loading = false;
 
 			var map;
 			while(u.googlemaps.api_load_queue.length) {
@@ -47,14 +59,26 @@ u.googlemaps = new function() {
 		}
 		
 		map.init = function() {
-
+			// u.bug("map init");
 		//	u.bug(map_key);
 //			u.bug("center:" + center[0] + "," + map._center_longitude + "," + map._maps_zoom)
-			var mapOptions = {center: new google.maps.LatLng(center[0], center[1]), zoom: this._maps_zoom, scrollwheel: this._maps_scrollwheel, streetViewControl: this._maps_streetview, zoomControlOptions: {position: google.maps.ControlPosition.LEFT_TOP}, styles: this._styles, disableDefaultUI: this._disable_ui};
+			var mapOptions = {
+				center: new google.maps.LatLng(this._center_latitude, this._center_longitude), 
+				zoom: this._zoom, 
+				scrollwheel: this._scrollwheel, 
+				streetViewControl: this._streetview, 
+				zoomControl: this._zoomControl, 
+				zoomControlOptions: this._zoomControlOptions ? this._zoomControlOptions : {position: google.maps.ControlPosition.LEFT_TOP}, 
+				styles: this._styles, 
+				disableDefaultUI: this._disable_ui,
+				fullscreenControl: this._fullscreenControl,
+				keyboardShortcuts: this._keyboardShortcuts,
+			};
 			this.g_map = new google.maps.Map(this, mapOptions);
 			this.g_map.m_map = this
 
-			
+
+
 			if(fun(this.APIloaded)) {
 				this.APIloaded();
 			}
@@ -224,4 +248,3 @@ u.googlemaps = new function() {
 	}
 
 }
-
