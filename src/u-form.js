@@ -2112,7 +2112,6 @@ Util.Form = u.f = new function() {
 					}
 				}
 
-				u.bug("vali", (files.length >= min && files.length <= max), (!pattern || files.every(function(node) {u.bug("test", u.cv(node, "format")); return pattern.indexOf("."+u.cv(node, "format")) !== -1})));
 				if(
 					(files.length >= min && files.length <= max)
 					&&
