@@ -553,9 +553,10 @@ Util.Form = u.f = new function() {
 				// Update filelist whenever value is changed (and before callback to application)
 				u.e.addEvent(field.input, "change", this._update_filelist);
 
-				// change and update event
-				u.e.addEvent(field.input, "change", this._updated);
-				u.e.addEvent(field.input, "change", this._changed);
+				// // change and update event
+				// Now called when filelist has been updated to allow for clientside width/height checks
+				// u.e.addEvent(field.input, "change", this._updated);
+				// u.e.addEvent(field.input, "change", this._changed);
 
 				// activate focus on input mouse/drag interaction
 				if(u.e.event_support != "touch") {
@@ -598,10 +599,10 @@ Util.Form = u.f = new function() {
 			field.virtual_input.setAttribute("tabindex", 0);
 			field.input.setAttribute("tabindex", 0);
 		}
-		else if(field.input.getAttribute("readonly")) {
+		else if(field.input && field.input.getAttribute("readonly")) {
 			field.input.setAttribute("tabindex", -1);
 		}
-		else if(!field.input.tabindex) {
+		else if(field.input && !field.input.tabindex) {
 			field.input.setAttribute("tabindex", 0);
 		}
 	}
@@ -995,9 +996,12 @@ Util.Form = u.f = new function() {
 
 		// Clear list
 		this.field.filelist.innerHTML = "";
+		this.e_updated = event;
 
 		// Add hint or label as visual
-		u.ae(this.field.filelist, "li", {html:this.field.hint ? u.text(this.field.hint) : u.text(this.label), class:"label"})
+		u.ae(this.field.filelist, "li", {
+			"html":this.field.hint ? u.text(this.field.hint) : u.text(this.label), class:"label",
+		});
 
 		// Selected new files for upload
 		if(files && files.length) {
@@ -1005,11 +1009,37 @@ Util.Form = u.f = new function() {
 
 			u.ac(this.field, "has_new_files");
 
-			var i;
+			var i, file, li_file;
+			this.field.filelist.load_queue = 0;
 
 			// Add files to list
 			for(i = 0; i < files.length; i++) {
-				u.ae(this.field.filelist, "li", {html:files[i].name, class:"new"})
+				file = files[i];
+
+				li_file = u.ae(this.field.filelist, "li", {"html":file.name, "class":"new format:"+file.name.substring(file.name.lastIndexOf(".")+1).toLowerCase()})
+				li_file.input = this;
+
+				// TODO: extend to cover video and audio
+				// Preload image files to enable width/height/proportion validation
+				if(file.type.match(/image/)) {
+					li_file.image = new Image();
+					li_file.image.li = li_file;
+					u.ac(li_file, "loading");
+					this.field.filelist.load_queue++;
+
+					li_file.image.onload = function() {
+						u.ac(this.li, "width:"+this.width);
+						u.ac(this.li, "height:"+this.height);
+						u.rc(this.li, "loading");
+						this.li.input.field.filelist.load_queue--;
+
+						u.f.filelistUpdated(this.li.input);
+
+					}
+					li_file.image.src = URL.createObjectURL(file);
+
+				}
+
 			}
 
 			// Keep uploaded files in list for multiple file inputs
@@ -1024,6 +1054,8 @@ Util.Form = u.f = new function() {
 				this.field.uploaded_files = [];
 
 			}
+
+			u.f.filelistUpdated(this);
 
 		}
 		// Already uploaded files
@@ -1048,6 +1080,112 @@ Util.Form = u.f = new function() {
 		}
 
 	}
+	// Filelist update handler (waiting for image files to be loaded)
+	this.filelistUpdated = function(input) {
+		// u.bug("this.filelistUpdated");
+
+		if(input.field.filelist.load_queue === 0) {
+			this._changed.bind(input.field.input)(input.e_updated);
+			this._updated.bind(input.field.input)(input.e_updated);
+			delete input.e_updated;
+
+		}
+	}
+
+	// Update filelist based on server response
+	this.updateFilelistStatus = function(form, response) {
+
+		// Do we have valid form and response
+		if(form && form.inputs && response && response.cms_status == "success" && response.cms_object && response.cms_object.mediae) {
+
+			// clone response mediae
+			var mediae = JSON.parse(JSON.stringify(response.cms_object.mediae));
+
+			// Get all filelists
+			var filelists = u.qsa("div.field.files ul.filelist", form);
+
+
+			var i, j, k, filelist, old_files, old_file, new_files, new_files;
+			for(i = 0; i < filelists.length; i++) {
+				filelist = filelists[i];
+
+				// Get new files from filelist
+				new_files = u.qsa("li.new", filelist);
+
+				// only do anything if filelist contains new files
+				if(new_files.length) {
+
+					// First filter out any "old" files first (to make matching safer)
+
+					// Get old files from filelist
+					old_files = u.qsa("li.uploaded", filelist);
+					if(old_files.length) {
+
+						// Loop through mediae to compare with old files
+						for(j in mediae) {
+
+							media = mediae[j];
+
+							// media matches this filelist
+							if(media.variant.match("^" + filelist.field.input.name.replace(/\[\]$/, "") + "(\-|$)")) {
+
+								// Find this media in old files of this filelist
+								for(k = 0; k < old_files.length; k++) {
+									old_file = old_files[k];
+
+									// If id matches, then remove media from collection (it's not a new file)
+									if(u.cv(old_file, "media_id") == media.id) {
+
+										// Don't bother with this media anymore
+										delete mediae[j];
+									}
+								}
+							}
+						}
+					}
+
+					// No need to continue if no more media exists (whatever is left must be new files)
+					if(Object.keys(mediae).length) {
+
+						// Loop through remaining mediae to compare with new files
+						for(j in mediae) {
+
+							media = mediae[j];
+
+							// media matches this filelist
+							if(media.variant.match("^"+filelist.field.input.name.replace(/\[\]$/, "")+"(\-|$)")) {
+
+								// Loop through new files to find the matching media
+								for(k = 0; k < new_files.length; k++) {
+									new_file = new_files[k];
+
+									// We only have name to compare with 
+									// (which leaves a small risk of mis-identification)
+									if(u.text(new_file) == media.name || u.text(new_file)+".zip" == media.name) {
+
+										new_file.innerHTML = media.name;
+
+										// Update classname
+										u.rc(new_file, "new");
+										u.ac(new_file, "uploaded media_id:"+media.id+" variant:"+media.variant+" format:"+media.format+" width:"+media.width+" height:"+media.height);
+
+										// Don't bother with this media anymore
+										delete mediae[j];
+									}
+								}
+							}
+						}
+					}
+				}
+
+				filelist.field.uploaded_files = u.qsa("li.uploaded", filelist);
+
+			}
+
+		}
+
+	}
+
 
 	// internal - mouseenter handler - attatched to inputs
 	this._mouseenter = function(event) {
@@ -1449,101 +1587,6 @@ Util.Form = u.f = new function() {
 		}
 
 	}
-
-	// Update filelist based on server response
-	this.updateFilelistStatus = function(form, response) {
-
-		// Do we have valid form and response
-		if(form && form.inputs && response && response.cms_status == "success" && response.cms_object && response.cms_object.mediae) {
-
-			// clone response mediae
-			var mediae = JSON.parse(JSON.stringify(response.cms_object.mediae));
-
-			// Get all filelists
-			var filelists = u.qsa("div.field.files ul.filelist", form);
-
-
-			var i, j, k, filelist, old_files, old_file, new_files, new_files;
-			for(i = 0; i < filelists.length; i++) {
-				filelist = filelists[i];
-
-				// Get new files from filelist
-				new_files = u.qsa("li.new", filelist);
-
-				// only do anything if filelist contains new files
-				if(new_files.length) {
-
-					// First filter out any "old" files first (to make matching safer)
-
-					// Get old files from filelist
-					old_files = u.qsa("li.uploaded", filelist);
-					if(old_files.length) {
-
-						// Loop through mediae to compare with old files
-						for(j in mediae) {
-
-							media = mediae[j];
-
-							// media matches this filelist
-							if(media.variant.match("^" + filelist.field.input.name.replace(/\[\]$/, "") + "(\-|$)")) {
-
-								// Find this media in old files of this filelist
-								for(k = 0; k < old_files.length; k++) {
-									old_file = old_files[k];
-
-									// If id matches, then remove media from collection (it's not a new file)
-									if(u.cv(old_file, "media_id") == media.id) {
-
-										// Don't bother with this media anymore
-										delete mediae[j];
-									}
-								}
-							}
-						}
-					}
-
-					// No need to continue if no more media exists (whatever is left must be new files)
-					if(Object.keys(mediae).length) {
-
-						// Loop through remaining mediae to compare with new files
-						for(j in mediae) {
-
-							media = mediae[j];
-
-							// media matches this filelist
-							if(media.variant.match("^"+filelist.field.input.name.replace(/\[\]$/, "")+"(\-|$)")) {
-
-								// Loop through new files to find the matching media
-								for(k = 0; k < new_files.length; k++) {
-									new_file = new_files[k];
-
-									// We only have name to compare with 
-									// (which leaves a small risk of mis-identification)
-									if(u.text(new_file) == media.name || u.text(new_file)+".zip" == media.name) {
-
-										new_file.innerHTML = media.name;
-
-										// Update classname
-										u.rc(new_file, "new");
-										u.ac(new_file, "uploaded media_id:"+media.id+" variant:"+media.variant+" format:"+media.format+" width:"+media.width+" height:"+media.height);
-
-										// Don't bother with this media anymore
-										delete mediae[j];
-									}
-								}
-							}
-						}
-					}
-				}
-
-				filelist.field.uploaded_files = u.qsa("li.uploaded", filelist);
-
-			}
-
-		}
-
-	}
-
 
 
 	// Validation helpers
@@ -2034,8 +2077,9 @@ Util.Form = u.f = new function() {
 
 			// files validation
 			else if(u.hc(iN.field, "files")) {
+				// u.bug("validate file");
 
-				// min and max length
+				// min and max number of files
 				min = Number(u.cv(iN.field, "min"));
 				max = Number(u.cv(iN.field, "max"));
 				min = min ? min : 1;
@@ -2043,24 +2087,44 @@ Util.Form = u.f = new function() {
 
 				// Acceptable file types
 				pattern = iN.getAttribute("accept");
+				if(pattern) {
+					pattern = pattern.split(",");
+				}
 
 				// collect list of added and already uploaded files
-				var i, value = iN.val(), files = [];
-				if(iN.field.uploaded_files && iN.field.uploaded_files.length) {
-					for(i = 0; i < iN.field.uploaded_files.length; i++) {
-						files.push("." + u.cv(iN.field.uploaded_files[i], "format").toLowerCase());
-					}
+				var i, files = Array.prototype.slice.call(u.qsa("li:not(.label)", iN.field.filelist));
+
+
+				// Min width, min height, allowed sizes and proportions
+				var min_width = Number(iN.getAttribute("data-min-width"));
+				var min_height = Number(iN.getAttribute("data-min-height"));
+				var allowed_sizes = iN.getAttribute("data-allowed-sizes");
+				if(allowed_sizes) {
+					allowed_sizes = allowed_sizes.split(",");
 				}
-				if(value && value.length) {
-					for(i = 0; i < value.length; i++) {
-						files.push(value[i].name.substring(value[i].name.lastIndexOf(".")).toLowerCase());
+				var allowed_proportions = iN.getAttribute("data-allowed-proportions");
+				if(allowed_proportions) {
+					allowed_proportions = allowed_proportions.split(",");
+					for(i = 0; i < allowed_proportions.length; i++) {
+						// Proportions are typically stated as divisions, like "16/9"
+						// – must be "calculated" for comparison
+						allowed_proportions[i] = u.round(eval(allowed_proportions[i]), 4);
 					}
 				}
 
+				u.bug("vali", (files.length >= min && files.length <= max), (!pattern || files.every(function(node) {u.bug("test", u.cv(node, "format")); return pattern.indexOf("."+u.cv(node, "format")) !== -1})));
 				if(
 					(files.length >= min && files.length <= max)
 					&&
-					(!pattern || files.every(function(v) {return pattern.split(",").indexOf(v) !== -1}))
+					(!pattern || files.every(function(node) {return pattern.indexOf("."+u.cv(node, "format")) !== -1}))
+					&&
+					(!min_width || files.every(function(node) {return u.cv(node, "width") >= min_width}))
+					&&
+					(!min_height || files.every(function(node) {return u.cv(node, "height") >= min_height}))
+					&&
+					(!allowed_sizes || files.every(function(node) {return allowed_sizes.indexOf(u.cv(node, "width")+"x"+u.cv(node, "height")) !== -1}))
+					&&
+					(!allowed_proportions || files.every(function(node) {return allowed_proportions.indexOf(u.round(Number(u.cv(node, "width"))/Number(u.cv(node, "height")), 4)) !== -1}))
 				) {
 					this.inputIsCorrect(iN);
 				}
