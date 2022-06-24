@@ -22,6 +22,7 @@ Util.mediaPlayer = function(_options) {
 	player._autoplay = false;
 	player._muted = false;
 	player._loop = false;
+	player._preload = false;
 	player._playsinline = false;
 	player._crossorigin = "anonymous";
 
@@ -197,10 +198,12 @@ Util.mediaPlayer = function(_options) {
 			}
 		}
 		player.mute = function() {
+			this._muted = true;
 			this.media.muted = true;
 		}
 		player.unmute = function() {
-			this.media.removeAttribute(muted);
+			this._muted = false;
+			this.media.muted = false;
 		}
 
 
@@ -277,6 +280,7 @@ u.setupMedia = function(player, _options) {
 				case "autoplay"     : player._autoplay               = _options[_argument]; break;
 				case "muted"        : player._muted                  = _options[_argument]; break;
 				case "loop"         : player._loop                   = _options[_argument]; break;
+				case "preload"      : player._preload                = _options[_argument]; break;
 				case "playsinline"  : player._playsinline            = _options[_argument]; break;
 
 				case "controls"     : player._controls               = _options[_argument]; break;
@@ -296,6 +300,7 @@ u.setupMedia = function(player, _options) {
 	player.media.playsinline = player._playsinline;
 	// iOS <=11 only accepts setting attribute like this
 	player.media.setAttribute("playsinline", player._playsinline);
+	player.media.setAttribute("preload", player._preload);
 //	player.media.setAttribute("webkit-playsinline", player._playsinline);
 
 	player.media.setAttribute("crossorigin", player._crossorigin);
@@ -455,8 +460,8 @@ u.setupMedia = function(player, _options) {
 u.correctMediaSource = function(player, src) {
 
 	// remove parameters and add them after format change
-	var param = src.match(/\?[^$]+/) ? src.match(/(\?[^$]+)/)[1] : "";
-	src = src.replace(/\?[^$]+/, "");
+	var param = src.match(/(\?|\#)[^$]+/) ? src.match(/((\?|\#)[^$]+)/)[1] : "";
+	src = src.replace(/(\?|\#)[^$]+/, "");
 
 //	console.log(player)
 
