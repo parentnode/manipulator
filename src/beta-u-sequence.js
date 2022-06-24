@@ -1,5 +1,5 @@
 
-u.sequencePlayer = function(node, options) {
+u.sequencePlayer = function(node, _options) {
 	
 	var player;
 
@@ -12,48 +12,68 @@ u.sequencePlayer = function(node, options) {
 		u.ac(player, "sequenceplayer");
 	}
 
+	player.node = node;
 
 	// playback timer
 	player.t_playback = false;
 	// default framerate (12 fps)
 	player._framerate = 12;
+	player._loop = false;
+	player._direction = 1;
+
+	player._callback_loaded = "loaded";
+	player._callback_ended = "ended";
+
+	var classname = false;
+
 
 	// additional info passed to function as JSON object
-	if(obj(options)) {
-		var argument;
-		for(argument in options) {
+	if(obj(_options)) {
+		var _argument;
+		for(_argument in _options) {
 
-			switch(argument) {
-				case "framerate"		: this._framerate			= options[argument]; break;
+			switch(_argument) {
+				case "framerate"          : player._framerate         = _options[_argument]; break;
+				case "loop"               : player._loop              = _options[_argument]; break;
+
+				case "callback_ended"     : player._callback_ended    = _options[_argument]; break;
+				case "callback_loaded"    : player._callback_loaded   = _options[_argument]; break;
+
+				case "direction"          : player._direction         = _options[_argument]; break;
+
+				case "class"              : classname                 = _options[_argument]; break;
 			}
 
 		}
-	}
-	else {
-		options = {};
-	}
 
+	}
+	// else {
+	// 	_options = {};
+	// }
+
+	if(classname) {
+		u.ac(player, classname);
+	}
 
 
 	// load sequence of images
-	player.load = function(images, options) {
+	player.load = function(images, _options) {
 //		u.bug("load sequence:" + images.length)
 		
-		this._load_callback;
 		this._autoplay = false;
 
-		// additional info passed to function as JSON object
-		if(obj(options)) {
-			var argument;
-			for(argument in options) {
-
-				switch(argument) {
-					case "load_callback"		: this._load_callback			= options[argument]; break;
-					case "autoplay"				: this._autoplay				= options[argument]; break;
-				}
-
-			}
-		}
+		// // additional info passed to function as JSON object
+		// if(obj(_options)) {
+		// 	var _argument;
+		// 	for(_argument in _options) {
+		//
+		// 		switch(_argument) {
+		// 			case "callback_loaded"     : this._load_callback        = _options[_argument]; break;
+		// 			case "autoplay"            : this._autoplay             = _options[_argument]; break;
+		// 		}
+		//
+		// 	}
+		// }
 
 
 		// setup sequence / clean sequence
@@ -61,50 +81,56 @@ u.sequencePlayer = function(node, options) {
 	}
 
 	// load sequence and play when loaded
-	player.loadAndPlay = function(images, options) {
+	player.loadAndPlay = function(images, _options) {
 		
-		// set autoplay to true
-		if(!options) {
-			options = {};
-		}
-		options.autoplay = true;
-		
-		// save options for use when loading is done
-		this._options = options;
+		// // set autoplay to true
+		// if(!_options) {
+		// 	_options = {};
+		// }
+		// _options.autoplay = true;
+		//
+		// // save options for use when loading is done
+		// this._options = options;
+
+		this._autoplay = true;
 
 		// load will automatically invoke play
-		this.load(images, options);
+		this.load(images, _options);
 	}
 
 
 	// play currently loaded sequence
-	player.play = function(options) {
+	player.play = function(_options) {
 
-		this._ended_callback = null;
+		// this._ended_callback = null;
 		this._from = this.sequence._start;
 		this._to = this.sequence._end;
+		
+		var _direction = false;
 
 		// additional info passed to function as JSON object
-		if(obj(options)) {
+		if(obj(_options)) {
 			var argument;
-			for(argument in options) {
+			for(argument in _options) {
 
 				switch(argument) {
-					case "ended_callback"	: this._ended_callback			= options[argument]; break;
-					case "framerate"		: this._framerate				= options[argument]; break;
+					// case "callback_ended"	: this._ended_callback			= _options[argument]; break;
+					case "framerate"		: this._framerate				= _options[argument]; break;
 
-					case "to"				: this._to						= options[argument]; break;
-					case "from"				: this._from					= options[argument]; break;
+					case "direction"		: _direction					= _options[argument]; break;
+					case "to"				: this._to						= _options[argument]; break;
+					case "from"				: this._from					= _options[argument]; break;
 				}
 
 			}
 		}
 
 
-
-
 		// playback direction
-		if(this._from <= this._to) {
+		if(_direction) {
+			this._direction = _direction;
+		}
+		else if(this._from <= this._to) {
 			this._direction = 1;
 		}
 		else {
@@ -128,7 +154,8 @@ u.sequencePlayer = function(node, options) {
 				for(i = this.sequence._start; i <= this.sequence._end; i++) {
 
 					// make first two frames visible (for better playback performance)
-					if(i == this._from || i == this._from+1) {
+					if(i == this._from) {
+					// if(i == this._from || i == this._from+1) {
 						u.as(this._nodes[i], "display", "block", 1);
 					}
 					else {
@@ -150,7 +177,8 @@ u.sequencePlayer = function(node, options) {
 				for(i = this.sequence._end; i <= this.sequence._start; i--) {
 
 					// make first two frames visible (for better playback performance)
-					if(i == this._from || i == this._from-1) {
+					if(i == this._from) {
+					// if(i == this._from || i == this._from-1) {
 						u.as(this._nodes[i], "display", "block", 1);
 					}
 					else {
@@ -214,24 +242,22 @@ u.sequencePlayer = function(node, options) {
 
 	// playback loop - continues until sequence is done
 	player.playback = function(start) {
+		// u.bug("playback", this._current_frame, this._direction, start);
 
 		// don't do anything on first loop
-		if(!start) {
+		// if(start !== true) {
 			// go to next frame
-			this.nextFrame(this._current_frame);
+			this.nextFrame();
 			// set current frame
-			this._current_frame = this._current_frame + this._direction;
-		}
+			// this._current_frame = this._current_frame + this._direction;
+		// }
 
 		// end loop and callback
-		if(this._to == this._current_frame) {
+		if(!this._loop && this._to == this._current_frame) {
 //			u.bug("end reached:" + typeof(this._ended_callback) + ", " + this.ended + "," + u.nodeId(this))
 
-			if(fun(this._ended_callback)) {
-				this._ended_callback();
-			}
-			else if(fun(this.ended)) {
-				this.ended();
+			if(fun(this[this._callback_ended])) {
+				this[this._callback_ended]();
 			}
 
 		}
@@ -243,26 +269,39 @@ u.sequencePlayer = function(node, options) {
 	}
 
 	// hides last frame and reveals next frame below (part of playback handling)
-	player.nextFrame = function(frame) {
-//			u.bug("nextframe:" + frame)
+	player.nextFrame = function() {
 
 		// prepare stack - after_next is not next frame, but frame after next frame (to be sure stack is always prepared two frame ahead)
 		// this is done, because firefox causes blinking animation, if animation is started with delay
-		var after_next = (frame + (this._direction*2));
-		// make next frame visible
-		if(this._nodes[after_next] && (this._direction > 0 ? after_next <= this._to : after_next >= this._to)) {
-//			u.bug("show after_next:" + after_next);
-			u.as(this._nodes[after_next], "display", "block");
+		// var after_next = (frame + (this._direction*2));
+		var next_frame = this._current_frame + this._direction;
+		if(this._direction > 0) {
+			next_frame = (next_frame <= this.sequence._end ? next_frame : this.sequence._start);
 		}
+		else {
+			next_frame = (next_frame >= 0 ? next_frame: this.sequence._end);
+		}
+
+		// u.bug("nextframe:" + next_frame);
+
+		// make next frame visible
+		// if(this._nodes[next_frame] && (this._direction > 0 ? after_next <= this._to : after_next >= this._to)) {
+//			u.bug("show after_next:" + after_next);
+			u.as(this._nodes[next_frame], "opacity", 1);
+			// u.as(this._nodes[next_frame], "display", "block");
+		// }
 
 		// hide current frame
-		if(this._nodes[frame]) {
+		if(this._nodes[this._current_frame]) {
 //			u.bug("hide current:" + frame);
-			u.as(this._nodes[frame], "display", "none");
+			// u.as(this._nodes[this._current_frame], "display", "none");
+			u.as(this._nodes[this._current_frame], "opacity", 0);
 		}
+		
+		this._current_frame = next_frame;
 	}
 
-	// hides last frame and reveals next frame below (part of playback handling)
+	// TODO: hides last frame and reveals next frame below (part of playback handling)
 	player.prevFrame = function(frame) {
 //			u.bug("nextframe:" + frame)
 
@@ -275,12 +314,14 @@ u.sequencePlayer = function(node, options) {
 		// hide current frame
 		if(this._nodes[prev]) {
 //			u.bug("show prev:" + prev);
-			u.as(this._nodes[prev], "display", "block");
+			u.as(this._nodes[prev], "opacity", 1);
+			// u.as(this._nodes[prev], "display", "block");
 
 				// make next frame visible
 			if(this._nodes[after_next] && (this._direction > 0 ? after_next <= this._to : after_next >= this._to)) {
 	//			u.bug("show after_next:" + after_next);
-				u.as(this._nodes[after_next], "display", "none");
+				u.as(this._nodes[after_next], "opacity", 0);
+				// u.as(this._nodes[after_next], "display", "none");
 			}
 
 		}
@@ -301,30 +342,74 @@ u.sequencePlayer = function(node, options) {
 
 	}
 
-
-	// TODO
-	player.next = function(loop) {
+	// step by step method
+	player.first = function() {
+		// u.bug("first");
 //		u.bug("next:" + loop);
 
-		if(!loop || this._current_frame + this._direction <= this._to) {
+		// Hide current frame
+		// u.as(this._nodes[this._current_frame], "display", "none");
+		u.as(this._nodes[this._current_frame], "opacity", 0);
+
+
+		// Set first frame as current and show
+		this._current_frame = this.sequence._start;
+		// u.as(this._nodes[this._current_frame], "display", "block");
+		u.as(this._nodes[this._current_frame], "opacity", 1);
+
+	}
+
+	// step by step method
+	player.frame = function(index) {
+		// u.bug("first");
+//		u.bug("next:" + loop);
+
+		// Hide current frame
+		// u.as(this._nodes[index], "display", "block");
+		u.as(this._nodes[index], "opacity", 1);
+		// u.as(this._nodes[this._current_frame], "display", "none");
+		u.as(this._nodes[this._current_frame], "opacity", 0);
+
+
+		// Set first frame as current and show
+		this._current_frame = index;
+
+	}
+
+	// step by step method
+	player.next = function() {
+		// u.bug("next");
+
+		// var next_frame = this._current_frame + this._direction
+
+		if(!this._loop && 
+			(
+				this._direction > 0 && this._current_frame < this.sequence._end
+				||
+				this._direction < 0 && this._current_frame > 0
+			)
+		) {
+
+
 //			u.bug("more frames:" + this._current_frame)
-			this.nextFrame(this._current_frame);
-			this._current_frame = this._current_frame + this._direction;
+			this.nextFrame();
+			// this._current_frame = this._current_frame + this._direction;
 
 //			u.bug("new current_frame:" + this._current_frame)
 		}
-		else if(loop) {
+		else if(this._loop) {
+			// u.bug("loop");
 //			u.bug("no more frames:" + this._current_frame);
 
-			this.play();
-			this.pause();
-			this.nextFrame(this._current_frame);
-			this._current_frame = this._current_frame + this._direction;
+			// this.play();
+			// this.pause();
+			this.nextFrame();
+			// this._current_frame = this._current_frame + this._direction;
 //			u.bug("new current_frame:" + this._current_frame)
 		}
 	}
 
-	// TODO
+	// TODO – step by step method
 	player.prev = function(loop) {
 //		u.bug("prev:" + loop);
 
@@ -346,6 +431,7 @@ u.sequencePlayer = function(node, options) {
 		}
 	}
 
+
 	player.resume = function() {
 		this.t_playback = u.t.setTimer(this, this.playback, (1000/this._framerate));
 	}
@@ -357,6 +443,7 @@ u.sequencePlayer = function(node, options) {
 	
 	// TODO
 	player.stop = function() {
+		// this._current_frame = 0;
 		u.t.resetTimer(this.t_playback);
 	}
 
@@ -384,16 +471,19 @@ u.sequencePlayer = function(node, options) {
 
 
 		// after preloading, continue setup
-		this._setup = function() {
+		this._setup = function(queue) {
 
-			u.bug("images loaded")
+			// u.bug("images loaded", queue);
+			var i;
+
 			// stack images to make playback as light as possible
 			for(i = 0; i <= this.sequence._end; i++) {
 
 				this._nodes[i] = u.ae(this.sequence, "li", {"style":"background-image: url(" + this._images[i] + ");"});
 
 				// keep first two frames visible (for better performance)
-				u.as(this._nodes[i], "display", "none", 1);
+				// u.as(this._nodes[i], "display", "none", 1);
+				u.as(this._nodes[i], "opacity", 0);
 			}
 
 			// update dom
@@ -401,17 +491,13 @@ u.sequencePlayer = function(node, options) {
 
 
 
-			if(fun(this._load_callback)) {
-				this._load_callback();
+			if(fun(this[this._callback_loaded])) {
+				this[this._callback_loaded]();
 			}
-			// or callback to default (loaded)
-			else if(fun(this.loaded)) {
-				this.loaded();
-			}
-
 
 			if(this._autoplay) {
-			 	this.play(this._options);
+			 	// this.play(this._options);
+			 	this.play();
 			}
 
 		}
@@ -424,5 +510,3 @@ u.sequencePlayer = function(node, options) {
 
 	return player;
 }
-
-
