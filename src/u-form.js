@@ -412,6 +412,58 @@ Util.Form = u.f = new function() {
 
 			}
 
+			// textarea initialization
+			else if(u.hc(field, "json")) {
+
+				// Register field type
+				field.type = "json";
+
+				// Get primary input
+				field.input = u.qs("textarea", field);
+				// form is a reserved property, so we use _form
+				field.input._form = _form;
+				// Get associated label
+				field.input.label = u.qs("label[for='"+field.input.id+"']", field);
+				// Let it know it's field
+				field.input.field = field;
+
+				// get/set value function
+				field.input.val = this._value;
+
+				// resize textarea while typing
+				if(u.hc(field, "autoexpand")) {
+
+					// Remove scrollbars
+					u.ass(field.input, {
+						"overflow": "hidden"
+					});
+
+					// set correct height
+					field.input.setHeight = function() {
+
+						u.ass(this, {
+							height: "auto"
+						});
+
+						u.ass(this, {
+							height: (this.scrollHeight) + "px"
+						});
+
+					}
+					// Listen for input
+					u.e.addEvent(field.input, "input", field.input.setHeight);
+					field.input.setHeight();
+				}
+
+				// change/update events
+				u.e.addEvent(field.input, "keyup", this._updated);
+				u.e.addEvent(field.input, "change", this._changed);
+
+				// Add additional standard event listeners and labelstyle
+				this.activateInput(field.input);
+
+			}
+
 			// select initialization
 			else if(u.hc(field, "select")) {
 
@@ -2021,6 +2073,35 @@ Util.Form = u.f = new function() {
 					iN.val().length >= min && 
 					iN.val().length <= max && 
 					(!pattern || iN.val().match("^"+pattern+"$"))
+				) {
+					this.inputIsCorrect(iN);
+				}
+				else {
+					this.inputHasError(iN);
+				}
+			}
+
+			// json validation
+			else if(u.hc(iN.field, "json")) {
+
+				// min and max length
+				min = Number(u.cv(iN.field, "min"));
+				max = Number(u.cv(iN.field, "max"));
+				min = min ? min : 2;
+				max = max ? max : 10000000;
+
+				if(
+					iN.val().length >= min && 
+					iN.val().length <= max && 
+					(function(value) {
+						try {
+							JSON.parse(value);
+							return true;
+						}
+						catch(exception) {
+							return false;
+						}
+					}(iN.val()))
 				) {
 					this.inputIsCorrect(iN);
 				}
