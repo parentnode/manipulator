@@ -1071,7 +1071,8 @@ Util.Form = u.f = new function() {
 				li_file = u.ae(this.field.filelist, "li", {"html":file.name, "class":"new format:"+file.name.substring(file.name.lastIndexOf(".")+1).toLowerCase()})
 				li_file.input = this;
 
-				// TODO: extend to cover video and audio
+
+				// TODO: extend to cover audio
 				// Preload image files to enable width/height/proportion validation
 				if(file.type.match(/image/)) {
 					li_file.image = new Image();
@@ -1085,10 +1086,34 @@ Util.Form = u.f = new function() {
 						u.rc(this.li, "loading");
 						this.li.input.field.filelist.load_queue--;
 
+						delete this.li.image;
+
 						u.f.filelistUpdated(this.li.input);
 
 					}
 					li_file.image.src = URL.createObjectURL(file);
+
+				}
+				else if(file.type.match(/video/)) {
+					li_file.video = document.createElement("video");
+					li_file.video.preload = "metadata";
+					li_file.video.li = li_file;
+					u.ac(li_file, "loading");
+					this.field.filelist.load_queue++;
+
+					li_file.video.onloadedmetadata = function() {
+						u.bug("loaded", this);
+						u.ac(this.li, "width:"+this.videoWidth);
+						u.ac(this.li, "height:"+this.videoHeight);
+						u.rc(this.li, "loading");
+						this.li.input.field.filelist.load_queue--;
+
+						delete this.li.video;
+
+						u.f.filelistUpdated(this.li.input);
+
+					}
+					li_file.video.src = URL.createObjectURL(file);
 
 				}
 
