@@ -111,8 +111,8 @@ u.createView = function(_options) {
 			for(_argument in _options) {
 				switch(_argument) {
 
-					case "template": template = _options[_argument]; break;
-					case "data": data = _options[_argument]; break;
+					case "template"      : template           = _options[_argument]; break;
+					case "data"          : data               = _options[_argument]; break;
 
 				}
 			}
@@ -120,6 +120,7 @@ u.createView = function(_options) {
 
 
 		if(template) {
+			// u.bug("template")
 
 			this._rv_template = template;
 			this._stateChanged();
@@ -133,13 +134,13 @@ u.createView = function(_options) {
 
 
 		if(data) {
-			// u.bug("data", data);
 
 			this._rv_data = data;
 			this._stateChanged();
 
 		}
 		else if(data_url) {
+			// u.bug("data_url")
 
 			this.loadData();
 
@@ -149,7 +150,7 @@ u.createView = function(_options) {
 
 
 	view.loadTemplate = function() {
-		// u.bug("loadTemplate", this._rv_template_path + this._rv_template_url.url)
+		// u.bug("loadTemplate", this._rv_template_path + this._rv_template_url.url);
 
 		this._rv_template = false;
 
@@ -173,6 +174,7 @@ u.createView = function(_options) {
 
 
 	view.loadData = function(_options) {
+		// u.bug("loadData", this._rv_data_url);
 
 		this._rv_data = false;
 
@@ -217,9 +219,16 @@ u.createView = function(_options) {
 				// console.log("View init: ", this);
 				this._initialized = true;
 
-				Util.Modules[view._rv_initializer].init(this);
+				if(obj(Util.Modules[this._rv_initializer])) {
+					Util.Modules[this._rv_initializer].init(this);
+				}
 
-				if(this[callback_rendered]) {
+				if(fun(this[callback_rendered])) {
+					this[callback_rendered]();
+				}
+			}
+			else {
+				if(fun(this[callback_rendered])) {
 					this[callback_rendered]();
 				}
 			}
@@ -229,12 +238,12 @@ u.createView = function(_options) {
 			u.init(this);
 
 
-			if(this[callback_state_changed]) {
+			if(fun(this[callback_state_changed])) {
 				this[callback_state_changed]();
 			}
 
 
-			u.rc(this, "loading");
+			// u.rc(this, "loading");
 		}
 	}
 
