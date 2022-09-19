@@ -21,7 +21,8 @@ u.includeGoogleTagManager = function() {
 
 			// track event
 			this.event = function(node, _options) {
-				u.bug("options", _options);
+				// u.bug("options", node, _options);
+
 				// default values
 				var event = false;
 				var eventCategory = "Uncategorized";
@@ -118,6 +119,6 @@ u.includeGoogleTagManager = function() {
 }
 
 if(u.gtm_account && !u.cookies_disallowed) {
-	u.bug("includeGoogleTagManager allowed");
+	// u.bug("includeGoogleTagManager allowed");
 	u.includeGoogleTagManager();
 }
