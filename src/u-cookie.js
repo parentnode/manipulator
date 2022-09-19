@@ -42,7 +42,8 @@ Util.saveCookie = function(name, value, _options) {
 	// use cookie
 	// create correct expire value
 	if(expires === false) {
-		expires = ";expires=Mon, 04-Apr-2020 05:00:00 GMT";
+		// default 1 year
+		expires = ";expires="+(new Date((new Date()).getTime() + (1000*60*60*24*365))).toGMTString();
 	}
 	else if(str(expires)) {
 		expires = ";expires="+expires;
