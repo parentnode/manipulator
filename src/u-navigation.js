@@ -125,7 +125,7 @@ u.navigation = function(_options) {
 				u.h.navigate(window._man_nav_path);
 
 				// init content
-				u.init(initialization_scope);
+				// u.init(initialization_scope);
 			}
 			// if different hash and url and hash value starts with /
 			// load content based on hash
@@ -145,7 +145,7 @@ u.navigation = function(_options) {
 //				u.bug("init content")
 
 				// just go for it
-				u.init(initialization_scope);
+				// u.init(initialization_scope);
 			}
 
 		}
@@ -175,7 +175,7 @@ u.navigation = function(_options) {
 //				u.bug("all good, init content");
 
 				// just go for it
-				u.init(initialization_scope);
+				// u.init(initialization_scope);
 			}
 		}
 
