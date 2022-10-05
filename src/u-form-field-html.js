@@ -289,7 +289,7 @@ u.f.textEditor = function(field) {
 
 	// updates actual Textarea 
 	field.updateContent = function() {
-		u.bug("updateContent");
+		// u.bug("updateContent");
 
 		// get all tags
 		var tags = u.qsa("div.tag", this);
@@ -669,6 +669,7 @@ u.f.textEditor = function(field) {
 			u.e.kill(event);
 		}
 		tag.bn_add.clicked = function(event) {
+
 			this.cleanupOptions = function(event) {
 				if(this.field.ul_new_tag_options) {
 					u.bug("remove options");
@@ -1617,6 +1618,7 @@ u.f.textEditor = function(field) {
 		li._input.tag = tag;
 		li._input.field = this;
 		li._input._form = this._form;
+		tag._input = li._input;
 
 		// declare get/set value funtion
 		li._input.val = function(value) {
