@@ -129,8 +129,8 @@ u.e.addWindowStartEvent = function(node, action) {
 		}
 	};
 
-	eval('window["_OnWindowEvent_' + id + '"].eventCallback = function(event) {window["_OnWindowStartEvent_'+ id + '"].callback(event);}');
-	u.e.addEvent(window, type, window["_OnWindowStartEvent_" + id].eventCallback);
+	eval('window["_OnWindowStartEvent_' + id + '"].eventCallback = function(event) {window["_OnWindowStartEvent_'+ id + '"].callback(event);}');
+	u.e.addStartEvent(window, window["_OnWindowStartEvent_" + id].eventCallback);
 
 	return id;
 }
@@ -138,7 +138,7 @@ u.e.removeWindowStartEvent = function(id) {
 
 	if(window["_OnWindowStartEvent_" + id]) {
 		// remove event listener
-		u.e.removeEvent(window, window["_OnWindowStartEvent_"+id].type, window["_OnWindowStartEvent_"+id].eventCallback);
+		u.e.removeStartEvent(window, window["_OnWindowStartEvent_"+id].eventCallback);
 
 		// remove callback references
 		delete window["_OnWindowStartEvent_"+id];
@@ -166,7 +166,7 @@ u.e.addWindowMoveEvent = function(node, action) {
 	};
 
 	eval('window["_OnWindowMoveEvent_' + id + '"].eventCallback = function(event) {window["_OnWindowMoveEvent_'+ id + '"].callback(event);}');
-	u.e.addEvent(window, type, window["_OnWindowMoveEvent_" + id].eventCallback);
+	u.e.addMoveEvent(window, type, window["_OnWindowMoveEvent_" + id].eventCallback);
 
 	return id;
 }
@@ -174,7 +174,7 @@ u.e.removeWindowMoveEvent = function(id) {
 
 	if(window["_OnWindowMoveEvent_" + id]) {
 		// remove event listener
-		u.e.removeEvent(window, window["_OnWindowMoveEvent_"+id].type, window["_OnWindowMoveEvent_"+id].eventCallback);
+		u.e.removeMoveEvent(window, window["_OnWindowMoveEvent_"+id].eventCallback);
 
 		// remove callback references
 		delete window["_OnWindowMoveEvent_"+id];
