@@ -15,25 +15,12 @@ u.includeGoogleAnalytics = function() {
 		document.head.appendChild(script);
 
 
-		// 	    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-		// 	    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-		// 	    m=s.getElementsByTagName(o)[0];a.async=1;a.defer=true;a.src=g;m.parentNode.insertBefore(a,m)
-		// 	    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-		//
-		// // track page view for initial load
-		// 	    ga('create', u.ga_account, u.ga_domain);
-		// 	    ga('send', 'pageview');
-		
-
 		u.stats = new function() {
 
 			// track regular page view
-			// GA4 does this automatically
+			// GA4 does this automatically, based on popstate event change
 			this.pageView = function(url) {
-				u.bug("pageView", url);
-				// gtag({
-				// 	'event': 'page_view'
-				// });
+				// u.bug("pageView", url);
 			}
 
 
