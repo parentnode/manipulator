@@ -1,23 +1,39 @@
 u.includeGoogleAnalytics = function() {
-	if(typeof(ga) !== "function") {
-
+	if(typeof(gtag) !== "function") {
 		// u.bug("includeGoogleAnalytics");
 
-	    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-	    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-	    m=s.getElementsByTagName(o)[0];a.async=1;a.defer=true;a.src=g;m.parentNode.insertBefore(a,m)
-	    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+		window.dataLayer = window.dataLayer || [];
+		function gtag(){dataLayer.push(arguments);}
+		gtag('js', new Date());
 
-		// track page view for initial load
-	    ga('create', u.ga_account, u.ga_domain);
-	    ga('send', 'pageview');
+		gtag('config', u.ga_account);
+
+
+		var script = document.createElement("script");
+		script.src = "https://www.googletagmanager.com/gtag/js?id="+u.ga_account;
+		script.async = true;
+		document.head.appendChild(script);
+
+
+		// 	    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		// 	    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		// 	    m=s.getElementsByTagName(o)[0];a.async=1;a.defer=true;a.src=g;m.parentNode.insertBefore(a,m)
+		// 	    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+		//
+		// // track page view for initial load
+		// 	    ga('create', u.ga_account, u.ga_domain);
+		// 	    ga('send', 'pageview');
 		
 
 		u.stats = new function() {
 
-			// track regurlar page view
+			// track regular page view
+			// GA4 does this automatically
 			this.pageView = function(url) {
-				ga('send', 'pageview', url);
+				u.bug("pageView", url);
+				// gtag({
+				// 	'event': 'page_view'
+				// });
 			}
 
 
@@ -73,13 +89,12 @@ u.includeGoogleAnalytics = function() {
 
 
 				//ga('send', 'event', [eventCategory], [eventAction], [eventLabel], [eventValue], [fieldsObject]);
-				ga('send', 'event', {
+				gtag({
+					"event": eventAction, 
 					"eventCategory": eventCategory, 
 					"eventAction": eventAction,
 					"eventLabel": eventLabel,
 					"eventValue": eventValue,
-					"nonInteraction": nonInteraction,
-					"hitCallback": hitCallback
 				});
 
 			}
