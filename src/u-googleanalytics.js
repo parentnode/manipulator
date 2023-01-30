@@ -75,7 +75,6 @@ u.includeGoogleAnalytics = function() {
 				}
 
 
-				//ga('send', 'event', [eventCategory], [eventAction], [eventLabel], [eventValue], [fieldsObject]);
 				gtag({
 					"event": eventAction, 
 					"eventCategory": eventCategory, 
@@ -86,18 +85,6 @@ u.includeGoogleAnalytics = function() {
 
 			}
 
-			// LEGACY
-			// this.customVar = function(slot, name, value, scope) {
-			//
-			//
-			// 	// _gaq.push(['_setCustomVar',
-			// 	//       slot,		// This custom var is set to slot #1.  Required parameter.
-			// 	//       name,		// The name of the custom variable.  Required parameter.
-			// 	//       value,	// The value of the custom variable.  Required parameter.
-			// 	//       scope		// Sets the scope to visitor-level.  Optional parameter.
-			// 	//  ]);
-			//
-			// }
 
 			// Simple label generator
 			this.nodeSnippet = function(node) {
