@@ -128,7 +128,7 @@ u.overlay = function (_options) {
 
 	}
 	// add resize event listener
-	u.e.addWindowEvent(overlay, "resize", "_resized");
+	u.e.addWindowEvent(overlay, "resize", overlay._resized);
 
 
 
@@ -203,7 +203,7 @@ u.overlay = function (_options) {
 
 	// Fade up
 	u.ass(overlay, {
-		"transition": "all .4s ease-in-out .1s",
+		"transition": "opacity .4s ease-in-out .1s",
 		"opacity": 1,
 	});
 
