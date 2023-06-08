@@ -679,7 +679,6 @@ u.f.textEditor = function(field) {
 
 			this.cleanupOptions = function(event) {
 				if(this.field.ul_new_tag_options) {
-					u.bug("remove options");
 
 					this.field.ul_new_tag_options.parentNode.removeChild(this.field.ul_new_tag_options);
 					delete this.field.ul_new_tag_options;
@@ -691,6 +690,12 @@ u.f.textEditor = function(field) {
 
 				}
 			}
+
+			// Remove existing options list if any
+			if(this.field.ul_new_tag_options) {
+				this.cleanupOptions();
+			}
+
 			// if(u.hc(this.field.options, "show")) {
 			// 	u.rc(this.field.options, "show");
 			// 	u.rc(this.field, "optionsshown");
@@ -704,7 +709,7 @@ u.f.textEditor = function(field) {
 			// 	u.ac(this.field.options, "show");
 			// 	u.ac(this.field, "optionsshown");
 			//
-				this.start_event_id = u.e.addWindowStartEvent(this, this.cleanupOptions);
+			this.start_event_id = u.e.addWindowStartEvent(this, this.cleanupOptions);
 			// }
 
 			// Add list for actions
@@ -832,9 +837,7 @@ u.f.textEditor = function(field) {
 				u.bug("some information is missing to support file upload:\nitem_id="+this.field.item_id+"\nfile_add_action="+this.field.file_add_action+"\nfile_delete_action="+this.field.file_delete_action);
 			}
 
-
 		}
-
 
 
 		// add remove button
