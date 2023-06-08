@@ -157,7 +157,14 @@ u.f.textEditor = function(field) {
 	}
 
 	// callback after sorting list
+	field._editor.picked = function() {
+		u.ac(this, "reordering");
+	}
+
+	// callback after sorting list
 	field._editor.dropped = function() {
+		u.rc(this, "reordering");
+
 		this.field.update();
 		//u.bug("sorted")
 	}
