@@ -166,7 +166,7 @@ u.e.addWindowMoveEvent = function(node, action) {
 	};
 
 	eval('window["_OnWindowMoveEvent_' + id + '"].eventCallback = function(event) {window["_OnWindowMoveEvent_'+ id + '"].callback(event);}');
-	u.e.addMoveEvent(window, type, window["_OnWindowMoveEvent_" + id].eventCallback);
+	u.e.addMoveEvent(window, window["_OnWindowMoveEvent_" + id].eventCallback);
 
 	return id;
 }
