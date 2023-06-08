@@ -2492,7 +2492,8 @@ u.f.textEditor = function(field) {
 		var fieldset = u.f.addFieldset(form);
 		var input_url = u.f.addField(fieldset, {
 			"label":"url", 
-			"name":"url", 
+			"name":"url",
+			"required": true,
 			"value":a.href.replace(location.protocol + "//" + document.domain, ""), 
 			"pattern":"(http[s]?:\\/\\/|mailto:|tel:)[^$]+|\/[^$]*",
 			"error_message":"Must start with /, http:// or https://, mailto: or tel:"
@@ -2511,6 +2512,7 @@ u.f.textEditor = function(field) {
 		});
 		u.f.init(form);
 
+		form.inputs["url"].focus();
 
 		form.a = a;
 		form.field = this;
