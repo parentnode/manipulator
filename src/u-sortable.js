@@ -805,7 +805,7 @@ u.sortable = function(scope, _options) {
 			for(i = 0; i < this.target_nodes.length; i++) {
 				target = this.target_nodes[i];
 
-				// u.bug("target", target, target._n_left);
+				// u.bug("target", target, target._n_left, target._n_right, target._n_top, target._n_bottom, u.cn(target, {include: this._draggable_selector}).length, target._n_display != "block");
 				// if(this._layout) {
 				// 	target._layout = this._layout;
 				// }
@@ -814,7 +814,7 @@ u.sortable = function(scope, _options) {
 					// if node-tops or node-bottoms are all the same
 					// - and more than one child (otherwise how to compare positions)
 					// - or only one element with display other than block (block indicates vertical list)
-					if((target._n_top || target._n_bottom) && (u.cn(target).length > 1 || target._n_display != "block")) {
+					if((target._n_top || target._n_bottom) && (u.cn(target, {include: this._draggable_selector}).length > 1 || target._n_display != "block")) {
 						target._layout = "horizontal";
 					}
 					// If node-left or node-right are all the same
@@ -1048,7 +1048,7 @@ u.sortable = function(scope, _options) {
 						if(this._allow_nesting) {
 							this.target_nodes.push(target);
 						}
-					// Only include first level list
+						// Only include first level list
 						else {
 							parent_ul = u.pn(target, {include:"ul"});
 							// if list doesn't have parent list - or parent list is outside of scope
