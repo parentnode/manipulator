@@ -2040,79 +2040,107 @@ u.f.textEditor = function(field) {
 
 	// PASTE FILTERING
 
-	// clean pasted content - first version
+	// clean pasted content
 	field._pasted_content = function(event) {
-		// u.bug("pasted content", event);
+		u.bug("pasted content", event, this);
 
 		u.e.kill(event);
 
-		var i, node;
+		var i, node, text, range, new_tag, current_tag, selection, paste_parts, text_parts, text_nodes;
 
 		var paste_content = event.clipboardData.getData("text/plain");
 		// u.bug("paste_content", paste_content);
 
-		// u.bug("paste_content:", paste_content, "yes");
 		// only do anything if paste content is not empty
 		if(paste_content !== "") {
 
 			// remove current selection if it exists
 			// because pasting on top of selection should replace selection
-			var selection = window.getSelection();
+			selection = window.getSelection();
 			if(!selection.isCollapsed) {
 				selection.deleteFromDocument();
 			}
 
+			if(u.hc(this.tag, "code")) {
+				// DO DIFFERENT ON CODE INPUT TO MAINTAIN TABS – AND NO NEW TAGS SHOULD BE CREATED
+				u.bug("must be handled – paste in code input");
+			}
+			if(u.hc(this.tag, "ul|ol")) {
+				// DO DIFFERENT ON LI INPUT – AND NO NEW TAGS SHOULD BE CREATED
+				u.bug("must be handled – paste in list input");
+			}
 
-			// u.bug("pasted:", paste_content, "#:", paste_content.trim(), "#");
 
-			// add break tags for newlines
-			// split string by newlines
-			var paste_parts = paste_content.trim().split(/\n\r|\n|\r/g);
-			// if(paste_parts.length > 1) {
-			//
-			// 	console.log("formatting");
-			//
-			// }
-			// else {
-			//
-			// 	console.log("no formatting");
 
-				var text_nodes = [];
-				for(i = 0; i < paste_parts.length; i++) {
-					text = paste_parts[i];
-					u.bug("text part", text);
-					text_nodes.push(document.createTextNode(text));
 
-					// only insert br-tag if there is more than one paste-part and not after the last one
-					if(paste_parts.length && i < paste_parts.length-1) {
-						text_nodes.push(document.createElement("br"));
+			// add additional tags for double-newlines
+			// split string by double newlines
+			paste_parts = paste_content.trim().split(/\n\r\n\r|\n\n|\r\r/g);
+
+			text_tags = [];
+
+			for(i = 0; i < paste_parts.length; i++) {
+
+				text_block = paste_parts[i].trim();
+				if(text_block) {
+					nodes = [];
+
+					text_parts = text_block.split(/\n\r|\n|\r/g);
+
+					for(j = 0; j < text_parts.length; j++) {
+						text = text_parts[j];
+						nodes.push(document.createTextNode(text));
+
+						if(j < text_parts.length - 1) {
+							nodes.push(document.createElement("br"));
+						}
 					}
+
+					text_tags.push(nodes);
 				}
 
-				// loop through nodes in opposite order
-				// webkit collapses space after selection if I don't 
-				for(i = text_nodes.length-1; i >= 0; i--) {
-					node = text_nodes[i];
+			}
+
+			u.bug(text_tags);
+
+			current_tag = this.tag;
+
+			for(i = 0; i < text_tags.length; i++) {
+				nodes = text_tags[i];
+				for(j = 0; j < nodes.length; j++) {
+
+					node = nodes[j];
+
+
+					selection = window.getSelection();
 
 					// get current range
-					var range = selection.getRangeAt(0);
+					range = selection.getRangeAt(0);
 					// insert new node
 					range.insertNode(node);
 
 					// add range to to selection
 					selection.addRange(range);
 
+					// now collapse selection to end, to have cursor after selection
+					selection.collapseToEnd();
+
 				}
 
-				// now collapse selection to end, to have cursor after selection
-				selection.collapseToEnd();
+				if(i < text_tags.length - 1) {
+					new_tag = this.field.addTextTag(this.field.text_allowed[0]);
+					u.ia(new_tag, current_tag);
 
-			// }
-//			alert(paste_parts.join(","))
+					current_tag = new_tag;
+
+					// Use focus and selection for insertion to have cursor follow along to the end
+					current_tag._input.focus();
+				}
+			}
 
 		}
-	}
 
+	}
 
 
 
