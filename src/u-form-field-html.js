@@ -2061,21 +2061,26 @@ u.f.textEditor = function(field) {
 				selection.deleteFromDocument();
 			}
 
-			if(u.hc(this.tag, "code")) {
-				// DO DIFFERENT ON CODE INPUT TO MAINTAIN TABS – AND NO NEW TAGS SHOULD BE CREATED
-				u.bug("must be handled – paste in code input");
-			}
 			if(u.hc(this.tag, "ul|ol")) {
 				// DO DIFFERENT ON LI INPUT – AND NO NEW TAGS SHOULD BE CREATED
 				u.bug("must be handled – paste in list input");
 			}
 
 
+			// Code input paste handling – no new tags should be created
+			if(u.hc(this.tag, "code")) {
 
+				paste_parts = [paste_content];
 
-			// add additional tags for double-newlines
-			// split string by double newlines
-			paste_parts = paste_content.trim().split(/\n\r\n\r|\n\n|\r\r/g);
+			}
+			// Default paste handling
+			else {
+
+				// add additional tags for double-newlines
+				// split string by double newlines
+				paste_parts = paste_content.trim().split(/\n\r\n\r|\n\n|\r\r/g);
+
+			}
 
 			text_tags = [];
 
@@ -2101,7 +2106,7 @@ u.f.textEditor = function(field) {
 
 			}
 
-			u.bug(text_tags);
+			// u.bug(text_tags);
 
 			current_tag = this.tag;
 
