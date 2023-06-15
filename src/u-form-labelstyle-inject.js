@@ -18,7 +18,9 @@ Util.Form.customLabelStyle["inject"] = function(iN) {
 		// Create psydo label for inputs that can't easily show label value
 		// Did experiments with with field replacement, but required too much work
 		// replacing event and references (this seems to provide sufficient backup)
-		if(iN.type.match(/number|integer|password|datetime|date/)) {
+		// Date/datetime should use it's own label for now
+		// if(iN.type.match(/number|integer|password|datetime|date/)) {
+		if(iN.type.match(/number|integer|password/)) {
 
 			iN.pseudolabel = u.ae(iN.parentNode, "span", {"class":"pseudolabel", "html":iN.default_value});
 			iN.pseudolabel.iN = iN;
@@ -64,7 +66,8 @@ u.f.updateDefaultState = function(iN) {
 		}
 
 		// remove default value if field does not have value
-		if(iN.val() === "") {
+		// Date/datetime can be partially filled and still return empty value, do not reset value
+		if(iN.val() === "" && !iN.type.match(/date|datetime/)) {
 			iN.val("");
 		}
 
@@ -80,7 +83,11 @@ u.f.updateDefaultState = function(iN) {
 			if(obj(iN.field.virtual_input)) {
 				u.ac(iN.field.virtual_input, "default");
 			}
-			iN.val(iN.default_value);
+
+			// Date/datetime can be partially filled, do not reset value
+			if(!iN.type.match(/date|datetime/)) {
+				iN.val(iN.default_value);
+			}
 
 		}
 	}
