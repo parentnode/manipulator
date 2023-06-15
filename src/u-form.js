@@ -331,10 +331,10 @@ Util.Form = u.f = new function() {
 
 
 			// regular inputs initialization
-			if(u.hc(field, "string|email|tel|number|integer|password|date|datetime")) {
+			if(u.hc(field, "string|email|tel|number|integer|password")) {
 
 				// Register field type
-				field.type = field.className.match(/(?:^|\b)(string|email|tel|number|integer|password|date|datetime)(?:\b|$)/)[0];
+				field.type = field.className.match(/(?:^|\b)(string|email|tel|number|integer|password)(?:\b|$)/)[0];
 
 				// Get primary input
 				field.input = u.qs("input", field);
@@ -566,6 +566,37 @@ Util.Form = u.f = new function() {
 					// Add additional standard event listeners and labelstyle
 					this.activateInput(input);
 				}
+
+			}
+
+			// date/datetime inputs initialization
+			else if(u.hc(field, "date|datetime")) {
+
+				// Register field type
+				field.type = field.className.match(/(?:^|\b)(date|datetime)(?:\b|$)/)[0];
+
+				// Get primary input
+				field.input = u.qs("input", field);
+				// form is a reserved property, so we use _form
+				field.input._form = _form;
+				// Get associated label
+				field.input.label = u.qs("label[for='"+field.input.id+"']", field);
+				// Let it know it's field
+				field.input.field = field;
+
+				// get/set value function
+				field.input.val = this._value_date;
+
+				// change/update(keyup) events to generic callback handler
+				u.e.addEvent(field.input, "keyup", this._updated);
+				u.e.addEvent(field.input, "change", this._changed);
+				u.e.addEvent(field.input, "change", this._updated);
+
+				// submit on enter (checks for autocomplete etc)
+				this.inputOnEnter(field.input);
+
+				// Add additional standard event listeners and labelstyle
+				this.activateInput(field.input);
 
 			}
 
@@ -920,6 +951,25 @@ Util.Form = u.f = new function() {
 
 		// Return value
 		return (this.selectedIndex >= 0 && this.default_value != this.options[this.selectedIndex].value) ? this.options[this.selectedIndex].value : "";
+	}
+	// value get/setter for date/datetime inputs
+	this._value_date = function(value) {
+		// u.bug("date_v", value);
+		// Set value? (value could be false or 0)
+		if(value !== undefined) {
+			this.value = value;
+
+			// if actual value, remove default state
+			if(value !== this.default_value) {
+				u.rc(this, "default");
+			}
+
+			// validate after setting value
+			u.f.validate(this);
+		}
+
+		// Return value
+		return (this.value != this.default_value) ? this.value.replace("T", " ") : "";
 	}
 	// value get/setter for file inputs
 	this._value_file = function(value) {
