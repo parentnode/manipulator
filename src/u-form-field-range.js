@@ -1,6 +1,7 @@
 // initializer
 Util.Form.customInit["range"] = function(field) {
 	// u.bug("init input range", field);
+
 	// Register field type
 	field.type = "range";
 
@@ -26,7 +27,7 @@ Util.Form.customInit["range"] = function(field) {
 	field.min = field.input.getAttribute("min");
 	field.max = field.input.getAttribute("max");
 	field.postfix = field.input.getAttribute("postfix");
-	field.locale = field.input.getAttribute("locale");
+	field.locale = field.input.getAttribute("locale") || document.documentElement.lang;
 
 	
 	// field._percent_viewer = u.ae(field._virtual_input_wrapper, "div", {"class":"percent"});
