@@ -90,7 +90,7 @@ Util.Form.customInit["dropdown"] = function(field) {
 	// inject UI elements
 	// Wrap contentEditable element in div, to prevent bug in MS Edge (12-16), where it removes part of the DOM when pressing delete or selecting last char and typing.
 	var virtual_input_wrapper = u.ae(field, "div", {"class": "virtual"});
-	field.virtual_input = u.ae(virtual_input_wrapper, "div", {"class": "input"});
+	field.virtual_input = u.ae(virtual_input_wrapper, "div", {"class": "input", "contentEditable": "true"});
 	field.insertBefore(virtual_input_wrapper, field.input);
 
 	// map relevant references
@@ -105,14 +105,13 @@ Util.Form.customInit["dropdown"] = function(field) {
 		// set value
 		if(value !== undefined) {
 
-			if(!this.field.span_search.is_focused) {
-				this.field.span_search.innerHTML = value;
+			if(!this.is_focused) {
+				this.innerHTML = value;
 			}
-
 
 			// Clear selection info
 			this.field.selected_option = false;
-			u.rc(this.field.span_search, "selection");
+			u.rc(this, "selection");
 
 			// Re-evaluate selection
 			var i, option;
@@ -121,7 +120,7 @@ Util.Form.customInit["dropdown"] = function(field) {
 				if(option.option_text == value) {
 
 					// add selection marker
-					u.ac(this.field.span_search, "selection");
+					u.ac(this, "selection");
 
 					// remember li reference
 					this.field.selected_option = option;
@@ -134,12 +133,7 @@ Util.Form.customInit["dropdown"] = function(field) {
 		}
 		// get value
 		else {
-			if(this.field.span_search) {
-				return u.text(this.field.span_search);
-			}
-			else {
-				return "";
-			}
+			return u.text(this);
 		}
 
 	}
@@ -152,7 +146,9 @@ Util.Form.customInit["dropdown"] = function(field) {
 		// u.bug("clicked")
 
 		// re-activate cursor
-		this.field.activateSearchCursor();
+		if(!this.is_focused) {
+			this.field.activateSearchCursor();
+		}
 
 	}
 	u.e.click(field.virtual_input);
@@ -190,7 +186,7 @@ Util.Form.customInit["dropdown"] = function(field) {
 
 			// additional blur handler (used along with window mousedown/touchstart)
 			// invoke blur with body as event.target
-			this.field.span_search._blur({"target": document.body});
+			this._blur({"target": document.body});
 
 		}
 		// [TAB] - select highlighted_option if it extist - otherwise it is just a tab
@@ -207,7 +203,7 @@ Util.Form.customInit["dropdown"] = function(field) {
 
 				// additional blur handler (used along with window mousedown/touchstart)
 				// invoke blur with body as event.target
-				this.field.span_search._blur({"target": document.body});
+				this._blur({"target": document.body});
 
 			}
 
@@ -252,12 +248,17 @@ Util.Form.customInit["dropdown"] = function(field) {
 	field.virtual_input.postKeyEvent = function(event) {
 		// u.bug("postKeyEvent:", event.keyCode, this.field.input.val());
 
+		var value = this.field.virtual_input.val();
+
+		// No search value
+		if(!value) {
+			this.field._show_all = true;
+		}
 		// end show_all state when actual input is received
-		if(event.keyCode == 8 || event.keyCode == 32 || event.keyCode >= 65) {
+		else if(event.keyCode == 8 || event.keyCode == 32 || event.keyCode >= 65) {
 			this.field._show_all = false;
 		}
 
-		var value = this.field.virtual_input.val();
 
 		// this is done on any key input to be absolutely sure – will also match any existing options
 		// selected_option not set – or does not match search text
@@ -293,14 +294,15 @@ Util.Form.customInit["dropdown"] = function(field) {
 
 
 	// inject actual search input
-	field.span_search = u.ae(field.virtual_input, "span", {"class": "search", "contentEditable": "true"});
-	// map relevant references
-	field.span_search._form = field._form;
-	field.span_search.field = field;
+	// field.span_search = field.virtual_input;
+	// // field.span_search = u.ae(field.virtual_input, "span", {"class": "search", "contentEditable": "true"});
+	// // map relevant references
+	// field.span_search._form = field._form;
+	// field.span_search.field = field;
 
 
 	// internal focus handler - attatched to inputs
-	field.span_search._focus = function(event) {
+	field.virtual_input._focus = function(event) {
 		// u.bug("this._focus:", this);
 
 		if(!this.is_focused) {
@@ -347,7 +349,7 @@ Util.Form.customInit["dropdown"] = function(field) {
 	}
 
 	// internal blur handler - attatched to inputs
-	field.span_search._blur = function(event) {
+	field.virtual_input._blur = function(event) {
 		// u.bug("this._blur:", this);
 
 		if(!u.contains(this.field, event.target)) {
@@ -404,13 +406,13 @@ Util.Form.customInit["dropdown"] = function(field) {
 	}
 
 	// allow search click without re-activating cursor
-	field.span_search.clicked = function(event) {
-		u.e.kill(event);
-	}
-	u.e.click(field.span_search);
+	// field.span_search.clicked = function(event) {
+	// 	u.e.kill(event);
+	// }
+	// u.e.click(field.span_search);
 
 	// add focus and blur event handlers to taxonomy input
-	u.e.addEvent(field.span_search, "focus", field.span_search._focus);
+	u.e.addEvent(field.virtual_input, "focus", field.virtual_input._focus);
 
 
 
@@ -465,8 +467,8 @@ Util.Form.customInit["dropdown"] = function(field) {
 
 		}
 
-		// Bring focus back to search input
-		this.field.span_search.focus();
+		// Bring focus back to virtual input
+		this.field.virtual_input.focus();
 
 	}
 
@@ -499,12 +501,12 @@ Util.Form.customInit["dropdown"] = function(field) {
 		// u.bug("activateSearchCursor", this, this.input.val());
 
 		// bring focus to search 
-		this.span_search.focus();
+		this.virtual_input.focus();
 
 		var range = document.createRange();
 
 		// Select whole text
-		range.selectNodeContents(this.span_search);
+		range.selectNodeContents(this.virtual_input);
 
 		// place cursor at the end, if option is not default
 		if(this.input.val()) {
@@ -798,7 +800,7 @@ Util.Form.customInit["dropdown"] = function(field) {
 		this._show_all = false;
 
 		// update search text
-		this.span_search.innerHTML = li.option_text;
+		this.virtual_input.innerHTML = li.option_text;
 
 		// Remove any highlight info
 		if(this.highlighted_option) {
@@ -830,15 +832,17 @@ Util.Form.customInit["dropdown"] = function(field) {
 
 		var value = this.virtual_input.val();
 
-
 		// Regular update of select – option exists
 		if(this.selected_option) {
 			this.input.val(this.selected_option.option_value);
 		}
 
 		// Option does not exist – make sure it is created
-		else {
+		else if(value) {
 			this.input.val("new::"+value);
+		}
+		else {
+			this.input.val("");
 		}
 
 		// throw updated / changed event
@@ -892,6 +896,7 @@ Util.Form.customInit["dropdown"] = function(field) {
 
 			}
 
+			this.dropdown_options.nodes.push(li);
 		}
 
 	}
@@ -900,6 +905,10 @@ Util.Form.customInit["dropdown"] = function(field) {
 	field.loadOptions = function() {
 
 		var existing_value = this.input.val();
+
+		// get list of all tag nodes
+		this.dropdown_options.nodes = [];
+
 
 		// add select options
 
@@ -912,8 +921,6 @@ Util.Form.customInit["dropdown"] = function(field) {
 			this.addOption(node);
 		}
 
-		// get list of all tag nodes
-		this.dropdown_options.nodes = u.qsa("li", this.dropdown_options);
 
 		// Set selected option (cascades to the whole UI)
 		this.input.val(existing_value);
