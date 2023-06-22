@@ -125,10 +125,14 @@ Util.Form.customInit["dropdown"] = function(field) {
 					// remember li reference
 					this.field.selected_option = option;
 
+					this.field.input.dispatchEvent(new Event("change"));
+
 					// only one selection posible
 					return;
 				}
 			}
+
+			this.field.input.dispatchEvent(new Event("change"));
 
 		}
 		// get value
