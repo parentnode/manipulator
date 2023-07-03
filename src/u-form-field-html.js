@@ -17,8 +17,29 @@ Util.Form.customInit["html"] = function(field) {
 	// Let it know it's field
 	field.input.field = field;
 
+	// field.input.val = u.f._value;
 	// get/set value function
-	field.input.val = u.f._value;
+	field._html_value = function(value) {
+
+		// Set value? (value could be false or 0)
+		if(value !== undefined) {
+			u.bug("set", value);
+			this.value = value;
+
+			// if actual value, remove default state
+			if(value !== this.default_value) {
+				u.rc(this, "default");
+			}
+
+			// validate after setting value
+			u.f.validate(this);
+		}
+
+		// Return value
+		return (this.value != this.default_value && u.text(this.field._viewer)) ? this.value : "";
+	}
+	field.input.val = field._html_value;
+
 
 	// create textEditor interface
 	u.f.textEditor(field);
@@ -27,6 +48,7 @@ Util.Form.customInit["html"] = function(field) {
 
 // validator
 Util.Form.customValidate["html"] = function(iN) {
+	// u.bug("validate", iN, iN.val(), u.text(iN.field._viewer));
 
 	// min and max length
 	min = Number(u.cv(iN.field, "min"));
@@ -2042,7 +2064,7 @@ u.f.textEditor = function(field) {
 
 	// clean pasted content
 	field._pasted_content = function(event) {
-		u.bug("pasted content", event, this);
+		// u.bug("pasted content", event, this);
 
 		u.e.kill(event);
 
@@ -2758,8 +2780,7 @@ u.f.textEditor = function(field) {
 	// INDEX EXISTING CONTENT 
 
 	// inject value into viewer div, to be able to inspect for DOM content on initialization
-	field._viewer.innerHTML = field.input.val();
-
+	field._viewer.innerHTML = field.input.value;
 
 	// enable dragging of html-tags
 	// u.sortable(field._editor, {"draggables":"div.tag,div.li", "targets":"div.editor,div.list", "layout": "vertical"});
