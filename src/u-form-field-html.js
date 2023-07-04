@@ -3,7 +3,8 @@
 
 // initializer
 Util.Form.customInit["html"] = function(field) {
-	u.bug("html field", field);
+	// u.bug("html field", field);
+
 	// Register field type
 	field.type = "html";
 
@@ -23,7 +24,6 @@ Util.Form.customInit["html"] = function(field) {
 
 		// Set value? (value could be false or 0)
 		if(value !== undefined) {
-			u.bug("set", value);
 			this.value = value;
 
 			// if actual value, remove default state
