@@ -24,9 +24,9 @@ u.columns = function(node, _columns, insert) {
 	var _column, div_column, column, i, key, value, j;
 
 	// loop through array of column objects/selectors
-	for(j = 0; j < _columns.length; j++) {
+	for(i = 0; i < _columns.length; i++) {
 
-		_column = _columns[j];
+		_column = _columns[i];
 
 		if(typeof(_column) === "object") {
 
@@ -46,13 +46,17 @@ u.columns = function(node, _columns, insert) {
 		// Selector string
 		else {
 
-			var target = u.qs(_column, node._tree.node);
-			if(target) {
+			var target, targets = u.qsa(_column, node._tree.node);
+			if(targets) {
 
-				// Insert 
-				div_column = u.ae(current_node, target);
+				for(j = 0; j < targets.length; j++) {
+					target = targets[j];
 
-				div_column._tree = node._tree;
+					// Insert 
+					div_column = u.ae(current_node, target);
+
+					div_column._tree = node._tree;
+				}
 
 			}
 
