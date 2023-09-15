@@ -116,7 +116,7 @@ u._queueLoader = function() {
 				u.rc(next, "waiting");
 				u.ac(next, "loading");
 
-				if(next._file.match(/png|jpg|gif|svg/)) {
+				if(next._file.match(/png|jpg|gif|svg|avif|webp/)) {
 
 					next.loaded = function(event) {
 						this.image = event.target;
