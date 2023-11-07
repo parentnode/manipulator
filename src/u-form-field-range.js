@@ -29,21 +29,11 @@ Util.Form.customInit["range"] = function(field) {
 	field.postfix = field.input.getAttribute("postfix");
 	field.locale = field.input.getAttribute("locale") || document.documentElement.lang;
 
-	
-	// field._percent_viewer = u.ae(field._virtual_input_wrapper, "div", {"class":"percent"});
-
 	field._virtual_input._form = field._form;
 	field._virtual_input.field = field;
 
-	// field._percent_viewer.field = field;
-	// field._percent_viewer._form = field._form;
-	
 	field._input_range_updated = function() {
-		// u.bug("updated", this.value);
-
-		// var price = this._form.inputs["price"].val().replace(/[\., a-zA-Z\;\$]+/g, "");
-		// var range = Math.round(price * (this.val()/100));
-
+		// u.bug("_input_range_updated", this.value);
 
 		var range_value = this.val();
 		var formatted_range = Number(range_value).toLocaleString(this.field.locale) + (this.field.postfix ? " "+this.field.postfix : "");
@@ -52,16 +42,23 @@ Util.Form.customInit["range"] = function(field) {
 		// this.field._percent_viewer.innerHTML = this.val() + "%";
 
 	}
-	field._virtual_input_updated = function() {
+	field._virtual_input_keydown = function(event) {
+		// [ENTER] - ignore input
+		if (event.keyCode == 13) {
+			u.e.kill(event);
+		}
+	}
+	field._virtual_input_updated = function(event) {
 		// u.bug("_virtual_input_updated updated");
-		// var price = this._form.inputs["price"].val().replace(/[\., a-zA-Z\;\$]+/g, "");
 
 		var range_value = this.innerHTML.replace(/[\., a-zA-Z\(\)\;\$\<\>]+/g, "");
 		if(!range_value) {
 			range_value = this.field.min;
 		}
 		this.field.input.val(range_value);
-		// this.field._percent_viewer.innerHTML = this.field.input.val() + "%";
+
+		// Make sure updated callback is executed
+		u.f._updated.bind(this.field.input)(event);
 
 	}
 	field._virtual_input_blurred = function() {
@@ -70,10 +67,11 @@ Util.Form.customInit["range"] = function(field) {
 		u.rc(this.field, "focus");
 		u.rc(this, "focus");
 
-		var range_value = this.innerHTML.replace(/[\., a-zA-Z\(\)\;\$\<\>]+/g, "");
+		var range_value = Number(this.innerHTML.replace(/[\., a-zA-Z\(\)\;\$\<\>]+/g, ""));
 		var min = this.field.input.getAttribute("min");
 		var max = this.field.input.getAttribute("max");
 
+		
 		if(range_value < this.field.min) {
 			range_value = this.field.min;
 		}
@@ -93,7 +91,17 @@ Util.Form.customInit["range"] = function(field) {
 
 		var range_value = this.innerHTML.replace(/[\., a-zA-Z\(\)\;\$\<\>]+/g, "");
 		this.innerHTML = range_value;
+
+		var selection = window.getSelection();
+		var range = document.createRange();
+		range.selectNodeContents(this);
+		selection.removeAllRanges();
+		selection.addRange(range);
+
 	}
+
+	// Filter out invalid input
+	u.e.addEvent(field._virtual_input, "keydown", field._virtual_input_keydown);
 
 	u.e.addEvent(field._virtual_input, "input", field._virtual_input_updated);
 	u.e.addEvent(field._virtual_input, "blur", field._virtual_input_blurred);
