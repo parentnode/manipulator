@@ -39,8 +39,6 @@ Util.Form.customInit["range"] = function(field) {
 		var formatted_range = Number(range_value).toLocaleString(this.field.locale) + (this.field.postfix ? " "+this.field.postfix : "");
 		this.field._virtual_input.innerHTML = formatted_range;
 
-		// this.field._percent_viewer.innerHTML = this.val() + "%";
-
 	}
 	field._virtual_input_keydown = function(event) {
 		// [ENTER] - ignore input
