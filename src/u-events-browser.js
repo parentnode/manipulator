@@ -67,7 +67,7 @@ u.e.addOnloadEvent = function(action) {
 
 			}
 		}
-		eval('window["_Onload_' + id + '"].eventCallback = function() {u.bug("load");window["_Onload_'+id+'"].callback(event);}');
+		eval('window["_Onload_' + id + '"].eventCallback = function() {window["_Onload_'+id+'"].callback(event);}');
 		u.e.addEvent(window, "load", window["_Onload_" + id].eventCallback);
 	}
 }
