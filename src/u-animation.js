@@ -309,7 +309,9 @@ Util.Animation = u.a = new function() {
 
 	this._animationqueue = {};
 	this.requestAnimationFrame = function(node, callback, duration) {
-//		u.bug("requestAnimationFrame:" + callback + ", " + duration + ", " + u.nodeId(node) + ", " + u.a._requestAnimationId)
+		// u.bug("requestAnimationFrame:" + callback + ", " + duration + ", " + u.nodeId(node) + ", " + u.a._requestAnimationId)
+
+		duration = duration || false;
 
 		if(!u.a.__animation_frame_start) {
 			u.a.__animation_frame_start = Date.now();
@@ -330,7 +332,9 @@ Util.Animation = u.a = new function() {
 
 		// TODO: timers are not very precise - is this a good idea+
 		// add duration timer
-		u.t.setTimer(u.a, function() {u.a.finalAnimationFrame(id)}, duration);
+		if(duration) {
+			u.t.setTimer(u.a, function() {u.a.finalAnimationFrame(id)}, duration);
+		}
 
 		// first addition, set up animationframe loop
 		if(!u.a._animationframe) {
@@ -342,7 +346,7 @@ Util.Animation = u.a = new function() {
 			// animationframe iterator
 			u.a._animationframe = function(timestamp) {
 
-//				u.bug("frame:" + timestamp);
+				// u.bug("frame:" + timestamp);
 
 
 
@@ -361,7 +365,7 @@ Util.Animation = u.a = new function() {
 
 					// progress callback
 					if(fun(animation.node[animation.callback])) {
-						animation.node[animation.callback]((timestamp-animation["__animation_frame_start_"+id]) / animation.duration);
+						animation.node[animation.callback]((timestamp-animation["__animation_frame_start_"+id]) / (animation.duration ? animation.duration : 1));
 					}
 				}
 
