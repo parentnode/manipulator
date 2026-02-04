@@ -702,6 +702,9 @@ Util.Form = u.f = new function() {
 		// Include buttons in tabindex
 		action.setAttribute("tabindex", 0);
 
+		// Does button require confirmation?
+		action.confirm = action.getAttribute("data-confirm");
+
 		// handle [ENTER] on button
 		this.buttonOnEnter(action);
 
@@ -1608,6 +1611,19 @@ Util.Form = u.f = new function() {
 		// apply clicked callback if not already declared
 		if(!action.clicked) {
 
+			// Create restore function if confirmation is required
+			if(action.confirm) {
+				// u.bug("confirm action:", action);
+
+				action.restore = function() {
+					u.rc(this, "confirm");
+					this.wait_for_confirm = false;
+
+					// Restore button value
+					this.value = this.confirm_default_value;
+				}
+			}
+
 			// default handling - can be overwritten in local implementation
 			action.clicked = function(event) {
 				// TODO: some uncertainty about the need for this kill
@@ -1615,6 +1631,29 @@ Util.Form = u.f = new function() {
 
 				// don't execute if button is disabled
 				if(!u.hc(this, "disabled")) {
+
+					// Confirmation required, enter wait for confirm state
+					if(this.confirm && !this.wait_for_confirm) {
+
+						// Wait for confirmation
+						this.wait_for_confirm = true;
+
+						// Enter confirm state
+						u.ac(this, "confirm");
+
+						// Set button value to confirm text
+						this.confirm_default_value = this.value;
+						this.value = this.confirm;
+
+						// Set timeout for restoring original state
+						this.t_confirm = u.t.setTimer(this, this.restore, 3000);
+
+						return;
+					}
+					// Reset restore timer
+					else if(this.confirm && this.t_confirm) {
+						u.t.resetTimer(this.t_confirm);
+					}
 
 					// Native submit button
 					if(this.type && this.type.match(/submit/i)) {
