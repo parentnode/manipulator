@@ -126,8 +126,8 @@ u.notifier = function(node) {
 						if(response.isJSON && response.cms_status == "success") {
 							var csrf_token = response.cms_object["csrf-token"];
 							//u.bug("new token:" + csrf_token);
-							var data_vars = u.qsa("[data-csrf-token]", page);
-							var input_vars = u.qsa("[name=csrf-token]", page);
+							var data_vars = u.qsa("[data-csrf-token]");
+							var input_vars = u.qsa("[name=csrf-token]");
 							var dom_vars = u.qsa("*", page);
 
 							var i, node;
