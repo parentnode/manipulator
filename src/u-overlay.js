@@ -10,6 +10,8 @@
 *  - height: Overlay height in pixels (default 400)
 *  - update: Update sizing (for calculated sizing) 
 *  - class: Additional classname to add to overlay 
+*  - content_scroll: Add class to allow forcing scroll bar in all scenarios
+*  - esc: Add ESC to close shortcut
 *
 * @return Node reference to overlay div
 *
@@ -28,6 +30,7 @@ u.overlay = function (_options) {
 	var height = 400;
 	var content_scroll = false;
 	var classname = "";
+	var esc_to_close = false;
 
 
 	// Apply parameters
@@ -43,6 +46,8 @@ u.overlay = function (_options) {
 				case "width"            : width             = _options[_argument]; break;
 				case "height"           : height            = _options[_argument]; break;
 				case "content_scroll"   : content_scroll    = _options[_argument]; break;
+
+				case "esc"              : esc_to_close      = _options[_argument]; break;
 			}
 		}
 	}
@@ -173,10 +178,16 @@ u.overlay = function (_options) {
 	overlay.close = function (event) {
 
 
+		if(this.esc_to_close && obj(u.k)) {
+			u.k.removeKey(this.x_close, "ESC");
+		}
+
+
 		// restore original state
 		u.as(document.body, "overflow", "auto");
 		document.body.removeChild(this);
 		document.body.removeChild(this.protection);
+
 
 		// callback to invoker to notify about closing
 		if(fun(this.closed)) {
@@ -197,6 +208,15 @@ u.overlay = function (_options) {
 	overlay.x_close.clicked = function (event) {
 		this.overlay.close(event);
 	}
+
+
+	// Add ESC shortcut to close overlay
+	if(esc_to_close && obj(u.k)) {
+		overlay.esc_to_close;
+
+		u.k.addKey(overlay.x_close, "ESC");
+	}
+
 
 	overlay._resized();
 
