@@ -682,14 +682,25 @@ u.sortable = function(scope, _options) {
 		// Get array of ordered ids or nodes
 		scope.getNodeOrder = function(_options) {
 
+			// Ways of finding node's data id
+
+			// id is stored in class_var, like class="item_id:XXX"
 			var class_var = "item_id";
+			// id is store in data attribute, like data-item-id="XXX"
+			var data_attribute = false;
+			// id is stored as property on node, like node.item_id = XXX
+			var node_property = false;
 
 			if(obj(_options)) {
 				var _argument;
 				for(_argument in _options) {
 
 					switch(_argument) {
-						case "class_var"			: class_var 		= _options[_argument]; break;
+
+						case "class_var"			: class_var 				= _options[_argument]; break;
+						case "data_attribute"		: data_attribute 			= _options[_argument]; break;
+						case "node_property"		: node_property 			= _options[_argument]; break;
+
 					}
 
 				}
@@ -705,7 +716,15 @@ u.sortable = function(scope, _options) {
 
 				node = this.draggable_nodes[i];
 
-				id = u.cv(node, class_var);
+				if(node_property) {
+					id = node[node_property];
+				}
+				else if(data_attribute) {
+					id = node.getAttribute("data-"+data_attribute);
+				}
+				else {
+					id = u.cv(node, class_var);
+				}
 
 				if(id) {
 					order.push(id);
