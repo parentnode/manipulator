@@ -74,6 +74,20 @@ Util.Form = u.f = new function() {
 		_form._debug = false;
 
 
+		// find item id, extended files preview functionality requires knowing item_id
+		// TODO: should be extended to look in other places
+		_form._item_id = _form.getAttribute("data-item_id");
+		if(!_form._item_id) {
+
+			// could be in form action (last fragment of url)
+			var item_id_match = _form.action.match(/\/([0-9]+)(\/|$)/);
+			if(item_id_match) {
+				_form._item_id = item_id_match[1];
+			}
+
+		}
+
+
 		// Label styles - defines special handling of label values
 		// specified via form classname as labelstyle:inject or sent via _options array
 		// Currently implemented: none or inject
@@ -172,20 +186,9 @@ Util.Form = u.f = new function() {
 		// internal error bookkeeper
 		_form._error_inputs = {};
 
-		// Index proper fields (in correct markup) first – the have presedence over hidden inputs
-		// get all fields
-		var fields = u.qsa(".field", _form);
-		for(i = 0; i < fields.length; i++) {
-			field = fields[i];
-
-			// u.bug("field found:", field);
-			u.f.initField(_form, field);
-
-		}
-
-
 
 		// reference hidden fields to allow accessing them through form fields array
+		// Do this first, since this makes csrf token availble
 		var hidden_inputs = u.qsa("input[type=hidden]", _form);
 		for(i = 0; i < hidden_inputs.length; i++) {
 			hidden_input = hidden_inputs[i];
@@ -204,6 +207,18 @@ Util.Form = u.f = new function() {
 		}
 
 
+		// Index proper fields (in correct markup) first – the have presedence over hidden inputs
+		// get all fields
+		var fields = u.qsa(".field", _form);
+		for(i = 0; i < fields.length; i++) {
+			field = fields[i];
+
+			// u.bug("field found:", field);
+			u.f.initField(_form, field);
+
+		}
+
+
 		// get all actions
 		var actions = u.qsa(".actions li input[type=button],.actions li input[type=submit],.actions li input[type=reset],.actions li a.button", _form);
 		for(i = 0; i < actions.length; i++) {
@@ -214,7 +229,6 @@ Util.Form = u.f = new function() {
 
 		}
 
-		
 
 		// Set up asynchronous initial bulk validation 
 		// To receive one single callback on first validation
@@ -524,6 +538,13 @@ Util.Form = u.f = new function() {
 				// Add additional standard event listeners and labelstyle
 				this.activateInput(field.input);
 
+				// added accessibility for devices with mouse input support
+				// apply hover to label as well
+				if(u.e.event_support != "touch") {
+					u.e.addEvent(field.input.label, "mouseenter", this._mouseenter.bind(field.input));
+					u.e.addEvent(field.input.label, "mouseleave", this._mouseleave.bind(field.input));
+				}
+
 			}
 
 			// radio button initialization
@@ -565,6 +586,14 @@ Util.Form = u.f = new function() {
 
 					// Add additional standard event listeners and labelstyle
 					this.activateInput(input);
+
+					// added accessibility for devices with mouse input support
+					// apply hover to label as well
+					if(u.e.event_support != "touch") {
+						u.e.addEvent(input.label, "mouseenter", this._mouseenter.bind(input));
+						u.e.addEvent(input.label, "mouseleave", this._mouseleave.bind(input));
+					}
+
 				}
 
 			}
@@ -615,16 +644,36 @@ Util.Form = u.f = new function() {
 				// Let it know it's field
 				field.input.field = field;
 
+				// extended functionality urls
+				field.file_delete_action = field.getAttribute("data-file-delete");
+				field.file_order_action = field.getAttribute("data-file-order");
+				field.file_update_metadata_action = field.getAttribute("data-file-update-metadata");
+				field.file_media_info_action = field.getAttribute("data-file-media-info");
+
+
+				// extended files preview functionality requires knowing item_id
+				field._item_id = _form._item_id;
+
+
 				// get/set value function
 				field.input.val = this._value_file;
 
+
+				// Create droparea to have relative container for file input, file list and preview
+				field.div_droparea = u.we(field.input, "div", {"class":"droparea"});
+
+
 				// Find or Add filelist for visual file selection feedback
+				// Create filelist if not exists
 				field.filelist = u.qs("ul.filelist", field);
 				if(!field.filelist) {
-					field.filelist = u.ae(field, "ul", {"class":"filelist"});
-					// position list correctly in field (before help)
-					field.insertBefore(field.help, field.filelist);
+					field.filelist = u.ae(field.div_droparea, "ul", {"class":"filelist"});
 				}
+				// Move filelist to droparea
+				else {
+					field.div_droparea.appendChild(field.filelist);
+				}
+
 				// Let filelist know about it's field
 				field.filelist.field = field;
 				// Get already uploaded files
@@ -1118,7 +1167,9 @@ Util.Form = u.f = new function() {
 			for(i = 0; i < files.length; i++) {
 				file = files[i];
 
-				li_file = u.ae(this.field.filelist, "li", {"html":file.name, "class":"new format:"+file.name.substring(file.name.lastIndexOf(".")+1).toLowerCase()})
+				li_file = u.ae(this.field.filelist, "li", {"html":file.name, "class":"new"})
+				li_file.setAttribute("data-format", file.name.substring(file.name.lastIndexOf(".")+1).toLowerCase());
+
 				li_file.input = this;
 
 
@@ -1131,8 +1182,9 @@ Util.Form = u.f = new function() {
 					this.field.filelist.load_queue++;
 
 					li_file.image.onload = function() {
-						u.ac(this.li, "width:"+this.width);
-						u.ac(this.li, "height:"+this.height);
+						this.li.setAttribute("data-width", this.width);
+						this.li.setAttribute("data-height", this.height);
+
 						u.rc(this.li, "loading");
 						this.li.input.field.filelist.load_queue--;
 
@@ -1152,9 +1204,47 @@ Util.Form = u.f = new function() {
 					this.field.filelist.load_queue++;
 
 					li_file.video.onloadedmetadata = function() {
-						u.bug("loaded", this);
-						u.ac(this.li, "width:"+this.videoWidth);
-						u.ac(this.li, "height:"+this.videoHeight);
+						// u.bug("loaded", this, this.videoWidth);
+
+						// JS not able to get video properties and
+						// Serverside identification is available
+						if(!this.videoWidth || !this.videoHeight && this.li.input._form && this.li.input.field.file_media_info_action) {
+
+							delete this.li.video;
+
+							var data = new FormData();
+							data.append("input_name", "video");
+							data.append("video[]", file, file.name);
+							data.append("csrf-token", this.li.input._form.inputs["csrf-token"].val());
+							this.response = function(response) {
+								u.bug("response", response);
+
+								var width = 0;
+								var height = 0;
+								if(response && response.cms_object && response.cms_object.length && response.cms_object[0].width && response.cms_object[0].height) {
+									width = response.cms_object[0].width;
+									height = response.cms_object[0].height;
+								}
+
+								this.li.setAttribute("data-width", width);
+								this.li.setAttribute("data-height", height);
+								u.rc(this.li, "loading");
+								this.li.input.field.filelist.load_queue--;
+
+								u.f.filelistUpdated(this.li.input);
+
+							}
+							u.request(this, this.li.input.field.file_media_info_action, {
+								"method": "post",
+								"data": data,
+							});
+							return;
+						}
+
+						// Update video info 
+						this.li.setAttribute("data-width", this.videoWidth);
+						this.li.setAttribute("data-height", this.videoHeight);
+
 						u.rc(this.li, "loading");
 						this.li.input.field.filelist.load_queue--;
 
@@ -1184,6 +1274,10 @@ Util.Form = u.f = new function() {
 
 			u.f.filelistUpdated(this);
 
+			// Set focus on file input
+			// This sets focus on input after drop file – not sure if there can be some unintended sideeffect
+			this.focus();
+
 		}
 		// Already uploaded files
 		else if(this.field.uploaded_files && this.field.uploaded_files.length) {
@@ -1206,6 +1300,8 @@ Util.Form = u.f = new function() {
 
 		}
 
+		u.f.updateFilePreview(this.field);
+
 	}
 	// Filelist update handler (waiting for image files to be loaded)
 	this.filelistUpdated = function(input) {
@@ -1215,18 +1311,699 @@ Util.Form = u.f = new function() {
 			this._changed.bind(input.field.input)(input.e_updated);
 			this._updated.bind(input.field.input)(input.e_updated);
 			delete input.e_updated;
+		}
+	}
+
+	// Create file preview – only previewing uploaded files
+	this.updateFilePreview = function(field) {
+		// u.bug("update file preview", field, field.filelist);
+
+		// Single file input – do preview in drop-area
+		if(!field.input.multiple) {
+
+			// Remove preview if exists
+			if(field.filelist.preview) {
+
+				// Remove preview and preview actions
+				// If new file was added on top, then preview still exists, but already detatched from DOM
+				if(field.filelist.preview.parentNode) {
+					field.filelist.removeChild(field.filelist.preview);
+				}
+
+				// Remove edit / delete actions
+				if(field.filelist.preview.ul_actions) {
+					field.div_droparea.removeChild(field.filelist.preview.ul_actions);
+				}
+
+				// Remove video controls
+				if(field.filelist.preview.ul_controls) {
+					field.div_droparea.removeChild(field.filelist.preview.ul_controls);
+				}
+
+				// Remove any existing shortcut
+				if(obj(u.k)) {
+					u.k.removeKey(field.filelist.preview.keyboard_target, "e");
+					u.k.removeKey(field.filelist.preview.keyboard_target, "DELETE");
+				}
+
+				// Delete reference
+				delete field.filelist.preview;
+
+				// Let it be known
+				u.rc(field.filelist, "previewing");
+
+			}
+
+			var file = u.qs("li.uploaded", field.filelist);
+			if(file) {
+
+				// Let filelist know it is now previewing uploaded file
+				u.ac(field.filelist, "previewing");
+
+				field.filelist.preview = u.ae(field.filelist, "li", {"class":"preview"});
+				field.filelist.preview.field = field;
+				field.filelist.preview.file = file;
+				field.filelist.preview.controls_parent = field.div_droparea;
+				field.filelist.preview.keyboard_target = field;
+
+				// Add new preview (will automatically determine correct preview type)
+				u.f.addPreview(field.filelist.preview);
+
+			}
 
 		}
+
+		// Multiple files input.
+		// Separate preview list needed
+		else {
+
+			// u.bug("Multiple files input", field.ul_previews);
+
+			// Remove preview if exists
+			if(field.ul_previews) {
+
+				var preview, li_preview, i, files, file, previews;
+
+				// Remove preview keyboard shortcuts
+				previews = u.qsa("li.preview", field.ul_previews);
+				for(i = 0; i < previews.length; i++) {
+					preview = previews[i];
+
+					if(obj(u.k)) {
+						u.k.removeKey(preview.keyboard_target, "e");
+						u.k.removeKey(preview.keyboard_target, "DELETE");
+					}
+
+				}
+
+				// Remove preview list
+				field.removeChild(field.ul_previews);
+
+				// Delete reference
+				delete field.ul_previews;
+			}
+
+
+			// Remove Start from scratch to secure fresh start
+			field.ul_previews = u.ae(field, "ul", {"class": "previews"});
+			field.ul_previews.field = field;
+
+			files = u.qsa("li.uploaded", field.filelist);
+			if(files) {
+
+				for(i = 0; i < files.length; i++) {
+					file = files[i];
+
+					preview = u.ae(field.ul_previews, "li", {"class":"preview", "tabindex": 0});
+					preview.field = field;
+					preview.file = file;
+					preview.controls_parent = preview;
+					preview.keyboard_target = preview;
+
+					// Add new preview (will automatically determine correct preview type)
+					u.f.addPreview(preview);
+				}
+
+			}
+
+			// sortable list
+			if(field.file_order_action) {
+
+				u.sortable(field.ul_previews);
+
+				field.ul_previews.picked = function(node) {}
+				field.ul_previews.dropped = function(node) {
+
+					// Get node order (getNodeOrder comes from u.sortable)
+					var order = this.getNodeOrder({node_property:"media_id"});
+
+					var form_data = new FormData();
+					form_data.append("csrf-token", this.field._form.inputs["csrf-token"].val());
+					form_data.append("item_id", this.field._item_id);
+					form_data.append("order", order.join(","));
+
+					this.response = function(response) {
+						// Notify of event
+						page.notify(response);
+					}
+					u.request(this, field.file_order_action, {
+						"method": "post", 
+						"data": form_data
+					});
+
+				}
+
+			}
+
+		}
+
+	}
+
+	// Select correct preview for file
+	this.addPreview = function(preview) {
+		// u.bug("add new preview", preview.file, preview);
+
+		preview.media_id = preview.file.getAttribute("data-media_id");
+
+		preview.media_name = preview.file.innerHTML;
+		preview.media_description = preview.file.getAttribute("data-description");
+
+		preview.media_format = preview.file.getAttribute("data-format");
+		preview.media_variant = preview.file.getAttribute("data-variant");
+
+		preview.media_width = preview.file.getAttribute("data-width");
+		preview.media_height = preview.file.getAttribute("data-height");
+
+		preview.media_created_at = preview.file.getAttribute("data-created_at");
+		preview.media_poster = preview.file.getAttribute("data-poster");
+
+		// preview.field = list.field;
+		// preview.file = file;
+
+
+		// Add view with filename
+		preview.view = u.ie(preview, "div", {"class":"view"});
+		u.ae(preview.view, "span", {"class": "name", "html": preview.media_name});
+
+
+		// Editable or Deletable
+		if(preview.field.file_delete_action || preview.field.file_update_metadata_action) {
+			preview.ul_actions = u.ae(preview.controls_parent, "ul", {"class":"actions"});
+		}
+
+		// Editable 
+		if(preview.field.file_update_metadata_action) {
+
+			preview.bn_edit = u.ae(preview.ul_actions, "li", {"class": "edit", "html": "edit"});
+			preview.bn_edit.preview = preview;
+
+			u.ce(preview.bn_edit);
+			// Prevent bubbling to drag
+			preview.bn_edit.inputStarted = function(event) {
+				u.e.kill(event);
+			}
+			preview.bn_edit.clicked = function(event) {
+				u.e.kill(event);
+				u.f.editMetadata(this.preview);
+			}
+
+			// Add edit shortcut
+			if(obj(u.k)) {
+				u.k.addKey(preview.keyboard_target, "e", {
+					"callback": preview.bn_edit.clicked.bind(preview.bn_edit),
+					"focused": true,
+				});
+			}
+
+		}
+
+		// Deletable
+		if(preview.field.file_delete_action) {
+
+			preview.bn_delete = u.ae(preview.ul_actions, "li", {"class": "delete", "html": "Are you sure?"});
+			preview.bn_delete.preview = preview;
+
+			u.ce(preview.bn_delete);
+			// Prevent bubbling to drag
+			preview.bn_delete.inputStarted = function(event) {
+				u.e.kill(event);
+			}
+			preview.bn_delete.clicked = function(event) {
+				u.e.kill(event);
+
+				// Confirm deletion
+				if(u.hc(this, "confirm")) {
+					// u.f.deleteFile(this.preview.field._item_id, this.preview.variant);
+					u.f.deleteFile(this.preview);
+				}
+				else {
+					u.ac(this, "confirm");
+					this.t_confirm = u.t.setTimer(this, "restore", 1500);
+				}
+
+			}
+			preview.bn_delete.restore = function() {
+				u.rc(this, "confirm");
+			}
+
+			// Add delete shortcut
+			if(obj(u.k)) {
+				u.k.addKey(preview.keyboard_target, "DELETE", {
+					"callback": preview.bn_delete.clicked.bind(preview.bn_delete),
+					"focused": true,
+				});
+			}
+		}
+
+
+		// set media type
+		if(preview.media_format.match(/^(jpg|png|gif)$/i)) {
+			u.f.addImagePreview(preview);
+		}
+		else if(preview.media_format.match(/^(mp3|ogg|wav|aac)$/i)) {
+			u.f.addAudioPreview(preview);
+		}
+		else if(preview.media_format.match(/^(mov|mp4|ogv|3gp)$/i)) {
+			u.f.addVideoPreview(preview);
+		}
+		else if(preview.media_format.match(/^zip$/i)) {
+			u.f.addZipPreview(preview);
+		}
+		else if(preview.media_format.match(/^pdf$/i)) {
+			u.f.addPdfPreview(preview);
+		}
+
+
+
+
+		// return preview;
+	}
+
+	// file preview, IMAGE
+	this.addImagePreview = function(preview) {
+		// u.bug("addImagePreview", preview);
+
+		u.ac(preview, "preview_image");
+
+		var image_src = "/images/"+preview.field._item_id+"/"+preview.media_variant+"/"+preview.offsetWidth+"x."+preview.media_format;
+
+		// Adjust preview size
+		u.ass(preview.view, {
+			"aspect-ratio": preview.media_width / preview.media_height,
+			"backgroundImage": "url("+image_src+"?"+u.randomString(4)+")"
+		});
+
+	}
+
+	// file preview, PDF
+	this.addPdfPreview = function(preview) {
+		// u.bug("addPdfPreview", preview);
+
+		u.ac(preview, "preview_pdf");
+
+		// Adjust preview height
+		u.ass(preview.view, {
+			"backgroundImage": "url(/images/0/pdf/30x.png)"
+		});
+
+	}
+
+	// file preview, ZIP
+	this.addZipPreview = function(preview) {
+		// u.bug("addZipPreview", preview);
+
+		u.ac(preview, "preview_zip");
+
+		// Adjust preview height
+		u.ass(preview.view, {
+			"backgroundImage": "url(/images/0/zip/30x.png)"
+		});
+
+	}
+
+	// file preview, AUDIO
+	this.addAudioPreview = function(preview) {
+
+		u.ac(preview, "preview_audio");
+
+		// enable playback
+		var audio_src = "/audios/"+preview.field._item_id+"/"+preview.media_variant+"/128."+preview.media_format;
+		preview.player = u.audioPlayer({"loop":true, "preload":"metadata"});
+		preview.player.preview = preview;
+		u.ae(preview.view, preview.player);
+
+		// Load url to show first frame
+		preview.player.load(audio_src+"?"+u.randomString(4));
+
+		// Add media preview controls (play / mute)
+		this.addMediaPlayerControls(preview.player);
+
+	}
+
+	// file preview, VIDEO
+	this.addVideoPreview = function(preview) {
+
+		u.ac(preview, "preview_video");
+
+		// enable playback
+		var video_src = "/videos/"+preview.field._item_id+"/"+preview.media_variant+"/1000x."+preview.media_format;
+		preview.player = u.videoPlayer({"muted":true, "loop":true, "preload":"metadata"});
+		preview.player.media.setAttribute("tabindex", -1);
+		preview.player.preview = preview;
+		u.ae(preview.view, preview.player);
+
+		// Wait for preview to be generated
+		u.ac(preview, "loading-preview");
+		preview.player.loadedmetadata = function(event) {
+			u.rc(this.preview, "loading-preview");
+		}
+
+		// Load url to show first frame
+		preview.player.load(video_src+"?"+u.randomString(4));
+
+
+		// Adjust preview size
+		u.ass(preview.view, {
+			"aspect-ratio": preview.media_width / preview.media_height,
+			// "width": (preview.offsetHeight / preview.media_height * preview.media_width) + "px",
+		});
+
+
+		// Add poster
+		if(preview.media_poster) {
+			var poster_src = "/images/"+preview.field._item_id+"/"+preview.media_variant+"/1000x."+preview.media_poster;
+			preview.player.media.poster = poster_src;
+		}
+
+		// Add media preview controls (play / mute)
+		this.addMediaPlayerControls(preview.player);
+
+	}
+
+
+	// add play form
+	this.addMediaPlayerControls = function(player) {
+
+		var ul_controls = u.ae(player.preview.controls_parent, "ul", {"class":"controls"});
+		player.preview.ul_controls = ul_controls;
+
+		// Create play button
+		var bn_play = u.ae(ul_controls, "li", {"class":"play"});
+		bn_play.player = player;
+		bn_play.ul_controls = ul_controls;
+
+
+		u.ce(bn_play);
+		// Prevent bubbling to drag
+		bn_play.inputStarted = function(event) {
+			u.e.kill(event);
+		}
+		bn_play.clicked = function(event) {
+			u.e.kill(event);
+
+			if(!u.hc(this.ul_controls, "playing")) {
+				this.player.play();
+				u.ac(this.ul_controls, "playing");
+			}
+			else {
+				this.player.pause();
+				u.rc(this.ul_controls, "playing");
+			}
+		}
+
+		// Auto play video on hover – disabled for now
+		// u.e.hover(player);
+		// player.over = function() {
+		// 	this.play();
+		// 	u.ac(this.preview.ul_controls, "playing");
+		// }
+		// player.out = function() {
+		// 	this.pause();
+		// 	u.rc(this.preview.ul_controls, "playing");
+		// }
+
+
+		// Only include mute on video preview
+		if(u.hc(player.preview, "preview_video")) {
+
+			// Create mute button
+			var bn_mute = u.ae(ul_controls, "li", {"class":"mute"});
+			// node.bn_play.preview = node.preview;
+			bn_mute.player = player;
+			bn_mute.ul_controls = ul_controls;
+
+			u.ce(bn_mute);
+			// Prevent bubbling to drag
+			bn_mute.inputStarted = function(event) {
+				u.e.kill(event);
+			}
+			bn_mute.clicked = function(event) {
+				u.e.kill(event);
+
+				if(!u.hc(this.ul_controls, "muted")) {
+					this.player.mute();
+					u.ac(this.ul_controls, "muted");
+				}
+				else {
+					this.player.unmute();
+					u.rc(this.ul_controls, "muted");
+				}
+			}
+			// Starting in muted state
+			u.ac(ul_controls, "muted");
+
+		}
+
+	}
+
+
+
+	// Open tag data input overlay
+	// For media, file and external video meta data
+	this.editMetadataOverlay = function(preview, title) {
+
+		var overlay = u.overlay({
+			"title": title,
+			"width": 600,
+			"height": 510,
+			"esc": true
+		});
+
+		overlay.preview = preview;
+
+		overlay.closed = function(event) {
+
+			// TODO: focus could be returned to preview for multiple inputs, but previews are re-generated on update
+			this.preview.field.input.focus();
+
+		}
+
+		return overlay;
+	}
+
+	// Overlay for external video meta data
+	this.editMetadata = function(preview) {
+
+		preview.overlay = this.editMetadataOverlay(preview, preview.media_name);
+
+
+		var form = u.f.addForm(preview.overlay.div_content);
+		form.preview = preview;
+
+		// Store item_id for default form handling
+		form.setAttribute("data-item_id", preview.field._item_id);
+
+		// Add csrf-token
+		u.f.addField(form, {
+			"name": "csrf-token",
+			"type": "hidden",
+			"value": preview.field._form.inputs["csrf-token"].val(),
+		});
+
+
+
+		// Create inputs
+		var fieldset = u.f.addFieldset(form);
+
+		// Show poster?
+		if(u.hc(preview, "preview_video")) {
+			u.f.addField(fieldset, {
+				"name": "file_poster[0]",
+				"type": "files",
+				"max": 1,
+				"label": "Poster for this file name.",
+				"value": (preview.media_poster ? [{
+					"name": "Poster",
+					"variant": preview.media_variant,
+					"format": preview.media_poster,
+					"width": preview.media_width,
+					"height": preview.media_height,
+					
+				}] : false),
+				"hint_message": "Add a poster for the file. This will be provided to search engines for better ranking.",
+
+				"file_delete": preview.field.getAttribute("data-file-delete"),
+				"is_poster": true,
+			});
+		}
+
+		u.f.addField(fieldset, {
+			"name": "file_name",
+			"type": "string",
+			"label": "SEO friendly file name.",
+			"value": preview.media_name,
+			"hint_message": "Enter the name or title of the file. This will be provided to search engines for better ranking.",
+		});
+		u.f.addField(fieldset, {
+			"name": "created_at",
+			"type": "datetime",
+			"label": "Created date and time",
+			"value": (preview.media_created_at ? preview.media_created_at : u.date("Y-m-d H:i:s")),
+			"hint_message": "When was the file created. This will be provided to search engines for better ranking.",
+		});
+		u.f.addField(fieldset, {
+			"name": "file_description",
+			"type": "text",
+			"label": "Description",
+			"value": preview.media_description,
+			"hint_message": "Enter a meaningful description for the file. This will be provided to search engines for better ranking.",
+		});
+
+		// Create buttons
+		u.f.addAction(form, {
+			"name": "update",
+			"value": "Update",
+			"class": "button primary",
+		});
+		u.f.addAction(form, {
+			"name": "cancel",
+			"value": "Cancel",
+			"class": "button",
+		});
+
+
+		// Initialize form
+		u.f.init(form);
+
+
+		// Close overlay on cancel
+		form.actions.cancel.clicked = function() {
+			this._form.preview.overlay.close();
+		}
+
+		// Add save shortcut
+		u.k.addKey(form, "s", {
+			"callback":"submit",
+			"focused":true
+		});
+
+		// Focus on first field
+		if(u.hc(preview, "preview_video")) {
+			form.inputs["file_poster[0]"].focus();
+		}
+		else {
+			form.inputs["file_name"].focus();
+		}
+
+
+
+		// Handle submission
+		form.submitted = function(iN) {
+
+			var form_data = this.getData();
+			form_data.append("file_variant", this.preview.media_variant);
+			form_data.append("item_id", this.preview.field._item_id);
+
+			u.ac(this, "submitting");
+
+
+			this.response = function(response) {
+
+				page.notify(response);
+
+				u.rc(this, "submitting");
+
+				// success
+				if(response && response.cms_status == "success") {
+
+					// Update filelist node and preview
+					this.preview.file.innerHTML = response.cms_object.name;
+					this.preview.file.setAttribute("data-media_id", response.cms_object.id);
+					this.preview.file.setAttribute("data-description", response.cms_object.description);
+					this.preview.file.setAttribute("data-variant", response.cms_object.variant);
+					this.preview.file.setAttribute("data-format", response.cms_object.format);
+					this.preview.file.setAttribute("data-height", response.cms_object.height ? response.cms_object.height : "");
+					this.preview.file.setAttribute("data-width", response.cms_object.width ? response.cms_object.width : "");
+					this.preview.file.setAttribute("data-poster", response.cms_object.poster ? response.cms_object.poster : "");
+					this.preview.file.setAttribute("data-created_at", response.cms_object.created_at);
+
+					u.f.updateFilePreview(this.preview.field);
+
+					// Close overlay
+					this.preview.overlay.close();
+				}
+
+			}
+			u.request(this, this.preview.field.file_update_metadata_action, {
+				"method":"post",
+				"data":form_data
+			});
+
+		}
+
+	}
+
+	// Delete file
+	// Delete button is related to preview, which also has a reference to the filelist element
+	this.deleteFile = function(preview) {
+		// u.bug("deletefile", preview);
+
+		// Create form data object
+		var form_data = new FormData();
+
+		// append csrf token from main form
+		form_data.append("csrf-token", preview.field._form.inputs["csrf-token"].val());
+		form_data.append("item_id", preview.field._item_id);
+		form_data.append("file_variant", preview.media_variant);
+
+
+		// Special poster condition
+		// If file is actually a poster for other file, then deletion should only delete poster, not the main media
+		if(preview.field.getAttribute("data-is-poster")) {
+			form_data.append("is_poster", preview.field.getAttribute("data-is-poster"));
+		}
+
+
+		// request response handler
+		preview.deleteResponse = function(response) {
+			// u.bug("deleteResponse", response);
+
+			// notify interface
+			page.notify(response);
+
+			// if every thing is good udate and save
+			if(response.cms_status && response.cms_status == "success") {
+
+				// Remove uploaded file
+				this.file.parentNode.removeChild(this.file);
+
+				// Update uploaded file list
+				this.field.uploaded_files = u.qsa("li.uploaded", this.field.filelist);
+
+				// Update preview
+				u.f.updateFilePreview(this.field);
+
+				// Callback to make sure update can be handled elsewhere
+				if(fun(this.field.input.fileDeleted)) {
+					this.field.input.fileDeleted(this.file);
+				}
+
+			}
+
+		}
+		u.request(preview, preview.field.file_delete_action, {
+			"callback": "deleteResponse",
+			"method": "post",
+			"data": form_data
+		});
 	}
 
 	// Update filelist based on server response
 	this.updateFilelistStatus = function(form, response) {
+		// u.bug("updateFilelistStatus", form, response);
 
 		// Do we have valid form and response
-		if(form && form.inputs && response && response.cms_status == "success" && response.cms_object && response.cms_object.mediae) {
+		// Response can be either one 
+		if(form && form.inputs && response && response.cms_status == "success" && response.cms_object && (response.cms_object.mediae || response.cms_object.length && response.cms_object[0].variant)) {
 
 			// clone response mediae
-			var mediae = JSON.parse(JSON.stringify(response.cms_object.mediae));
+			var mediae;
+			if(response.cms_object.mediae) {
+				mediae = JSON.parse(JSON.stringify(response.cms_object.mediae));
+			}
+			else {
+				mediae = JSON.parse(JSON.stringify(response.cms_object));
+			}
 
 			// Get all filelists
 			var filelists = u.qsa("div.field.files ul.filelist", form);
@@ -1261,7 +2038,8 @@ Util.Form = u.f = new function() {
 									old_file = old_files[k];
 
 									// If id matches, then remove media from collection (it's not a new file)
-									if(u.cv(old_file, "media_id") == media.id) {
+									// if(u.cv(old_file, "media_id") == media.id) {
+									if(old_file.getAttribute("data-media_id") === media.id) {
 
 										// Don't bother with this media anymore
 										delete mediae[j];
@@ -1292,9 +2070,20 @@ Util.Form = u.f = new function() {
 
 										new_file.innerHTML = media.name;
 
+										// Remove file from fileinput
+										u.f.removeFileFromFileInput(filelist.field.input, media.name);
+
 										// Update classname
 										u.rc(new_file, "new");
-										u.ac(new_file, "uploaded media_id:"+media.id+" variant:"+media.variant+" format:"+media.format+" width:"+media.width+" height:"+media.height);
+										u.ac(new_file, "uploaded");
+										new_file.setAttribute("data-medie-id", media.id);
+										new_file.setAttribute("data-variant", media.variant);
+										new_file.setAttribute("data-format", media.format);
+										new_file.setAttribute("data-width", media.width);
+										new_file.setAttribute("data-height", media.height);
+										new_file.setAttribute("data-description", media.description);
+										new_file.setAttribute("data-created_at", media.created_at);
+
 
 										// Don't bother with this media anymore
 										delete mediae[j];
@@ -1303,6 +2092,15 @@ Util.Form = u.f = new function() {
 							}
 						}
 					}
+
+
+					// Update field state
+					// Check if all files were uploaded
+					var remaining_new_files = u.qsa("li.new", filelist);
+					if(!remaining_new_files.length) {
+						u.rc(filelist.field, "has_new_files");
+					}
+
 				}
 
 				filelist.field.uploaded_files = u.qsa("li.uploaded", filelist);
@@ -1312,6 +2110,47 @@ Util.Form = u.f = new function() {
 		}
 
 	}
+
+	// Remove file for file input selection (after upload or if user modifies selected files before upload)
+	this.removeFileFromFileInput = function(input, file_name) {
+		// u.bug("removeFileFromFileInput", input.files, file_name);
+
+		var datatransfer = new DataTransfer();
+		var i, file;
+		var files = Array.from(input.files);
+
+		// Loop through all selected files and move all other files to datatransfor object
+		for(i = 0; i < files.length; i++) {
+			file = files[i];
+			if(file_name !== file.name) {
+				datatransfer.items.add(file);
+			}
+		}
+
+		// Set updated files array as files property on input
+		input.files = datatransfer.files;
+
+	}
+
+
+
+	// Update different aspects of form after submission response has been received
+	// Fx. filelists, filepreviews
+	// Must be called manually from response receiver, 
+	// (since there is no way of knowing how submission and reception reception is handled)
+	this.updateFormAfterResponse = function(form, response) {
+		// u.bug("updateFormAfterResponse", form, response, form.inputs);
+
+		this.updateFilelistStatus(form, response);
+
+		var input;
+		for(input in form.inputs) {
+			if(form.inputs[input].field && form.inputs[input].field.type === "files") {
+				this.updateFilePreview(form.inputs[input].field);
+			}
+		}
+	}
+
 
 
 	// internal - mouseenter handler - attatched to inputs
@@ -1669,9 +2508,12 @@ Util.Form = u.f = new function() {
 			action._form.actions[action_name] = action;
 		}
 
-		// keyboard shortcut
+		// keyboard shortcut (mapped to form and only execute when a form field is focused)
 		if(obj(u.k) && u.hc(action, "key:[a-z0-9]+")) {
-			u.k.addKey(action, u.cv(action, "key"));
+			u.k.addKey(action._form, u.cv(action, "key"), {
+				"callback": action.clicked.bind(action),
+				"focused": true
+			});
 		}
 
 		// add focus and blur handlers
@@ -1734,7 +2576,6 @@ Util.Form = u.f = new function() {
 
 				// Remember error in error list
 				iN._form._error_inputs[iN.name] = true;
-
 
 				// Register error on field and input
 				u.ac(iN, "error");
@@ -2248,8 +3089,7 @@ Util.Form = u.f = new function() {
 				}
 
 				// collect list of added and already uploaded files
-				var i, files = Array.prototype.slice.call(u.qsa("li:not(.label)", iN.field.filelist));
-
+				var i, files = Array.prototype.slice.call(u.qsa("li:not(.label,.preview)", iN.field.filelist));
 
 				// Min width, min height, allowed sizes and proportions
 				var min_width = Number(iN.getAttribute("data-min-width"));
@@ -2271,15 +3111,15 @@ Util.Form = u.f = new function() {
 				if(
 					(files.length >= min && files.length <= max)
 					&&
-					(!pattern || files.every(function(node) {return pattern.indexOf("."+u.cv(node, "format")) !== -1}))
+					(!pattern || files.every(function(node) {return pattern.indexOf("."+node.getAttribute("data-format")) !== -1}))
 					&&
-					(!min_width || files.every(function(node) {return u.cv(node, "width") >= min_width}))
+					(!min_width || files.every(function(node) {return node.getAttribute("data-width") >= min_width}))
 					&&
-					(!min_height || files.every(function(node) {return u.cv(node, "height") >= min_height}))
+					(!min_height || files.every(function(node) {return node.getAttribute("data-height") >= min_height}))
 					&&
-					(!allowed_sizes || files.every(function(node) {return allowed_sizes.indexOf(u.cv(node, "width")+"x"+u.cv(node, "height")) !== -1}))
+					(!allowed_sizes || files.every(function(node) {return allowed_sizes.indexOf(node.getAttribute("data-width")+"x"+node.getAttribute("data-height")) !== -1}))
 					&&
-					(!allowed_proportions || files.every(function(node) {return allowed_proportions.indexOf(u.round(Number(u.cv(node, "width"))/Number(u.cv(node, "height")), 4)) !== -1}))
+					(!allowed_proportions || files.every(function(node) {return allowed_proportions.indexOf(u.round(Number(node.getAttribute("data-width"))/Number(node.getAttribute("data-height")), 4)) !== -1}))
 				) {
 					this.inputIsCorrect(iN);
 				}
