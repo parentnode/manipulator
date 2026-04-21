@@ -65,6 +65,15 @@ u.f.addField = function(node, _options) {
 
 	var field_max = false;
 	var field_min = false;
+	var field_allowed_formats = false;
+
+	// File interaction
+	var field_file_delete = false;
+	var field_file_update = false;
+
+	// Is file poster (modify delete command)
+	var field_is_poster = false
+
 
 	var field_disabled = false;
 	var field_readonly = false;
@@ -82,27 +91,33 @@ u.f.addField = function(node, _options) {
 		for(_argument in _options) {
 
 			switch(_argument) {
-				case "name"					: field_name			= _options[_argument]; break;
-				case "label"				: field_label			= _options[_argument]; break;
-				case "type"					: field_type			= _options[_argument]; break;
-				case "value"				: field_value			= _options[_argument]; break;
-				case "options"				: field_options			= _options[_argument]; break;
-				case "checked"				: field_checked			= _options[_argument]; break;
+				case "name"					: field_name				= _options[_argument]; break;
+				case "label"				: field_label				= _options[_argument]; break;
+				case "type"					: field_type				= _options[_argument]; break;
+				case "value"				: field_value				= _options[_argument]; break;
+				case "options"				: field_options				= _options[_argument]; break;
+				case "checked"				: field_checked				= _options[_argument]; break;
 
-				case "class"				: field_class			= _options[_argument]; break;
-				case "id"					: field_id				= _options[_argument]; break;
+				case "class"				: field_class				= _options[_argument]; break;
+				case "id"					: field_id					= _options[_argument]; break;
 
-				case "max"					: field_max				= _options[_argument]; break;
-				case "min"					: field_min				= _options[_argument]; break;
+				case "max"					: field_max					= _options[_argument]; break;
+				case "min"					: field_min					= _options[_argument]; break;
 
-				case "disabled"				: field_disabled		= _options[_argument]; break;
-				case "readonly"				: field_readonly		= _options[_argument]; break;
+				case "allowed_formats"		: field_allowed_formats		= _options[_argument]; break;
 
-				case "required"				: field_required		= _options[_argument]; break;
-				case "pattern"				: field_pattern			= _options[_argument]; break;
+				case "file_delete"			: field_file_delete			= _options[_argument]; break;
+				case "file_update"			: field_file_update			= _options[_argument]; break;
+				case "is_poster"			: field_is_poster			= _options[_argument]; break;
 
-				case "error_message"		: field_error_message	= _options[_argument]; break;
-				case "hint_message"			: field_hint_message	= _options[_argument]; break;
+				case "disabled"				: field_disabled			= _options[_argument]; break;
+				case "readonly"				: field_readonly			= _options[_argument]; break;
+
+				case "required"				: field_required			= _options[_argument]; break;
+				case "pattern"				: field_pattern				= _options[_argument]; break;
+
+				case "error_message"		: field_error_message		= _options[_argument]; break;
+				case "hint_message"			: field_hint_message		= _options[_argument]; break;
 			}
 		}
 	}
@@ -127,6 +142,7 @@ u.f.addField = function(node, _options) {
 	field_readonly = !field_readonly ? (field_class.match(/(^| )readonly( |$)/) ? "readonly" : false) : "readonly";
 	field_required = !field_required ? (field_class.match(/(^| )required( |$)/) ? true : false) : true;
 
+
 //	u.bug("field_disabled:" + field_disabled + ", field_readonly:" + field_readonly + ", field_required:" + field_required)
 
 	// compile full classname value (check for existing values)
@@ -137,16 +153,37 @@ u.f.addField = function(node, _options) {
 	field_class += field_min ? (!field_class.match(/(^| )min:[0-9]+( |$)/) ? " min:"+field_min : "") : "";
 	field_class += field_max ? (!field_class.match(/(^| )max:[0-9]+( |$)/) ? " max:"+field_max : "") : "";
 
+	field_class += field_type === "files" && field_max && field_max !== 1 ? " multiple" : "";
+
 
 	// HIDDEN (STRING)
 	// no field wrapper for hidden fields
-	if (field_type == "hidden") {
+	if(field_type == "hidden") {
 		return u.ae(node, "input", {"type":"hidden", "name":field_name, "value":field_value, "id":field_id});
 	}
 
+	var field_options = {};
+
+	// Additional setting for files input
+	if(field_type === "files") {
+
+		if(field_file_delete) {
+			field_options["data-file-delete"] = field_file_delete;
+		}
+		if(field_file_update) {
+			field_options["data-file-update"] = field_file_update;
+		}
+		if(field_is_poster) {
+			field_options["data-is-poster"] = field_is_poster;
+		}
+
+	}
+
+	field_options["class"] = "field "+field_type+" "+field_class;
+	// u.bug("field_options", field_options);
 
 	// create field
-	var field = u.ae(node, "div", {"class":"field "+field_type+" "+field_class});
+	var field = u.ae(node, "div", field_options);
 	var attributes = {};
 
 
@@ -191,10 +228,29 @@ u.f.addField = function(node, _options) {
 	}
 
 	// NUMBER, INTEGER, DATE, DATETIME
-	else if(field_type == "number" || field_type == "integer" || field_type == "date" || field_type == "datetime") {
+	else if(field_type == "number" || field_type == "integer" || field_type == "date") {
 
 		attributes = {
 			"type":field_type, 
+			"id":field_id, 
+			"value":field_value, 
+			"name":field_name, 
+			"max":field_max, 
+			"min":field_min,
+			"pattern":field_pattern,
+			"readonly":field_readonly,
+			"disabled":field_disabled
+		};
+
+		u.ae(field, "label", {"for":field_id, "html":field_label});
+		u.ae(field, "input", u.f.verifyAttributes(attributes));
+	}
+
+	// NUMBER, INTEGER, DATE, DATETIME
+	else if(field_type == "datetime") {
+
+		attributes = {
+			"type":field_type+"-local", 
 			"id":field_id, 
 			"value":field_value, 
 			"name":field_name, 
@@ -275,7 +331,6 @@ u.f.addField = function(node, _options) {
 	// RADIOBUTTONS
 	else if(field_type == "radiobuttons") {
 
-
 		u.ae(field, "label", {"html":field_label});
 
 		if(field_options) {
@@ -301,8 +356,49 @@ u.f.addField = function(node, _options) {
 	// FILES
 	else if(field_type == "files") {
 
+		attributes = {
+			"id":field_id, 
+			"name":field_name, 
+			"type":"file",
+			"accept":field_allowed_formats ? "."+field_allowed_formats.replace(/,/, ",.") : false,
+			"multiple":field_max && field_max === 1 ? false : true,
+		};
+
 		u.ae(field, "label", {"for":field_id, "html":field_label});
-		u.ae(field, "input", {"id":field_id, "name":field_name, "type":"file"});
+		u.ae(field, "input", u.f.verifyAttributes(attributes));
+
+		// List files belonging to this input
+		var file, options;
+		var ul = u.ae(field, "ul", {"class": "filelist"});
+		if(field_value) {
+			for(i = 0; i < field_value.length; i++) {
+				file = field_value[i];
+
+				options = {
+					"class": "uploaded", 
+					"html": file["name"],
+					"data-id": file.id,
+					"data-name": file.name,
+					"data-description": file.description,
+					"data-variant": file.variant,
+					"data-format": file.format,
+					"data-width": file.width,
+					"data-height": file.height,
+				};
+
+				// Compile classname with available values
+				// classname = "uploaded";
+
+				// classname += file.id ? (" media_id:"+file.id) : "";
+				// classname += file.variant ? (" variant:"+file.variant) : "";
+				// classname += file.format ? (" format:"+file.format) : "";
+				// classname += file.width ? (" width:"+file.width) : "";
+				// classname += file.height ? (" height:"+file.height) : "";
+
+				u.ae(ul, "li", options);
+			}
+		}
+
 	}
 
 
