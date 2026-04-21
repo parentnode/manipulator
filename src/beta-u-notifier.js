@@ -1,5 +1,6 @@
 /**
 * Notify response object structure
+* Standard janitor response object
 * {
 *	"cms_message":{
 *		"message":[
@@ -11,23 +12,80 @@
 *		
 *	}
 * }
+*
+* Or cms_message with compressed message object
+* {
+*	"cms_message":{
+*		"message":"message1",
+*		"error":"message1"
+*	}
+* }
+*
+* Or array of message object
+* [
+*	{"type":"error", "message":"message1"},
+*	{"type":"message", "message":"message2"},
+* ]
+*
+* Or single message
+* {"type":"error", "message":"message1"}
+*
+* Or HTML
+*
 */
 
-u.notifier = function(node) {
+u.notifier = function(node, _options) {
 	
 	// u.bug_force = true;
 	// u.bug("enable notifier");
 
-	var notifications = u.qs("div.notifications", node);
-	if(!notifications) {
-		node.notifications = u.ae(node, "div", {"id":"notifications"});
+	node._nt_hide_delay = 4500;
+
+	node._nt_hide_callback = "_hide";
+	node._nt_show_callback = "_show";
+
+	// Scrape notifications from HTML on load
+	node._nt_scrape = false;
+
+
+
+		// additional info passed to function as JSON object
+	if(obj(_options)) {
+		var argument;
+		for(argument in _options) {
+
+			switch(argument) {
+				case "hide_delay"      : node._nt_hide_delay        = _options[argument]; break;
+
+				case "scrape"          : node._nt_scrape            = _options[argument]; break;
+			}
+
+		}
 	}
 
-	node.notifications.hide_delay = 4500;
-	node.notifications.hide = function(node) {
-		u.a.transition(this, "all 0.5s ease-in-out");
-		u.a.translate(this, 0, -this.offsetHeight);
+	// Create notification div, unless it exists
+	var notifications = u.qs("div.notifications", node);
+	if(!notifications) {
+		notifications = u.ae(node, "div", {"id":"notifications"});
 	}
+	node.notifications = notifications;
+
+
+	// hide notification
+	node.notifications._hide = function() {
+		u.ass(this, {
+			"transition": "all 0.5s ease-in-out",
+			"opacity": 0,
+			"transform":"translate(0, "+(-this.offsetHeight)+"px",
+		});
+	}
+	node.notifications._show = function() {
+		u.ass(this, {
+			"transition": "all 0.2s ease-in-out",
+			"opacity": 1,
+		});
+	}
+
 	
 	node.notify = function(response, _options) {
 
@@ -39,78 +97,73 @@ u.notifier = function(node) {
 			for(argument in _options) {
 
 				switch(argument) {
-					case "class"	: class_name	= _options[argument]; break;
+					case "class"       : class_name            = _options[argument]; break;
 				}
 
 			}
 		}
 
 		var output = [];
-
 		// u.bug("message:" + typeof(response) + "; JSON: " + response.isJSON + "; HTML: " + response.isHTML);
 
-		// if(obj(response)) {
-		if(obj(response) && response.isJSON) {
+		// Response is object, returned via u.request
+		if(obj(response) && response.isJSON && response.cms_message) {
 
-			var message = response.cms_message;
+			var cms_message = response.cms_message;
 			var cms_status = typeof(response.cms_status) != "undefined" ? response.cms_status : "";
+			var message, i;
 
-			// TODO: message can be JSON object
-			if(obj(message)) {
-				for(type in message) {
-//					u.bug("typeof(message[type]:" + typeof(message[type]) + "; " + type);
-					if(str(message[type])) {
-						output.push(u.ae(this.notifications, "div", {"class":class_name+" "+cms_status+" "+type, "html":message[type]}));
+			// Message is object
+			if(obj(cms_message)) {
+
+				for(type in cms_message) {
+					// u.bug("typeof(cms_message[type]:" + typeof(cms_message[type]) + "; " + type);
+
+					// Message in object is string
+					if(str(cms_message[type])) {
+						output.push(u.ae(this.notifications, "div", {"class":class_name+" "+cms_status+" "+type, "html":cms_message[type]}));
 					}
-					else if(obj(message[type]) && message[type].length) {
-						var node, i;
-						for(i = 0; i < message[type].length; i++) {
-							_message = message[type][i];
+					// Array of messages
+					else if(obj(cms_message[type]) && cms_message[type].length) {
+						for(i = 0; i < cms_message[type].length; i++) {
+							message = cms_message[type][i];
 
-							output.push(u.ae(this.notifications, "div", {"class":class_name+" "+cms_status+" "+type, "html":_message}));
+							output.push(u.ae(this.notifications, "div", {"class":class_name+" "+cms_status+" "+type, "html":message}));
 						}
 					
 					}
 				}
 			
 			}
-			else if(str(message)) {
-				output.push(u.ae(this.notifications, "div", {"class":class_name+" "+cms_status, "html":message}));
-			}
-		
-			if(fun(this.notifications.show)) {
-				this.notifications.show();
+			// Message is plain string
+			else if(str(cms_message)) {
+				output.push(u.ae(this.notifications, "div", {"class":class_name+" "+cms_status, "html":cms_message}));
 			}
 		
 		}
+		// Response is HTML, returned via u.request
 		else if(obj(response) && response.isHTML) {
 
-			// check for login
+			// check for janitor login form
+			// in case AJAX call returned login form due to session expiring
 			var login = u.qs(".scene.login form", response);
 			var messages = u.qsa(".scene div.messages p", response);
 			if(login && !u.qs("#login_overlay")) {
 
-				// // remove article from login (if it exists)
-				// // it should not be shown in quick login
-				// var article = u.qs("div.article", login);
-				// if(article) {
-				// 	article.parentNode.removeChild(article);
-				// }
 
-
-				this.autosave_disabled = true;
+				// pause janitor auto save 
+				page.autosave_disabled = true;
 
 				// stop autosave
 				if(page.t_autosave) {
 					u.t.resetTimer(page.t_autosave);
 				}
 
-
+				// Create login overlay
 				var overlay = u.ae(document.body, "div", {"id":"login_overlay"});
 				overlay.node = this;
 				u.ae(overlay, login);
 				u.as(document.body, "overflow", "hidden");
-//				var form = u.qs("form", overlay);
 
 				var relogin = u.ie(login, "h1", {"class":"relogin", "html":(u.txt["relogin"] ? u.txt["relogin"] : "Your session expired")});
 //				login.insertBefore(relogin, form);
@@ -164,14 +217,13 @@ u.notifier = function(node) {
 							// restore body overflow
 							u.as(document.body, "overflow", "auto");
 
-							this.overlay.node.autosave_disabled = false;
-							
+
 							// start autosave again
-							if(this.overlay.node._autosave_node && this.overlay.node._autosave_interval) {
-								u.t.setTimer(this.overlay.node._autosave_node, "autosave", this.overlay.node._autosave_interval);
+							page.autosave_disabled = false;
+							if(page._autosave_node && page._autosave_interval) {
+								u.t.setTimer(page._autosave_node, "autosave", page._autosave_interval);
 							}
-							
-//							u.bug("vars:" + vars.length)
+
 						}
 						// login form returned (some error occured)
 						else {
@@ -187,14 +239,13 @@ u.notifier = function(node) {
 								this.overlay.node.notify({"isJSON":true, "cms_status":"error", "cms_message":"An error occured"});
 							}
 
-//							alert("login error")
-
 						}
-//						alert(u.qs("[data-csrf-token]")["data-csrf-token"]);
+
 					}
 					u.request(this, this.action, {"method":this.method, "data":this.getData()});
-//					alert("handle it")
 				}
+
+				return;
 			}
 
 			// look for messages in HTML
@@ -205,25 +256,55 @@ u.notifier = function(node) {
 
 					output.push(u.ae(this.notifications, "div", {"class":message.className, "html":message.innerHTML}));
 				}
+
 			}
 		}
+		// Standard object (could be HTML, array or object)
+		else if(obj(response)) {
 
+			// HTML
+			if(response.nodeName) {
 
-		this.t_notifier = u.t.setTimer(this.notifications, this.notifications.hide, this.notifications.hide_delay, output);
+				var messages = u.qsa(".scene div.messages p", response);
+				for(i = 0; i < messages.length; i++) {
+					message = messages[i];
+					output.push(u.ae(this.notifications, "div", {"class":message.className, "html":message.innerHTML}));
+				}
 
-		// if(message) {
-		// 	message.hide = function() {
-		// 		this.transitioned = function() {
-		// 			u.a.transition(this, "none");
-		// 			u.as(this, "display", "none");
-		// 		}
-		// 		u.a.transition(this, "all 0.5s ease-in-out");
-		// 		u.a.setOpacity(this, 0);
-		// 	}
-		// 	u.t.setTimer(message, message.hide, 2000);
-		// }
+			}
+			// Array of messages
+			else if(response.length) {
+
+				for(i = 0; i < response.length; i++) {
+					message = response[i];
+					if(obj(message) && message.message) {
+						output.push(u.ae(this.notifications, "div", {"class":(message.type ? message.type : "message"), "html":message.message}));
+					}
+				}
+
+			}
+			// Single message object
+			else if(fun(response.toString) && response.toString() === "[object Object]" && response.type && response.message) {
+				output.push(u.ae(this.notifications, "div", {"class":response.type, "html":response.message}));
+			}
+
+		}
+
+		// Is there a specific show method declared
+		if(fun(this.notifications[this._nt_show_callback])) {
+			this.notifications[this._nt_show_callback]();
+		}
+
+		// Start hide timer
+		if(fun(this.notifications[this._nt_hide_callback])) {
+			this.t_notifier = u.t.setTimer(this.notifications, this.notifications[this._nt_hide_callback], this._nt_hide_delay, output);
+		}
 
 	}
 
+	// Automatically scrape notifications from current HTML document
+	if(node._nt_scrape) {
+		node.notify(document.body);
+	}
 
 }
