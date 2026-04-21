@@ -314,11 +314,12 @@ Util.Form.customInit["dropdown"] = function(field) {
 		}
 
 		this.field.is_focused = true;
+		this.field.input.is_focused = true;
 		this.is_focused = true;
 
 		u.ac(this.field, "focus");
 		u.ac(this, "focus");
-		u.ac(this.field.virtual_input, "focus");
+		u.ac(this.field.input, "focus");
 
 
 		// make sure field goes all the way in front - hint/error must be seen
@@ -362,18 +363,19 @@ Util.Form.customInit["dropdown"] = function(field) {
 			u.e.removeWindowStartEvent(this, this.field.blur_event_id);
 
 			this.field.is_focused = false;
+			this.field.input.is_focused = false;
 			this.is_focused = false;
 
 			u.rc(this.field, "focus");
 			u.rc(this, "focus");
-			u.rc(this.field.virtual_input, "focus");
+			u.rc(this.field.input, "focus");
 
 			// drop back to base z-index
 			u.as(this.field, "zIndex", this.field._base_z_index);
 
 
 			// field has been interacted with (content can now be validated)
-			this._used = true;
+			this.field.input._used = true;
 
 
 			// end show_all state
@@ -418,6 +420,12 @@ Util.Form.customInit["dropdown"] = function(field) {
 	// add focus and blur event handlers to taxonomy input
 	u.e.addEvent(field.virtual_input, "focus", field.virtual_input._focus);
 
+
+	// added accessibility for devices with mouse input support
+	if(u.e.event_support != "touch") {
+		u.e.addEvent(field.virtual_input, "mouseenter", u.f._mouseenter.bind(field.input));
+		u.e.addEvent(field.virtual_input, "mouseleave", u.f._mouseleave.bind(field.input));
+	}
 
 
 	// inject option selector button
@@ -947,9 +955,10 @@ Util.Form.customInit["dropdown"] = function(field) {
 Util.Form.customValidate["dropdown"] = function(iN) {
 	// u.bug("validate dropdown:" + iN.val());
 
-	if (iN.val() !== "") {
+	if(iN.val() !== "") {
 		u.f.inputIsCorrect(iN);
-	} else {
+	}
+	else {
 		u.f.inputHasError(iN);
 	}
 

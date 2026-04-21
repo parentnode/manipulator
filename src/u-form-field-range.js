@@ -20,14 +20,19 @@ Util.Form.customInit["range"] = function(field) {
 	field.input.val = u.f._value;
 
 
-	field._virtual_input_wrapper = u.ae(field, "div", {"class":"input_wrapper"});
+	field._virtual_input_wrapper = u.ae(field, "div", {"class":"virtual"});
 	field.insertBefore(field._virtual_input_wrapper, field.input);
 	field._virtual_input = u.ae(field._virtual_input_wrapper, "div", {"class":"input", "contentEditable":"true"});
 	
 	field.min = field.input.getAttribute("min");
 	field.max = field.input.getAttribute("max");
+
 	field.postfix = field.input.getAttribute("postfix");
 	field.locale = field.input.getAttribute("locale") || document.documentElement.lang;
+
+	field._min = u.ae(field._virtual_input_wrapper, "div", {"class":"min", "html": field.min + (field.postfix ? " "+field.postfix : "")});
+	field._max = u.ae(field._virtual_input_wrapper, "div", {"class":"max", "html": field.max + (field.postfix ? " "+field.postfix : "")});
+
 
 	field._virtual_input._form = field._form;
 	field._virtual_input.field = field;

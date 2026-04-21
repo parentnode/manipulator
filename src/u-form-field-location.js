@@ -148,77 +148,84 @@ Util.Form.location = function(field) {
 	field.lon_input.autocomplete = "off";
 	field.lon_input.field = field;
 
+
 	// create map if it doesn't exist and position according to field
 	field.showMap = function() {
-		if(!window._mapsiframe) {
-			var lat = this.lat_input.val() !== "" ? this.lat_input.val() : 0;
-			var lon = this.lon_input.val() !== "" ? this.lon_input.val() : 0;
 
-			var maps_url = "https://maps.googleapis.com/maps/api/js" + (u.gapi_key ? "?key="+u.gapi_key : "");
-			var html = '<html><head>';
-			html += '<style type="text/css">body {margin: 0;} #map {width: 300px; height: 300px;} #close {width: 25px; height: 25px; position: absolute; top: 0; left: 0; background: #ffffff; z-index: 10; border-bottom-right-radius: 10px; cursor: pointer;}</style>';
-			html += '<script type="text/javascript" src="'+maps_url+'"></script>';
-			html += '<script type="text/javascript">';
+		
+		// Do not attempt to create map view without api key
+		if(u.gapi_key) {
+			if(!this.iframe_maps) {
 
-			html += 'var map, marker;';
-			html += 'var initialize = function() {';
-			html += '	window._map_loaded = true;';
-			html += '	var close = document.getElementById("close");';
-			html += '	close.onclick = function() {field.hideMap();};';
-			html += '	var mapOptions = {center: new google.maps.LatLng('+lat+', '+lon+'),zoom: 15, streetViewControl: false, zoomControlOptions: {position: google.maps.ControlPosition.LEFT_CENTER}};';
-			html += '	map = new google.maps.Map(document.getElementById("map"),mapOptions);';
-			html += '	marker = new google.maps.Marker({position: new google.maps.LatLng('+lat+', '+lon+'), draggable:true});';
-			html += '	marker.setMap(map);';
+				var lat = this.lat_input.val() !== "" ? this.lat_input.val() : 0;
+				var lon = this.lon_input.val() !== "" ? this.lon_input.val() : 0;
 
-			html += '	marker.dragend = function(event_type) {';
-			html += '		var lat_marker = Math.round(marker.getPosition().lat()*100000)/100000;';
-			html += '		var lon_marker = Math.round(marker.getPosition().lng()*100000)/100000;';
-			html += '		field.lon_input.val(lon_marker);';
-			html += '		field.lat_input.val(lat_marker);';
-			html += '	};';
-			html += '	marker.addListener("dragend", marker.dragend);';
-			html += '};';
+				var maps_url = "https://maps.googleapis.com/maps/api/js?key="+u.gapi_key+"&libraries=marker&callback=initMap&loading=async";
+				var html = '<!DOCTYPE html><html><head>';
+				html += '</head><body><div id="map"></div><div id="close"></div>';
+				html += '<style type="text/css">body {margin: 0;} #map {width: 100%; height: 300px;} #close {width: 25px; height: 25px; position: absolute; top: 0; left: 0; background: #ffffff; z-index: 10; border-bottom-right-radius: 10px; cursor: pointer;} gmp-advanced-marker {outline: none;}</style>';
+				html += '<script type="text/javascript">';
 
-			html += 'var centerMap = function(lat, lon) {';
-			html += '	var loc = new google.maps.LatLng(lat, lon);';
-			html += '	map.setCenter(loc);';
-			html += '	marker.setPosition(loc);';
-			html += '};';
-			html += 'google.maps.event.addDomListener(window, "load", initialize);';
-			html += '</script>';
-			html += '</head><body><div id="map"></div><div id="close"></div></body></html>';
+				html += 'var map, marker;';
+				html += 'var initMap = function() {';
+				html += '	window._map_loaded = true;';
+				html += '	var close = document.getElementById("close");';
+				html += '	close.onclick = function() {field.hideMap();};';
+				html += '	var mapOptions = {center: new google.maps.LatLng('+lat+', '+lon+'),zoom: 15, streetViewControl: false, zoomControlOptions: {position: google.maps.ControlPosition.LEFT_CENTER}, mapId:"map"};';
+				html += '	map = new google.maps.Map(document.getElementById("map"), mapOptions);';
+				html += '	document.getElementById("map").addEventListener("mousedown", function(){clearTimeout(document.field.t_hide_map)});';
 
-			window._mapsiframe = u.ae(document.body, "iframe", {"id":"geolocationmap"});
-			window._mapsiframe.field = this;
+				html += '	marker = new google.maps.marker.AdvancedMarkerElement({position: new google.maps.LatLng('+lat+', '+lon+'), map:map, gmpDraggable: true});';
+				html += '	marker.field = document.field;';
+				html += '	marker.dragend = function(event_type) {';
+				html += '		var lat_marker = Math.round(marker.position.lat*100000)/100000;';
+				html += '		var lon_marker = Math.round(marker.position.lng*100000)/100000;';
+				html += '		this.field.lon_input.val(lon_marker);';
+				html += '		this.field.lat_input.val(lat_marker);';
+				html += '	};';
+				html += '	marker.addListener("dragend", marker.dragend);';
 
-			window._mapsiframe.doc = window._mapsiframe.contentDocument ? window._mapsiframe.contentDocument : window._mapsiframe.contentWindow.document;
-			window._mapsiframe.doc.open();
-			window._mapsiframe.doc.write(html);
-			window._mapsiframe.doc.close();
-			window._mapsiframe.doc.field = this;
-			
-			u.e.addEvent(window._mapsiframe.doc, "focus", function() {u.t.resetTimer(this.field.t_hide_map)});
+				html += '};';
+
+				html += 'var centerMap = function(lat, lon) {';
+				html += '	var loc = new google.maps.LatLng(lat, lon);';
+				html += '	map.setCenter(loc);';
+				html += '	marker.position = loc;';
+				html += '};';
+				html += '</script>';
+				html += '<script type="text/javascript" src="'+maps_url+'" async></script>';
+				html += '</body></html>';
+
+				this.iframe_maps = u.ae(this, "iframe", {"class": "geolocationmap"});
+
+				this.iframe_maps.doc = this.iframe_maps.contentDocument ? this.iframe_maps.contentDocument : this.iframe_maps.contentWindow.document;
+				this.iframe_maps.doc.field = this;
+				this.iframe_maps.doc.open();
+				this.iframe_maps.doc.write(html);
+				this.iframe_maps.doc.close();
+
+
+				u.e.addEvent(this.iframe_maps.doc, "focus", function() {u.t.resetTimer(this.field.t_hide_map)});
+				u.e.addEvent(this.iframe_maps.doc, "blur", function() {this.field.startHideTimer();});
+
+			}
 
 		}
 		else {
-
-			// TODO: avoid this
-//				this.updateMap();
-
-
+			u.bug("Attempted to include map, but u.gapi_key is missing");
 		}
 
-		window._mapsiframe.contentWindow.field = this;
-		u.as(window._mapsiframe, "left", (u.absX(this.bn_geolocation)+this.bn_geolocation.offsetWidth+10)+"px");
-		u.as(window._mapsiframe, "top", (u.absY(this.bn_geolocation) + (this.bn_geolocation.offsetHeight/2) -(window._mapsiframe.offsetHeight/2))+"px");
 	}
+
 	// update map center
 	field.updateMap = function() {
 
-		if(window._mapsiframe && window._mapsiframe.contentWindow && window._mapsiframe.contentWindow._map_loaded) {
-			window._mapsiframe.contentWindow.centerMap(this.lat_input.val(), this.lon_input.val());
+		if(this.iframe_maps && this.iframe_maps.contentWindow && this.iframe_maps.contentWindow._map_loaded) {
+			this.iframe_maps.contentWindow.centerMap(this.lat_input.val(), this.lon_input.val());
 		}
+
 	}
+
 	// move map based on key presses or current values
 	field.moveMap = function(event) {
 
@@ -253,9 +260,9 @@ Util.Form.location = function(field) {
 	field.hideMap = function() {
 		u.t.resetTimer(this.t_hide_map);
 
-		if(window._mapsiframe) {
-			document.body.removeChild(window._mapsiframe);
-			window._mapsiframe = null;
+		if(this.iframe_maps) {
+			this.removeChild(this.iframe_maps);
+			delete this.iframe_maps;
 		}
 	}
 
@@ -289,7 +296,11 @@ Util.Form.location = function(field) {
 	}
 	// hide map when lat/long fields loose focus
 	field.lat_input.blurred = field.lon_input.blurred = function() {
-		this.field.t_hide_map = u.t.setTimer(this.field, this.field.hideMap, 800);
+		this.field.startHideTimer();
+	}
+
+	field.startHideTimer = function() {
+		this.t_hide_map = u.t.setTimer(this, this.hideMap, 800);
 	}
 
 
