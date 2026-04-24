@@ -35,8 +35,12 @@ Util.Form.customInit["html"] = function(field) {
 			u.f.validate(this);
 		}
 
+		// enable testing for empty HTML
+		var value_tester = document.createElement("div");
+		value_tester.innerHTML = this.value;
+
 		// Return value
-		return (this.value != this.default_value && u.text(this.field.viewer)) ? this.value : "";
+		return (this.value != this.default_value && u.text(value_tester)) ? this.value : "";
 	}
 	field.input.val = field._html_value;
 
