@@ -4037,7 +4037,7 @@ u.f.textEditor = function(field) {
 
 	// return focus to correct field input
 	field.returnFocus = function(tag) {
-		u.bug("returnFocus", tag);
+		// u.bug("returnFocus", tag);
 
 		// text, code, ext_video node
 		if(tag.type.match(/^(text|code|ext_video|li|button)$/)) {
