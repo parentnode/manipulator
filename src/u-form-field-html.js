@@ -704,6 +704,9 @@ u.f.textEditor = function(field) {
 
 				// Update HTML
 				this.tag.field.update();
+
+				// return focus to tag
+				this.tag.field.returnFocus(this.tag);
 			}
 
 			form.inputs["classname"].blurred = function(event) {
