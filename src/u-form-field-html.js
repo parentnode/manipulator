@@ -61,10 +61,14 @@ Util.Form.customValidate["html"] = function(iN) {
 	max = max ? max : 10000000;
 	pattern = iN.getAttribute("pattern");
 
+	// enable testing for empty HTML
+	var value_tester = document.createElement("div");
+	value_tester.innerHTML = iN.val();
+
 	if(
-		u.text(iN.field.viewer) &&
-		u.text(iN.field.viewer).length >= min && 
-		u.text(iN.field.viewer).length <= max && 
+		u.text(value_tester) &&
+		u.text(value_tester).length >= min && 
+		u.text(value_tester).length <= max && 
 		(!pattern || iN.val().match("^"+pattern+"$"))
 	) {
 		u.f.inputIsCorrect(iN);
