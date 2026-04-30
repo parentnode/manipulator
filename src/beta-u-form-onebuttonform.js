@@ -40,10 +40,9 @@ Util.Modules["oneButtonForm"] = new function() {
 
 				var inputs = node.getAttribute("data-inputs");
 
-
 				// add additional hidden inputs
 				if(inputs) {
-					inputs = JSON.parse(inputs);
+					inputs = JSON.parse(decodeURI(inputs));
 					for(input_name in inputs) {
 						u.ae(node._ob_form, "input", {"type":"hidden","name":input_name, "value":inputs[input_name]});
 					}
