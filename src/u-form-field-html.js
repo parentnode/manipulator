@@ -36,8 +36,9 @@ Util.Form.customInit["html"] = function(field) {
 		}
 
 		// enable testing for empty HTML
+		// remove trailing linebreaks after HTML tags
 		var value_tester = document.createElement("div");
-		value_tester.innerHTML = this.value;
+		value_tester.innerHTML = this.value.trim();
 
 		// Return value
 		return (this.value != this.default_value && u.text(value_tester)) ? this.value : "";
@@ -58,7 +59,7 @@ Util.Form.customValidate["html"] = function(iN) {
 	min = Number(u.cv(iN.field, "min"));
 	max = Number(u.cv(iN.field, "max"));
 	min = min ? min : 1;
-	max = max ? max : 10000000;
+	max = max ? max : 1000000000;
 	pattern = iN.getAttribute("pattern");
 
 	// enable testing for empty HTML
