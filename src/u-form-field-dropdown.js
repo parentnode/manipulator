@@ -18,30 +18,31 @@ Util.Form.customInit["dropdown"] = function(field) {
 
 	// value get/setter for selects
 	field._value_select = function(value) {
+		// u.bug("_value_select", value);
 
 		// only return value if no value is passed (value could be false or 0)
 		if(value !== undefined) {
 
 			// new:: option – create new option to enable serverside creation of new option
-			if(value.match(/^new::/)) {
-
-				if(!this.field.new_option) {
-					this.field.new_option = document.createElement("option");
-					this.add(this.field.new_option);
-				}
-
-				var text = value.replace(/^new::/, "");
-				this.field.new_option.value = value;
-				this.field.new_option.text = text;
-
-				this.selectedIndex = this.options.length-1;
-				u.f.validate(this);
-
-				this.field.virtual_input.val(text);
-				
-				return this.selectedIndex;
-
-			}
+			// if(value.match(/^new::/)) {
+			//
+			// 	if(!this.field.new_option) {
+			// 		this.field.new_option = document.createElement("option");
+			// 		this.add(this.field.new_option);
+			// 	}
+			//
+			// 	var text = value.replace(/^new::/, "");
+			// 	this.field.new_option.value = value;
+			// 	this.field.new_option.text = text;
+			//
+			// 	this.selectedIndex = this.options.length-1;
+			// 	u.f.validate(this);
+			//
+			// 	this.field.virtual_input.val(text);
+			//
+			// 	return this.selectedIndex;
+			//
+			// }
 
 
 			// find option with matching value option if it exists
@@ -60,6 +61,24 @@ Util.Form.customInit["dropdown"] = function(field) {
 				}
 			}
 
+			if(value) {
+
+				if(!this.field.new_option) {
+					this.field.new_option = document.createElement("option");
+					this.add(this.field.new_option);
+				}
+
+				this.field.new_option.value = value;
+				this.field.new_option.text = value;
+
+				this.selectedIndex = this.options.length-1;
+				u.f.validate(this);
+
+				this.field.virtual_input.val(value);
+
+				return this.selectedIndex;
+
+			}
 
 			// deselect but no empty value option
 			if(value === "") {
@@ -100,7 +119,7 @@ Util.Form.customInit["dropdown"] = function(field) {
 
 	// get/set value for virtual dropdown input
 	field._value_virtual = function(value) {
-		// u.bug("set value:", value);
+		// u.bug("_value_virtual:", value);
 
 		// set value
 		if(value !== undefined) {
@@ -125,14 +144,18 @@ Util.Form.customInit["dropdown"] = function(field) {
 					// remember li reference
 					this.field.selected_option = option;
 
-					this.field.input.dispatchEvent(new Event("change"));
+					// this.field.input.dispatchEvent(new Event("change"));
 
 					// only one selection posible
 					return;
 				}
 			}
 
-			this.field.input.dispatchEvent(new Event("change"));
+			// No option match was found, create new option
+			// TODO: perhaps this is handled in select value set/getter
+			
+
+			// this.field.input.dispatchEvent(new Event("change"));
 
 		}
 		// get value
@@ -156,6 +179,7 @@ Util.Form.customInit["dropdown"] = function(field) {
 
 	}
 	u.e.click(field.virtual_input);
+
 
 	// handle all keydown events on virtual input
 	field.virtual_input.preKeyEvent = function (event) {
@@ -291,6 +315,7 @@ Util.Form.customInit["dropdown"] = function(field) {
 		this.field.t_search = u.t.setTimer(this.field, this.field.searchOptions, 200);
 
 	}
+
 	u.e.addEvent(field.virtual_input, "keyup", field.virtual_input.postKeyEvent);
 	u.e.addEvent(field.virtual_input, "keydown", field.virtual_input.preKeyEvent);
 
@@ -540,10 +565,11 @@ Util.Form.customInit["dropdown"] = function(field) {
 		// Show options
 		// Also do this is dropdown is already open to adjust height continuously
 		u.ass(this.dropdown_options, {
-			transition: "all 0.3s ease-in-out",
+			transition: "all 0.2s ease-in-out",
 			height: this.dropdown_options_list.offsetHeight + "px"
 		});
 
+		u.ac(this, "open");
 		this.is_expanded = true;
 
 	}
@@ -559,10 +585,11 @@ Util.Form.customInit["dropdown"] = function(field) {
 			}
 
 			u.ass(this.dropdown_options, {
-				transition: "all 0.2s ease-in-out",
+				transition: "all 0.1s ease-in-out",
 				height: "0px"
 			});
 
+			u.rc(this, "open");
 			this.is_expanded = false;
 		}
 		else if(fun(this.optionsHidden)) {
@@ -687,18 +714,17 @@ Util.Form.customInit["dropdown"] = function(field) {
 		if(this.highlighted_option) {
 
 			// if option is too far down
-			if(this.highlighted_option.offsetTop + this.highlighted_option.offsetHeight > this.dropdown_options.offsetHeight + this.dropdown_options.scrollTop) {
-				this.dropdown_options.scrollTop = (this.highlighted_option.offsetTop + this.highlighted_option.offsetHeight) - this.dropdown_options.offsetHeight;
+			if(this.highlighted_option.offsetTop + this.highlighted_option.offsetHeight > this.dropdown_options_list.offsetHeight + this.dropdown_options_list.scrollTop) {
+				this.dropdown_options_list.scrollTop = (this.highlighted_option.offsetTop + this.highlighted_option.offsetHeight) - this.dropdown_options_list.offsetHeight;
 			}
 			// if option is too far up
-			else if(this.highlighted_option.offsetTop < this.dropdown_options.scrollTop) {
-				this.dropdown_options.scrollTop = this.highlighted_option.offsetTop;
+			else if(this.highlighted_option.offsetTop < this.dropdown_options_list.scrollTop) {
+				this.dropdown_options_list.scrollTop = this.highlighted_option.offsetTop;
 			}
 
 		}
 
 	}
-
 
 
 	// Search options
@@ -755,7 +781,7 @@ Util.Form.customInit["dropdown"] = function(field) {
 
 			// get text from input field
 			var value = this.virtual_input.val();
-			var value_reg_exp = new RegExp("(" + value + ")", "gi");
+			var value_reg_exp = new RegExp("(" + RegExp.escape(value) + ")", "gi");
 
 			// loop through options to identify which are matching search term
 			for(i = 0; i < this.dropdown_options.nodes.length; i++) {
@@ -851,7 +877,8 @@ Util.Form.customInit["dropdown"] = function(field) {
 
 		// Option does not exist – make sure it is created
 		else if(value) {
-			this.input.val("new::"+value);
+			// this.input.val("new::"+value);
+			this.input.val(value);
 		}
 		else {
 			this.input.val("");
@@ -870,14 +897,13 @@ Util.Form.customInit["dropdown"] = function(field) {
 	// // double click should be allowed to select text
 	// field._virtual_input.dblclicked = function(event) {}
 
-
-
 	// add option to dropdown
 	field.addOption = function (node) {
+		// u.bug("addOption", node.text);
 		if(node.text) {
 
 			// add list element
-			var li = u.ae(this.dropdown_options_list, "li", {"class": (!node.value ? "default" : ""), "html": node.text});
+			var li = u.ae(this.dropdown_options_list, "li", {"class": "option"+(!node.value ? " default" : ""), "html": node.text});
 			li.field = this;
 			li.option_value = node.value;
 			li.option_text = node.text;
@@ -917,6 +943,7 @@ Util.Form.customInit["dropdown"] = function(field) {
 	field.loadOptions = function() {
 
 		var existing_value = this.input.val();
+		// u.bug("existing_value", existing_value);
 
 		// get list of all tag nodes
 		this.dropdown_options.nodes = [];
@@ -942,6 +969,7 @@ Util.Form.customInit["dropdown"] = function(field) {
 	// activate input
 	u.f.activateInput(field.input);
 
+
 	// validate field now
 	u.f.validate(field.input);
 
@@ -955,7 +983,8 @@ Util.Form.customInit["dropdown"] = function(field) {
 Util.Form.customValidate["dropdown"] = function(iN) {
 	// u.bug("validate dropdown:" + iN.val());
 
-	if(iN.val() !== "") {
+	// Dropdown values may be validated seperately, and custom error can be indicated
+	if(iN.val() !== "" && !iN.custom_error) {
 		u.f.inputIsCorrect(iN);
 	}
 	else {
