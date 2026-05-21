@@ -2164,7 +2164,9 @@ Util.Form = u.f = new function() {
 		u.ac(this, "hover");
 
 		// in case of overlapping hint/errors, make sure this one is on top
-		u.as(this.field, "zIndex", this._form._hover_z_index);
+		if(!this.is_focused) {
+			u.as(this.field, "zIndex", this._form._hover_z_index);
+		}
 
 		// is help element available, then position it appropriately to input
 		u.f.positionHint(this.field);
@@ -2178,7 +2180,9 @@ Util.Form = u.f = new function() {
 		u.rc(this, "hover");
 
 		// in case of overlapping hint/errors, make sure this one drops back down
-		u.as(this.field, "zIndex", this.field._base_z_index);
+		if(!this.is_focused) {
+			u.as(this.field, "zIndex", this.field._base_z_index);
+		}
 
 		// is help element available, then position it appropriately to input
 		// it might still be shown, is error has occured
