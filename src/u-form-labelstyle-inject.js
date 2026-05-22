@@ -67,7 +67,7 @@ u.f.updateDefaultState = function(iN) {
 
 		// remove default value if field does not have value
 		// Date/datetime can be partially filled and still return empty value, do not reset value
-		if(iN.val() === "" && !iN.type.match(/date|datetime/)) {
+		if(iN.val() === "" && !iN.type.match(/date|datetime|select/)) {
 			iN.val("");
 		}
 
@@ -85,7 +85,7 @@ u.f.updateDefaultState = function(iN) {
 			}
 
 			// Date/datetime can be partially filled, do not reset value
-			if(!iN.type.match(/date|datetime/)) {
+			if(!iN.type.match(/date|datetime|select/)) {
 				iN.val(iN.default_value);
 			}
 

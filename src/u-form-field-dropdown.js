@@ -969,7 +969,6 @@ Util.Form.customInit["dropdown"] = function(field) {
 	// activate input
 	u.f.activateInput(field.input);
 
-
 	// validate field now
 	u.f.validate(field.input);
 
