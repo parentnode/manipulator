@@ -3310,7 +3310,7 @@ Util.Form = u.f = new function() {
 			input = inputs[i];
 
 			// exclude specific inputs (defined by ignore_inputs)
-			if(!u.hc(input, ignore_inputs)) {
+			if(!u.hc(input, ignore_inputs) && input.form === _form) {
 
 				// if checkbox/radio and node is checked
 				if((input.type == "checkbox" || input.type == "radio") && input.checked) {
@@ -3378,7 +3378,7 @@ Util.Form = u.f = new function() {
 			select = selects[i];
 
 			// exclude specific inputs (defined by ignore_inputs)
-			if(!u.hc(select, ignore_inputs)) {
+			if(!u.hc(select, ignore_inputs) && select.form === _form) {
 
 				// Manipulator initiated input
 				if(fun(select.val)) {
@@ -3396,7 +3396,7 @@ Util.Form = u.f = new function() {
 			textarea = textareas[i];
 
 			// exclude specific inputs (defined by ignore_inputs)
-			if(!u.hc(textarea, ignore_inputs)) {
+			if(!u.hc(textarea, ignore_inputs) && textarea.form === _form) {
 
 				// Manipulator initiated input
 				if(fun(textarea.val)) {
