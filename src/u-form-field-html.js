@@ -690,8 +690,9 @@ u.f.textEditor = function(field) {
 
 
 			u.f.init(form);
-			
+
 			form.submitted = function() {
+
 				var classname = this.inputs["classname"].val();
 				this.parentNode.removeChild(this);
 
@@ -699,11 +700,11 @@ u.f.textEditor = function(field) {
 				u.rc(this.tag, "classname_open");
 
 				if(classname && classname != "") {
-					u.ac(this.tag.bn_classname, "modified");
+					// u.ac(this.tag.bn_classname, "modified");
 					this.tag.updateClassName(classname);
 				}
 				else {
-					u.rc(this.tag.bn_classname, "modified");
+					// u.rc(this.tag.bn_classname, "modified");
 					this.tag.updateClassName();
 				}
 
@@ -1369,16 +1370,18 @@ u.f.textEditor = function(field) {
 
 		// add CSS button
 		tag.bn_classname = u.ae(tag.ul_tag_options, "li", {"class":"classname"});
-		tag.bn_classname.default_test = "CSS classname";
-		tag.bn_classname.span = u.ae(tag.bn_classname, "span", {"html": tag.bn_classname.default_test});
+		tag.bn_classname.default_text = "CSS classname";
+		tag.bn_classname.span = u.ae(tag.bn_classname, "span", {"html": tag.bn_classname.default_text});
 		tag.updateClassName = function(classname) {
 			if(classname) {
 				this._classname = classname;
 				this.bn_classname.span.innerHTML = classname;
+				u.ac(this.bn_classname, "modified");
 			}
 			else {
 				this._classname = "";
-				this.bn_classname.span.innerHTML = this.bn_classname.default_test
+				this.bn_classname.span.innerHTML = this.bn_classname.default_text
+				u.rc(this.bn_classname, "modified");
 			}
 		}
 		tag.bn_classname.field = this;
