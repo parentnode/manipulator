@@ -6,13 +6,57 @@ Util.Form.customLabelStyle["inject"] = function(iN) {
 	// textarea has no type
 	if(!iN.type || !iN.type.match(/file|radio|checkbox/)) {
 
+
+
+		// update default state on input
+		iN.updateDefaultState = function() {
+			// u.bug("updateDefaultState for:", iN, iN.is_focused);
+
+			// is input focused
+			if(this.is_focused || this.val() !== "") {
+
+				// leave default state
+				u.rc(this, "default");
+				if(this.field.virtual_input) {
+					u.rc(this.field.virtual_input, "default");
+				}
+
+				// remove default value if field does not have value
+				// Date/datetime can be partially filled and still return empty value, do not reset value
+				if(this.val() === "" && !this.type.match(/date|datetime|select/)) {
+					this.val("");
+				}
+
+			}
+			// input does not have focus - consider dafault value
+			else {
+
+				// only set default value if input is empty
+				if(this.val() === "") {
+
+					// add class to indicate default value
+					u.ac(this, "default");
+					if(obj(this.field.virtual_input)) {
+						u.ac(this.field.virtual_input, "default");
+					}
+
+					// Date/datetime can be partially filled, do not reset value
+					if(!this.type.match(/date|datetime|select/)) {
+						this.val(this.default_value);
+					}
+
+				}
+			}
+		}
+
+
 		// store default value
 		iN.default_value = u.text(iN.label);
 
 		// add default handlers to focus and blur events
-		u.e.addEvent(iN, "focus", u.f._changed_state);
-		u.e.addEvent(iN, "blur", u.f._changed_state);
-		u.e.addEvent(iN, "change", u.f._changed_state);
+		u.e.addEvent(iN, "focus", iN.updateDefaultState);
+		u.e.addEvent(iN, "blur", iN.updateDefaultState);
+		u.e.addEvent(iN, "change", iN.updateDefaultState);
 
 
 		// Create psydo label for inputs that can't easily show label value
@@ -37,58 +81,19 @@ Util.Form.customLabelStyle["inject"] = function(iN) {
 
 		}
 
-		u.f.updateDefaultState(iN);
+		iN.updateDefaultState(iN);
 
 	}
+
 
 }
 
 
-// internal focus/blur handler for default value controller - attatched to inputs
-u.f._changed_state = function() {
-	// u.bug("this._default_value_focus:", this);
+// // internal focus/blur handler for default value controller - attatched to inputs
+// u.f._changed_state = function() {
+// 	// u.bug("this._default_value_focus:", this);
+//
+// 	u.f.updateDefaultState(this);
+// }
 
-	u.f.updateDefaultState(this);
-}
 
-
-// update default state on input
-u.f.updateDefaultState = function(iN) {
-	// u.bug("updateDefaultState for:", iN, iN.is_focused);
-
-	// is input focused
-	if(iN.is_focused || iN.val() !== "") {
-
-		// leave default state
-		u.rc(iN, "default");
-		if(iN.field.virtual_input) {
-			u.rc(iN.field.virtual_input, "default");
-		}
-
-		// remove default value if field does not have value
-		// Date/datetime can be partially filled and still return empty value, do not reset value
-		if(iN.val() === "" && !iN.type.match(/date|datetime|select/)) {
-			iN.val("");
-		}
-
-	}
-	// input does not have focus - consider dafault value
-	else {
-
-		// only set default value if input is empty
-		if(iN.val() === "") {
-
-			// add class to indicate default value
-			u.ac(iN, "default");
-			if(obj(iN.field.virtual_input)) {
-				u.ac(iN.field.virtual_input, "default");
-			}
-
-			// Date/datetime can be partially filled, do not reset value
-			if(!iN.type.match(/date|datetime|select/)) {
-				iN.val(iN.default_value);
-			}
-
-		}
-	}
-}

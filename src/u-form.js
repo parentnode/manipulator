@@ -786,8 +786,8 @@ Util.Form = u.f = new function() {
 
 
 				// Is there a defaultState updater (for a labelstyle)
-				if(fun(u.f.updateDefaultState)) {
-					u.f.updateDefaultState(this.inputs[name]);
+				if(fun(this.inputs[name].updateDefaultState)) {
+					this.inputs[name].updateDefaultState();
 				}
 
 			}
