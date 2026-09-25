@@ -401,7 +401,18 @@ u.f.addField = function(node, _options) {
 		}
 
 	}
+	// FILES
+	else if(field_type == "output") {
 
+		attributes = {
+			"id":field_id,
+			"html": field_value,
+		};
+
+		u.ae(field, "label", {"html":field_label});
+		u.ae(field, "p", u.f.verifyAttributes(attributes));
+
+	}
 
 	else {
 		u.bug("input type not implemented")
