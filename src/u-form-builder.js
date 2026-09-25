@@ -57,7 +57,7 @@ u.f.addField = function(node, _options) {
 	var field_label = "Label";
 	var field_type = "string";
 	var field_value = "";
-	var field_options = [];
+	var field_input_options = [];
 	var field_checked = false;
 
 	var field_class = "";
@@ -95,7 +95,7 @@ u.f.addField = function(node, _options) {
 				case "label"				: field_label				= _options[_argument]; break;
 				case "type"					: field_type				= _options[_argument]; break;
 				case "value"				: field_value				= _options[_argument]; break;
-				case "options"				: field_options				= _options[_argument]; break;
+				case "options"				: field_input_options		= _options[_argument]; break;
 				case "checked"				: field_checked				= _options[_argument]; break;
 
 				case "class"				: field_class				= _options[_argument]; break;
@@ -312,11 +312,12 @@ u.f.addField = function(node, _options) {
 		u.ae(field, "label", {"for":field_id, "html":field_label});
 
 		var select = u.ae(field, "select", u.f.verifyAttributes(attributes));
+
 		// add options
-		if(field_options) {
+		if(field_input_options) {
 			var i, option;
-			for(i = 0; i < field_options.length; i++) {
-				option = field_options[i];
+			for(i = 0; i < field_input_options.length; i++) {
+				option = field_input_options[i];
 				
 				if(option.value == field_value) {
 					u.ae(select, "option", {"value":option.value, "html":option.text, "selected":"selected"});
@@ -333,10 +334,10 @@ u.f.addField = function(node, _options) {
 
 		u.ae(field, "label", {"html":field_label});
 
-		if(field_options) {
+		if(field_input_options) {
 			var i, option;
-			for(i = 0; i < field_options.length; i++) {
-				option = field_options[i];
+			for(i = 0; i < field_input_options.length; i++) {
+				option = field_input_options[i];
 
 				var div = u.ae(field, "div", {"class":"item"});
 				
